@@ -181,7 +181,9 @@ export default function TemporalDriveScreen({ navigation }: any) {
         showAlert('¡Archivos Subidos!', `Se agregaron ${newPhotos.length} fotos/videos al álbum.`);
       };
       input.click();
-    } else {
+    }
+  };
+
   const handleDownloadPhoto = (url: string) => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       const link = document.createElement('a');
