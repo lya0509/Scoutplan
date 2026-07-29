@@ -192,6 +192,10 @@ export default function ProfileScreen() {
   const [pDay, setPDay] = useState(1);  const [pMonth, setPMonth] = useState(1);  const [pYear, setPYear] = useState(todayY);
   const [jDay, setJDay] = useState(1);  const [jMonth, setJMonth] = useState(1);  const [jYear, setJYear] = useState(todayY);
 
+  const [membershipExpiresAt, setMembershipExpiresAt] = useState('');
+  const [membershipStatus,    setMembershipStatus]    = useState('');
+  const [membershipRejectedReason, setMembershipRejectedReason] = useState('');
+
   useFocusEffect(useCallback(() => { loadProfile(); }, []));
 
   const loadProfile = async () => {
@@ -199,7 +203,7 @@ export default function ProfileScreen() {
     if (!user?.id) { setLoading(false); return; }
     const { data } = await supabase
       .from('profiles')
-      .select('promise_date, birth_date, join_date, phone, cedula')
+      .select('promise_date, birth_date, join_date, phone, cedula, membership_expires_at, membership_status, membership_rejected_reason')
       .eq('id', user.id)
       .single();
     if (data) {
@@ -208,6 +212,9 @@ export default function ProfileScreen() {
       setPromiseDate(data.promise_date || '');
       setJoinDate(data.join_date || '');
       setPhone(data.phone || '');
+      setMembershipExpiresAt(data.membership_expires_at || '');
+      setMembershipStatus(data.membership_status || 'none');
+      setMembershipRejectedReason(data.membership_rejected_reason || '');
       if (data.promise_date) {
         const [y,m,d] = data.promise_date.split('-');
         setPYear(+y); setPMonth(+m); setPDay(+d);
@@ -397,26 +404,44 @@ export default function ProfileScreen() {
         />
       </View>
 
-      {/* SECCIÓN 2: CARNET SCOUT OFICIAL (GESTIONADO POR JEFATURA) */}
+      {/* SECCIÓN 2: CARNET Y ESTADO DE MEMBRESÍA */}
       <View style={[styles.section, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-        <Text style={[styles.sectionHeader, { color: isDarkMode ? '#c084fc' : colors.primary }]}>CARNET SCOUT DIGITAL</Text>
+        <Text style={[styles.sectionHeader, { color: isDarkMode ? '#c084fc' : colors.primary }]}>ESTADO DE MEMBRESÍA Y CARNET</Text>
 
-        {user?.scout_card_url ? (
+        {membershipStatus === 'approved' ? (
           <View style={[styles.cardAvailableBox, { backgroundColor: isDarkMode ? '#14532d' : '#dcfce7', borderColor: '#16a34a' }]}>
             <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#86efac' : '#15803d', fontSize: 13 }}>
-              ✓ CARNET SCOUT VIGENTE Y OFICIAL
+              ✓ MEMBRESÍA REGISTRADA Y APROBADA
             </Text>
             <Text style={{ color: isDarkMode ? '#f4f4f5' : '#334155', fontSize: 12, marginTop: 4 }}>
-              Cargado oficialmente por la Jefatura de Grupo.
+              Válida hasta el: <Text style={{ fontWeight: 'bold' }}>{membershipExpiresAt}</Text>
+            </Text>
+          </View>
+        ) : membershipStatus === 'pending_approval' ? (
+          <View style={[styles.cardMissingBox, { backgroundColor: isDarkMode ? '#451a03' : '#fef3c7', borderColor: '#d97706' }]}>
+            <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fcd34d' : '#b45309', fontSize: 13, marginBottom: 4 }}>
+              ⏳ MEMBRESÍA EN ESPERA DE APROBACIÓN
+            </Text>
+            <Text style={{ color: isDarkMode ? '#f4f4f5' : '#451a03', fontSize: 12, lineHeight: 18 }}>
+              Tu Scouter asignó la fecha <Text style={{ fontWeight: 'bold' }}>{membershipExpiresAt}</Text>. La Jefatura de Grupo la aprobará en breve.
+            </Text>
+          </View>
+        ) : membershipStatus === 'rejected' ? (
+          <View style={[styles.cardMissingBox, { backgroundColor: isDarkMode ? '#450a0a' : '#fee2e2', borderColor: '#ef4444' }]}>
+            <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fca5a5' : '#991b1b', fontSize: 13, marginBottom: 4 }}>
+              ❌ MEMBRESÍA RECHAZADA
+            </Text>
+            <Text style={{ color: isDarkMode ? '#f4f4f5' : '#7f1d1d', fontSize: 12, lineHeight: 18 }}>
+              Motivo: {membershipRejectedReason || 'No especificado por Jefatura'}. Por favor consulta con tu Scouter de Unidad.
             </Text>
           </View>
         ) : (
-          <View style={[styles.cardMissingBox, { backgroundColor: isDarkMode ? '#451a03' : '#fef3c7', borderColor: '#d97706' }]}>
-            <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fcd34d' : '#b45309', fontSize: 13, marginBottom: 4 }}>
-              ⚠️ CARNET SCOUT NO DISPONIBLE
+          <View style={[styles.cardMissingBox, { backgroundColor: isDarkMode ? '#1e1b4b' : '#eff6ff', borderColor: '#3b82f6' }]}>
+            <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#93c5fd' : '#1d4ed8', fontSize: 13, marginBottom: 4 }}>
+              📋 SIN REGISTRO DE MEMBRESÍA
             </Text>
-            <Text style={{ color: isDarkMode ? '#f4f4f5' : '#451a03', fontSize: 12, lineHeight: 18 }}>
-              Aún no se ha cargado tu Carnet Scout Oficial. Por favor solicita a la Jefatura de Grupo que suba tu carnet digital para habilitar tu acreditación.
+            <Text style={{ color: isDarkMode ? '#f4f4f5' : '#1e3a8a', fontSize: 12, lineHeight: 18 }}>
+              Tu Scouter de Unidad debe registrar y asignar tu fecha de vencimiento de membresía scout.
             </Text>
           </View>
         )}

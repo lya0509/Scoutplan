@@ -350,6 +350,7 @@ export default function RegisterScreen({ navigation }: any) {
     setFormError(null);
     const missingFields = [];
     if (!name.trim()) missingFields.push('Nombre y Apellido');
+    if (!cedula.trim()) missingFields.push('Cédula de Identidad');
     if (!email.trim()) missingFields.push('Correo Electrónico');
     if (!password) missingFields.push('Contraseña');
     if (!birthDate) missingFields.push('Fecha de Nacimiento');
