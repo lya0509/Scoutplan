@@ -37,6 +37,12 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const [selectedReqForCip, setSelectedReqForCip] = useState<any>(null);
   const [loadingCip, setLoadingCip] = useState(false);
 
+  // Formulario rápido para convalidar CIP previo
+  const [showFastCipForm, setShowFastCipForm] = useState(false);
+  const [fastCipName, setFastCipName] = useState('');
+  const [fastCipYear, setFastCipYear] = useState(new Date().getFullYear().toString());
+  const [fastCipScope, setFastCipScope] = useState<'distrital' | 'regional' | 'nacional' | 'internacional'>('distrital');
+
   useModalBackHandler(showCipModal, () => setShowCipModal(false));
   useModalBackHandler(confirming, () => setConfirming(false));
 
@@ -267,45 +273,145 @@ export default function StageDetailScreen({ route, navigation }: any) {
             </View>
 
             <ScrollView style={{ padding: 20 }}>
-              <TouchableOpacity
+              {/* BOTÓN Y FORMULARIO DE CONVALIDACIÓN RÁPIDA DE CIP */}
+              <View
                 style={{
-                  backgroundColor: 'rgba(99, 102, 241, 0.12)',
+                  backgroundColor: 'rgba(99, 102, 241, 0.08)',
                   borderColor: colors.primary,
                   borderWidth: 1.5,
-                  borderStyle: 'dashed',
-                  borderRadius: 12,
-                  padding: 12,
-                  marginBottom: 16,
-                  alignItems: 'center'
-                }}
-                onPress={async () => {
-                  if (!user || !selectedReqForCip) return;
-                  const fastTitle = `CIP Convalidado (${selectedReqForCip.text})`;
-                  try {
-                    await dataService.createCipEvent({
-                      title: fastTitle,
-                      scope: 'distrital',
-                      unit: user.unit ? user.unit.toLowerCase() : 'clan',
-                      date: new Date().toISOString().split('T')[0],
-                      description: 'Convalidado para avance progresivo previo',
-                      created_by: user.id
-                    });
-                    setChecks(prev => ({ ...prev, [selectedReqForCip.id]: true }));
-                    await dataService.toggleRequirement(user.id, stageId, selectedReqForCip.id, true);
-                    showAlert('¡CIP Convalidado!', `Se ha acreditado correctamente: "${fastTitle}"`);
-                    setShowCipModal(false);
-                  } catch (e: any) {
-                    showAlert('Error', e?.message || 'No se pudo convalidar el CIP.');
-                  }
+                  borderRadius: 14,
+                  padding: 14,
+                  marginBottom: 16
                 }}
               >
-                <Text style={{ fontWeight: 'bold', color: colors.primary, fontSize: 13 }}>
-                  ⚡ Convalidar CIP Anterior (Avanzar Etapa Previa)
-                </Text>
-                <Text style={{ fontSize: 11, color: theme.subText, textAlign: 'center', marginTop: 2 }}>
-                  Toca aquí si ya participaste en este CIP en años anteriores y deseas marcarlo como cumplido.
-                </Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                  onPress={() => setShowFastCipForm(prev => !prev)}
+                >
+                  <View style={{ flex: 1, paddingRight: 6 }}>
+                    <Text style={{ fontWeight: 'bold', color: colors.primary, fontSize: 13 }}>
+                      ⚡ Convalidar CIP Anterior / Previo
+                    </Text>
+                    <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                      Escribe el nombre y año del CIP en el que participaste anteriormente.
+                    </Text>
+                  </View>
+                  <Text style={{ fontWeight: 'bold', color: colors.primary, fontSize: 12 }}>
+                    {showFastCipForm ? 'Ocultar ▲' : 'Escribir ▼'}
+                  </Text>
+                </TouchableOpacity>
+
+                {showFastCipForm && (
+                  <View style={{ marginTop: 12, pt: 12, borderTopWidth: 1, borderTopColor: theme.border, gap: 10 }}>
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.text }}>
+                      ¿EN QUÉ CIP O EVENTO ESTUVISTE? *
+                    </Text>
+                    <TextInput
+                      style={{
+                        backgroundColor: theme.cardBg,
+                        color: theme.text,
+                        borderColor: theme.border,
+                        borderWidth: 1,
+                        borderRadius: 10,
+                        padding: 10,
+                        fontSize: 13
+                      }}
+                      placeholder="Ej: I Campamento Distrital / Indaba Regional"
+                      placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                      value={fastCipName}
+                      onChangeText={setFastCipName}
+                    />
+
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.text, marginTop: 4 }}>
+                      ¿EN QUÉ AÑO PARTICIPASTE? *
+                    </Text>
+                    <TextInput
+                      style={{
+                        backgroundColor: theme.cardBg,
+                        color: theme.text,
+                        borderColor: theme.border,
+                        borderWidth: 1,
+                        borderRadius: 10,
+                        padding: 10,
+                        fontSize: 13
+                      }}
+                      placeholder="Ej: 2024"
+                      placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                      value={fastCipYear}
+                      keyboardType="numeric"
+                      onChangeText={setFastCipYear}
+                    />
+
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.text, marginTop: 4 }}>
+                      ALCANCE DEL EVENTO
+                    </Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      {(['distrital', 'regional', 'nacional', 'internacional'] as const).map(sc => (
+                        <TouchableOpacity
+                          key={sc}
+                          style={{
+                            paddingHorizontal: 8,
+                            paddingVertical: 5,
+                            borderRadius: 8,
+                            borderWidth: 1,
+                            borderColor: fastCipScope === sc ? colors.primary : theme.border,
+                            backgroundColor: fastCipScope === sc ? colors.primary : theme.cardBg
+                          }}
+                          onPress={() => setFastCipScope(sc)}
+                        >
+                          <Text style={{ fontSize: 10, fontWeight: 'bold', color: fastCipScope === sc ? 'white' : theme.subText }}>
+                            {sc.toUpperCase()}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: colors.primary,
+                        paddingVertical: 12,
+                        borderRadius: 10,
+                        alignItems: 'center',
+                        marginTop: 10
+                      }}
+                      onPress={async () => {
+                        if (!user || !selectedReqForCip) return;
+                        if (!fastCipName.trim()) {
+                          showAlert('Campo requerido', 'Ingresa el nombre del CIP en el que participaste.');
+                          return;
+                        }
+                        const yearStr = fastCipYear.trim() || new Date().getFullYear().toString();
+                        const fullTitle = `${fastCipName.trim()} (${yearStr})`;
+
+                        try {
+                          await dataService.createCipEvent({
+                            title: fullTitle,
+                            scope: fastCipScope,
+                            unit: user.unit ? user.unit.toLowerCase() : 'clan',
+                            date: `${yearStr}-01-01`,
+                            description: `Convalidado por ${user.name || 'Scout'} para ${selectedReqForCip.text}`,
+                            created_by: user.id
+                          });
+
+                          setChecks(prev => ({ ...prev, [selectedReqForCip.id]: true }));
+                          await dataService.toggleRequirement(user.id, stageId, selectedReqForCip.id, true);
+
+                          showAlert('¡CIP Convalidado!', `Se registró correctamente "${fullTitle}". Tu dirigente podrá revisarlo.`);
+                          setFastCipName('');
+                          setShowFastCipForm(false);
+                          setShowCipModal(false);
+                        } catch (e: any) {
+                          showAlert('Error', e?.message || 'No se pudo convalidar el CIP.');
+                        }
+                      }}
+                    >
+                      <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>
+                        Guardar y Convalidar CIP
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
 
               <Text style={[modalStyles.subtitle, { color: theme.subText }]}>
                 O selecciona un evento CIP publicado por tus dirigentes:

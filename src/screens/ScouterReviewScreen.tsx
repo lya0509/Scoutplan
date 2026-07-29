@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen } from 'lucide-react-native';
+import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen, Flag } from 'lucide-react-native';
 import { dataService } from '../lib/dataService';
 import { useTheme } from '../context/ThemeContext';
 import { stagesData } from '../data/progressionTemplate';
@@ -15,6 +15,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
   const stageTemplate = stagesData.find(s => s.id === stageId);
   const [checks, setChecks] = useState<Record<string, boolean>>({});
   const [completedActivities, setCompletedActivities] = useState<any[]>([]);
+  const [cipList, setCipList] = useState<any[]>([]);
   const [showCatalogDetails, setShowCatalogDetails] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +35,10 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
     const completedIds = await dataService.getCompletedCatalogActivityIds(scoutId);
     const matched = activitiesCatalog.filter(act => completedIds.includes(act.id));
     setCompletedActivities(matched);
+
+    // Cargar CIPs de la unidad / registrados por dirigentes o convalidados por el Scout
+    const cips = await dataService.getCipEvents();
+    setCipList(cips || []);
 
     setLoading(false);
   };
@@ -114,6 +119,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
         {stageTemplate.requirements.map(req => {
           const isChecked = checks[req.id];
           const isCatalogReq = req.type === 'basica' || req.type === 'opcional';
+          const isCipReq = req.type === 'ciclos' || req.text.toLowerCase().includes('ciclo') || req.text.toLowerCase().includes('cip') || req.text.toLowerCase().includes('6p');
           const isExpanded = !!showCatalogDetails[req.id];
 
           return (
@@ -156,6 +162,22 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                       {isExpanded ? <ChevronUp size={14} color={colors.primary} style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color={colors.primary} style={{ marginLeft: 2 }} />}
                     </TouchableOpacity>
                   )}
+
+                  {isCipReq && (
+                    <TouchableOpacity 
+                      style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        toggleShowDetails(req.id);
+                      }}
+                    >
+                      <Flag size={14} color={colors.primary} style={{ marginRight: 4 }} />
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>
+                        {isExpanded ? 'Ocultar detalles del CIP' : `Ver CIPs registrados/convalidados (${cipList.length})`}
+                      </Text>
+                      {isExpanded ? <ChevronUp size={14} color={colors.primary} style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color={colors.primary} style={{ marginLeft: 2 }} />}
+                    </TouchableOpacity>
+                  )}
                 </View>
               </TouchableOpacity>
 
@@ -184,6 +206,39 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                               Área: {act.subArea}
                             </Text>
                           )}
+                        </View>
+                      </View>
+                    ))
+                  )}
+                </View>
+              )}
+
+              {/* LISTA DESPLEGABLE DE CIPS REGISTRADOS O CONVALIDADOS */}
+              {isCipReq && isExpanded && (
+                <View style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.border, borderRadius: 12, padding: 12, marginTop: -4, marginLeft: 10, marginRight: 10 }}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text, marginBottom: 8 }}>
+                    Eventos CIP vinculados / convalidados en la unidad:
+                  </Text>
+                  {cipList.length === 0 ? (
+                    <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic' }}>
+                      No hay eventos CIP registrados o convalidados aún.
+                    </Text>
+                  ) : (
+                    cipList.map((cip, index) => (
+                      <View key={cip.id || index} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8, backgroundColor: theme.cardBg, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: theme.border }}>
+                        <Flag size={16} color={colors.primary} style={{ marginRight: 8, marginTop: 2 }} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>
+                            {(cip.title || '').replace(/\[6P\s*/gi, '[CIP ').replace(/\b6P\b/gi, 'CIP')}
+                          </Text>
+                          <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                            📅 Fecha / Año: {cip.date || 'Sin fecha'}
+                          </Text>
+                          {cip.description ? (
+                            <Text style={{ fontSize: 10, color: theme.subText, fontStyle: 'italic', marginTop: 1 }}>
+                              {cip.description.replace(/\b6P\b/gi, 'CIP')}
+                            </Text>
+                          ) : null}
                         </View>
                       </View>
                     ))
