@@ -94,6 +94,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
 
   const handleRequirementClick = async (req: any) => {
     if (isReadOnly) return;
+    if (!checkProfileCompletion(user, navigation)) return;
 
     if (req.type === 'basica' || req.type === 'opcional') {
       navigation.navigate('CatalogSelector', {
@@ -139,6 +140,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
 
   const handleSendToReview = async () => {
     if (!user) return;
+    if (!checkProfileCompletion(user, navigation)) return;
     setConfirming(false);
     await dataService.submitStageForReview(user.id, stageId);
     setStatus('En Revision');

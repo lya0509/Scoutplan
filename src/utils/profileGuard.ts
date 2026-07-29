@@ -7,8 +7,9 @@ export function isProfileIncomplete(user: Profile | null): boolean {
   const nameValid = !!user.name && user.name.trim() !== '' && user.name.trim() !== 'Usuario Scout';
   const groupValid = !!user.group_name && user.group_name.trim() !== '' && user.group_name.trim() !== 'Sin Grupo';
   const unitValid = !!user.unit && user.unit.trim() !== '' && user.unit.trim() !== 'Sin Unidad';
+  const cedulaValid = !!user.cedula && user.cedula.trim() !== '';
   
-  return !nameValid || !groupValid || !unitValid;
+  return !nameValid || !groupValid || !unitValid || !cedulaValid;
 }
 
 export function checkProfileCompletion(user: Profile | null, navigation?: any): boolean {
