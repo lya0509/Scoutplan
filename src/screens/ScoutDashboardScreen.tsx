@@ -188,14 +188,25 @@ export default function ScoutDashboardScreen({ navigation }: any) {
       ))}
 
       {/* Saludo */}
-      <View style={[styles.welcomeCard, isDarkMode && { backgroundColor: '#000000', borderWidth: 1, borderColor: '#27272a' }]}>
-        <Text style={styles.welcomeTag}>⚜️ Siempre Listo</Text>
-        <Text style={styles.welcomeName}>¡Hola, {user?.name || 'Scout'}!</Text>
-        <Text style={styles.welcomeGroup}>
-          {user?.group_name ? `${user.group_name} • ` : ''}
-          {user?.unit ? user.unit.toUpperCase() : 'SCOUT'}
-        </Text>
-      </View>
+      {(() => {
+        const unitKey = (user?.unit || '').toLowerCase();
+        let motto = '⚜️ ¡Siempre Listo!';
+        if (unitKey === 'manada') motto = '🐾 ¡Siempre lo Mejor!';
+        else if (unitKey === 'tropa') motto = '⚜️ ¡Siempre Listo!';
+        else if (unitKey === 'caminantes' || unitKey === 'comunidad') motto = '🏕️ ¡Siempre Adelante!';
+        else if (unitKey === 'clan') motto = '🔴 ¡Siempre Listo para Servir!';
+
+        return (
+          <View style={[styles.welcomeCard, isDarkMode && { backgroundColor: '#000000', borderWidth: 1, borderColor: '#27272a' }]}>
+            <Text style={styles.welcomeTag}>{motto}</Text>
+            <Text style={styles.welcomeName}>¡Hola, {user?.name || 'Scout'}!</Text>
+            <Text style={styles.welcomeGroup}>
+              {user?.group_name ? `${user.group_name} • ` : ''}
+              {user?.unit ? user.unit.toUpperCase() : 'SCOUT'}
+            </Text>
+          </View>
+        );
+      })()}
 
       {/* Etapa Actual */}
       <View style={styles.sectionHeader}>

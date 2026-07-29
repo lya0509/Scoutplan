@@ -1040,7 +1040,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
             </View>
 
             {worldProgramsList.map((wp, idx) => (
-              <View key={idx} style={{ backgroundColor: theme.inputBg, padding: 10, borderRadius: 10, marginTop: 8, borderWidth: 1, borderColor: theme.border, gap: 6 }}>
+              <View key={idx} style={{ backgroundColor: theme.inputBg, padding: 10, borderRadius: 10, marginTop: 8, borderWidth: 1, borderColor: theme.border, gap: 6, overflow: 'hidden' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <TextInput
                     style={[styles.input, { flex: 1, backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
@@ -1056,9 +1056,9 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                     </TouchableOpacity>
                   )}
                 </View>
-                <View style={{ flexDirection: 'row', gap: 6 }}>
+                <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
                   <TextInput
-                    style={[styles.input, { flex: 1, backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
+                    style={[styles.input, { flex: 3, backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
                     placeholder="Cargo (Ej: Participante)"
                     placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
                     value={wp.role}
@@ -1066,7 +1066,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                     editable={!isViewOnlyForScouter}
                   />
                   <TextInput
-                    style={[styles.input, { flex: 1, backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
+                    style={[styles.input, { flex: 1.5, backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
                     placeholder="Fecha"
                     placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
                     value={wp.date}
