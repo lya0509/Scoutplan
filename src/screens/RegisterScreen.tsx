@@ -447,7 +447,7 @@ export default function RegisterScreen({ navigation }: any) {
           <Text style={[styles.label, dynamicStyles.label]}>Cédula de Identidad <Text style={styles.required}>*</Text></Text>
           <TextInput 
             style={[styles.input, dynamicStyles.input]} 
-            placeholder="Ej: V-31.902.000 / 31902000" 
+            placeholder="Ej: V-12.345.678 / 12345678" 
             placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
             value={cedula} 
             onChangeText={(v) => { setCedula(v); setFormError(null); }} 

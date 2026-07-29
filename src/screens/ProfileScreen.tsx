@@ -8,11 +8,10 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
 import { colors } from '../theme/colors';
-import { Edit2 } from 'lucide-react-native';
+import { Edit2, ShieldCheck, AlertTriangle, Plus, Camera, CheckCircle } from 'lucide-react-native';
 import { UserScoutAvatar } from '../components/UserScoutAvatar';
 import { CarnetScoutModal } from '../components/CarnetScoutModal';
 import { showAlert } from '../utils/alert';
-import { ShieldCheck, AlertTriangle } from 'lucide-react-native';
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                 'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -229,8 +228,13 @@ export default function ProfileScreen() {
 
   const calcCompletion = () => {
     const fields = [
-      user?.name, user?.email, user?.unit, user?.group_name,
-      user?.region, user?.district || 'guarenas_guatire', cedula || user?.cedula, birthDate, phone
+      user?.name,
+      user?.email,
+      user?.unit,
+      user?.group_name,
+      user?.region,
+      user?.district || 'guarenas_guatire',
+      cedula || user?.cedula,
     ];
     const filled = fields.filter(Boolean).length;
     return Math.round((filled / fields.length) * 100);
@@ -305,7 +309,17 @@ export default function ProfileScreen() {
       {/* TARJETA DE CABECERA */}
       <View style={[styles.headerCard, isDarkMode && { backgroundColor: '#121214', borderBottomColor: '#27272a' }]}>
         <TouchableOpacity style={styles.avatarCircle} onPress={handleAvatarPress} activeOpacity={0.8}>
-          <UserScoutAvatar unit={user?.unit || undefined} role={user?.role} size={84} />
+          <View style={{ position: 'relative' }}>
+            <UserScoutAvatar unit={user?.unit || undefined} role={user?.role} size={84} />
+            <View style={{
+              position: 'absolute', bottom: 2, right: 2,
+              backgroundColor: colors.primary, width: 26, height: 26,
+              borderRadius: 13, borderWidth: 2, borderColor: isDarkMode ? '#121214' : 'white',
+              justifyContent: 'center', alignItems: 'center'
+            }}>
+              <Camera size={13} color="white" />
+            </View>
+          </View>
         </TouchableOpacity>
         <Text style={[styles.name, { color: theme.text }]}>{user?.name || 'Scout'}</Text>
         <Text style={styles.email}>{user?.email}</Text>
@@ -320,6 +334,13 @@ export default function ProfileScreen() {
               {(user?.role || 'scout').toUpperCase()}
             </Text>
           </View>
+          {membershipStatus === 'approved' && (
+            <View style={[styles.roleBadge, { backgroundColor: '#dcfce7', borderWidth: 1, borderColor: '#16a34a' }]}>
+              <Text style={{ color: '#15803d', fontWeight: 'bold', fontSize: 11 }}>
+                ✓ MEMBRESÍA ACTIVA
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* BOTÓN PARA ABRIR CARNET SCOUT AL LLEGAR AL 100% */}
@@ -521,7 +542,7 @@ export default function ProfileScreen() {
             <Text style={{ fontSize: 17, fontWeight: 'bold', marginBottom: 12 }}>Cédula de Identidad</Text>
             <TextInput
               style={{ backgroundColor: '#f5f5f5', borderRadius: 10, padding: 12, fontSize: 15, marginBottom: 20 }}
-              placeholder="Ej: V-31.902.000 / 31902000"
+              placeholder="Ej: V-12.345.678 / 12345678"
               value={cedulaInput}
               onChangeText={setCedulaInput}
             />
