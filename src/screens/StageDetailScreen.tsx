@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Modal
+  Modal,
+  TextInput
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { CheckSquare, Square, Lock, Send, Flag, X, CheckCircle } from 'lucide-react-native';
@@ -302,7 +303,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                 </TouchableOpacity>
 
                 {showFastCipForm && (
-                  <View style={{ marginTop: 12, pt: 12, borderTopWidth: 1, borderTopColor: theme.border, gap: 10 }}>
+                  <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.border, gap: 10 }}>
                     <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.text }}>
                       ¿EN QUÉ CIP O EVENTO ESTUVISTE? *
                     </Text>
