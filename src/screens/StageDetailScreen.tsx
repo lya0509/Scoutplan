@@ -97,6 +97,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
     if (req.type === 'basica' || req.type === 'opcional') {
       navigation.navigate('CatalogSelector', {
         stageId,
+        reqId: req.id,
         reqType: req.reqType || req.type,
         requiredCount: req.requiredCount || 12
       });

@@ -15,6 +15,7 @@ import { useTheme } from '../context/ThemeContext';
 import { dataService } from '../lib/dataService';
 import { activitiesCatalog } from '../data/activitiesCatalog';
 import { colors } from '../theme/colors';
+import { showAlert } from '../utils/alert';
 
 const SUB_AREAS = [
   'TODAS',
@@ -38,7 +39,7 @@ const SUB_AREAS = [
 ];
 
 export default function CatalogSelectorScreen({ route, navigation }: any) {
-  const { stageId = 'expedicionario', reqType = 'basica', requiredCount = 12 } = route.params || {};
+  const { stageId = 'expedicionario', reqId, reqType = 'basica', requiredCount = 12 } = route.params || {};
   const { user } = useAuth();
   const { isDarkMode, theme } = useTheme();
 
@@ -70,9 +71,20 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
 
       for (const id of completedIds) {
         const isCurrent = await dataService.getRequirement(user.id, stageId, id);
-        if (isCurrent) {
+        const activityItem = activitiesCatalog.find(a => a.id === id);
+
+        const subStr = (activityItem?.subArea || '').toUpperCase();
+        const superStr = (activityItem?.superArea || '').toUpperCase();
+        const areaStr = (activityItem?.area || '').toUpperCase();
+
+        const isBasic = subStr.includes('BÁSIC') || superStr.includes('BÁSIC') || areaStr.includes('BÁSIC');
+        const isOptional = subStr.includes('OPCIONAL') || superStr.includes('OPCIONAL') || areaStr.includes('OPCIONAL');
+
+        const matchesType = reqType === 'basica' ? isBasic : isOptional;
+
+        if (isCurrent && matchesType) {
           currentStageCompleted.push(id);
-        } else {
+        } else if (!isCurrent && matchesType) {
           previousCompleted.push(id);
         }
       }
@@ -108,14 +120,29 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
       : [...selectedIds, id];
 
     setSelectedIds(newSelection);
+
+    // Guardar la actividad del catálogo
     await dataService.toggleRequirement(user.id, stageId, id, !isCurrentlySelected);
+
+    // Si al hacer toggle se alcanza o desmarcan las actividades, actualizar automáticamente el requisito padre de la etapa si se especificó reqId
+    if (reqId) {
+      const willBeCompleted = newSelection.length >= requiredCount;
+      await dataService.toggleRequirement(user.id, stageId, reqId, willBeCompleted);
+    }
   };
 
   const filteredActivities = activitiesCatalog.filter(act => {
-    const targetSuperArea = reqType === 'basica' ? 'BÁSICAS' : 'OPCIONALES';
-    if (act.superArea !== targetSuperArea) {
-      return false;
-    }
+    const isBasicType = reqType === 'basica';
+    const subStr = (act.subArea || '').toUpperCase();
+    const superStr = (act.superArea || '').toUpperCase();
+    const areaStr = (act.area || '').toUpperCase();
+
+    const isMatchBasic = subStr.includes('BÁSIC') || superStr.includes('BÁSIC') || areaStr.includes('BÁSIC');
+    const isMatchOptional = subStr.includes('OPCIONAL') || superStr.includes('OPCIONAL') || areaStr.includes('OPCIONAL');
+
+    // Filtrar estrictamente por tipo (Básicas u Opcionales) si la actividad tiene la etiqueta
+    if (isMatchBasic && !isBasicType) return false;
+    if (isMatchOptional && isBasicType) return false;
 
     const isAreaMatch = selectedArea === 'TODAS' || 
       act.subArea === selectedArea || 
@@ -175,7 +202,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
           <Text style={styles.counterText}>
             Seleccionadas: <Text style={styles.counterHighlight}>{selectedIds.length}</Text> / {requiredCount}
           </Text>
-          {selectedIds.length === requiredCount && (
+          {selectedIds.length >= requiredCount && (
             <Text style={styles.completedBadge}>✓ REQUISITO CUMPLIDO</Text>
           )}
         </View>
@@ -217,7 +244,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
       </View>
 
       {/* Lista de Actividades */}
-      <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 20 }}>
         {loading ? (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
         ) : filteredActivities.length === 0 ? (
@@ -276,6 +303,41 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
         )}
       </ScrollView>
 
+      {/* BARRA INFERIOR: BOTÓN DE GUARDAR Y ACEPTAR REQUISITO */}
+      {!isReadOnly && (
+        <View style={[styles.bottomBar, { backgroundColor: isDarkMode ? '#121214' : 'white', borderTopColor: theme.border }]}>
+          <TouchableOpacity
+            style={[
+              styles.saveAcceptBtn,
+              selectedIds.length < requiredCount && styles.saveAcceptBtnPartial
+            ]}
+            onPress={async () => {
+              if (!user) return;
+              const isCompleted = selectedIds.length >= requiredCount;
+              if (reqId) {
+                await dataService.toggleRequirement(user.id, stageId, reqId, isCompleted);
+              }
+              showAlert(
+                isCompleted ? '¡Requisito Aceptado y Completado!' : 'Progreso Guardado',
+                isCompleted
+                  ? `¡Seleccionaste las ${requiredCount} actividades! Se marcó el requisito con un check (✓) en tu etapa.`
+                  : `Has seleccionado ${selectedIds.length} de ${requiredCount} actividades. Recuerda completarlas todas.`
+              );
+              if (navigation?.canGoBack()) {
+                navigation.goBack();
+              }
+            }}
+          >
+            <CheckSquare size={20} color="white" style={{ marginRight: 8 }} />
+            <Text style={styles.saveAcceptBtnText}>
+              {selectedIds.length >= requiredCount
+                ? `ACEPTAR Y COMPLETAR REQUISITO (${selectedIds.length}/${requiredCount})`
+                : `GUARDAR SELECCIÓN (${selectedIds.length}/${requiredCount})`}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Modal de Aviso */}
       <Modal visible={modalMessage !== null} transparent animationType="fade">
         <View style={styles.modalOverlay}>
@@ -322,6 +384,11 @@ const styles = StyleSheet.create({
 
   emptyCard: { padding: 30, alignItems: 'center', borderRadius: 14, borderWidth: 1, marginTop: 20 },
   emptyTitle: { fontSize: 15, fontWeight: 'bold' },
+
+  bottomBar: { padding: 16, borderTopWidth: 1 },
+  saveAcceptBtn: { backgroundColor: '#16a34a', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14 },
+  saveAcceptBtnPartial: { backgroundColor: colors.primary },
+  saveAcceptBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14, letterSpacing: 0.5 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 },
   modalCard: { width: '100%', maxWidth: 360, borderRadius: 20, padding: 24, alignItems: 'center' },
