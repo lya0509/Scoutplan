@@ -132,22 +132,32 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
   };
 
   const filteredActivities = activitiesCatalog.filter(act => {
+    // 1. Excluir resúmenes del Cuadro de Adelantos y nombres de insignias/etapas (act_1 a act_87)
+    if (
+      act.superArea === 'CUADRO DE ADELANTOS' || 
+      ['PRECURSOR', 'EXPEDICIONARIO', 'DESCUBRIDOR', 'FUNDADOR'].includes(act.superArea)
+    ) {
+      return false;
+    }
+
+    // 2. Filtrar por el tipo actual (Básicas u Opcionales)
     const isBasicType = reqType === 'basica';
-    const subStr = (act.subArea || '').toUpperCase();
     const superStr = (act.superArea || '').toUpperCase();
+    const subStr = (act.subArea || '').toUpperCase();
     const areaStr = (act.area || '').toUpperCase();
 
-    const isMatchBasic = subStr.includes('BÁSIC') || superStr.includes('BÁSIC') || areaStr.includes('BÁSIC');
-    const isMatchOptional = subStr.includes('OPCIONAL') || superStr.includes('OPCIONAL') || areaStr.includes('OPCIONAL');
+    const isMatchBasic = superStr === 'BÁSICAS' || subStr.includes('BÁSIC') || areaStr.includes('BÁSIC');
+    const isMatchOptional = superStr === 'OPCIONALES' || subStr.includes('OPCIONAL') || areaStr.includes('OPCIONAL');
 
-    // Filtrar estrictamente por tipo (Básicas u Opcionales) si la actividad tiene la etiqueta
-    if (isMatchBasic && !isBasicType) return false;
-    if (isMatchOptional && isBasicType) return false;
+    if (isBasicType && !isMatchBasic) return false;
+    if (!isBasicType && !isMatchOptional) return false;
 
+    // 3. Filtrar por Categoría seleccionada (TODAS o subárea específica)
     const isAreaMatch = selectedArea === 'TODAS' || 
       act.subArea === selectedArea || 
       act.area === selectedArea;
 
+    // 4. Búsqueda por texto libre
     const isSearchMatch = searchQuery.trim() === '' || 
       (act.text && act.text.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (act.subArea && act.subArea.toLowerCase().includes(searchQuery.toLowerCase()));
