@@ -12,20 +12,6 @@ import {
   FlatList,
   Platform
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Image,
-  Modal,
-  TextInput,
-  ActivityIndicator,
-  FlatList,
-  Platform
-} from 'react-native';
 import { Camera, Image as ImageIcon, Clock, Plus, Trash2, Download, X, Share2, ShieldAlert, Sparkles, FolderPlus, Info, Eye, Lock, Globe } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';

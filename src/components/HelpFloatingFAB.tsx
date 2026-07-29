@@ -161,10 +161,10 @@ export default function HelpFloatingFAB() {
       const { data: sessionData } = await supabase.auth.getSession();
       const realEmail = user?.email || sessionData?.session?.user?.email || 'Sin correo registrado';
       const realName = user?.name || sessionData?.session?.user?.user_metadata?.full_name || 'Usuario Scout';
-      const userGroup = user?.group_name || user?.group || 'No especificado';
+      const userGroup = user?.group_name || (user as any)?.group || 'No especificado';
       const userUnit = (user?.unit || 'No especificada').toUpperCase();
       const userRole = (user?.role || 'scout').toUpperCase();
-      const userPhone = user?.phone || user?.phone_number || 'No registrado';
+      const userPhone = user?.phone || (user as any)?.phone_number || 'No registrado';
 
       const TELEGRAM_BOT_TOKEN = '8542174214:AAGJt11WkNmWMND_LopQ3FR-XeQ9ZVx9oDg';
       const TELEGRAM_CHAT_ID = '1162964312';
@@ -572,7 +572,7 @@ export default function HelpFloatingFAB() {
               <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: theme.border, marginBottom: 14 }}>
                 <Text style={{ fontSize: 11, fontWeight: 'bold', color: colors.primary, marginBottom: 2 }}>IDENTIFICACIÓN DEL REMITENTE</Text>
                 <Text style={{ fontSize: 13, color: theme.text, fontWeight: '600' }}>{user?.name || 'Usuario Scout'} • {(user?.role || 'scout').toUpperCase()}</Text>
-                <Text style={{ fontSize: 12, color: theme.subText }}>Grupo: {user?.group_name || user?.group || 'Sin especificar'} | Unidad: {(user?.unit || 'Sin especificar').toUpperCase()}</Text>
+                <Text style={{ fontSize: 12, color: theme.subText }}>Grupo: {user?.group_name || (user as any)?.group || 'Sin especificar'} | Unidad: {(user?.unit || 'Sin especificar').toUpperCase()}</Text>
               </View>
 
               <Text style={[styles.fieldLabel, { color: theme.text }]}>¿QUÉ FUNCIONES NUEVAS QUISIERAS QUE ESTÉN EN LA APP? *</Text>
