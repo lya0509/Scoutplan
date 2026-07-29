@@ -113,6 +113,13 @@ function WheelColumn({ items, selected, onSelect, labelFn }: {
         getItemLayout={(_, index) => ({ length: ITEM_HEIGHT, offset: ITEM_HEIGHT * index, index })}
         ListHeaderComponent={<View style={{ height: ITEM_HEIGHT * 2 }} />}
         ListFooterComponent={<View style={{ height: ITEM_HEIGHT * 2 }} />}
+        onScroll={(e) => {
+          const index = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+          if (index >= 0 && index < items.length && items[index] !== selected) {
+            onSelect(items[index]);
+          }
+        }}
+        scrollEventThrottle={16}
         onMomentumScrollEnd={(e) => {
           const index = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
           if (index >= 0 && index < items.length) {
@@ -211,6 +218,7 @@ export default function RegisterScreen({ navigation }: any) {
   const { isDarkMode, theme } = useTheme();
   
   const [name, setName]         = useState('');
+  const [cedula, setCedula]     = useState('');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -274,6 +282,7 @@ export default function RegisterScreen({ navigation }: any) {
         options: {
           data: {
             name: name.trim(),
+            cedula: cedula.trim(),
             email: emailToUse,
             role: 'scout',
             unit: selectedUnit,
@@ -289,6 +298,7 @@ export default function RegisterScreen({ navigation }: any) {
         await supabase.from('profiles').upsert({
           id: signUpData.user.id,
           name: name.trim(),
+          cedula: cedula.trim(),
           email: emailToUse,
           role: 'scout',
           unit: selectedUnit,
@@ -429,6 +439,18 @@ export default function RegisterScreen({ navigation }: any) {
             placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
             value={name} 
             onChangeText={(v) => { setName(v); setFormError(null); }} 
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={[styles.label, dynamicStyles.label]}>Cédula de Identidad <Text style={styles.required}>*</Text></Text>
+          <TextInput 
+            style={[styles.input, dynamicStyles.input]} 
+            placeholder="Ej: V-31.902.000 / 31902000" 
+            placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+            value={cedula} 
+            onChangeText={(v) => { setCedula(v); setFormError(null); }} 
+            keyboardType="default"
           />
         </View>
 

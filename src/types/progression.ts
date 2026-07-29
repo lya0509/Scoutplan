@@ -7,6 +7,7 @@ export interface Profile {
   name: string;
   email?: string | null;
   phone?: string | null;
+  cedula?: string | null;
   region?: string | null;
   district?: string | null;
   avatar_url: string | null;
@@ -14,6 +15,11 @@ export interface Profile {
   role: Role;
   unit: Unit | null;
   group_name: string | null;
+  birth_date?: string | null;
+  membership_expires_at?: string | null;
+  membership_status?: 'none' | 'pending_approval' | 'approved' | 'rejected' | null;
+  membership_rejected_reason?: string | null;
+  photo_rejected_reason?: string | null;
 }
 
 export interface Requirement {

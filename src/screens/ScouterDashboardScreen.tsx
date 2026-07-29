@@ -20,7 +20,7 @@ import { stagesData } from '../data/progressionTemplate';
 import { colors } from '../theme/colors';
 import {
   Users, ChevronDown, ChevronUp,
-  Calendar, LogOut, Trash2, Plus, Flag, X, Moon, Sun, Compass, Camera
+  Calendar, LogOut, Trash2, Plus, Flag, X, Moon, Sun, Compass, Camera, ShieldCheck, Ban, CheckCircle, ImageOff
 } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 
@@ -367,6 +367,16 @@ export default function ScouterDashboardScreen({ navigation }: any) {
   const [cipDesc, setCipDesc] = useState('');
   const [savingCip, setSavingCip] = useState(false);
 
+  // Membership management
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [selectedScoutForMembership, setSelectedScoutForMembership] = useState<any>(null);
+  const [membershipDateInput, setMembershipDateInput] = useState('');
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [showPhotoRejectModal, setShowPhotoRejectModal] = useState(false);
+  const [photoRejectReason, setPhotoRejectReason] = useState('');
+  const [photoRejectScout, setPhotoRejectScout] = useState<any>(null);
+
   useFocusEffect(
     useCallback(() => { loadScouts(); }, [])
   );
@@ -535,8 +545,236 @@ export default function ScouterDashboardScreen({ navigation }: any) {
             theme={theme}
             onAddCip={() => setShowCipModal(true)}
           />
+
+          {/* PANEL DE GESTIÓN DE MEMBRESÍA SCOUT */}
+          <View style={[panelStyles.wrapper, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+            <View style={[panelStyles.header, { paddingBottom: 10 }]}>
+              <View style={panelStyles.headerLeft}>
+                <ShieldCheck size={20} color="#7c3aed" />
+                <Text style={[panelStyles.headerTitle, { color: theme.text }]}>Gestión de Carnet y Membresía</Text>
+              </View>
+            </View>
+            <View style={[panelStyles.body, { borderTopColor: theme.border }]}>
+              <Text style={{ fontSize: 12, color: theme.subText, marginBottom: 10 }}>
+                Asigna la fecha de vigencia de membresía a cada scout. {user?.role === 'jefe_grupo' ? 'Puedes aprobar o rechazar solicitudes.' : 'El Jefe de Grupo aprobará las solicitudes.'}
+              </Text>
+              {scouts.length === 0 ? (
+                <Text style={panelStyles.empty}>No hay scouts registrados aún.</Text>
+              ) : (
+                scouts.map(scout => {
+                  const mStatus = scout.membership_status || 'none';
+                  const mDate = scout.membership_expires_at || '';
+                  return (
+                    <View key={`mem_${scout.id}`} style={{
+                      flexDirection: 'row', alignItems: 'center', paddingVertical: 10,
+                      borderBottomWidth: 1, borderBottomColor: theme.border
+                    }}>
+                      <View style={[panelStyles.avatar, { backgroundColor: mStatus === 'approved' ? '#22c55e' : mStatus === 'pending_approval' ? '#f59e0b' : colors.primary }]}>
+                        <Text style={panelStyles.avatarText}>{scout.name?.charAt(0)?.toUpperCase()}</Text>
+                      </View>
+                      <View style={{ flex: 1, marginLeft: 10 }}>
+                        <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>{scout.name}</Text>
+                        <Text style={{ fontSize: 11, color: theme.subText }}>
+                          {mStatus === 'approved' ? `✅ Aprobada hasta: ${mDate}` :
+                           mStatus === 'pending_approval' ? `⏳ Pendiente: ${mDate}` :
+                           mStatus === 'rejected' ? `❌ Rechazada: ${scout.membership_rejected_reason || 'Sin motivo'}` :
+                           '📋 Sin membresía asignada'}
+                        </Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', gap: 6 }}>
+                        {/* Asignar / Modificar fecha */}
+                        <TouchableOpacity
+                          style={{ backgroundColor: '#7c3aed', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8 }}
+                          onPress={() => {
+                            setSelectedScoutForMembership(scout);
+                            setMembershipDateInput(mDate || new Date().toISOString().split('T')[0]);
+                            setShowMembershipModal(true);
+                          }}
+                        >
+                          <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>
+                            {mStatus === 'none' || mStatus === 'rejected' ? '📅 Asignar' : '✏️ Editar'}
+                          </Text>
+                        </TouchableOpacity>
+                        {/* Aprobar (solo jefe_grupo o para pending) */}
+                        {user?.role === 'jefe_grupo' && mStatus === 'pending_approval' && (
+                          <>
+                            <TouchableOpacity
+                              style={{ backgroundColor: '#22c55e', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8 }}
+                              onPress={async () => {
+                                await dataService.approveMembershipDate(scout.id);
+                                showAlert('✅ Membresía Aprobada', `La membresía de ${scout.name} fue aprobada hasta el ${mDate}.`);
+                                loadScouts();
+                              }}
+                            >
+                              <CheckCircle size={14} color="white" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={{ backgroundColor: '#ef4444', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8 }}
+                              onPress={() => {
+                                setSelectedScoutForMembership(scout);
+                                setRejectReason('');
+                                setShowRejectModal(true);
+                              }}
+                            >
+                              <Ban size={14} color="white" />
+                            </TouchableOpacity>
+                          </>
+                        )}
+                        {/* Eliminar foto no institucional */}
+                        {scout.avatar_url && (user?.role === 'scouter' || user?.role === 'jefe_grupo') && (
+                          <TouchableOpacity
+                            style={{ backgroundColor: '#dc2626', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8 }}
+                            onPress={() => {
+                              setPhotoRejectScout(scout);
+                              setPhotoRejectReason('');
+                              setShowPhotoRejectModal(true);
+                            }}
+                          >
+                            <ImageOff size={14} color="white" />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+            </View>
+          </View>
         </ScrollView>
       )}
+
+      {/* MODAL ASIGNAR / EDITAR FECHA DE MEMBRESÍA */}
+      <Modal visible={showMembershipModal} transparent animationType="fade" onRequestClose={() => setShowMembershipModal(false)}>
+        <View style={modalStyles.overlay}>
+          <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', padding: 24, borderRadius: 20 }]}>
+            <Text style={{ fontSize: 17, fontWeight: 'bold', color: theme.text, marginBottom: 4 }}>📅 Fecha de Membresía</Text>
+            <Text style={{ fontSize: 12, color: theme.subText, marginBottom: 16 }}>
+              Scout: <Text style={{ fontWeight: 'bold', color: theme.text }}>{selectedScoutForMembership?.name}</Text>
+            </Text>
+            <Text style={[modalStyles.label, { color: theme.subText }]}>MEMBRESÍA VÁLIDA HASTA (AAAA-MM-DD) *</Text>
+            <TextInput
+              style={[modalStyles.input, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
+              placeholder="Ej: 2027-05-12"
+              placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+              value={membershipDateInput}
+              onChangeText={setMembershipDateInput}
+            />
+            <View style={{ backgroundColor: '#fffbeb', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: '#fef08a', marginTop: 10 }}>
+              <Text style={{ fontSize: 11, color: '#92400e' }}>
+                ⚠️ Formato obligatorio: AAAA-MM-DD (Año-Mes-Día). Ejemplo: 2027-05-12.
+                {user?.role === 'scouter' ? ' La fecha quedará en "Esperando Aprobación" hasta que Jefatura la valide.' : ' Como Jefe de Grupo, la fecha se aprobará de inmediato.'}
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+              <TouchableOpacity onPress={() => setShowMembershipModal(false)} style={{ padding: 10 }}>
+                <Text style={{ color: theme.subText }}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ backgroundColor: '#7c3aed', padding: 12, borderRadius: 10 }}
+                onPress={async () => {
+                  if (!membershipDateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    showAlert('Formato Inválido', 'La fecha debe tener el formato AAAA-MM-DD. Ejemplo: 2027-05-12');
+                    return;
+                  }
+                  showAlert('¿Confirmar fecha?', `¿Es correcta la fecha ${membershipDateInput}?`);
+                  if (user?.role === 'jefe_grupo') {
+                    await dataService.proposeMembershipDate(selectedScoutForMembership.id, membershipDateInput);
+                    await dataService.approveMembershipDate(selectedScoutForMembership.id);
+                  } else {
+                    await dataService.proposeMembershipDate(selectedScoutForMembership.id, membershipDateInput);
+                  }
+                  setShowMembershipModal(false);
+                  loadScouts();
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>Confirmar Fecha</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL RECHAZAR MEMBRESÍA (SOLO JEFE DE GRUPO) */}
+      <Modal visible={showRejectModal} transparent animationType="fade" onRequestClose={() => setShowRejectModal(false)}>
+        <View style={modalStyles.overlay}>
+          <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', padding: 24, borderRadius: 20 }]}>
+            <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#ef4444', marginBottom: 12 }}>❌ Rechazar Membresía</Text>
+            <Text style={{ fontSize: 12, color: theme.subText, marginBottom: 10 }}>
+              Scout: <Text style={{ fontWeight: 'bold', color: theme.text }}>{selectedScoutForMembership?.name}</Text>
+            </Text>
+            <Text style={[modalStyles.label, { color: theme.subText }]}>MOTIVO DEL RECHAZO *</Text>
+            <TextInput
+              style={[modalStyles.input, { height: 80, backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
+              placeholder="Ej: Falta pago de registro de membresía nacional 2026"
+              placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+              multiline
+              value={rejectReason}
+              onChangeText={setRejectReason}
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 16 }}>
+              <TouchableOpacity onPress={() => setShowRejectModal(false)} style={{ padding: 10 }}>
+                <Text style={{ color: theme.subText }}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ backgroundColor: '#ef4444', padding: 12, borderRadius: 10 }}
+                onPress={async () => {
+                  if (!rejectReason.trim()) {
+                    showAlert('Campo Obligatorio', 'Debes indicar el motivo del rechazo.');
+                    return;
+                  }
+                  await dataService.rejectMembershipDate(selectedScoutForMembership.id, rejectReason.trim());
+                  showAlert('Membresía Rechazada', `Se notificó a ${selectedScoutForMembership?.name} con el motivo especificado.`);
+                  setShowRejectModal(false);
+                  loadScouts();
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>Confirmar Rechazo</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL ELIMINAR FOTO NO INSTITUCIONAL */}
+      <Modal visible={showPhotoRejectModal} transparent animationType="fade" onRequestClose={() => setShowPhotoRejectModal(false)}>
+        <View style={modalStyles.overlay}>
+          <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', padding: 24, borderRadius: 20 }]}>
+            <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#dc2626', marginBottom: 12 }}>🚫 Eliminar Foto No Institucional</Text>
+            <Text style={{ fontSize: 12, color: theme.subText, marginBottom: 10 }}>
+              Scout: <Text style={{ fontWeight: 'bold', color: theme.text }}>{photoRejectScout?.name}</Text>
+            </Text>
+            <Text style={[modalStyles.label, { color: theme.subText }]}>MOTIVO DE ELIMINACIÓN *</Text>
+            <TextInput
+              style={[modalStyles.input, { height: 80, backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
+              placeholder="Ej: Foto con filtro de red social, no institucional"
+              placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+              multiline
+              value={photoRejectReason}
+              onChangeText={setPhotoRejectReason}
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 16 }}>
+              <TouchableOpacity onPress={() => setShowPhotoRejectModal(false)} style={{ padding: 10 }}>
+                <Text style={{ color: theme.subText }}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ backgroundColor: '#dc2626', padding: 12, borderRadius: 10 }}
+                onPress={async () => {
+                  if (!photoRejectReason.trim()) {
+                    showAlert('Campo Obligatorio', 'Debes indicar por qué se elimina la foto.');
+                    return;
+                  }
+                  await dataService.deleteProfilePhotoWithReason(photoRejectScout.id, photoRejectReason.trim());
+                  showAlert('Foto Eliminada', `Se eliminó la foto de ${photoRejectScout?.name} y se le notificó el motivo.`);
+                  setShowPhotoRejectModal(false);
+                  loadScouts();
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>Eliminar Foto</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* MODAL PARA CREAR CICLO INSTITUCIONAL CIP / EVENTO CIP */}
       <Modal visible={showCipModal} transparent animationType="slide" onRequestClose={() => setShowCipModal(false)}>

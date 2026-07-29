@@ -10,7 +10,9 @@ import { supabase } from '../lib/supabaseClient';
 import { colors } from '../theme/colors';
 import { Edit2 } from 'lucide-react-native';
 import { UserScoutAvatar } from '../components/UserScoutAvatar';
+import { CarnetScoutModal } from '../components/CarnetScoutModal';
 import { showAlert } from '../utils/alert';
+import { ShieldCheck, AlertTriangle } from 'lucide-react-native';
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                 'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -38,6 +40,11 @@ function WheelColumn({ items, selected, onSelect, labelFn }: {
         getItemLayout={(_, i) => ({ length: ITEM_H, offset: ITEM_H * i, index: i })}
         ListHeaderComponent={<View style={{ height: ITEM_H * 2 }} />}
         ListFooterComponent={<View style={{ height: ITEM_H * 2 }} />}
+        onScroll={e => {
+          const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_H);
+          if (idx >= 0 && idx < items.length && items[idx] !== selected) onSelect(items[idx]);
+        }}
+        scrollEventThrottle={16}
         onMomentumScrollEnd={e => {
           const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_H);
           if (idx >= 0 && idx < items.length) onSelect(items[idx]);
@@ -165,6 +172,7 @@ export default function ProfileScreen() {
   const { user } = useAuth();
   const { isDarkMode, theme } = useTheme();
 
+  const [cedula,      setCedula]      = useState('');
   const [birthDate,   setBirthDate]   = useState('');
   const [promiseDate, setPromiseDate] = useState('');
   const [joinDate,    setJoinDate]    = useState('');
@@ -175,7 +183,10 @@ export default function ProfileScreen() {
   const [showPromisePicker, setShowPromisePicker] = useState(false);
   const [showJoinPicker,    setShowJoinPicker]    = useState(false);
   const [showPhoneEdit,     setShowPhoneEdit]     = useState(false);
+  const [showCedulaEdit,    setShowCedulaEdit]    = useState(false);
   const [phoneInput,        setPhoneInput]        = useState('');
+  const [cedulaInput,       setCedulaInput]       = useState('');
+  const [showCarnetModal,   setShowCarnetModal]   = useState(false);
 
   const todayY = new Date().getFullYear();
   const [pDay, setPDay] = useState(1);  const [pMonth, setPMonth] = useState(1);  const [pYear, setPYear] = useState(todayY);
@@ -188,10 +199,11 @@ export default function ProfileScreen() {
     if (!user?.id) { setLoading(false); return; }
     const { data } = await supabase
       .from('profiles')
-      .select('promise_date, birth_date, join_date, phone')
+      .select('promise_date, birth_date, join_date, phone, cedula')
       .eq('id', user.id)
       .single();
     if (data) {
+      setCedula(data.cedula || user.cedula || '');
       setBirthDate(data.birth_date || '');
       setPromiseDate(data.promise_date || '');
       setJoinDate(data.join_date || '');
@@ -211,7 +223,7 @@ export default function ProfileScreen() {
   const calcCompletion = () => {
     const fields = [
       user?.name, user?.email, user?.unit, user?.group_name,
-      user?.region, birthDate, promiseDate, joinDate, phone,
+      user?.region, user?.district || 'guarenas_guatire', cedula || user?.cedula, birthDate, phone
     ];
     const filled = fields.filter(Boolean).length;
     return Math.round((filled / fields.length) * 100);
@@ -258,6 +270,19 @@ export default function ProfileScreen() {
     saveField('phone', phoneInput);
   };
 
+  const confirmCedula = () => {
+    setCedula(cedulaInput);
+    setShowCedulaEdit(false);
+    saveField('cedula', cedulaInput);
+  };
+
+  const handleAvatarPress = () => {
+    showAlert(
+      '📷 Foto de Perfil Institucional',
+      '⚠️ ADVERTENCIA INSTITUCIONAL: La foto de perfil debe ser un retrato oficial de frente, con fondo claro y vestimenta/pañoleta scout adecuada para documentos oficiales y Carnet Scout.'
+    );
+  };
+
   if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: theme.bg }]}>
@@ -272,9 +297,9 @@ export default function ProfileScreen() {
     <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ paddingBottom: 40 }}>
       {/* TARJETA DE CABECERA */}
       <View style={[styles.headerCard, isDarkMode && { backgroundColor: '#121214', borderBottomColor: '#27272a' }]}>
-        <View style={styles.avatarCircle}>
+        <TouchableOpacity style={styles.avatarCircle} onPress={handleAvatarPress} activeOpacity={0.8}>
           <UserScoutAvatar unit={user?.unit || undefined} role={user?.role} size={84} />
-        </View>
+        </TouchableOpacity>
         <Text style={[styles.name, { color: theme.text }]}>{user?.name || 'Scout'}</Text>
         <Text style={styles.email}>{user?.email}</Text>
         <View style={styles.badgeRow}>
@@ -289,6 +314,29 @@ export default function ProfileScreen() {
             </Text>
           </View>
         </View>
+
+        {/* BOTÓN PARA ABRIR CARNET SCOUT AL LLEGAR AL 100% */}
+        <TouchableOpacity
+          style={[
+            styles.carnetTriggerBtn,
+            { backgroundColor: completion === 100 ? colors.primary : (isDarkMode ? '#27272a' : '#f3f4f6') }
+          ]}
+          onPress={() => {
+            if (completion === 100) {
+              setShowCarnetModal(true);
+            } else {
+              showAlert('Perfil Incompleto', 'Debes completar el 100% de tus datos personales para acceder a tu Carnet Scout Oficial.');
+            }
+          }}
+        >
+          <ShieldCheck size={18} color={completion === 100 ? 'white' : (isDarkMode ? '#a1a1aa' : '#6b7280')} style={{ marginRight: 6 }} />
+          <Text style={[
+            styles.carnetTriggerText,
+            { color: completion === 100 ? 'white' : (isDarkMode ? '#a1a1aa' : '#6b7280') }
+          ]}>
+            {completion === 100 ? '🪪 VER Y DESCARGAR CARNET SCOUT OFICIAL' : `🪪 CARNET SCOUT (${completion}% COMPLETADO)`}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* BARRA DE COMPLETITUD */}
@@ -297,6 +345,15 @@ export default function ProfileScreen() {
       {/* SECCIÓN 1: DATOS SCOUT */}
       <View style={[styles.section, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
         <Text style={[styles.sectionHeader, { color: isDarkMode ? '#c084fc' : colors.primary }]}>INFORMACIÓN SCOUT</Text>
+
+        <EditRow
+          label="Cédula de Identidad"
+          value={cedula}
+          onEdit={() => { setCedulaInput(cedula); setShowCedulaEdit(true); }}
+          placeholder="Añadir Cédula de Identidad"
+          highlight={!cedula}
+          isDarkMode={isDarkMode}
+        />
 
         <EditRow
           label="Región"
@@ -432,6 +489,34 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
+
+      <Modal visible={showCedulaEdit} transparent animationType="fade">
+        <View style={mStyles.overlay}>
+          <View style={[mStyles.sheet, { padding: 24, borderRadius: 20 }]}>
+            <Text style={{ fontSize: 17, fontWeight: 'bold', marginBottom: 12 }}>Cédula de Identidad</Text>
+            <TextInput
+              style={{ backgroundColor: '#f5f5f5', borderRadius: 10, padding: 12, fontSize: 15, marginBottom: 20 }}
+              placeholder="Ej: V-31.902.000 / 31902000"
+              value={cedulaInput}
+              onChangeText={setCedulaInput}
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10 }}>
+              <TouchableOpacity onPress={() => setShowCedulaEdit(false)} style={{ padding: 10 }}>
+                <Text style={{ color: '#888' }}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={confirmCedula} style={{ backgroundColor: colors.primary, padding: 10, borderRadius: 8 }}>
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <CarnetScoutModal
+        visible={showCarnetModal}
+        user={user ? { ...user, cedula } : null}
+        onClose={() => setShowCarnetModal(false)}
+      />
     </ScrollView>
   );
 }
@@ -451,6 +536,13 @@ const styles = StyleSheet.create({
   unitBadgeText: { color: colors.primary, fontWeight: 'bold', fontSize: 12 },
   roleBadge: { backgroundColor: '#f3f4f6', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
   roleBadgeText: { color: '#4b5563', fontWeight: 'bold', fontSize: 12 },
+
+  carnetTriggerBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12, marginTop: 16, width: '100%'
+  },
+  carnetTriggerText: { fontWeight: 'bold', fontSize: 12 },
+
   section: {
     marginHorizontal: 20, marginBottom: 16, padding: 20, borderRadius: 16,
     borderWidth: 1, elevation: 2,

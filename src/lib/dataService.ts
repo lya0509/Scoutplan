@@ -560,5 +560,58 @@ export const dataService = {
 
     if (error) throw error;
     return data;
+  },
+
+  async updateCedula(scoutId: string, cedula: string) {
+    try {
+      await supabase.from('profiles').update({ cedula: cedula.trim() }).eq('id', scoutId);
+    } catch (e) {
+      console.warn('Aviso actualizando cédula:', e);
+    }
+  },
+
+  async proposeMembershipDate(scoutId: string, expiresAt: string) {
+    try {
+      await supabase.from('profiles').update({
+        membership_expires_at: expiresAt,
+        membership_status: 'pending_approval',
+        membership_rejected_reason: null
+      }).eq('id', scoutId);
+    } catch (e) {
+      console.warn('Aviso proponiendo membresía:', e);
+    }
+  },
+
+  async approveMembershipDate(scoutId: string) {
+    try {
+      await supabase.from('profiles').update({
+        membership_status: 'approved',
+        membership_rejected_reason: null
+      }).eq('id', scoutId);
+    } catch (e) {
+      console.warn('Aviso aprobando membresía:', e);
+    }
+  },
+
+  async rejectMembershipDate(scoutId: string, reason: string) {
+    try {
+      await supabase.from('profiles').update({
+        membership_status: 'rejected',
+        membership_rejected_reason: reason
+      }).eq('id', scoutId);
+    } catch (e) {
+      console.warn('Aviso rechazando membresía:', e);
+    }
+  },
+
+  async deleteProfilePhotoWithReason(scoutId: string, reason: string) {
+    try {
+      await supabase.from('profiles').update({
+        avatar_url: null,
+        photo_rejected_reason: reason
+      }).eq('id', scoutId);
+    } catch (e) {
+      console.warn('Aviso eliminando foto de perfil:', e);
+    }
   }
 };
