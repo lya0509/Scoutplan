@@ -64,15 +64,23 @@ const linking = {
 
 export default function AppNavigator() {
   const { user, isLoading } = useAuth();
+  const navigationRef = React.useRef<any>(null);
 
-  // Asegurar que el historial del navegador responda al gesto de echar para atrás sin salir de la página
+  // Interceptar la navegación del navegador para que la tecla Atras navegue por las pantallas de la app en bucle seguro
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.history.pushState({ page: 1 }, '', window.location.href);
+      window.history.pushState({ appPage: true }, '', window.location.href);
+
       const handlePopState = (event: PopStateEvent) => {
-        // Empujar un nuevo estado para prevenir el cierre accidental hacia Google
-        window.history.pushState({ page: 1 }, '', window.location.href);
+        if (navigationRef.current && navigationRef.current.canGoBack()) {
+          navigationRef.current.goBack();
+          window.history.pushState({ appPage: true }, '', window.location.href);
+        } else {
+          // Prevenir salida accidental a Google si estamos en la pantalla inicial
+          window.history.pushState({ appPage: true }, '', window.location.href);
+        }
       };
+
       window.addEventListener('popstate', handlePopState);
       return () => {
         window.removeEventListener('popstate', handlePopState);
@@ -89,7 +97,7 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer linking={linking}>
+    <NavigationContainer ref={navigationRef} linking={linking}>
       <Stack.Navigator screenOptions={{ headerShown: false, gestureEnabled: true, fullScreenGestureEnabled: true, animation: 'slide_from_right' }}>
         {!user ? (
           <Stack.Group>

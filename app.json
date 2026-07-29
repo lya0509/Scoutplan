@@ -23,7 +23,9 @@
       "name": "Plan Progresivo Scout",
       "shortName": "Plan Scout",
       "themeColor": "#612499",
-      "backgroundColor": "#612499"
+      "backgroundColor": "#612499",
+      "display": "standalone",
+      "orientation": "portrait"
     }
   }
 }
