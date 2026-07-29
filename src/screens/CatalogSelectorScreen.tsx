@@ -16,6 +16,7 @@ import { dataService } from '../lib/dataService';
 import { activitiesCatalog } from '../data/activitiesCatalog';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
+import { checkProfileCompletion } from '../utils/profileGuard';
 
 const SUB_AREAS = [
   'TODAS',
@@ -102,6 +103,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
 
   const handleToggleActivity = async (id: string) => {
     if (isReadOnly || !user) return;
+    if (!checkProfileCompletion(user, navigation)) return;
 
     if (disabledIds.includes(id)) {
       setModalMessage('Esta actividad ya fue completada en una etapa anterior y no se puede repetir.');

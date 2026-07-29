@@ -19,6 +19,7 @@ import { stagesData } from '../data/progressionTemplate';
 import { StageBadgeIcon } from '../components/StageBadgeIcon';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
+import { checkProfileCompletion } from '../utils/profileGuard';
 
 export default function StageDetailScreen({ route, navigation }: any) {
   const { stageId } = route.params || { stageId: 'precursor' };

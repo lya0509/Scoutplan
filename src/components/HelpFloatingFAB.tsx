@@ -24,7 +24,11 @@ import {
   WifiOff,
   FileText,
   ShieldCheck,
-  Compass
+  Compass,
+  Sparkles,
+  Lock,
+  Globe,
+  Award
 } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -33,6 +37,7 @@ import { colors } from '../theme/colors';
 import { supabase } from '../lib/supabaseClient';
 import { storageService } from '../lib/storageService';
 import { showAlert } from '../utils/alert';
+import { checkProfileCompletion } from '../utils/profileGuard';
 import { OnboardingGuideModal } from './OnboardingGuideModal';
 
 interface FAQItem {
@@ -51,24 +56,36 @@ const FAQ_DATA: FAQItem[] = [
   },
   {
     id: 'faq_2',
+    question: '🔒 ¿Cómo funciona la visibilidad Pública y Privada del Drive de Fotos?',
+    answer: 'Al crear un Álbum Temporal puedes elegir: "🌐 Público" (lo pueden ver y descargar todos los jóvenes y adultos de tu Grupo Scout) o "🔒 Privado" (disponible únicamente para los jóvenes y Scouters pertenecientes a tu misma unidad, como Manada, Tropa, Caminantes o Clan).',
+    icon: Lock
+  },
+  {
+    id: 'faq_3',
+    question: '🎯 ¿Cómo convalidar o registrar un Evento CIP anterior?',
+    answer: 'Entra a tu etapa en "Mi Plan Progresivo" y abre el requisito del CIP. Encontrarás un formulario rápido donde colocas el nombre del evento (ej: I Campamento Distrital) y el año para marcarlo de inmediato.',
+    icon: Award
+  },
+  {
+    id: 'faq_4',
     question: '📶 ¿La aplicación funciona sin conexión a Internet?',
     answer: '¡Sí! Toda la sección de Manual de Nudos, Cancionero Scout y tus Fichas guardadas funcionan 100% offline sin necesidad de datos móviles.',
     icon: WifiOff
   },
   {
-    id: 'faq_3',
+    id: 'faq_5',
     question: '📜 ¿Cómo descargar mi Ficha Médica o Currículum en Word?',
     answer: 'Entra a la opción "Ficha Médica" o "Currículum Scout" desde el menú. Completa tus datos, presiona "Guardar Datos" y luego haz clic en el botón inferior "Descargar Documento Oficial (.docx)". El documento se descargará autocompletado con formato oficial.',
     icon: FileText
   },
   {
-    id: 'faq_4',
+    id: 'faq_6',
     question: '📷 ¿Cómo subir fotos o videos al Drive de Actividades?',
     answer: 'Dirígete a "Drive de Fotos" en el menú. Selecciona o crea un álbum de evento y presiona "+ Subir Fotos o Videos". Puedes subir clips de hasta 50MB a máxima calidad original sin compresión.',
     icon: Camera
   },
   {
-    id: 'faq_5',
+    id: 'faq_7',
     question: '🔐 ¿Quién puede ver mi información y avances?',
     answer: 'Tus datos están protegidos. Únicamente tu Scouter de Unidad y el Jefe de Grupo tienen autorización para revisar y verificar tus fichas y adelanto progresivo.',
     icon: ShieldCheck
@@ -85,11 +102,13 @@ export default function HelpFloatingFAB() {
   const [showFaqModal, setShowFaqModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
+  const [showSuggestionModal, setShowSuggestionModal] = useState(false);
 
   useModalBackHandler(expanded, () => setExpanded(false));
   useModalBackHandler(showFaqModal, () => setShowFaqModal(false));
   useModalBackHandler(showReportModal, () => setShowReportModal(false));
   useModalBackHandler(showGuideModal, () => setShowGuideModal(false));
+  useModalBackHandler(showSuggestionModal, () => setShowSuggestionModal(false));
 
   // Acordeón FAQ
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>('faq_1');
@@ -100,6 +119,10 @@ export default function HelpFloatingFAB() {
   const [bugMediaType, setBugMediaType] = useState<'image' | 'video'>('image');
   const [submittingBug, setSubmittingBug] = useState(false);
 
+  // Formulario Sugerir Funciones
+  const [suggestionText, setSuggestionText] = useState('');
+  const [submittingSuggestion, setSubmittingSuggestion] = useState(false);
+
   const toggleFAB = () => setExpanded(prev => !prev);
 
   const openFaq = () => {
@@ -108,6 +131,7 @@ export default function HelpFloatingFAB() {
   };
 
   const openReport = () => {
+    if (!checkProfileCompletion(user)) return;
     setExpanded(false);
     setShowReportModal(true);
   };
@@ -115,6 +139,71 @@ export default function HelpFloatingFAB() {
   const openGuide = () => {
     setExpanded(false);
     setShowGuideModal(true);
+  };
+
+  const openSuggestion = () => {
+    if (!checkProfileCompletion(user)) return;
+    setExpanded(false);
+    setShowSuggestionModal(true);
+  };
+
+  // Enviar Sugerencia / Comentarios a Telegram Bot
+  const handleSubmitSuggestion = async () => {
+    if (!checkProfileCompletion(user)) return;
+
+    if (!suggestionText.trim()) {
+      showAlert('Sugerencia Vacía', 'Por favor escribe tus comentarios o las funciones que te gustaría ver en la app.');
+      return;
+    }
+
+    setSubmittingSuggestion(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const realEmail = user?.email || sessionData?.session?.user?.email || 'Sin correo registrado';
+      const realName = user?.name || sessionData?.session?.user?.user_metadata?.full_name || 'Usuario Scout';
+      const userGroup = user?.group_name || user?.group || 'No especificado';
+      const userUnit = (user?.unit || 'No especificada').toUpperCase();
+      const userRole = (user?.role || 'scout').toUpperCase();
+      const userPhone = user?.phone || user?.phone_number || 'No registrado';
+
+      const TELEGRAM_BOT_TOKEN = '8542174214:AAGJt11WkNmWMND_LopQ3FR-XeQ9ZVx9oDg';
+      const TELEGRAM_CHAT_ID = '1162964312';
+
+      const messageText = 
+        `💡 *NUEVA SUGERENCIA DE FUNCIÓN / COMENTARIO*\n\n` +
+        `👤 *Usuario:* ${realName}\n` +
+        `👑 *Rol:* ${userRole}\n` +
+        `⚜️ *Grupo Scout:* ${userGroup}\n` +
+        `⛺ *Unidad:* ${userUnit}\n` +
+        `📧 *Correo:* ${realEmail}\n` +
+        `📱 *Teléfono:* ${userPhone}\n\n` +
+        `💡 *Sugerencia / Comentarios:*\n${suggestionText.trim()}`;
+
+      if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: messageText,
+            parse_mode: 'Markdown'
+          })
+        });
+      }
+
+      showAlert(
+        '¡Sugerencia Recibida! 💡',
+        'Muchas gracias por tus comentarios e ideas. Tu opinión nos ayuda a seguir construyendo la mejor app para la Asociación de Scouts de Venezuela.'
+      );
+      setSuggestionText('');
+      setShowSuggestionModal(false);
+    } catch (err: any) {
+      showAlert('Sugerencia Recibida', '¡Gracias por compartir tu idea con nosotros!');
+      setSuggestionText('');
+      setShowSuggestionModal(false);
+    } finally {
+      setSubmittingSuggestion(false);
+    }
   };
 
   // Seleccionar foto/video de evidencia para el reporte
@@ -284,7 +373,17 @@ export default function HelpFloatingFAB() {
               </View>
             </TouchableOpacity>
 
-            {/* OPCIÓN 3: REPORTAR ERROR */}
+            {/* OPCIÓN 3: SUGERIR FUNCIONES Y COMENTARIOS */}
+            <TouchableOpacity style={styles.speedDialBtn} onPress={openSuggestion} activeOpacity={0.8}>
+              <View style={styles.labelBubble}>
+                <Text style={styles.labelText}>¿Qué nuevas funciones quisieras en la app?</Text>
+              </View>
+              <View style={[styles.miniFab, { backgroundColor: '#d97706' }]}>
+                <Sparkles size={18} color="white" />
+              </View>
+            </TouchableOpacity>
+
+            {/* OPCIÓN 4: REPORTAR ERROR */}
             <TouchableOpacity style={styles.speedDialBtn} onPress={openReport} activeOpacity={0.8}>
               <View style={styles.labelBubble}>
                 <Text style={styles.labelText}>Reportar un Error</Text>
@@ -450,7 +549,71 @@ export default function HelpFloatingFAB() {
         </View>
       </Modal>
 
-      {/* MODAL 3: GUÍA DE INICIO INTERACTIVA PASO A PASO */}
+      {/* MODAL 3: SUGERIR NUEVAS FUNCIONES O COMENTARIOS */}
+      <Modal visible={showSuggestionModal} transparent animationType="slide" onRequestClose={() => setShowSuggestionModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalSheet, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
+            
+            <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Sparkles size={22} color="#d97706" style={{ marginRight: 8 }} />
+                <Text style={[styles.modalTitle, { color: theme.text }]}>Sugerir Nuevas Funciones</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowSuggestionModal(false)}>
+                <X size={22} color={theme.subText} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ padding: 20 }}>
+              <Text style={{ fontSize: 13, color: theme.subText, lineHeight: 20, marginBottom: 14 }}>
+                ¿Qué nueva herramienta, función o mejora te gustaría que agreguemos a la App Scout? Tu opinión es enviada directamente a nuestro equipo técnico.
+              </Text>
+
+              <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: theme.border, marginBottom: 14 }}>
+                <Text style={{ fontSize: 11, fontWeight: 'bold', color: colors.primary, marginBottom: 2 }}>IDENTIFICACIÓN DEL REMITENTE</Text>
+                <Text style={{ fontSize: 13, color: theme.text, fontWeight: '600' }}>{user?.name || 'Usuario Scout'} • {(user?.role || 'scout').toUpperCase()}</Text>
+                <Text style={{ fontSize: 12, color: theme.subText }}>Grupo: {user?.group_name || user?.group || 'Sin especificar'} | Unidad: {(user?.unit || 'Sin especificar').toUpperCase()}</Text>
+              </View>
+
+              <Text style={[styles.fieldLabel, { color: theme.text }]}>¿QUÉ FUNCIONES NUEVAS QUISIERAS QUE ESTÉN EN LA APP? *</Text>
+              <TextInput
+                style={[
+                  styles.textAreaInput,
+                  { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border, height: 110 }
+                ]}
+                placeholder="Escribe aquí tus comentarios, ideas o sugerencias de nuevas funciones..."
+                placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                multiline
+                numberOfLines={5}
+                textAlignVertical="top"
+                value={suggestionText}
+                onChangeText={setSuggestionText}
+              />
+
+              <TouchableOpacity
+                style={[
+                  styles.sendReportBtn,
+                  { backgroundColor: '#d97706', marginTop: 20 },
+                  submittingSuggestion && { opacity: 0.7 }
+                ]}
+                onPress={handleSubmitSuggestion}
+                disabled={submittingSuggestion}
+              >
+                {submittingSuggestion ? (
+                  <ActivityIndicator color="white" size="small" />
+                ) : (
+                  <>
+                    <Send size={16} color="white" style={{ marginRight: 6 }} />
+                    <Text style={styles.sendReportBtnText}>Enviar Sugerencia</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL 4: GUÍA DE INICIO INTERACTIVA PASO A PASO */}
       <OnboardingGuideModal
         visible={showGuideModal}
         onClose={() => setShowGuideModal(false)}

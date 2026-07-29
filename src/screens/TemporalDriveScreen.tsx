@@ -12,12 +12,27 @@ import {
   FlatList,
   Platform
 } from 'react-native';
-import { Camera, Image as ImageIcon, Clock, Plus, Trash2, Download, X, Share2, ShieldAlert, Sparkles, FolderPlus } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+  Modal,
+  TextInput,
+  ActivityIndicator,
+  FlatList,
+  Platform
+} from 'react-native';
+import { Camera, Image as ImageIcon, Clock, Plus, Trash2, Download, X, Share2, ShieldAlert, Sparkles, FolderPlus, Info, Eye, Lock, Globe } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { storageService } from '../lib/storageService';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
+import { checkProfileCompletion } from '../utils/profileGuard';
 
 interface DrivePhoto {
   id: string;
@@ -32,13 +47,14 @@ interface PhotoAlbum {
   id: string;
   title: string;
   unit: string;
+  visibility: 'public' | 'private';
   expiresAt: number; // Timestamp en ms
   durationDays: number;
   photos: DrivePhoto[];
   createdBy: string;
 }
 
-export default function TemporalDriveScreen() {
+export default function TemporalDriveScreen({ navigation }: any) {
   const { user } = useAuth();
   const { isDarkMode, theme } = useTheme();
 
@@ -48,10 +64,12 @@ export default function TemporalDriveScreen() {
   // Modales
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState<DrivePhoto | null>(null);
+  const [showVisibilityInfo, setShowVisibilityInfo] = useState(false);
 
   // Formulario Crear Álbum
   const [newTitle, setNewTitle] = useState('');
   const [durationDays, setDurationDays] = useState<number>(3); // Defecto 3 días (Máx 7)
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public');
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -72,7 +90,14 @@ export default function TemporalDriveScreen() {
     return `${hours}h restantes`;
   };
 
+  const handleOpenCreateModal = () => {
+    if (!checkProfileCompletion(user, navigation)) return;
+    setShowCreateModal(true);
+  };
+
   const handleCreateAlbum = () => {
+    if (!checkProfileCompletion(user, navigation)) return;
+
     if (!newTitle.trim()) {
       showAlert('Nombre requerido', 'Por favor ingresa un nombre para el álbum temporal.');
       return;
@@ -85,6 +110,7 @@ export default function TemporalDriveScreen() {
       id: `alb_${Date.now()}`,
       title: newTitle.trim(),
       unit: user?.unit || 'clan',
+      visibility: visibility,
       durationDays: maxDays,
       expiresAt: expiresAt,
       createdBy: user?.name || 'Scout',
@@ -93,11 +119,16 @@ export default function TemporalDriveScreen() {
 
     setAlbums(prev => [newAlb, ...prev]);
     setNewTitle('');
+    setVisibility('public');
     setShowCreateModal(false);
-    showAlert('¡Álbum Creado!', `El álbum "${newAlb.title}" estará disponible a máxima calidad durante ${maxDays} días.`);
+    showAlert(
+      '¡Álbum Creado!',
+      `El álbum "${newAlb.title}" (${visibility === 'public' ? 'Público' : 'Privado de ' + (user?.unit || 'Unidad')}) estará disponible a máxima calidad durante ${maxDays} días.`
+    );
   };
 
   const handlePickMedia = async () => {
+    if (!checkProfileCompletion(user, navigation)) return;
     if (!selectedAlbum) return;
 
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -108,6 +139,52 @@ export default function TemporalDriveScreen() {
       input.onchange = async (e: any) => {
         const rawFiles: File[] = Array.from(e.target.files || []);
         if (rawFiles.length === 0) return;
+
+        setUploading(true);
+        const newPhotos: DrivePhoto[] = [];
+
+        for (const file of rawFiles) {
+          const isVideo = file.type.startsWith('video');
+          const dataUrl = await new Promise<string>((res) => {
+            const r = new FileReader();
+            r.onload = (evt: any) => res(evt.target.result);
+            r.readAsDataURL(file);
+          });
+
+          const publicUrl = await storageService.uploadImage(
+            'scout-files',
+            'drive_photos',
+            file.name,
+            dataUrl
+          );
+
+          newPhotos.push({
+            id: `photo_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+            url: publicUrl || dataUrl,
+            type: isVideo ? 'video' : 'image',
+            fileName: file.name,
+            uploaderName: user?.name || 'Scout',
+            createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          });
+        }
+
+        setAlbums(prev => prev.map(alb => {
+          if (alb.id === selectedAlbum.id) {
+            const updated = { ...alb, photos: [...alb.photos, ...newPhotos] };
+            setSelectedAlbum(updated);
+            return updated;
+          }
+          return alb;
+        }));
+
+        setUploading(false);
+        showAlert('¡Archivos Subidos!', `Se agregaron ${newPhotos.length} fotos/videos al álbum.`);
+      };
+      input.click();
+    } else {
+      showAlert('Modo Web', 'Función disponible en la versión web y móvil.');
+    }
+  };
 
         // Filtrar archivos que excedan los 50MB
         const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
@@ -400,8 +477,101 @@ export default function TemporalDriveScreen() {
                 ))}
               </View>
 
+              {/* SECCIÓN VISIBILIDAD DE ÁLBUM */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 16, marginBottom: 6 }}>
+                <Text style={[modalStyles.label, { color: theme.subText, marginBottom: 0 }]}>
+                  VISIBILIDAD DEL ÁLBUM *
+                </Text>
+                <TouchableOpacity
+                  style={{ marginLeft: 8, padding: 2 }}
+                  onPress={() => setShowVisibilityInfo(true)}
+                >
+                  <Info size={18} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
+                <TouchableOpacity
+                  style={[
+                    modalStyles.daysChip,
+                    { flex: 1, backgroundColor: theme.inputBg, borderColor: theme.border, paddingVertical: 10 },
+                    visibility === 'public' && { backgroundColor: colors.primary, borderColor: colors.primary }
+                  ]}
+                  onPress={() => setVisibility('public')}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                    <Globe size={15} color={visibility === 'public' ? 'white' : theme.text} style={{ marginRight: 6 }} />
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: visibility === 'public' ? 'white' : theme.text }}>
+                      Público (Grupo)
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    modalStyles.daysChip,
+                    { flex: 1, backgroundColor: theme.inputBg, borderColor: theme.border, paddingVertical: 10 },
+                    visibility === 'private' && { backgroundColor: colors.primary, borderColor: colors.primary }
+                  ]}
+                  onPress={() => setVisibility('private')}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                    <Lock size={15} color={visibility === 'private' ? 'white' : theme.text} style={{ marginRight: 6 }} />
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: visibility === 'private' ? 'white' : theme.text }}>
+                      Privado (Unidad)
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
               <TouchableOpacity style={modalStyles.submitBtn} onPress={handleCreateAlbum}>
                 <Text style={modalStyles.submitBtnText}>Crear Álbum Temporal</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL INFORMACIÓN DE VISIBILIDAD (i) */}
+      <Modal visible={showVisibilityInfo} transparent animationType="fade">
+        <View style={modalStyles.overlay}>
+          <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', maxWidth: 420 }]}>
+            <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Info size={20} color={colors.primary} style={{ marginRight: 8 }} />
+                <Text style={[modalStyles.title, { color: theme.text, fontSize: 16 }]}>Explicación de Visibilidad</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowVisibilityInfo(false)}>
+                <X color={isDarkMode ? '#a1a1aa' : '#64748b'} size={22} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ padding: 20 }}>
+              <View style={{ marginBottom: 16, backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', padding: 14, borderRadius: 12, borderWidth: 1, borderColor: theme.border }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                  <Globe size={18} color="#16a34a" style={{ marginRight: 8 }} />
+                  <Text style={{ fontWeight: 'bold', fontSize: 14, color: theme.text }}>🌐 Álbum Público (Todo el Grupo)</Text>
+                </View>
+                <Text style={{ fontSize: 13, color: theme.subText, lineHeight: 18 }}>
+                  Cualquier integrante de tu Grupo Scout (Manada, Tropa, Caminantes, Clan Rover y Scouters) podrá acceder a este álbum, ver las fotos y descargarlas en alta calidad.
+                </Text>
+              </View>
+
+              <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', padding: 14, borderRadius: 12, borderWidth: 1, borderColor: theme.border }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                  <Lock size={18} color="#d97706" style={{ marginRight: 8 }} />
+                  <Text style={{ fontWeight: 'bold', fontSize: 14, color: theme.text }}>🔒 Álbum Privado (Solo tu Unidad)</Text>
+                </View>
+                <Text style={{ fontSize: 13, color: theme.subText, lineHeight: 18 }}>
+                  Únicamente los miembros registrados en tu misma unidad (ej: <Text style={{ fontWeight: 'bold', color: colors.primary }}>{(user?.unit || 'tu unidad').toUpperCase()}</Text>) tendrán acceso a ver y subir contenido en este álbum.
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={[modalStyles.submitBtn, { marginTop: 20 }]}
+                onPress={() => setShowVisibilityInfo(false)}
+              >
+                <Text style={modalStyles.submitBtnText}>Entendido</Text>
               </TouchableOpacity>
             </View>
           </View>

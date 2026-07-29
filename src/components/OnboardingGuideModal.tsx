@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
-import { Compass, Award, Calendar, FileText, ChevronRight, ChevronLeft, Check, X } from 'lucide-react-native';
+import { Compass, Award, Calendar, FileText, ChevronRight, ChevronLeft, Check, X, Camera, Lock } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { useTheme } from '../context/ThemeContext';
 
@@ -15,23 +15,39 @@ const STEPS = [
     title: '¡Bienvenido a tu App Scout!',
     subtitle: 'Asociación de Scouts de Venezuela',
     description: 'Diseñada especialmente para acompañarte en tu crecimiento, insignia a insignia, facilitando el trabajo colaborativo con tus compañeros y Scouters.',
-    badge: '⚜️ Guía Rápida - Paso 1 de 4',
+    badge: '⚜️ Guía Rápida - Paso 1 de 6',
     color: colors.primary
   },
   {
     icon: Award,
-    title: 'Mi Plan Progresivo',
-    subtitle: 'Registro de Insignias y Desafíos',
-    description: 'Explora las etapas oficiales (Precursor, Expedicionario, Descubridor, Fundador y Rover Ciudadano). Completa tus retos y envíalos a revisión con un solo toque.',
-    badge: '🎯 Avance Scout - Paso 2 de 4',
+    title: 'Mi Plan Progresivo & Catálogo',
+    subtitle: 'Registro de Insignias y Actividades',
+    description: 'Explora las etapas oficiales (Precursor, Expedicionario, Descubridor, Fundador y Rover). Selecciona tus actividades Básicas y Opcionales del catálogo oficial sin interferencias.',
+    badge: '🎯 Avance Scout - Paso 2 de 6',
     color: '#16a34a'
+  },
+  {
+    icon: Camera,
+    title: 'Drive de Fotos (Público vs Privado)',
+    subtitle: 'Álbumes de Eventos y Campamentos',
+    description: 'Crea álbumes de fotos temporales de hasta 7 días. Elige visibilidad "🌐 Pública" (todo el Grupo Scout) o "🔒 Privada" (exclusiva para tu unidad: Manada, Tropa, Caminantes o Clan).',
+    badge: '📷 Fotos & Recuerdos - Paso 3 de 6',
+    color: '#0284c7'
+  },
+  {
+    icon: Lock,
+    title: 'Perfil Scout & Convalidación CIP',
+    subtitle: 'Verificación de Datos y Eventos',
+    description: 'Completa tu perfil personal (Nombre, Grupo Scout y Unidad) para desbloquear la edición. Registra o convalida fácilmente tus eventos CIP anteriores especificando nombre y año.',
+    badge: '👤 Perfil & CIPs - Paso 4 de 6',
+    color: '#eab308'
   },
   {
     icon: Calendar,
     title: 'Plan Trimestral Colaborativo',
     subtitle: 'Cronograma Único de Unidad',
     description: 'Toda la unidad comparte un solo Plan Trimestral. Puedes proponer actividades, editar con confirmación doble y exportar la plantilla oficial en Excel.',
-    badge: '📅 Unidad - Paso 3 de 4',
+    badge: '📅 Unidad - Paso 5 de 6',
     color: '#d97706'
   },
   {
@@ -39,7 +55,7 @@ const STEPS = [
     title: 'Currículum Word & Herramientas Offline',
     subtitle: 'Exportación y Manuales',
     description: 'Genera tu Currículum Scout Joven auto-rellenado en formato Word (.docx) con tu foto. Además, consulta el Manual de Nudos y Cancionero 100% sin internet.',
-    badge: '🚀 Herramientas - Paso 4 de 4',
+    badge: '🚀 Herramientas - Paso 6 de 6',
     color: '#7c3aed'
   }
 ];
