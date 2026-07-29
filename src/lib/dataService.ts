@@ -57,27 +57,27 @@ export const dataService = {
   async getProgressForAllStages(scoutId: string) {
     const { data: completedReqs } = await supabase
       .from('requirement_progress')
-      .select('stage_id')
+      .select('stage_id, requirement_id')
       .eq('scout_id', scoutId)
       .eq('completed', true);
 
-    const completedCountByStage: Record<string, number> = {};
+    const completedReqSet = new Set<string>();
     if (completedReqs) {
       completedReqs.forEach(req => {
-        if (!completedCountByStage[req.stage_id]) {
-          completedCountByStage[req.stage_id] = 0;
-        }
-        completedCountByStage[req.stage_id]++;
+        completedReqSet.add(`${req.stage_id}:${req.requirement_id}`);
       });
     }
 
     return stagesData.map(stageTemplate => {
       const totalReqs = stageTemplate.requirements.length;
-      const completed = completedCountByStage[stageTemplate.id] || 0;
+      // Solo contar requisitos principales de la plantilla de la etapa
+      const completed = stageTemplate.requirements.filter(r => 
+        completedReqSet.has(`${stageTemplate.id}:${r.id}`)
+      ).length;
       
       let progress = 0;
       if (totalReqs > 0) {
-        progress = Math.round((completed / totalReqs) * 100);
+        progress = Math.min(100, Math.round((completed / totalReqs) * 100));
       }
 
       return {

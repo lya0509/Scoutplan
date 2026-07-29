@@ -167,6 +167,14 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
 
   const isClan = (user?.unit || 'clan').toLowerCase() === 'clan';
 
+  const handleReturnToStage = () => {
+    if (stageId) {
+      navigation.navigate('StageDetail', { stageId });
+    } else if (navigation?.canGoBack()) {
+      navigation.goBack();
+    }
+  };
+
   if (!isClan) {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
@@ -181,9 +189,9 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
         </Text>
         <TouchableOpacity
           style={{ marginTop: 24, backgroundColor: colors.primary, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 14 }}
-          onPress={() => navigation.canGoBack() && navigation.goBack()}
+          onPress={handleReturnToStage}
         >
-          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>← Volver</Text>
+          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>← Volver a la Etapa</Text>
         </TouchableOpacity>
       </View>
     );
@@ -194,15 +202,13 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
       {/* Cabecera */}
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderColor: theme.border }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-          {navigation?.canGoBack() && (
-            <TouchableOpacity
-              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', marginRight: 10 }}
-              onPress={() => navigation.goBack()}
-            >
-              <ArrowLeft size={16} color={theme.text} style={{ marginRight: 4 }} />
-              <Text style={{ fontWeight: 'bold', fontSize: 13, color: theme.text }}>Volver</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', marginRight: 10 }}
+            onPress={handleReturnToStage}
+          >
+            <ArrowLeft size={16} color={theme.text} style={{ marginRight: 4 }} />
+            <Text style={{ fontWeight: 'bold', fontSize: 13, color: theme.text }}>Volver</Text>
+          </TouchableOpacity>
           <Text style={[styles.title, { color: theme.text, flex: 1 }]}>
             Catálogo de Actividades {reqType === 'basica' ? 'Básicas' : 'Opcionales'}
           </Text>
@@ -333,9 +339,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
                   ? `¡Seleccionaste las ${requiredCount} actividades! Se marcó el requisito con un check (✓) en tu etapa.`
                   : `Has seleccionado ${selectedIds.length} de ${requiredCount} actividades. Recuerda completarlas todas.`
               );
-              if (navigation?.canGoBack()) {
-                navigation.goBack();
-              }
+              handleReturnToStage();
             }}
           >
             <CheckSquare size={20} color="white" style={{ marginRight: 8 }} />
