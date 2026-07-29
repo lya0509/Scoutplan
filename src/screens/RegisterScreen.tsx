@@ -39,20 +39,12 @@ const REGIONS_LIST = [
 const DISTRICTS_DATA: Record<string, { id: string; label: string }[]> = {
   miranda: [
     { id: 'guarenas_guatire', label: 'Distrito Guarenas-Guatire' },
-    { id: 'sucre_miranda', label: 'Distrito Sucre' },
-    { id: 'baruta_chacao', label: 'Distrito Baruta-Chacao' },
     { id: 'altos_mirandinos', label: 'Distrito Altos Mirandinos' },
-    { id: 'otro_distrito', label: 'Otro Distrito' },
-  ],
-  capital: [
-    { id: 'distrito_libertador', label: 'Distrito Libertador' },
-    { id: 'distrito_avila', label: 'Distrito Ávila' },
     { id: 'otro_distrito', label: 'Otro Distrito' },
   ],
 };
 
 const DEFAULT_DISTRICTS = [
-  { id: 'distrito_principal', label: 'Distrito Principal' },
   { id: 'otro_distrito', label: 'Otro Distrito' },
 ];
 
@@ -187,7 +179,7 @@ function SelectorGrid({ options, selected, onSelect, isDarkMode }: {
               },
               isSelected && { backgroundColor: opt.color || colors.primary, borderColor: opt.color || colors.primary }
             ]}
-            onPress={() => onSelect(opt.id)}
+            onPress={() => onSelect(isSelected ? '' : opt.id)}
             activeOpacity={0.7}
           >
             {isSelected && <CheckCircle size={13} color="white" style={{ marginRight: 5 }} />}
