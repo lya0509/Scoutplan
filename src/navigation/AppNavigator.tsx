@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Platform, BackHandler } from 'react-native';
 
 import { useAuth } from '../context/AuthContext';
 import LoginScreen from '../screens/LoginScreen';
@@ -27,8 +27,58 @@ import DrawerNavigator from './DrawerNavigator';
 
 const Stack = createNativeStackNavigator();
 
+const linking = {
+  prefixes: ['http://localhost:8081', 'http://localhost:19006', 'https://*.vercel.app'],
+  config: {
+    screens: {
+      Login: 'login',
+      Register: 'registro',
+      Drawer: {
+        path: '',
+        initialRouteName: 'PlanProgresivo',
+        screens: {
+          PlanProgresivo: 'plan',
+          Perfil: 'perfil',
+          CentroActividades: 'actividades',
+          Calendario: 'calendario',
+          ManualNudos: 'nudos',
+          Cancionero: 'cancionero',
+        }
+      },
+      StageDetail: 'etapa/:stageId',
+      ScouterDashboard: 'scouter',
+      ScouterReview: 'scouter-revision',
+      JefeDashboard: 'jefe-grupo',
+      CatalogSelector: 'catalogo',
+      CertificateUpload: 'certificados',
+      ScoutFullProfile: 'perfil-completo',
+      QuarterlyPlan: 'plan-trimestral',
+      TemporalDrive: 'drive-fotos',
+      FichaMedica: 'ficha-medica',
+      CurriculumScout: 'curriculo',
+      NudosManual: 'manual-nudos',
+      Cancionero: 'cancionero-scout'
+    }
+  }
+};
+
 export default function AppNavigator() {
   const { user, isLoading } = useAuth();
+
+  // Asegurar que el historial del navegador responda al gesto de echar para atrás sin salir de la página
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.history.pushState({ page: 1 }, '', window.location.href);
+      const handlePopState = (event: PopStateEvent) => {
+        // Empujar un nuevo estado para prevenir el cierre accidental hacia Google
+        window.history.pushState({ page: 1 }, '', window.location.href);
+      };
+      window.addEventListener('popstate', handlePopState);
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+  }, []);
 
   if (isLoading) {
     return (
@@ -39,7 +89,7 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <Stack.Navigator screenOptions={{ headerShown: false, gestureEnabled: true, fullScreenGestureEnabled: true, animation: 'slide_from_right' }}>
         {!user ? (
           <Stack.Group>
