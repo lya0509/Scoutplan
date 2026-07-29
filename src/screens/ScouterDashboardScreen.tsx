@@ -168,9 +168,9 @@ function ActivitiesPanel({ unitFilter, isDarkMode, theme, onAddCip }: { unitFilt
   return (
     <View style={[panelStyles.wrapper, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
       <TouchableOpacity style={panelStyles.header} onPress={handleToggle} activeOpacity={0.8}>
-        <View style={panelStyles.headerLeft}>
+        <View style={[panelStyles.headerLeft, { flex: 1, marginRight: 8 }]}>
           <Calendar size={20} color={colors.primary} />
-          <Text style={[panelStyles.headerTitle, { color: theme.text }]}>Actividades y Ciclos Institucionales de Programa (CIP)</Text>
+          <Text style={[panelStyles.headerTitle, { color: theme.text, flex: 1, flexWrap: 'wrap' }]}>Actividades y Ciclos (CIP)</Text>
         </View>
         <View style={panelStyles.headerRight}>
           <TouchableOpacity 
