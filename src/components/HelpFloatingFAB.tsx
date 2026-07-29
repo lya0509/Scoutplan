@@ -28,6 +28,7 @@ import {
 } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useModalBackHandler } from '../hooks/useBackHandler';
 import { colors } from '../theme/colors';
 import { supabase } from '../lib/supabaseClient';
 import { storageService } from '../lib/storageService';
@@ -84,6 +85,11 @@ export default function HelpFloatingFAB() {
   const [showFaqModal, setShowFaqModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
+
+  useModalBackHandler(expanded, () => setExpanded(false));
+  useModalBackHandler(showFaqModal, () => setShowFaqModal(false));
+  useModalBackHandler(showReportModal, () => setShowReportModal(false));
+  useModalBackHandler(showGuideModal, () => setShowGuideModal(false));
 
   // Acordeón FAQ
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>('faq_1');
@@ -301,7 +307,7 @@ export default function HelpFloatingFAB() {
       </View>
 
       {/* MODAL 1: PREGUNTAS FRECUENTES (FAQ) */}
-      <Modal visible={showFaqModal} transparent animationType="slide">
+      <Modal visible={showFaqModal} transparent animationType="slide" onRequestClose={() => setShowFaqModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalSheet, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
             
@@ -360,7 +366,7 @@ export default function HelpFloatingFAB() {
       </Modal>
 
       {/* MODAL 2: REPORTAR UN ERROR O FALLO */}
-      <Modal visible={showReportModal} transparent animationType="slide">
+      <Modal visible={showReportModal} transparent animationType="slide" onRequestClose={() => setShowReportModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalSheet, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
             

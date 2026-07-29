@@ -12,6 +12,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useModalBackHandler } from '../hooks/useBackHandler';
 import HelpFloatingFAB from '../components/HelpFloatingFAB';
 import { dataService } from '../lib/dataService';
 import { supabase } from '../lib/supabaseClient';
@@ -359,6 +360,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
 
   // Modal para agregar Evento CIP 6P
   const [showCipModal, setShowCipModal] = useState(false);
+  useModalBackHandler(showCipModal, () => setShowCipModal(false));
   const [cipTitle, setCipTitle] = useState('');
   const [cipScope, setCipScope] = useState<'distrital' | 'regional' | 'nacional' | 'internacional'>('distrital');
   const [cipDate, setCipDate] = useState(new Date().toISOString().split('T')[0]);
@@ -537,16 +539,16 @@ export default function ScouterDashboardScreen({ navigation }: any) {
       )}
 
       {/* MODAL PARA CREAR CICLO INSTITUCIONAL CIP / EVENTO CIP */}
-      <Modal visible={showCipModal} transparent animationType="slide">
+      <Modal visible={showCipModal} transparent animationType="slide" onRequestClose={() => setShowCipModal(false)}>
         <View style={modalStyles.overlay}>
           <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
             <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Flag color={colors.primary} size={20} style={{ marginRight: 8 }} />
-                <Text style={[modalStyles.title, { color: theme.text }]}>Registrar Ciclo Institucional de Programa (CIP)</Text>
+                <Text style={[modalStyles.title, { color: theme.text }]}>Registrar Ciclo Institucional (CIP)</Text>
               </View>
-              <TouchableOpacity onPress={() => setShowCipModal(false)}>
-                <X color={isDarkMode ? '#a1a1aa' : '#64748b'} size={22} />
+              <TouchableOpacity onPress={() => setShowCipModal(false)} padding={6}>
+                <X color={isDarkMode ? '#a1a1aa' : '#64748b'} size={24} />
               </TouchableOpacity>
             </View>
 
@@ -608,6 +610,13 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                 disabled={savingCip}
               >
                 {savingCip ? <ActivityIndicator color="white" /> : <Text style={modalStyles.saveBtnText}>Guardar Ciclo CIP</Text>}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ alignItems: 'center', paddingVertical: 12, marginBottom: 20 }}
+                onPress={() => setShowCipModal(false)}
+              >
+                <Text style={{ color: theme.subText, fontWeight: 'bold', fontSize: 14 }}>Cancelar y Volver</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>

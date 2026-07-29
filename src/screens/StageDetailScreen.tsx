@@ -12,6 +12,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { CheckSquare, Square, Lock, Send, Flag, X, CheckCircle } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useModalBackHandler } from '../hooks/useBackHandler';
 import { dataService } from '../lib/dataService';
 import { stagesData } from '../data/progressionTemplate';
 import { StageBadgeIcon } from '../components/StageBadgeIcon';
@@ -35,6 +36,9 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const [cipEvents, setCipEvents] = useState<any[]>([]);
   const [selectedReqForCip, setSelectedReqForCip] = useState<any>(null);
   const [loadingCip, setLoadingCip] = useState(false);
+
+  useModalBackHandler(showCipModal, () => setShowCipModal(false));
+  useModalBackHandler(confirming, () => setConfirming(false));
 
   useFocusEffect(
     useCallback(() => { loadData(); }, [user, stageId])
@@ -249,7 +253,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
       )}
 
       {/* MODAL SELECCIÓN EVENTOS CIP 6P */}
-      <Modal visible={showCipModal} transparent animationType="slide">
+      <Modal visible={showCipModal} transparent animationType="slide" onRequestClose={() => setShowCipModal(false)}>
         <View style={modalStyles.overlay}>
           <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
             <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
@@ -342,7 +346,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
       </Modal>
 
       {/* MODAL DE CONFIRMACIÓN */}
-      <Modal visible={confirming} transparent animationType="fade">
+      <Modal visible={confirming} transparent animationType="fade" onRequestClose={() => setConfirming(false)}>
         <View style={modalStyles.overlay}>
           <View style={[modalStyles.card, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
             <Send size={40} color={colors.primary} style={{ marginBottom: 12 }} />
