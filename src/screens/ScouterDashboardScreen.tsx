@@ -167,24 +167,35 @@ function ActivitiesPanel({ unitFilter, isDarkMode, theme, onAddCip }: { unitFilt
 
   return (
     <View style={[panelStyles.wrapper, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-      <TouchableOpacity style={panelStyles.header} onPress={handleToggle} activeOpacity={0.8}>
-        <View style={[panelStyles.headerLeft, { flex: 1, marginRight: 8 }]}>
-          <Calendar size={20} color={colors.primary} />
-          <Text style={[panelStyles.headerTitle, { color: theme.text, flex: 1, flexWrap: 'wrap' }]}>Actividades y Ciclos (CIP)</Text>
+      <TouchableOpacity style={[panelStyles.header, { flexDirection: 'column', alignItems: 'stretch', gap: 10 }]} onPress={handleToggle} activeOpacity={0.8}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+            <Calendar size={20} color={colors.primary} />
+            <Text style={[panelStyles.headerTitle, { color: theme.text, flex: 1 }]} numberOfLines={2}>
+              Actividades y Ciclos (CIP)
+            </Text>
+          </View>
+          {open ? <ChevronUp size={20} color={theme.subText} /> : <ChevronDown size={20} color={theme.subText} />}
         </View>
-        <View style={panelStyles.headerRight}>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6, borderTopWidth: 1, borderTopColor: isDarkMode ? '#27272a' : '#f1f5f9' }}>
           <TouchableOpacity 
-            style={panelStyles.addCipBtn}
+            style={[panelStyles.addCipBtn, { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }]}
             onPress={(e) => {
               e.stopPropagation();
               onAddCip();
             }}
           >
-            <Plus size={14} color="white" style={{ marginRight: 4 }} />
-            <Text style={panelStyles.addCipBtnText}>+ CIP</Text>
+            <Plus size={15} color="white" style={{ marginRight: 4 }} />
+            <Text style={[panelStyles.addCipBtnText, { fontSize: 12 }]}>+ Registrar Evento CIP</Text>
           </TouchableOpacity>
-          {loaded && <View style={panelStyles.badge}><Text style={panelStyles.badgeText}>{events.length}</Text></View>}
-          {open ? <ChevronUp size={18} color={theme.subText} /> : <ChevronDown size={18} color={theme.subText} />}
+
+          {loaded && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ fontSize: 11, color: theme.subText }}>Registrados:</Text>
+              <View style={panelStyles.badge}><Text style={panelStyles.badgeText}>{events.length}</Text></View>
+            </View>
+          )}
         </View>
       </TouchableOpacity>
 
