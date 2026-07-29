@@ -7,14 +7,14 @@ export const stagesData: StageTemplate[] = [
     description: 'Insignia que representa el inicio de este viaje',
     estimatedTime: '4 a 8 semanas',
     requirements: [
-      { id: 'pre_ley', text: 'Ley Scout', type: 'basica' },
-      { id: 'pre_promesa', text: 'Promesa Scout', type: 'basica' },
-      { id: 'pre_uniforme', text: 'Uniforme Scout', type: 'basica' },
-      { id: 'pre_introspeccion', text: 'Introspección (Compromiso Inicial)', type: 'basica' },
-      { id: 'pre_campismo', text: 'Campismo Elemental', type: 'basica' },
-      { id: 'pre_pionerismo', text: 'Pionerismo Elemental', type: 'basica' },
-      { id: 'pre_exploracion', text: 'Exploración Elemental', type: 'basica' },
-      { id: 'pre_conservacionismo', text: 'Conservacionismo Elemental', type: 'basica' },
+      { id: 'pre_ley', text: 'Ley Scout', type: 'checklist' },
+      { id: 'pre_promesa', text: 'Promesa Scout', type: 'checklist' },
+      { id: 'pre_uniforme', text: 'Uniforme Scout', type: 'checklist' },
+      { id: 'pre_introspeccion', text: 'Introspección (Compromiso Inicial)', type: 'checklist' },
+      { id: 'pre_campismo', text: 'Campismo Elemental', type: 'checklist' },
+      { id: 'pre_pionerismo', text: 'Pionerismo Elemental', type: 'checklist' },
+      { id: 'pre_exploracion', text: 'Exploración Elemental', type: 'checklist' },
+      { id: 'pre_conservacionismo', text: 'Conservacionismo Elemental', type: 'checklist' },
       { id: 'pre_noches', text: 'Noches de Vida al Aire Libre (3 noches)', type: 'aire_libre' }
     ]
   },

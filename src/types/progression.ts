@@ -19,7 +19,7 @@ export interface Profile {
 export interface Requirement {
   id: string;
   text: string;
-  type: 'basica' | 'opcional' | 'especialidad' | 'accion_comunitaria' | 'vida_grupo' | 'ciclos' | 'cursos' | 'aire_libre' | 'concursos' | 'personales';
+  type: 'basica' | 'opcional' | 'especialidad' | 'accion_comunitaria' | 'vida_grupo' | 'ciclos' | 'cursos' | 'aire_libre' | 'concursos' | 'personales' | 'checklist';
   level?: 'bronce' | 'plata' | 'oro' | 'doble_oro';
   requiredCount?: number;
 }
