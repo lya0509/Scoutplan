@@ -503,15 +503,22 @@ export const dataService = {
 
   async getUnitRoversDirectory(groupName: string, unit: string) {
     try {
+      const unitLower = (unit || 'clan').toLowerCase();
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, name, avatar_url, updated_at, unit, group_name, role')
-        .eq('unit', unit);
+        .select('id, name, avatar_url, updated_at, unit, group_name, role');
 
-      if (error || !data) return [];
+      if (error) {
+        console.warn('Error obteniendo directorio de unidad:', error);
+        return [];
+      }
+      if (!data || data.length === 0) return [];
+
+      // Filtrar por unidad de forma case-insensitive
+      const filtered = data.filter(p => (p.unit || '').toLowerCase() === unitLower);
       
       const now = Date.now();
-      return data.map(p => {
+      return filtered.map(p => {
         const lastSeenTime = p.updated_at ? new Date(p.updated_at).getTime() : 0;
         const isOnline = (now - lastSeenTime) < (5 * 60 * 1000);
         return {
