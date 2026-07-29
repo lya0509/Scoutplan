@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "plan-progresivo",
+    "name": "Plan Progresivo Scout",
     "slug": "plan-progresivo",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,7 +19,11 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Plan Progresivo Scout",
+      "shortName": "Plan Scout",
+      "themeColor": "#612499",
+      "backgroundColor": "#612499"
     }
   }
 }
