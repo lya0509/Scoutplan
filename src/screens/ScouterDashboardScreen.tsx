@@ -547,7 +547,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                 <Flag color={colors.primary} size={20} style={{ marginRight: 8 }} />
                 <Text style={[modalStyles.title, { color: theme.text }]}>Registrar Ciclo Institucional (CIP)</Text>
               </View>
-              <TouchableOpacity onPress={() => setShowCipModal(false)} padding={6}>
+              <TouchableOpacity onPress={() => setShowCipModal(false)} style={{ padding: 6 }}>
                 <X color={isDarkMode ? '#a1a1aa' : '#64748b'} size={24} />
               </TouchableOpacity>
             </View>
