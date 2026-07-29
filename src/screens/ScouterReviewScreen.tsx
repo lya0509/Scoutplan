@@ -76,7 +76,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
         <Text style={styles.subtitle}>Revisando ficha de:</Text>
         <Text style={styles.title}>{scoutName}</Text>
 
-        {/* BOTONES DE ACCESO A FICHA MÉDICA Y CURRÍCULO DEL SCOUT */}
+        {/* BOTONES DE ACCESO A FICHA MÉDICA Y CURRÍCULUM DEL SCOUT */}
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
           <TouchableOpacity
             style={styles.viewDocBtn}
@@ -88,7 +88,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
             style={styles.viewDocBtn}
             onPress={() => navigation.navigate('CurriculumScout', { targetUserId: scoutId })}
           >
-            <Text style={styles.viewDocBtnText}>📜 Ver Currículo Scout</Text>
+            <Text style={styles.viewDocBtnText}>📜 Ver Currículum Scout</Text>
           </TouchableOpacity>
         </View>
       </View>

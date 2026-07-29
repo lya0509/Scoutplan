@@ -194,7 +194,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
           ) : null}
         </View>
 
-        {/* BOTONES DE DOCUMENTACIÓN OFICIAL DEL SCOUT (FICHA MÉDICA Y CURRÍCULO) */}
+        {/* BOTONES DE DOCUMENTACIÓN OFICIAL DEL SCOUT (FICHA MÉDICA Y CURRÍCULUM) */}
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
           <TouchableOpacity
             style={[styles.docBtn, { backgroundColor: 'rgba(99, 102, 241, 0.12)', borderColor: colors.primary }]}
@@ -213,7 +213,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
           >
             <Text style={{ fontSize: 18, marginRight: 6 }}>📜</Text>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>Currículo Scout</Text>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>Currículum Scout</Text>
               <Text style={{ fontSize: 10, color: theme.subText }}>Ver y Descargar Word</Text>
             </View>
           </TouchableOpacity>

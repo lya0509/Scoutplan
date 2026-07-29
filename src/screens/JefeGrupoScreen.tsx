@@ -117,7 +117,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
             </View>
           </View>
 
-          {/* LISTA DE MIEMBROS DEL GRUPO CON FICHA MÉDICA Y CURRÍCULO */}
+          {/* LISTA DE MIEMBROS DEL GRUPO CON FICHA MÉDICA Y CURRÍCULUM */}
           <Text style={[styles.sectionTitle, { color: theme.text, marginTop: 10 }]}>
             Scouts del Grupo ({groupScouts.length})
           </Text>
@@ -150,7 +150,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   </TouchableOpacity>
                 </View>
 
-                {/* ACCESOS DIRECTOS A FICHA MÉDICA Y CURRÍCULO */}
+                {/* ACCESOS DIRECTOS A FICHA MÉDICA Y CURRÍCULUM */}
                 <View style={styles.docActionsRow}>
                   <TouchableOpacity
                     style={[styles.miniDocBtn, { backgroundColor: 'rgba(99, 102, 241, 0.12)', borderColor: colors.primary }]}
@@ -165,7 +165,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                     onPress={() => navigation.navigate('CurriculumScout', { targetUserId: scout.id })}
                   >
                     <Text style={{ fontSize: 13, marginRight: 4 }}>📜</Text>
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: colors.primary }}>Currículo Scout</Text>
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: colors.primary }}>Currículum Scout</Text>
                   </TouchableOpacity>
                 </View>
               </View>

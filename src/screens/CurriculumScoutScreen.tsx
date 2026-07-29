@@ -187,7 +187,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
         }
       }
     } catch (err) {
-      console.error('Error cargando currículo scout:', err);
+      console.error('Error cargando currículum scout:', err);
     } finally {
       setLoading(false);
       setTimeout(() => {
@@ -323,15 +323,15 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
       savedStateRef.current = getCurrentFormJSON();
       setHasChanges(false);
 
-      showAlert('¡Currículo Guardado!', 'Se han guardado todos los datos de tu Currículo Scout Joven.');
+      showAlert('¡Currículum Guardado!', 'Se han guardado todos los datos de tu Currículum Scout Joven.');
     } catch (err: any) {
-      showAlert('¡Guardado Completado!', 'Datos del currículo guardados localmente en tu dispositivo.');
+      showAlert('¡Guardado Completado!', 'Datos del currículum guardados localmente en tu dispositivo.');
     } finally {
       setSaving(false);
     }
   };
 
-  // EXPORTAR CURRÍCULO SCOUT AUTO-RELLENADO EN FORMATO OFICIAL WORD (.DOCX)
+  // EXPORTAR CURRÍCULUM SCOUT AUTO-RELLENADO EN FORMATO OFICIAL WORD (.DOCX)
   const handleExportCurriculumDoc = async () => {
     try {
       const replacements: Record<string, string> = {
@@ -433,16 +433,16 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
       if (Platform.OS === 'web' && typeof window !== 'undefined') {
         const response = await fetch('/Curriculum_Scout_Template.docx');
         if (!response.ok) {
-          throw new Error('No se pudo cargar la plantilla Word del Currículo.');
+          throw new Error('No se pudo cargar la plantilla Word del Currículum.');
         }
         const arrayBuffer = await response.arrayBuffer();
         await exportDocxInBrowser(arrayBuffer, replacements, `CURRICULUM_SCOUT_${fullName.replace(/\s+/g, '_')}.docx`, { photoUrl });
-        showAlert('¡Currículo Exportado!', 'Se ha descargado tu Currículo Scout Joven en formato Word (.docx).');
+        showAlert('¡Currículum Exportado!', 'Se ha descargado tu Currículum Scout Joven en formato Word (.docx).');
       } else {
-        showAlert('Descargar Currículo', 'Documento autocompletado en formato Word.');
+        showAlert('Descargar Currículum', 'Documento autocompletado en formato Word.');
       }
     } catch (err: any) {
-      console.error('Error exportando Currículo:', err);
+      console.error('Error exportando Currículum:', err);
       showAlert('Error', err?.message || 'No se pudo generar el documento Word.');
     }
   };
@@ -455,7 +455,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flex: 1 }}>
             <Text style={styles.asociacionBanner}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>
-            <Text style={[styles.title, { color: theme.text }]}>Currículo Scout Joven</Text>
+            <Text style={[styles.title, { color: theme.text }]}>Currículum Scout Joven</Text>
           </View>
           {isViewOnlyForScouter && (
             <View style={styles.scouterBadge}>
@@ -469,7 +469,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
           <View style={styles.changesBanner}>
             <AlertCircle size={14} color="#f59e0b" style={{ marginRight: 6 }} />
             <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#f59e0b', flex: 1 }}>
-              Has realizado cambios en tu Currículo. Recuerda guardar los cambios.
+              Has realizado cambios en tu Currículum. Recuerda guardar los cambios.
             </Text>
           </View>
         )}
@@ -1086,7 +1086,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                   ) : (
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       <Save size={16} color="white" style={{ marginRight: 6 }} />
-                      <Text style={styles.saveBtnText}>Guardar Datos del Currículo</Text>
+                      <Text style={styles.saveBtnText}>Guardar Datos del Currículum</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -1094,7 +1094,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
 
               <TouchableOpacity style={styles.bottomExportBtn} onPress={handleExportCurriculumDoc}>
                 <Download size={18} color="white" style={{ marginRight: 8 }} />
-                <Text style={styles.bottomExportBtnText}>Descargar Currículo Oficial (.docx)</Text>
+                <Text style={styles.bottomExportBtnText}>Descargar Currículum Oficial (.docx)</Text>
               </TouchableOpacity>
             </View>
 

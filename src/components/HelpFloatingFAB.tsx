@@ -56,8 +56,8 @@ const FAQ_DATA: FAQItem[] = [
   },
   {
     id: 'faq_3',
-    question: '📜 ¿Cómo descargar mi Ficha Médica o Currículo en Word?',
-    answer: 'Entra a la opción "Ficha Médica" o "Currículo Scout" desde el menú. Completa tus datos, presiona "Guardar Datos" y luego haz clic en el botón inferior "Descargar Documento Oficial (.docx)". El documento se descargará autocompletado con formato oficial.',
+    question: '📜 ¿Cómo descargar mi Ficha Médica o Currículum en Word?',
+    answer: 'Entra a la opción "Ficha Médica" o "Currículum Scout" desde el menú. Completa tus datos, presiona "Guardar Datos" y luego haz clic en el botón inferior "Descargar Documento Oficial (.docx)". El documento se descargará autocompletado con formato oficial.',
     icon: FileText
   },
   {

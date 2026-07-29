@@ -127,7 +127,7 @@ export default function AppNavigator() {
             <Stack.Screen name="QuarterlyPlan" component={QuarterlyPlanScreen} options={{ headerShown: true, title: 'Plan Trimestral' }} />
             <Stack.Screen name="TemporalDrive" component={TemporalDriveScreen} options={{ headerShown: true, title: 'Drive de Fotos' }} />
             <Stack.Screen name="FichaMedica" component={FichaMedicaScreen} options={{ headerShown: true, title: 'Ficha Médica Scout' }} />
-            <Stack.Screen name="CurriculumScout" component={CurriculumScoutScreen} options={{ headerShown: true, title: 'Currículo Scout Joven' }} />
+            <Stack.Screen name="CurriculumScout" component={CurriculumScoutScreen} options={{ headerShown: true, title: 'Currículum Scout Joven' }} />
             <Stack.Screen name="NudosManual" component={NudosManualScreen} options={{ headerShown: true, title: 'Manual de Nudos (Offline)' }} />
             <Stack.Screen name="Cancionero" component={CancioneroScreen} options={{ headerShown: true, title: 'Cancionero Scout (Offline)' }} />
           </Stack.Group>

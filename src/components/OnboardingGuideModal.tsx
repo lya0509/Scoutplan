@@ -36,9 +36,9 @@ const STEPS = [
   },
   {
     icon: FileText,
-    title: 'Currículo Word & Herramientas Offline',
+    title: 'Currículum Word & Herramientas Offline',
     subtitle: 'Exportación y Manuales',
-    description: 'Genera tu Currículo Scout Joven auto-rellenado en formato Word (.docx) con tu foto. Además, consulta el Manual de Nudos y Cancionero 100% sin internet.',
+    description: 'Genera tu Currículum Scout Joven auto-rellenado en formato Word (.docx) con tu foto. Además, consulta el Manual de Nudos y Cancionero 100% sin internet.',
     badge: '🚀 Herramientas - Paso 4 de 4',
     color: '#7c3aed'
   }

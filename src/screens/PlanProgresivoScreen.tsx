@@ -93,7 +93,7 @@ export default function PlanProgresivoScreen({ navigation }: any) {
             • 📅 Calendario de Eventos y Actividades{'\n'}
             • 📋 Ficha Médica Scout Autocompletada{'\n'}
             • 📷 Drive de Fotos y Multimedia{'\n'}
-            • 📜 Currículo Scout Exportable en Word{'\n'}
+            • 📜 Currículum Scout Exportable en Word{'\n'}
             • 🪢 Manual de Nudos y Cancionero Offline
           </Text>
         </View>
