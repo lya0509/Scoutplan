@@ -9,19 +9,69 @@ import { colors } from '../theme/colors';
 import { validateEmail } from '../utils/emailValidator';
 import { useTheme } from '../context/ThemeContext';
 
-const SCOUT_DATA: Record<string, { label: string; groups: { id: string; label: string }[] }> = {
-  miranda: {
-    label: 'Región Miranda',
-    groups: [
-      { id: 'Orion',    label: 'Grupo Orión' },
-      { id: 'Alianza',  label: 'Grupo Alianza' },
-      { id: 'Mafeking', label: 'Grupo Mafeking' },
-      { id: 'Gamma',    label: 'Grupo Gamma' },
-      { id: 'Sirio',    label: 'Grupo Sirio' },
-      { id: 'Aquatiri', label: 'Grupo Aquatiri' },
-    ],
-  },
+const REGIONS_LIST = [
+  { id: 'miranda', label: 'Región Miranda' },
+  { id: 'capital', label: 'Región Capital' },
+  { id: 'amazonas', label: 'Región Amazonas' },
+  { id: 'anzoategui', label: 'Región Anzoátegui' },
+  { id: 'apure', label: 'Región Apure' },
+  { id: 'aragua', label: 'Región Aragua' },
+  { id: 'barinas', label: 'Región Barinas' },
+  { id: 'bolivar', label: 'Región Bolívar' },
+  { id: 'carabobo', label: 'Región Carabobo' },
+  { id: 'cojedes', label: 'Región Cojedes' },
+  { id: 'delta_amacuro', label: 'Región Delta Amacuro' },
+  { id: 'falcon', label: 'Región Falcón' },
+  { id: 'guarico', label: 'Región Guárico' },
+  { id: 'lara', label: 'Región Lara' },
+  { id: 'merida', label: 'Región Mérida' },
+  { id: 'monagas', label: 'Región Monagas' },
+  { id: 'nueva_esparta', label: 'Región Nueva Esparta' },
+  { id: 'portuguesa', label: 'Región Portuguesa' },
+  { id: 'sucre', label: 'Región Sucre' },
+  { id: 'tachira', label: 'Región Táchira' },
+  { id: 'trujillo', label: 'Región Trujillo' },
+  { id: 'vargas', label: 'Región Vargas (La Guaira)' },
+  { id: 'yaracuy', label: 'Región Yaracuy' },
+  { id: 'zulia', label: 'Región Zulia' },
+];
+
+const DISTRICTS_DATA: Record<string, { id: string; label: string }[]> = {
+  miranda: [
+    { id: 'guarenas_guatire', label: 'Distrito Guarenas-Guatire' },
+    { id: 'sucre_miranda', label: 'Distrito Sucre' },
+    { id: 'baruta_chacao', label: 'Distrito Baruta-Chacao' },
+    { id: 'altos_mirandinos', label: 'Distrito Altos Mirandinos' },
+    { id: 'otro_distrito', label: 'Otro Distrito' },
+  ],
+  capital: [
+    { id: 'distrito_libertador', label: 'Distrito Libertador' },
+    { id: 'distrito_avila', label: 'Distrito Ávila' },
+    { id: 'otro_distrito', label: 'Otro Distrito' },
+  ],
 };
+
+const DEFAULT_DISTRICTS = [
+  { id: 'distrito_principal', label: 'Distrito Principal' },
+  { id: 'otro_distrito', label: 'Otro Distrito' },
+];
+
+const GROUPS_DATA: Record<string, { id: string; label: string }[]> = {
+  guarenas_guatire: [
+    { id: 'Grupo Orión #84', label: 'Grupo Scout Orión #84' },
+    { id: 'Grupo Alianza', label: 'Grupo Scout Alianza' },
+    { id: 'Grupo Mafeking', label: 'Grupo Scout Mafeking' },
+    { id: 'Grupo Gamma', label: 'Grupo Scout Gamma' },
+    { id: 'Grupo Sirio', label: 'Grupo Scout Sirio' },
+    { id: 'Grupo Aquatiri', label: 'Grupo Scout Aquatiri' },
+    { id: 'Otro Grupo Scout', label: 'Otro Grupo Scout' },
+  ],
+};
+
+const DEFAULT_GROUPS = [
+  { id: 'Grupo Orión #84', label: 'Grupo Scout Orión #84' },
+  { id: 'Otro Grupo Scout', label: 'Otro Grupo Scout' },
+];
 
 const UNITS = [
   { id: 'manada',    label: 'Manada',     color: '#ffb300' },
@@ -192,12 +242,19 @@ export default function RegisterScreen({ navigation }: any) {
 
   const handleRegionChange = (regionId: string) => {
     setSelectedRegion(regionId);
+    setSelectedDistrict('');
     setSelectedGroup('');
     setFormError(null);
   };
 
-  const groupsForRegion = selectedRegion ? SCOUT_DATA[selectedRegion]?.groups || [] : [];
-  const regionOptions   = Object.entries(SCOUT_DATA).map(([id, val]) => ({ id, label: val.label }));
+  const handleDistrictChange = (districtId: string) => {
+    setSelectedDistrict(districtId);
+    setSelectedGroup('');
+    setFormError(null);
+  };
+
+  const districtOptions = selectedRegion ? (DISTRICTS_DATA[selectedRegion] || DEFAULT_DISTRICTS) : [];
+  const groupOptions    = selectedDistrict ? (GROUPS_DATA[selectedDistrict] || DEFAULT_GROUPS) : [];
 
   const confirmDate = () => {
     const mm = String(pickerMonth).padStart(2, '0');
@@ -295,6 +352,7 @@ export default function RegisterScreen({ navigation }: any) {
     if (!password) missingFields.push('Contraseña');
     if (!birthDate) missingFields.push('Fecha de Nacimiento');
     if (!selectedRegion) missingFields.push('Región');
+    if (!selectedDistrict) missingFields.push('Distrito Scout');
     if (!selectedGroup) missingFields.push('Grupo Scout');
     if (!selectedUnit) missingFields.push('Unidad');
 
@@ -433,16 +491,31 @@ export default function RegisterScreen({ navigation }: any) {
           <View style={[styles.dividerLine, dynamicStyles.dividerLine]} />
         </View>
 
+        {/* SELECCIÓN DE REGIÓN */}
         <View style={styles.formGroup}>
           <Text style={[styles.label, dynamicStyles.label]}>Región <Text style={styles.required}>*</Text></Text>
-          <SelectorGrid options={regionOptions} selected={selectedRegion} onSelect={handleRegionChange} isDarkMode={isDarkMode} />
+          <SelectorGrid options={REGIONS_LIST} selected={selectedRegion} onSelect={handleRegionChange} isDarkMode={isDarkMode} />
         </View>
 
+        {/* SELECCIÓN DE DISTRITO (CASCADA 1) */}
         {selectedRegion !== '' && (
+          <View style={styles.formGroup}>
+            <Text style={[styles.label, dynamicStyles.label]}>Distrito Scout <Text style={styles.required}>*</Text></Text>
+            <SelectorGrid 
+              options={districtOptions} 
+              selected={selectedDistrict} 
+              onSelect={handleDistrictChange} 
+              isDarkMode={isDarkMode}
+            />
+          </View>
+        )}
+
+        {/* SELECCIÓN DE GRUPO SCOUT (CASCADA 2) */}
+        {selectedDistrict !== '' && (
           <View style={styles.formGroup}>
             <Text style={[styles.label, dynamicStyles.label]}>Grupo Scout <Text style={styles.required}>*</Text></Text>
             <SelectorGrid 
-              options={groupsForRegion} 
+              options={groupOptions} 
               selected={selectedGroup} 
               onSelect={(id) => { setSelectedGroup(id); setFormError(null); }} 
               isDarkMode={isDarkMode}

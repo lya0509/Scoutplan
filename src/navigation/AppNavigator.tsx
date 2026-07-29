@@ -31,7 +31,7 @@ const linking = {
   prefixes: ['http://localhost:8081', 'http://localhost:19006', 'https://*.vercel.app'],
   config: {
     screens: {
-      Login: 'login',
+      Login: 'ingresar',
       Register: 'registro',
       Drawer: {
         path: '',
@@ -93,7 +93,7 @@ export default function AppNavigator() {
       <Stack.Navigator screenOptions={{ headerShown: false, gestureEnabled: true, fullScreenGestureEnabled: true, animation: 'slide_from_right' }}>
         {!user ? (
           <Stack.Group>
-            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Ingresar' }} />
             <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: true, title: 'Registro' }} />
           </Stack.Group>
         ) : (
