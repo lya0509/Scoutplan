@@ -59,48 +59,7 @@ export default function TemporalDriveScreen() {
   }, []);
 
   const loadMockAlbums = () => {
-    const now = Date.now();
-    const mockData: PhotoAlbum[] = [
-      {
-        id: 'alb_1',
-        title: 'Aniversario Grupo Scout Orión #84',
-        unit: 'clan',
-        durationDays: 3,
-        expiresAt: now + (3 * 24 * 60 * 60 * 1000) - (5 * 60 * 60 * 1000), // Faltan 2 días y 19 horas
-        createdBy: 'Scouter Julio',
-        photos: [
-          {
-            id: 'ph_1',
-            url: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=800&auto=format&fit=crop&q=80',
-            uploaderName: 'Juan Laya',
-            createdAt: 'Hace 5 horas'
-          },
-          {
-            id: 'ph_2',
-            url: 'https://images.unsplash.com/photo-1526772662000-3f88f10405ff?w=800&auto=format&fit=crop&q=80',
-            uploaderName: 'Scouter Lizbeth',
-            createdAt: 'Hace 3 horas'
-          }
-        ]
-      },
-      {
-        id: 'alb_2',
-        title: 'Campamento de Fuego y Cocina en Playa',
-        unit: 'clan',
-        durationDays: 7,
-        expiresAt: now + (6 * 24 * 60 * 60 * 1000), // Faltan 6 días
-        createdBy: 'Juan Laya',
-        photos: [
-          {
-            id: 'ph_3',
-            url: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=800&auto=format&fit=crop&q=80',
-            uploaderName: 'Juan Laya',
-            createdAt: 'Ayer'
-          }
-        ]
-      }
-    ];
-    setAlbums(mockData);
+    setAlbums([]);
   };
 
   const getTimeRemaining = (expiresAt: number) => {
