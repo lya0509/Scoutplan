@@ -237,7 +237,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
       {/* DIRECTORIO Y ESTADO ONLINE DE ROVERS DE LA UNIDAD */}
       <View style={{ marginBottom: 20 }}>
-        <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 8 }]}>⚜️ Comunidad Rover de la Unidad ({roversList.length})</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 8 }]}>⚜️ Rovers</Text>
         {roversList.length === 0 ? (
           <View style={[styles.emptyEventsCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
             <Text style={{ color: theme.subText, fontSize: 13 }}>Sé el primer Rover registrado en esta unidad.</Text>

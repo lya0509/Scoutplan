@@ -506,7 +506,6 @@ export const dataService = {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, name, avatar_url, updated_at, unit, group_name, role')
-        .eq('group_name', groupName)
         .eq('unit', unit);
 
       if (error || !data) return [];

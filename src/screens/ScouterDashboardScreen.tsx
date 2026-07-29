@@ -257,6 +257,87 @@ function ActivitiesPanel({ unitFilter, isDarkMode, theme, onAddCip }: { unitFilt
   );
 }
 
+function OnlineRosterPanel({ unit, groupName, isDarkMode, theme }: { unit: string; groupName: string; isDarkMode: boolean; theme: any }) {
+  const [open, setOpen] = useState(false);
+  const [members, setMembers] = useState<any[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  const loadMembers = async () => {
+    if (loaded) return;
+    const result = await dataService.getUnitRoversDirectory(groupName, unit);
+    setMembers(result);
+    setLoaded(true);
+  };
+
+  const handleToggle = () => {
+    setOpen(o => !o);
+    loadMembers();
+  };
+
+  return (
+    <View style={[panelStyles.wrapper, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+      <TouchableOpacity style={panelStyles.header} onPress={handleToggle} activeOpacity={0.8}>
+        <View style={panelStyles.headerLeft}>
+          <Users size={20} color="#22c55e" />
+          <Text style={[panelStyles.headerTitle, { color: theme.text }]}>Estado en Línea de la Unidad</Text>
+        </View>
+        <View style={panelStyles.headerRight}>
+          {loaded && <View style={[panelStyles.badge, { backgroundColor: '#22c55e' }]}><Text style={panelStyles.badgeText}>{members.filter(m => m.isOnline).length} en línea</Text></View>}
+          {open ? <ChevronUp size={18} color={theme.subText} /> : <ChevronDown size={18} color={theme.subText} />}
+        </View>
+      </TouchableOpacity>
+
+      {open && (
+        <View style={[panelStyles.body, { borderTopColor: theme.border }]}>
+          {!loaded ? (
+            <ActivityIndicator color={colors.primary} />
+          ) : members.length === 0 ? (
+            <Text style={panelStyles.empty}>No hay miembros registrados en esta unidad aún.</Text>
+          ) : (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {members.map(member => (
+                <View
+                  key={member.id}
+                  style={{
+                    backgroundColor: isDarkMode ? '#27272a' : '#f9fafb',
+                    borderColor: member.isOnline ? '#22c55e' : theme.border,
+                    borderWidth: 1.5,
+                    borderRadius: 12,
+                    padding: 10,
+                    alignItems: 'center',
+                    minWidth: 90,
+                    maxWidth: 110,
+                  }}
+                >
+                  <View style={{ position: 'relative', marginBottom: 4 }}>
+                    <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
+                      <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>
+                        {member.name?.charAt(0)?.toUpperCase() || '?'}
+                      </Text>
+                    </View>
+                    <View style={{
+                      position: 'absolute', bottom: 0, right: 0,
+                      width: 10, height: 10, borderRadius: 5,
+                      backgroundColor: member.isOnline ? '#22c55e' : '#9ca3af',
+                      borderWidth: 1.5, borderColor: 'white'
+                    }} />
+                  </View>
+                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.text, textAlign: 'center' }} numberOfLines={1}>
+                    {member.name?.split(' ')[0] || 'Scout'}
+                  </Text>
+                  <Text style={{ fontSize: 9, color: member.isOnline ? '#16a34a' : '#9ca3af', marginTop: 2 }}>
+                    {member.isOnline ? '🟢 En línea' : '⚪ Desconectado'}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function ScouterDashboardScreen({ navigation }: any) {
   const { user, signOut } = useAuth();
   const { isDarkMode, theme, toggleDarkMode } = useTheme();
@@ -426,6 +507,13 @@ export default function ScouterDashboardScreen({ navigation }: any) {
               stageId:   scout.reviewStageId,
               scoutName: scout.name,
             })}
+          />
+
+          <OnlineRosterPanel
+            unit={user?.unit?.toLowerCase() || 'clan'}
+            groupName={user?.group_name || ''}
+            isDarkMode={isDarkMode}
+            theme={theme}
           />
 
           <ActivitiesPanel 
