@@ -82,10 +82,18 @@ export default function ScoutDashboardScreen({ navigation }: any) {
     }
   };
 
+  useEffect(() => {
+    if (user) {
+      loadDashboardData();
+    }
+  }, [user]);
+
   useFocusEffect(
     useCallback(() => {
-      loadDashboardData();
-    }, [])
+      if (user) {
+        loadDashboardData();
+      }
+    }, [user])
   );
 
   const [roversList, setRoversList] = useState<any[]>([]);

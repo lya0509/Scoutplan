@@ -506,39 +506,43 @@ export const dataService = {
       let targetUnit = (unit || 'clan').toLowerCase().trim();
       if (targetUnit === 'comunidad') targetUnit = 'caminantes';
 
-      const { data, error } = await supabase
+      // Usar select('*') para garantizar compatibilidad con cualquier columna existente
+      let { data, error } = await supabase
         .from('profiles')
-        .select('id, name, avatar_url, updated_at, unit, group_name, role');
+        .select('*');
 
-      if (error) {
-        console.warn('Error obteniendo directorio de unidad:', error);
-        return [];
+      if (error || !data || data.length === 0) {
+        const res = await supabase.from('profiles').select('id, name');
+        data = res.data;
       }
+
       if (!data || data.length === 0) return [];
 
-      // Filtrar por unidad de forma flexible (normalizando acentos/mayúsculas)
+      // Filtrar por unidad de forma flexible
       let filtered = data.filter(p => {
-        if (!p.unit) return true; // Si no tiene unidad asignada aún, incluirlo
+        if (!p.unit) return true; // Incluir si no tiene unidad especificada
         let pUnit = (p.unit || '').toLowerCase().trim();
         if (pUnit === 'comunidad') pUnit = 'caminantes';
         return pUnit === targetUnit || pUnit.includes(targetUnit) || targetUnit.includes(pUnit);
       });
 
-      // Fallback: Si por alguna variante la lista filtrada queda vacía pero hay usuarios en la BD, mostrar todos los usuarios
+      // Fallback absoluto: Si el filtro de unidad deja la lista vacía pero hay perfiles registrados en la BD, mostrar todos los perfiles
       if (filtered.length === 0 && data.length > 0) {
         filtered = data;
       }
 
       const now = Date.now();
       return filtered.map(p => {
-        const lastSeenTime = p.updated_at ? new Date(p.updated_at).getTime() : 0;
-        const isOnline = (now - lastSeenTime) < (5 * 60 * 1000);
+        const lastSeenTime = p.updated_at ? new Date(p.updated_at).getTime() : (p.created_at ? new Date(p.created_at).getTime() : 0);
+        const isOnline = (now - lastSeenTime) < (10 * 60 * 1000);
         return {
           ...p,
+          name: p.name || p.full_name || 'Scout',
           isOnline
         };
       });
     } catch (e) {
+      console.error('Error en getUnitRoversDirectory:', e);
       return [];
     }
   },
