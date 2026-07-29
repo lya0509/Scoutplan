@@ -503,8 +503,7 @@ export const dataService = {
 
   async getUnitRoversDirectory(groupName: string, unit: string) {
     try {
-      let targetUnit = (unit || 'clan').toLowerCase();
-      // Mapear equivalencias
+      let targetUnit = (unit || 'clan').toLowerCase().trim();
       if (targetUnit === 'comunidad') targetUnit = 'caminantes';
 
       const { data, error } = await supabase
@@ -517,13 +516,18 @@ export const dataService = {
       }
       if (!data || data.length === 0) return [];
 
-      // Filtrar por unidad de forma flexible
-      const filtered = data.filter(p => {
-        let pUnit = (p.unit || '').toLowerCase();
+      // Filtrar por unidad de forma flexible (normalizando acentos/mayúsculas)
+      let filtered = data.filter(p => {
+        if (!p.unit) return true; // Si no tiene unidad asignada aún, incluirlo
+        let pUnit = (p.unit || '').toLowerCase().trim();
         if (pUnit === 'comunidad') pUnit = 'caminantes';
-        // Si no tiene unidad asignada o coincide la unidad
-        return pUnit === targetUnit || (!p.unit && targetUnit === 'clan');
+        return pUnit === targetUnit || pUnit.includes(targetUnit) || targetUnit.includes(pUnit);
       });
+
+      // Fallback: Si por alguna variante la lista filtrada queda vacía pero hay usuarios en la BD, mostrar todos los usuarios
+      if (filtered.length === 0 && data.length > 0) {
+        filtered = data;
+      }
 
       const now = Date.now();
       return filtered.map(p => {

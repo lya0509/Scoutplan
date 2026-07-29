@@ -263,8 +263,48 @@ export default function StageDetailScreen({ route, navigation }: any) {
             </View>
 
             <ScrollView style={{ padding: 20 }}>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: 'rgba(99, 102, 241, 0.12)',
+                  borderColor: colors.primary,
+                  borderWidth: 1.5,
+                  borderStyle: 'dashed',
+                  borderRadius: 12,
+                  padding: 12,
+                  marginBottom: 16,
+                  alignItems: 'center'
+                }}
+                onPress={async () => {
+                  if (!user || !selectedReqForCip) return;
+                  const fastTitle = `CIP Convalidado (${selectedReqForCip.text})`;
+                  try {
+                    await dataService.createCipEvent({
+                      title: fastTitle,
+                      scope: 'distrital',
+                      unit: user.unit ? user.unit.toLowerCase() : 'clan',
+                      date: new Date().toISOString().split('T')[0],
+                      description: 'Convalidado para avance progresivo previo',
+                      created_by: user.id
+                    });
+                    setChecks(prev => ({ ...prev, [selectedReqForCip.id]: true }));
+                    await dataService.toggleRequirement(user.id, stageId, selectedReqForCip.id, true);
+                    showAlert('¡CIP Convalidado!', `Se ha acreditado correctamente: "${fastTitle}"`);
+                    setShowCipModal(false);
+                  } catch (e: any) {
+                    showAlert('Error', e?.message || 'No se pudo convalidar el CIP.');
+                  }
+                }}
+              >
+                <Text style={{ fontWeight: 'bold', color: colors.primary, fontSize: 13 }}>
+                  ⚡ Convalidar CIP Anterior (Avanzar Etapa Previa)
+                </Text>
+                <Text style={{ fontSize: 11, color: theme.subText, textAlign: 'center', marginTop: 2 }}>
+                  Toca aquí si ya participaste en este CIP en años anteriores y deseas marcarlo como cumplido.
+                </Text>
+              </TouchableOpacity>
+
               <Text style={[modalStyles.subtitle, { color: theme.subText }]}>
-                Selecciona el ciclo/evento en el que participaste (subido previamente por tu dirigente/scouter):
+                O selecciona un evento CIP publicado por tus dirigentes:
               </Text>
 
               {loadingCip ? (
@@ -272,7 +312,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
               ) : cipEvents.length === 0 ? (
                 <View style={[modalStyles.emptyCard, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
                   <Text style={[modalStyles.emptyText, { color: theme.subText }]}>
-                    No hay Ciclos Institucionales de Programa (CIP) registrados por los dirigentes de tu unidad aún.
+                    No hay Ciclos Institucionales de Programa (CIP) registrados por los dirigentes de tu unidad aún. Usa el botón superior de Convalidación Rápida.
                   </Text>
                 </View>
               ) : (

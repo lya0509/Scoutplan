@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { CheckSquare, Square, CheckCircle } from 'lucide-react-native';
+import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen } from 'lucide-react-native';
 import { dataService } from '../lib/dataService';
 import { useTheme } from '../context/ThemeContext';
 import { stagesData } from '../data/progressionTemplate';
+import { activitiesCatalog } from '../data/activitiesCatalog';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 
@@ -13,6 +14,8 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
   
   const stageTemplate = stagesData.find(s => s.id === stageId);
   const [checks, setChecks] = useState<Record<string, boolean>>({});
+  const [completedActivities, setCompletedActivities] = useState<any[]>([]);
+  const [showCatalogDetails, setShowCatalogDetails] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +29,12 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
       loadedChecks[req.id] = await dataService.getRequirement(scoutId, stageId, req.id);
     }
     setChecks(loadedChecks);
+
+    // Obtener IDs de actividades completadas por el Scout
+    const completedIds = await dataService.getCompletedCatalogActivityIds(scoutId);
+    const matched = activitiesCatalog.filter(act => completedIds.includes(act.id));
+    setCompletedActivities(matched);
+
     setLoading(false);
   };
 
@@ -33,6 +42,10 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
     const newValue = !checks[reqId];
     setChecks(prev => ({ ...prev, [reqId]: newValue }));
     await dataService.toggleRequirement(scoutId, stageId, reqId, newValue);
+  };
+
+  const toggleShowDetails = (reqId: string) => {
+    setShowCatalogDetails(prev => ({ ...prev, [reqId]: !prev[reqId] }));
   };
 
   const [confirmStep, setConfirmStep] = useState<'none' | 'approve' | 'reject'>('none');
@@ -100,30 +113,84 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
 
         {stageTemplate.requirements.map(req => {
           const isChecked = checks[req.id];
+          const isCatalogReq = req.type === 'basica' || req.type === 'opcional';
+          const isExpanded = !!showCatalogDetails[req.id];
+
           return (
-            <TouchableOpacity 
-              key={req.id} 
-              style={[
-                styles.reqRow, 
-                { backgroundColor: theme.cardBg, borderColor: theme.border },
-                !isChecked && (isDarkMode ? styles.reqRowErrorDark : styles.reqRowError)
-              ]}
-              onPress={() => toggleCheck(req.id)}
-              activeOpacity={0.7}
-            >
-              {isChecked ? (
-                <CheckSquare color={colors.primary} size={24} />
-              ) : (
-                <Square color={colors.error} size={24} />
+            <View key={req.id} style={{ marginBottom: 10 }}>
+              <TouchableOpacity 
+                style={[
+                  styles.reqRow, 
+                  { backgroundColor: theme.cardBg, borderColor: theme.border },
+                  !isChecked && (isDarkMode ? styles.reqRowErrorDark : styles.reqRowError)
+                ]}
+                onPress={() => toggleCheck(req.id)}
+                activeOpacity={0.7}
+              >
+                {isChecked ? (
+                  <CheckSquare color={colors.primary} size={24} />
+                ) : (
+                  <Square color={colors.error} size={24} />
+                )}
+                <View style={{ flex: 1, marginLeft: 15 }}>
+                  <Text style={[
+                    styles.reqText, 
+                    { color: theme.text },
+                    !isChecked && styles.reqTextError
+                  ]}>
+                    {req.text}
+                  </Text>
+                  
+                  {isCatalogReq && (
+                    <TouchableOpacity 
+                      style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        toggleShowDetails(req.id);
+                      }}
+                    >
+                      <BookOpen size={14} color={colors.primary} style={{ marginRight: 4 }} />
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>
+                        {isExpanded ? 'Ocultar actividades realizadas' : `Ver actividades realizadas (${completedActivities.length})`}
+                      </Text>
+                      {isExpanded ? <ChevronUp size={14} color={colors.primary} style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color={colors.primary} style={{ marginLeft: 2 }} />}
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </TouchableOpacity>
+
+              {/* LISTA DESPLEGABLE DE ACTIVIDADES REALIZADAS */}
+              {isCatalogReq && isExpanded && (
+                <View style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.border, borderRadius: 12, padding: 12, marginTop: -4, marginLeft: 10, marginRight: 10 }}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text, marginBottom: 8 }}>
+                    Actividades del Catálogo realizadas por {scoutName}:
+                  </Text>
+                  {completedActivities.length === 0 ? (
+                    <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic' }}>
+                      No se registraron actividades específicas del catálogo para este requisito.
+                    </Text>
+                  ) : (
+                    completedActivities.map((act, index) => (
+                      <View key={act.id} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6 }}>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary, marginRight: 6 }}>
+                          {index + 1}.
+                        </Text>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 12, fontWeight: '600', color: theme.text }}>
+                            {act.text}
+                          </Text>
+                          {act.subArea && (
+                            <Text style={{ fontSize: 10, color: theme.subText }}>
+                              Área: {act.subArea}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+                    ))
+                  )}
+                </View>
               )}
-              <Text style={[
-                styles.reqText, 
-                { color: theme.text },
-                !isChecked && styles.reqTextError
-              ]}>
-                {req.text}
-              </Text>
-            </TouchableOpacity>
+            </View>
           );
         })}
       </ScrollView>
