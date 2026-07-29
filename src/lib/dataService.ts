@@ -503,7 +503,10 @@ export const dataService = {
 
   async getUnitRoversDirectory(groupName: string, unit: string) {
     try {
-      const unitLower = (unit || 'clan').toLowerCase();
+      let targetUnit = (unit || 'clan').toLowerCase();
+      // Mapear equivalencias
+      if (targetUnit === 'comunidad') targetUnit = 'caminantes';
+
       const { data, error } = await supabase
         .from('profiles')
         .select('id, name, avatar_url, updated_at, unit, group_name, role');
@@ -514,9 +517,14 @@ export const dataService = {
       }
       if (!data || data.length === 0) return [];
 
-      // Filtrar por unidad de forma case-insensitive
-      const filtered = data.filter(p => (p.unit || '').toLowerCase() === unitLower);
-      
+      // Filtrar por unidad de forma flexible
+      const filtered = data.filter(p => {
+        let pUnit = (p.unit || '').toLowerCase();
+        if (pUnit === 'comunidad') pUnit = 'caminantes';
+        // Si no tiene unidad asignada o coincide la unidad
+        return pUnit === targetUnit || (!p.unit && targetUnit === 'clan');
+      });
+
       const now = Date.now();
       return filtered.map(p => {
         const lastSeenTime = p.updated_at ? new Date(p.updated_at).getTime() : 0;
