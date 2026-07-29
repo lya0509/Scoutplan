@@ -1,0 +1,3215 @@
+[
+  {
+    "col": 1,
+    "r5": "CUADRO DE METAS",
+    "r6": "",
+    "r7": "",
+    "r8": "INTEGRANTES"
+  },
+  {
+    "col": 2,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CARGO"
+  },
+  {
+    "col": 3,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE NACIMIENTO"
+  },
+  {
+    "col": 4,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE INGRESO (SCOUT)"
+  },
+  {
+    "col": 5,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE INGRESO (UNIDAD)"
+  },
+  {
+    "col": 6,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE PROMESA"
+  },
+  {
+    "col": 7,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "EDAD"
+  },
+  {
+    "col": 8,
+    "r5": "",
+    "r6": "",
+    "r7": "2016",
+    "r8": "E"
+  },
+  {
+    "col": 9,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "F"
+  },
+  {
+    "col": 10,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 11,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 12,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 13,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 14,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 15,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 16,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "S"
+  },
+  {
+    "col": 17,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "O"
+  },
+  {
+    "col": 18,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "N"
+  },
+  {
+    "col": 19,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "D"
+  },
+  {
+    "col": 20,
+    "r5": "",
+    "r6": "",
+    "r7": "2022",
+    "r8": "E"
+  },
+  {
+    "col": 21,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "F"
+  },
+  {
+    "col": 22,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 23,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 24,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 25,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 26,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 27,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 28,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "S"
+  },
+  {
+    "col": 29,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "O"
+  },
+  {
+    "col": 30,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "N"
+  },
+  {
+    "col": 31,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "D"
+  },
+  {
+    "col": 32,
+    "r5": "",
+    "r6": "",
+    "r7": "2023",
+    "r8": "E"
+  },
+  {
+    "col": 33,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "F"
+  },
+  {
+    "col": 34,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 35,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 36,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 37,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 38,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 39,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 40,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "S"
+  },
+  {
+    "col": 41,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "O"
+  },
+  {
+    "col": 42,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "N"
+  },
+  {
+    "col": 43,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "D"
+  },
+  {
+    "col": 44,
+    "r5": "",
+    "r6": "",
+    "r7": "2024",
+    "r8": "E"
+  },
+  {
+    "col": 45,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "F"
+  },
+  {
+    "col": 46,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 47,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 48,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 49,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 50,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 51,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 52,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "S"
+  },
+  {
+    "col": 53,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "O"
+  },
+  {
+    "col": 54,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "N"
+  },
+  {
+    "col": 55,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "D"
+  },
+  {
+    "col": 56,
+    "r5": "",
+    "r6": "",
+    "r7": "2025",
+    "r8": "E"
+  },
+  {
+    "col": 57,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "F"
+  },
+  {
+    "col": 58,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 59,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 60,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 61,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 62,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 63,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 64,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "S"
+  },
+  {
+    "col": 65,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "O"
+  },
+  {
+    "col": 66,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "N"
+  },
+  {
+    "col": 67,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "D"
+  },
+  {
+    "col": 68,
+    "r5": "",
+    "r6": "",
+    "r7": "2026",
+    "r8": "E"
+  },
+  {
+    "col": 69,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "F"
+  },
+  {
+    "col": 70,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 71,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 72,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 73,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 74,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 75,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 76,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "S"
+  },
+  {
+    "col": 77,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "O"
+  },
+  {
+    "col": 78,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "N"
+  },
+  {
+    "col": 79,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "D"
+  },
+  {
+    "col": 80,
+    "r5": "",
+    "r6": "",
+    "r7": "2027",
+    "r8": "E"
+  },
+  {
+    "col": 81,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "F"
+  },
+  {
+    "col": 82,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 83,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 84,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 85,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 86,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 87,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 88,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "S"
+  },
+  {
+    "col": 89,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "O"
+  },
+  {
+    "col": 90,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "N"
+  },
+  {
+    "col": 91,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "D"
+  },
+  {
+    "col": 92,
+    "r5": "",
+    "r6": "",
+    "r7": "2028",
+    "r8": "E"
+  },
+  {
+    "col": 93,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "F"
+  },
+  {
+    "col": 94,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 95,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 96,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "M"
+  },
+  {
+    "col": 97,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 98,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "J"
+  },
+  {
+    "col": 99,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "A"
+  },
+  {
+    "col": 100,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "S"
+  },
+  {
+    "col": 101,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "O"
+  },
+  {
+    "col": 102,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "N"
+  },
+  {
+    "col": 103,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "D"
+  },
+  {
+    "col": 106,
+    "r5": "CUADRO DE ADELANTOS",
+    "r6": "",
+    "r7": "",
+    "r8": "INTEGRANTES"
+  },
+  {
+    "col": 107,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CARGO"
+  },
+  {
+    "col": 108,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE NACIMIENTO"
+  },
+  {
+    "col": 109,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE INGRESO (SCOUT)"
+  },
+  {
+    "col": 110,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE INGRESO (UNIDAD)"
+  },
+  {
+    "col": 111,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "TIEMPO EN EL GRUPO (MESES)"
+  },
+  {
+    "col": 112,
+    "r5": "",
+    "r6": "",
+    "r7": "PRECURSOR",
+    "r8": "LEY"
+  },
+  {
+    "col": 113,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "PROMESA"
+  },
+  {
+    "col": 114,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "UNIFORME SCOUT"
+  },
+  {
+    "col": 115,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "INTROSPECCIÓN (COMPROMISO INICIAL)"
+  },
+  {
+    "col": 116,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CAMPISMO ELEMENTAL"
+  },
+  {
+    "col": 117,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "PIONERISMO ELEMENTAL"
+  },
+  {
+    "col": 118,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "EXPLORACIÓN ELEMENTAL"
+  },
+  {
+    "col": 119,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CONSERVACIONISMO ELEMENTAL"
+  },
+  {
+    "col": 120,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "NOCHES DE VIDA AL AIRE LIBRE (3 NOCHES)"
+  },
+  {
+    "col": 121,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CONCURSO DE ACCIÓN COMUNITARIA (BUENAS ACCIONES)"
+  },
+  {
+    "col": 122,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE PROMESA"
+  },
+  {
+    "col": 123,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE ENTREGA"
+  },
+  {
+    "col": 124,
+    "r5": "",
+    "r6": "",
+    "r7": "EXPEDICIONARIO",
+    "r8": "ACTIVIDADES BÁSICAS (12 Cualquier área)"
+  },
+  {
+    "col": 125,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ACTIVIDADES OPCIONALES (9 Cualquier área)"
+  },
+  {
+    "col": 126,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ESPECIALIDADES (1 BRONCE)"
+  },
+  {
+    "col": 127,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ESPECIALIDADES (1 PLATA)"
+  },
+  {
+    "col": 128,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ACCIÓN COMUNITARIA (4 CRÉDITOS)"
+  },
+  {
+    "col": 129,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VIDA DE GRUPO (1 CAMPAMENTO)"
+  },
+  {
+    "col": 130,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VIDA DE GRUPO (1 PEREGRINAJE)"
+  },
+  {
+    "col": 131,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VIDA DE GRUPO (1 PROYECTO DE SERVICIO)"
+  },
+  {
+    "col": 132,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CICLOS INSTITUCIONALES (1 ACTIVIDAD Cualquier nivel) DISTRITAL"
+  },
+  {
+    "col": 133,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CICLOS INSTITUCIONALES (1 ACTIVIDAD Cualquier nivel) REGIONAL"
+  },
+  {
+    "col": 134,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CICLOS INSTITUCIONALES (1 ACTIVIDAD Cualquier nivel) NACIONAL"
+  },
+  {
+    "col": 135,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CURSOS Y TALLERES (HORQUETA EN BRONCE)"
+  },
+  {
+    "col": 136,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "NOCHES DE VIDA AL AIRE LIBRE (7 NOCHES)"
+  },
+  {
+    "col": 137,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CONCURSO DE VIDA AL AIRE LIBRE (NIVEL BRONCE)"
+  },
+  {
+    "col": 138,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CONCURSO DE ACCIÓN COMUNITARIA (NIVEL BRONCE)"
+  },
+  {
+    "col": 139,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE ENTREGA"
+  },
+  {
+    "col": 140,
+    "r5": "",
+    "r6": "",
+    "r7": "DESCUBRIDOR",
+    "r8": "ACTIVIDADES BÁSICAS (9 Cualquier área)"
+  },
+  {
+    "col": 141,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ACTIVIDADES OPCIONALES (6 Cualquier área)"
+  },
+  {
+    "col": 142,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ESPECIALIDADES (1 BRONCE)"
+  },
+  {
+    "col": 143,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ESPECIALIDADES (1 PLATA)"
+  },
+  {
+    "col": 144,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ACCIÓN COMUNITARIA (8 CRÉDITOS)"
+  },
+  {
+    "col": 145,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VIDA DE GRUPO (1 CAMPAMENTO)"
+  },
+  {
+    "col": 146,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VIDA DE GRUPO (1 PEREGRINAJE)"
+  },
+  {
+    "col": 147,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VIDA DE GRUPO (1 PROYECTO DE SERVICIO)"
+  },
+  {
+    "col": 148,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CICLOS INSTITUCIONALES (2 ACTIVIDAD Cualquier nivel) DISTRITAL"
+  },
+  {
+    "col": 149,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CICLOS INSTITUCIONALES (2 ACTIVIDADES Cualquier nivel) REGIONAL"
+  },
+  {
+    "col": 150,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CICLOS INSTITUCIONALES (2 ACTIVIDADES Cualquier nivel) NACIONAL"
+  },
+  {
+    "col": 151,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CURSOS Y TALLERES (REMO EN PLATA)"
+  },
+  {
+    "col": 152,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "NOCHES DE VIDA AL AIRE LIBRE (10 NOCHES)"
+  },
+  {
+    "col": 153,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CONCURSO DE VIDA AL AIRE LIBRE (NIVEL PLATA)"
+  },
+  {
+    "col": 154,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CONCURSO DE ACCIÓN COMUNITARIA (NIVEL PLATA)"
+  },
+  {
+    "col": 155,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE ENTREGA"
+  },
+  {
+    "col": 156,
+    "r5": "",
+    "r6": "",
+    "r7": "FUNDADOR",
+    "r8": "ACTIVIDADES BÁSICAS (9 Cualquier área)"
+  },
+  {
+    "col": 157,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ACTIVIDADES OPCIONALES (6 Cualquier área)"
+  },
+  {
+    "col": 158,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ACTIVIDADES PERSONALES (3 De su propia creación)"
+  },
+  {
+    "col": 159,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ESPECIALIDADES (1 PLATA)"
+  },
+  {
+    "col": 160,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ESPECIALIDADES (1 ORO)"
+  },
+  {
+    "col": 161,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ACCIÓN COMUNITARIA (10 CRÉDITOS)"
+  },
+  {
+    "col": 162,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VIDA DE GRUPO (2 CAMPAMENTOS)"
+  },
+  {
+    "col": 163,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VIDA DE GRUPO (2 PEREGRINAJES)"
+  },
+  {
+    "col": 164,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VIDA DE GRUPO (1 PROYECTO DE SERVICIO)"
+  },
+  {
+    "col": 165,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CICLOS INSTITUCIONALES (3 ACTIVIDAD Cualquier nivel) DISTRITAL"
+  },
+  {
+    "col": 166,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CICLOS INSTITUCIONALES (3 ACTIVIDADES Cualquier nivel) REGIONAL"
+  },
+  {
+    "col": 167,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CICLOS INSTITUCIONALES (3 ACTIVIDADES Cualquier nivel) NACIONAL"
+  },
+  {
+    "col": 168,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CURSOS Y TALLERES (CANOA EN ORO)"
+  },
+  {
+    "col": 169,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "NOCHES DE VIDA AL AIRE LIBRE (12 NOCHES)"
+  },
+  {
+    "col": 170,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CONCURSO DE VIDA AL AIRE LIBRE (NIVEL ORO)"
+  },
+  {
+    "col": 171,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CONCURSO DE ACCIÓN COMUNITARIA (NIVEL ORO)"
+  },
+  {
+    "col": 172,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE ENTREGA"
+  },
+  {
+    "col": 173,
+    "r5": "",
+    "r6": "",
+    "r7": "ROVER CIUDADANO",
+    "r8": "ACTIVIDADES OPCIONALES (9 Cualquier área)"
+  },
+  {
+    "col": 174,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ACTIVIDADES PERSONALES (3 De su propia creación)"
+  },
+  {
+    "col": 175,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ESPECIALIDADES (2 ORO)"
+  },
+  {
+    "col": 176,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ACCIÓN COMUNITARIA (16 CRÉDITOS)"
+  },
+  {
+    "col": 177,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VIDA DE GRUPO (2 CAMPAMENTOS)"
+  },
+  {
+    "col": 178,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VIDA DE GRUPO (3 PEREGRINAJES)"
+  },
+  {
+    "col": 179,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VIDA DE GRUPO (1 PROYECTO DE SERVICIO)"
+  },
+  {
+    "col": 180,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CICLOS INSTITUCIONALES (3 ACTIVIDAD Cualquier nivel) DISTRITAL"
+  },
+  {
+    "col": 181,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CICLOS INSTITUCIONALES (3 ACTIVIDADES Cualquier nivel) REGIONAL"
+  },
+  {
+    "col": 182,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CICLOS INSTITUCIONALES (3 ACTIVIDADES Cualquier nivel) NACIONAL"
+  },
+  {
+    "col": 183,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CURSOS Y TALLERES (CANOA EN ORO)"
+  },
+  {
+    "col": 184,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "NOCHES DE VIDA AL AIRE LIBRE (15 NOCHES)"
+  },
+  {
+    "col": 185,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CONCURSO DE VIDA AL AIRE LIBRE (NIVEL ORO)"
+  },
+  {
+    "col": 186,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CONCURSO DE ACCIÓN COMUNITARIA (NIVEL ORO)"
+  },
+  {
+    "col": 187,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE ENTREGA"
+  },
+  {
+    "col": 190,
+    "r5": "ADELANTO PRGRESIVO",
+    "r6": "",
+    "r7": "",
+    "r8": "INTEGRANTES"
+  },
+  {
+    "col": 191,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CARGO"
+  },
+  {
+    "col": 192,
+    "r5": "PRECURSOR",
+    "r6": "",
+    "r7": "BÁSICAS",
+    "r8": "Verbalizar la Ley Scout"
+  },
+  {
+    "col": 193,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Oración Scout"
+  },
+  {
+    "col": 194,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Promesa"
+  },
+  {
+    "col": 195,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Uniforme Scout"
+  },
+  {
+    "col": 196,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Introspección (Compromiso Inicial)"
+  },
+  {
+    "col": 197,
+    "r5": "",
+    "r6": "",
+    "r7": "OPCIONALES (2)",
+    "r8": "Campismo elemental"
+  },
+  {
+    "col": 198,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Pionerismos elemental"
+  },
+  {
+    "col": 199,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Exploración elemental"
+  },
+  {
+    "col": 200,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Conservacionismo elemental"
+  },
+  {
+    "col": 201,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE PROMESA"
+  },
+  {
+    "col": 202,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE ENTREGA"
+  },
+  {
+    "col": 203,
+    "r5": "EXPEDICIONARIO",
+    "r6": "",
+    "r7": "BÁSICAS",
+    "r8": "12 Actividades cualesquiera"
+  },
+  {
+    "col": 204,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VERIFICACIÓN"
+  },
+  {
+    "col": 205,
+    "r5": "",
+    "r6": "",
+    "r7": "OPCIONALES",
+    "r8": "9 Actividades cualesquiera"
+  },
+  {
+    "col": 206,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VERIFICACIÓN"
+  },
+  {
+    "col": 207,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE ENTREGA"
+  },
+  {
+    "col": 208,
+    "r5": "DESCUBRIDOR",
+    "r6": "",
+    "r7": "BÁSICAS",
+    "r8": "9 Actividades cualesquiera adicionales (21 en total)"
+  },
+  {
+    "col": 209,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VERIFICACIÓN"
+  },
+  {
+    "col": 210,
+    "r5": "",
+    "r6": "",
+    "r7": "OPCIONALES",
+    "r8": "6 Actividades cualesquiera adicionales (15 en total)"
+  },
+  {
+    "col": 211,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VERIFICACIÓN"
+  },
+  {
+    "col": 212,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE ENTREGA"
+  },
+  {
+    "col": 213,
+    "r5": "FUNDADOR",
+    "r6": "",
+    "r7": "BÁSICAS",
+    "r8": "6 Actividades cualesquiera adicionales (27 en total)"
+  },
+  {
+    "col": 214,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VERIFICACIÓN"
+  },
+  {
+    "col": 215,
+    "r5": "",
+    "r6": "",
+    "r7": "OPCIONALES",
+    "r8": "9 Actividades cualesquiera adicionales (24 en total)"
+  },
+  {
+    "col": 216,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VERIFICACIÓN"
+  },
+  {
+    "col": 217,
+    "r5": "",
+    "r6": "",
+    "r7": "PERSONALES",
+    "r8": "3 Actividades cualesquiera (FECHA DE REALIZACIÓN)"
+  },
+  {
+    "col": 220,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VERIFICACIÓN"
+  },
+  {
+    "col": 221,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE ENTREGA"
+  },
+  {
+    "col": 222,
+    "r5": "BÁSICAS",
+    "r6": "SERVICIO SOCIAL Y COMUNIDAD",
+    "r7": "RELIGIÓN",
+    "r8": "Participar en ceremonias de su religión"
+  },
+  {
+    "col": 223,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en actividades de su religión"
+  },
+  {
+    "col": 224,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Aplicar preceptos de su fé en su vida"
+  },
+  {
+    "col": 225,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Mantener contacto con su guía espiritual"
+  },
+  {
+    "col": 226,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Planificar proyecto de servicio a su religión"
+  },
+  {
+    "col": 227,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en 2 campañas humanitarias"
+  },
+  {
+    "col": 228,
+    "r5": "",
+    "r6": "",
+    "r7": "FAMILIA",
+    "r8": "Asumir obligaciones en el hogar"
+  },
+  {
+    "col": 229,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Dirigir un proyecto en el hogar"
+  },
+  {
+    "col": 230,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Promover actividades familiares"
+  },
+  {
+    "col": 231,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Mantener armonía en su núcleo familiar"
+  },
+  {
+    "col": 232,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Organizar paseo con su núcleo familiar"
+  },
+  {
+    "col": 233,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Realizar una actividad de cocina con su familia"
+  },
+  {
+    "col": 234,
+    "r5": "",
+    "r6": "",
+    "r7": "COMUNIDAD",
+    "r8": "Intervenir en actividad de la comunidad"
+  },
+  {
+    "col": 235,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en mejoramiento de su comunidad"
+  },
+  {
+    "col": 236,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Promover creación de centro juvenil"
+  },
+  {
+    "col": 237,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en campeonatos dentro de su comunidad"
+  },
+  {
+    "col": 238,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Inducir a jóvenes a tomar cursos de mejoramiento personal"
+  },
+  {
+    "col": 239,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Planificar un servicio para mejorar un sector de su comunidad"
+  },
+  {
+    "col": 240,
+    "r5": "",
+    "r6": "",
+    "r7": "ESCUELA O TRABAJO",
+    "r8": "Mejorar rendimiento académico en 1 punto"
+  },
+  {
+    "col": 241,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Aumentar productividad en su trabajo en 5%"
+  },
+  {
+    "col": 242,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Servir de facilitador a un compañero de estudios"
+  },
+  {
+    "col": 243,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Crear un club de estudio"
+  },
+  {
+    "col": 244,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Proponer una mejora en sistema de trabajo"
+  },
+  {
+    "col": 245,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Aprender reglas de seguridad industrial"
+  },
+  {
+    "col": 246,
+    "r5": "",
+    "r6": "",
+    "r7": "IDENTIDAD NACIONAL",
+    "r8": "Integrarse a la Comunidad"
+  },
+  {
+    "col": 247,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Realizar investigaciones sobre sus raíces históricas"
+  },
+  {
+    "col": 248,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Buscar información sobre los cambios en su país"
+  },
+  {
+    "col": 249,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Conocer y verbalizar zona histórica de su región"
+  },
+  {
+    "col": 250,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Enumerar sus deberes y derechos ciudadanos"
+  },
+  {
+    "col": 251,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Desmostrar el conocimiento sobre ceremonias a símbolos patrios"
+  },
+  {
+    "col": 252,
+    "r5": "",
+    "r6": "VIVENCIA AL AIRE LIBRE",
+    "r7": "CAMPISMO",
+    "r8": "Ejecutar técnicas básicas de campismo"
+  },
+  {
+    "col": 253,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en un curso de vivencia al aire libre"
+  },
+  {
+    "col": 254,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Tomar un curso de rescate y salvamento"
+  },
+  {
+    "col": 255,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Adquirir técnicas básicas de primeros auxilios"
+  },
+  {
+    "col": 256,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Servir de sinodal de campismo a las unidades intermedias"
+  },
+  {
+    "col": 257,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Servir de sinodal de primeros auxilios a las unidades menores"
+  },
+  {
+    "col": 258,
+    "r5": "",
+    "r6": "",
+    "r7": "PIONERISMO",
+    "r8": "Ejecutar los nudos: rizo plano, as de guía, margarita y vuelta escota"
+  },
+  {
+    "col": 259,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Elaborar construcciones de campamento"
+  },
+  {
+    "col": 260,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Ejecutar 3 amarres y 10 nudos"
+  },
+  {
+    "col": 261,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Armar un refugio natural y organizar su morral"
+  },
+  {
+    "col": 262,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Demostrar el correcto uso de herramientas"
+  },
+  {
+    "col": 263,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Enseñar 10 nudos y 3 amarres"
+  },
+  {
+    "col": 264,
+    "r5": "",
+    "r6": "",
+    "r7": "ESPECIALIDADES (ACTIVIDADES)",
+    "r8": "Tomar un curso de especialización"
+  },
+  {
+    "col": 265,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en un seminario de actividades rover"
+  },
+  {
+    "col": 266,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Tomar un curso de nuevas tecnologías"
+  },
+  {
+    "col": 267,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Se reune con profesionales de distintas áreas"
+  },
+  {
+    "col": 268,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Planificar, organizar y ejecutar 2 actividades rover"
+  },
+  {
+    "col": 269,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Demostrar alcance de nuevas tecnologías"
+  },
+  {
+    "col": 270,
+    "r5": "",
+    "r6": "",
+    "r7": "EXPLORACIÓN",
+    "r8": "Participar en 2 excursiones a sitios  no explorados"
+  },
+  {
+    "col": 271,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Orientarse por medios no convencionales"
+  },
+  {
+    "col": 272,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Conocer el uso de la rosa de los vientos"
+  },
+  {
+    "col": 273,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Diseñar o acompañar  la caminata de un joven de su unidad"
+  },
+  {
+    "col": 274,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Diseñar y realizar excursión a una zona no explorada"
+  },
+  {
+    "col": 275,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Tomar un curso de montañismo o similar"
+  },
+  {
+    "col": 276,
+    "r5": "",
+    "r6": "",
+    "r7": "LEY Y PROMESA",
+    "r8": "Participar en discusiones de Ley y Promesa Scout"
+  },
+  {
+    "col": 277,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en discusiones del libro \"Roverismo hacia el éxito\""
+  },
+  {
+    "col": 278,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Servir como sinodal en las unidades menores"
+  },
+  {
+    "col": 279,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Asistir regularente a las actividades"
+  },
+  {
+    "col": 280,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Asumir un cargo dentro del consejo de su unidad (1 año)"
+  },
+  {
+    "col": 281,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Intervenir en la planificación de actividades"
+  },
+  {
+    "col": 282,
+    "r5": "",
+    "r6": "",
+    "r7": "CONSERVACIÓN",
+    "r8": "Participar en campañas de reforestación"
+  },
+  {
+    "col": 283,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Promover la participación en cursos de conservación"
+  },
+  {
+    "col": 284,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en proyecto de mejora del medio ambiente"
+  },
+  {
+    "col": 285,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Identificar recursos para mejorar el medio ambiente"
+  },
+  {
+    "col": 286,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Diseñar y elaborar mural o grafitti alegórico al conservacionismo"
+  },
+  {
+    "col": 287,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Estudiar materiales reciclabes del sector que habita"
+  },
+  {
+    "col": 288,
+    "r5": "",
+    "r6": "DESARROLLO PERSONAL",
+    "r7": "DESARROLLO CORPORAL",
+    "r8": "Realizar actividad al aire libre"
+  },
+  {
+    "col": 289,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Promocionar un campeonato deportivo"
+  },
+  {
+    "col": 290,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Mejorar su fortaleza física mediante actividades corporales"
+  },
+  {
+    "col": 291,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Planificar y ejecutar como ejercitarse diariamente"
+  },
+  {
+    "col": 292,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en 2 excursiones donde se demuestre su fortaleza física"
+  },
+  {
+    "col": 293,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Preparar y dictar charla de cómo mantenerse sano"
+  },
+  {
+    "col": 294,
+    "r5": "",
+    "r6": "",
+    "r7": "DESARROLLO CULTURAL",
+    "r8": "Promover 2 salidas a museo, sitios históricos, parques, exposiciones"
+  },
+  {
+    "col": 295,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Realizar foro o charla de actividad cultural"
+  },
+  {
+    "col": 296,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Diseñar y ejecutar una representación teatral de valores Scouts"
+  },
+  {
+    "col": 297,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Diseñar y ejecutar cine-for"
+  },
+  {
+    "col": 298,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en evento cultural"
+  },
+  {
+    "col": 299,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en 2 cursos artesanales"
+  },
+  {
+    "col": 300,
+    "r5": "",
+    "r6": "",
+    "r7": "DESARROLLO OCUPACIONAL",
+    "r8": "Practicar un oficio"
+  },
+  {
+    "col": 301,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Describir el proceso productivo al cual se ha vinculado"
+  },
+  {
+    "col": 302,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Inducir a un joven desocupado a integrarse a una labor"
+  },
+  {
+    "col": 303,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Exponer normas de seguridad industrial"
+  },
+  {
+    "col": 304,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Investigar posibilidades de mejorar su trabajo"
+  },
+  {
+    "col": 305,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Asumir responsabilidad de su formación"
+  },
+  {
+    "col": 306,
+    "r5": "",
+    "r6": "",
+    "r7": "DESARROLLO SOCIAL",
+    "r8": "Mantener documentación personal vigente"
+  },
+  {
+    "col": 307,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Dar a conocer a su Grupo en la comunidad"
+  },
+  {
+    "col": 308,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Integrar a los miembros del Clan en actividades con amigos no Scouts"
+  },
+  {
+    "col": 309,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Conocer y practicar normas de buena conducta"
+  },
+  {
+    "col": 310,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en 3 noches Rovers o en 1 evento Nacional"
+  },
+  {
+    "col": 311,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en un servicio en los campamentos de las unidades intermedias"
+  },
+  {
+    "col": 312,
+    "r5": "",
+    "r6": "",
+    "r7": "DESARROLLO ESPIRITUAL",
+    "r8": "Inducir a miembros de su Grupo a participar en servicios de su iglesia"
+  },
+  {
+    "col": 313,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en charla sobre mística y Espíritu Scout"
+  },
+  {
+    "col": 314,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en convivencias y encuentros con otros clanes"
+  },
+  {
+    "col": 315,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Realizar actividad de reflexión personal"
+  },
+  {
+    "col": 316,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Demostrar los principios de su fé"
+  },
+  {
+    "col": 317,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Planificar formas de superación personal"
+  },
+  {
+    "col": 318,
+    "r5": "",
+    "r6": "",
+    "r7": "LIDERAZGO",
+    "r8": "Dirigir una mesa redonda o foro"
+  },
+  {
+    "col": 319,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en la programación de las actividades"
+  },
+  {
+    "col": 320,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en curso de toma de desiciones"
+  },
+  {
+    "col": 321,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Organizar y dirigir 3 noches Rovers"
+  },
+  {
+    "col": 322,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Dirigir actividad de comunicación"
+  },
+  {
+    "col": 323,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Realizar curso de planificación y programación"
+  },
+  {
+    "col": 324,
+    "r5": "OPCIONALES",
+    "r6": "SERVICIO SOCIAL Y COMUNIDAD",
+    "r7": "RELIGIÓN",
+    "r8": "Actuar como evangelizador"
+  },
+  {
+    "col": 325,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Conocer dogmas de otras religiones"
+  },
+  {
+    "col": 326,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en servicio a su religión"
+  },
+  {
+    "col": 327,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Planificar y ejecutar actividades de introspección"
+  },
+  {
+    "col": 328,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Interesarse por las congregaciones de su religión"
+  },
+  {
+    "col": 329,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Fomentar paseos con niños de su religión"
+  },
+  {
+    "col": 330,
+    "r5": "",
+    "r6": "",
+    "r7": "FAMILIA",
+    "r8": "Participar en convivencias familiares"
+  },
+  {
+    "col": 331,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Inducir a sus familiares a tomar cursos de autoestima y relaciones humanas"
+  },
+  {
+    "col": 332,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Orientar a un familiar o amigo con problemas de conducta"
+  },
+  {
+    "col": 333,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Realizar actividad con valores familiares"
+  },
+  {
+    "col": 334,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Organizar actividad con su familia cercana"
+  },
+  {
+    "col": 335,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Inducir a su familia a participar en el Grupo Scout"
+  },
+  {
+    "col": 336,
+    "r5": "",
+    "r6": "",
+    "r7": "COMUNIDAD",
+    "r8": "Ejecutar un servicio para mejorar un sector de su comunidad"
+  },
+  {
+    "col": 337,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Defender el desarrollo de la naturaleza"
+  },
+  {
+    "col": 338,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Defender áreas comunes"
+  },
+  {
+    "col": 339,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en campaña de vacunación"
+  },
+  {
+    "col": 340,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Crear campaña de mejoramiento de calidad de vida"
+  },
+  {
+    "col": 341,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Realizar evento e invitar autoridades civiles"
+  },
+  {
+    "col": 342,
+    "r5": "",
+    "r6": "",
+    "r7": "ESCUELA O TRABAJO",
+    "r8": "Tomar una materia o curso de verano"
+  },
+  {
+    "col": 343,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Promover cursos de crecimiento personal"
+  },
+  {
+    "col": 344,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Organizar foros, seminarios o charlas"
+  },
+  {
+    "col": 345,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Promover y participar en la identificación del trabajo"
+  },
+  {
+    "col": 346,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Organizar campeonatos deportivos o culturales"
+  },
+  {
+    "col": 347,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Organizar cooperativa para formar o mejorar biblioteca"
+  },
+  {
+    "col": 348,
+    "r5": "",
+    "r6": "",
+    "r7": "IDENTIDAD NACIONAL",
+    "r8": "Participar en cursos, seminarios o eventos que refuerzan la venezolanidad"
+  },
+  {
+    "col": 349,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Actuar como guía histórico en su región"
+  },
+  {
+    "col": 350,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Asumir la defensa de sus derechos y obligaciones"
+  },
+  {
+    "col": 351,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en elecciones nacionales o regionales"
+  },
+  {
+    "col": 352,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en campañas en pro de la identidad nacional"
+  },
+  {
+    "col": 353,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Elaborar y ejecutar un proyecto de servicio a una comunidad indígena"
+  },
+  {
+    "col": 354,
+    "r5": "",
+    "r6": "VIVENCIA AL AIRE LIBRE",
+    "r7": "CAMPISMO",
+    "r8": "Participar en curso de supervivencia"
+  },
+  {
+    "col": 355,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Demostrar lo aprendido en curso de campismo"
+  },
+  {
+    "col": 356,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Especializarse en un curso de rescate y salvamento"
+  },
+  {
+    "col": 357,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Demostrar lo aprendido en primeros auxilios"
+  },
+  {
+    "col": 358,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Preparar y dictar charlas de primeros auxilios a las unidades intermedias"
+  },
+  {
+    "col": 359,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Preparar y dictar charlas de rescate y salvamento a las unidades intermedias"
+  },
+  {
+    "col": 360,
+    "r5": "",
+    "r6": "",
+    "r7": "PIONERISMO",
+    "r8": "Actuar como instructor en ramas menores en la construcción de una torre de observación (4 m)"
+  },
+  {
+    "col": 361,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Elaborar exposición con maquetas de un campamento"
+  },
+  {
+    "col": 362,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Elaborar campamento de pionerismo francés"
+  },
+  {
+    "col": 363,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Tomar curso de cocina primitiva"
+  },
+  {
+    "col": 364,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Elaborar en campamento 3 comidas sin utencilios"
+  },
+  {
+    "col": 365,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Asumir el cargo de intendente por 6 meses"
+  },
+  {
+    "col": 366,
+    "r5": "",
+    "r6": "",
+    "r7": "ESPECIALIDADES (ACTIVIDADES)",
+    "r8": "Demostar lo aprendido en su especialidad"
+  },
+  {
+    "col": 367,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Especializarse en un área de comunicación"
+  },
+  {
+    "col": 368,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en la planificación de un evento regional"
+  },
+  {
+    "col": 369,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Crear y enseñar un tipo de comunicación"
+  },
+  {
+    "col": 370,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Planificar y ejecutar una actividad del Jamboree del Aire"
+  },
+  {
+    "col": 371,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Planificar y ejecutar actividades multitudinarias de su rama"
+  },
+  {
+    "col": 372,
+    "r5": "",
+    "r6": "",
+    "r7": "EXPLORACIÓN",
+    "r8": "Visitar 2 poblaciones desconocidas por él"
+  },
+  {
+    "col": 373,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Ayudar en actividades de exploración en unidades intermedias"
+  },
+  {
+    "col": 374,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Conocer 3 formas de comunicación no convencionales"
+  },
+  {
+    "col": 375,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Buscar sitios de adecuados de campamento"
+  },
+  {
+    "col": 376,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en grupo excursionista"
+  },
+  {
+    "col": 377,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Promover 2 actividades de exploración con otros clanes"
+  },
+  {
+    "col": 378,
+    "r5": "",
+    "r6": "",
+    "r7": "LEY Y PROMESA",
+    "r8": "Servir de tutor de 2 jóvenes que inician la rama"
+  },
+  {
+    "col": 379,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Escoger y discutir un libro no Scout o película de crecimiento personal"
+  },
+  {
+    "col": 380,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Prestar un servicio a su Grupo"
+  },
+  {
+    "col": 381,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en un curso de autoestima"
+  },
+  {
+    "col": 382,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Formar parte del equipo de servicio en un curso de autoestima"
+  },
+  {
+    "col": 383,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Respetar y acatar normas de su grupo y unidad"
+  },
+  {
+    "col": 384,
+    "r5": "",
+    "r6": "",
+    "r7": "CONSERVACIÓN",
+    "r8": "Tomar curso de prevención de incendios forestales"
+  },
+  {
+    "col": 385,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Involucrar a la comunidad y unidad en proyecto ecológico"
+  },
+  {
+    "col": 386,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Prepara y dictar charla de prevención de incendios a las unidades menores"
+  },
+  {
+    "col": 387,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Estudiar y dictar charla sobre flora y fauna de Venezuela"
+  },
+  {
+    "col": 388,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Diseñar y llevar a cabo camaña de reciclaje"
+  },
+  {
+    "col": 389,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Elaborar proyecto de cómo preservar nuestra etnias"
+  },
+  {
+    "col": 390,
+    "r5": "",
+    "r6": "DESARROLLO PERSONAL",
+    "r7": "DESARROLLO CORPORAL",
+    "r8": "Formar parte de un equipo deportivo"
+  },
+  {
+    "col": 391,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en un curso de supervivencia, rapel, escalada libre, etc."
+  },
+  {
+    "col": 392,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Tomar curso de rescate y salvamento"
+  },
+  {
+    "col": 393,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Servir como sinodal en 2 actividades corporales de las unidades menores"
+  },
+  {
+    "col": 394,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Crear actividades de bienestar físico"
+  },
+  {
+    "col": 395,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Conocer su organismo y conservar un buen estado físico"
+  },
+  {
+    "col": 396,
+    "r5": "",
+    "r6": "",
+    "r7": "DESARROLLO CULTURAL",
+    "r8": "Inducir a miembros a participar en cursos artesanales"
+  },
+  {
+    "col": 397,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Promover una exposición artesanal en su grupo"
+  },
+  {
+    "col": 398,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Organizar un concierto en el grupo e invitar a organizaciones juveniles"
+  },
+  {
+    "col": 399,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Organizar una fogata e invitar organizaciones juveniles"
+  },
+  {
+    "col": 400,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Adquirir habilidades en una actividad artesanal"
+  },
+  {
+    "col": 401,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Organizar y participar en una feria artesanal en su grupo"
+  },
+  {
+    "col": 402,
+    "r5": "",
+    "r6": "",
+    "r7": "DESARROLLO OCUPACIONAL",
+    "r8": "Ayudar a un compañero a conseguir empleo"
+  },
+  {
+    "col": 403,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Tomar un curso (Computación. Electrónica, etc.)"
+  },
+  {
+    "col": 404,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Elaborar metas para superar el puesto que ocupa en el trabajo"
+  },
+  {
+    "col": 405,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Diseñar un proyecto para superar su producción"
+  },
+  {
+    "col": 406,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Identificar medios para adquirir habilidades"
+  },
+  {
+    "col": 407,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Demostrar sus capacidades personales para desempeñar labores"
+  },
+  {
+    "col": 408,
+    "r5": "",
+    "r6": "",
+    "r7": "DESARROLLO SOCIAL",
+    "r8": "Visitar y comprenter instituciones nacionales (Ministerios, Congreso, etc.)"
+  },
+  {
+    "col": 409,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Integrarse a grupos de bienestar comunitario"
+  },
+  {
+    "col": 410,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en actividades del Distrito"
+  },
+  {
+    "col": 411,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar por 1 mes en actividades de otro clan"
+  },
+  {
+    "col": 412,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Vincularse a proyectos de integración de los países"
+  },
+  {
+    "col": 413,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Mantener contacto con miembros de la hemandad Scout mundiales"
+  },
+  {
+    "col": 414,
+    "r5": "",
+    "r6": "",
+    "r7": "DESARROLLO ESPIRITUAL",
+    "r8": "Ayudar a amigos a superar problemas"
+  },
+  {
+    "col": 415,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Realizar servicio a la comunidad"
+  },
+  {
+    "col": 416,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Preparar espiritualmente a un hermano Scout novato en la rama"
+  },
+  {
+    "col": 417,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Escoger un grupo afín para un mejor crecimiento espiritual"
+  },
+  {
+    "col": 418,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en un retiro espiritual de su dogma de fé"
+  },
+  {
+    "col": 419,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en 2 servicios espirituales de otra comunidad"
+  },
+  {
+    "col": 420,
+    "r5": "",
+    "r6": "",
+    "r7": "LIDERAZGO",
+    "r8": "Organizar un foro con especialistas"
+  },
+  {
+    "col": 421,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Proponer actividades donde se manifieste el liderazgo"
+  },
+  {
+    "col": 422,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Participar en la programación de actividades de las unidades menores"
+  },
+  {
+    "col": 423,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Dirigir una actividad artística"
+  },
+  {
+    "col": 424,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Planificar, dirigir y desarrollar un servicio a la comunidad"
+  },
+  {
+    "col": 425,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "Tomar curso de idiomas o computación"
+  },
+  {
+    "col": 426,
+    "r5": "ESPECIALIDADES",
+    "r6": "",
+    "r7": "",
+    "r8": "BRONCE"
+  },
+  {
+    "col": 432,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "PLATA"
+  },
+  {
+    "col": 438,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ORO"
+  },
+  {
+    "col": 444,
+    "r5": "CURSOS",
+    "r6": "",
+    "r7": "",
+    "r8": "HORQUETA BRONCE"
+  },
+  {
+    "col": 446,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "REMO PLATA"
+  },
+  {
+    "col": 448,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CANOA ORO"
+  },
+  {
+    "col": 450,
+    "r5": "VIDA DE GRUPO",
+    "r6": "",
+    "r7": "PRECRUSOR",
+    "r8": "NOCHES"
+  },
+  {
+    "col": 454,
+    "r5": "",
+    "r6": "",
+    "r7": "EXPEDICIONARIO",
+    "r8": "CAMPAMENTOS"
+  },
+  {
+    "col": 456,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "PEREGRINAJES"
+  },
+  {
+    "col": 458,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "PROYECTO CONTINUADO (3 MESES)"
+  },
+  {
+    "col": 460,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "NOCHES"
+  },
+  {
+    "col": 468,
+    "r5": "",
+    "r6": "",
+    "r7": "DESCUBRIDOR",
+    "r8": "CAMPAMENTOS"
+  },
+  {
+    "col": 470,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "PEREGRINAJES"
+  },
+  {
+    "col": 472,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "PROYECTO CONTINUADO (6 MESES)"
+  },
+  {
+    "col": 474,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "NOCHES"
+  },
+  {
+    "col": 485,
+    "r5": "",
+    "r6": "",
+    "r7": "FUNDADOR",
+    "r8": "CAMPAMENTOS"
+  },
+  {
+    "col": 488,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "PEREGRINAJES"
+  },
+  {
+    "col": 491,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "PROYECTO CONTINUADO (9 MESES)"
+  },
+  {
+    "col": 493,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "NOCHES"
+  },
+  {
+    "col": 506,
+    "r5": "",
+    "r6": "",
+    "r7": "ROVER CIUDADANO",
+    "r8": "CAMPAMENTOS"
+  },
+  {
+    "col": 509,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "PEREGRINAJES"
+  },
+  {
+    "col": 513,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "PROYECTO CONTINUADO (12 MESES)"
+  },
+  {
+    "col": 515,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "NOCHES"
+  },
+  {
+    "col": 531,
+    "r5": "CONCURSO DE VIDA AL AIRE LIBRE",
+    "r6": "",
+    "r7": "",
+    "r8": "BRONCE"
+  },
+  {
+    "col": 533,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "PLATA"
+  },
+  {
+    "col": 535,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ORO"
+  },
+  {
+    "col": 537,
+    "r5": "CICLOS INSTITUCIONALES",
+    "r6": "",
+    "r7": "",
+    "r8": "ACTIVIDADES A NIVEL DE GRUPO"
+  },
+  {
+    "col": 547,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ACTIVIDADES A NIVEL DISTRITAL"
+  },
+  {
+    "col": 557,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ACTIVIDADES A NIVEL REGIONAL"
+  },
+  {
+    "col": 567,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ACTIVIDADES A NIVEL NACIONAL"
+  },
+  {
+    "col": 577,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "CREDITOS"
+  },
+  {
+    "col": 601,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "TOTAL"
+  },
+  {
+    "col": 603,
+    "r5": "CONCURSO DE ACCIÓN COMUNITARIA",
+    "r6": "",
+    "r7": "",
+    "r8": "BRONCE"
+  },
+  {
+    "col": 605,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "PLATA"
+  },
+  {
+    "col": 607,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "ORO"
+  },
+  {
+    "col": 609,
+    "r5": "ROVER CIUDADANO",
+    "r6": "",
+    "r7": "OPCIONALES",
+    "r8": "9 Actividades cualesquiera adicionales (33 en total)"
+  },
+  {
+    "col": 610,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VERIFICACIÓN"
+  },
+  {
+    "col": 611,
+    "r5": "",
+    "r6": "",
+    "r7": "PERSONALES",
+    "r8": "3 Actividades cualesquiera (FECHA DE REALIZACIÓN)"
+  },
+  {
+    "col": 614,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "VERIFICACIÓN"
+  },
+  {
+    "col": 615,
+    "r5": "",
+    "r6": "",
+    "r7": "",
+    "r8": "FECHA DE ENTREGA"
+  }
+]

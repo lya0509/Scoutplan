@@ -1,0 +1,482 @@
+import React, { useState, useCallback } from 'react';
+import {
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  TextInput, Modal, FlatList, ActivityIndicator
+} from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { supabase } from '../lib/supabaseClient';
+import { colors } from '../theme/colors';
+import { Edit2 } from 'lucide-react-native';
+import { UserScoutAvatar } from '../components/UserScoutAvatar';
+import { showAlert } from '../utils/alert';
+
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const ITEM_H  = 44;
+const CY      = new Date().getFullYear();
+const YEARS   = Array.from({ length: CY - 1949 }, (_, i) => 1950 + i).reverse();
+const DAYS    = Array.from({ length: 31 }, (_, i) => i + 1);
+
+function WheelColumn({ items, selected, onSelect, labelFn }: {
+  items: (number | string)[];
+  selected: number | string;
+  onSelect: (v: number | string) => void;
+  labelFn?: (v: number | string) => string;
+}) {
+  const label = (v: number | string) => labelFn ? labelFn(v) : String(v);
+  return (
+    <View style={{ flex: 1, maxHeight: ITEM_H * 5, overflow: 'hidden' }}>
+      <FlatList
+        data={items}
+        keyExtractor={v => String(v)}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={ITEM_H}
+        decelerationRate="fast"
+        initialScrollIndex={Math.max(0, items.indexOf(selected))}
+        getItemLayout={(_, i) => ({ length: ITEM_H, offset: ITEM_H * i, index: i })}
+        ListHeaderComponent={<View style={{ height: ITEM_H * 2 }} />}
+        ListFooterComponent={<View style={{ height: ITEM_H * 2 }} />}
+        onMomentumScrollEnd={e => {
+          const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_H);
+          if (idx >= 0 && idx < items.length) onSelect(items[idx]);
+        }}
+        renderItem={({ item }) => {
+          const sel = item === selected;
+          return (
+            <TouchableOpacity
+              style={{ height: ITEM_H, justifyContent: 'center', alignItems: 'center' }}
+              onPress={() => onSelect(item)}
+            >
+              <Text style={{ fontSize: sel ? 18 : 15, fontWeight: sel ? 'bold' : 'normal',
+                color: sel ? colors.primary : '#bbb' }}>
+                {label(item)}
+              </Text>
+            </TouchableOpacity>
+          );
+        }}
+      />
+    </View>
+  );
+}
+
+function DatePickerModal({ visible, title, day, month, year,
+  onDay, onMonth, onYear, onConfirm, onCancel }: {
+  visible: boolean; title: string;
+  day: number; month: number; year: number;
+  onDay: (v: number) => void; onMonth: (v: number) => void; onYear: (v: number) => void;
+  onConfirm: () => void; onCancel: () => void;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <View style={mStyles.overlay}>
+        <View style={mStyles.sheet}>
+          <View style={mStyles.header}>
+            <TouchableOpacity onPress={onCancel}><Text style={mStyles.cancel}>Cancelar</Text></TouchableOpacity>
+            <Text style={mStyles.title}>{title}</Text>
+            <TouchableOpacity onPress={onConfirm}><Text style={mStyles.confirm}>Guardar</Text></TouchableOpacity>
+          </View>
+          <View style={mStyles.labels}>
+            {['DÍA','MES','AÑO'].map(l => <Text key={l} style={mStyles.colLabel}>{l}</Text>)}
+          </View>
+          <View style={mStyles.wheels}>
+            <WheelColumn items={DAYS} selected={day} onSelect={v => onDay(+v)} />
+            <View style={mStyles.sep} />
+            <WheelColumn items={Array.from({length:12},(_,i)=>i+1)} selected={month}
+              onSelect={v => onMonth(+v)} labelFn={v => MONTHS[+v-1]} />
+            <View style={mStyles.sep} />
+            <WheelColumn items={YEARS} selected={year} onSelect={v => onYear(+v)} />
+          </View>
+          <Text style={mStyles.preview}>
+            {String(day).padStart(2,'0')} de {MONTHS[month-1]} de {year}
+          </Text>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function EditRow({ label, value, onEdit, placeholder = 'Toca para agregar', highlight = false, readonly = false, isDarkMode = false }: {
+  label: string; value: string; onEdit?: () => void;
+  placeholder?: string; highlight?: boolean; readonly?: boolean; isDarkMode?: boolean;
+}) {
+  return (
+    <TouchableOpacity
+      style={[
+        rowStyles.row, 
+        { borderBottomColor: isDarkMode ? '#27272a' : '#f5f5f5' },
+        highlight && (isDarkMode ? rowStyles.rowHighlightDark : rowStyles.rowHighlight)
+      ]}
+      onPress={onEdit}
+      disabled={readonly}
+      activeOpacity={readonly ? 1 : 0.7}
+    >
+      <View style={{ flex: 1 }}>
+        <Text style={[rowStyles.label, { color: isDarkMode ? '#a1a1aa' : colors.textLight }]}>{label}</Text>
+        <Text style={[
+          rowStyles.value,
+          { color: isDarkMode ? '#f4f4f5' : '#222222' },
+          !value && { color: isDarkMode ? '#fbbf24' : '#888888', fontStyle: 'italic', fontWeight: 'bold' }
+        ]}>
+          {value || placeholder}
+        </Text>
+      </View>
+      {!readonly && <Edit2 size={16} color={highlight ? (isDarkMode ? '#fbbf24' : colors.primary) : (isDarkMode ? '#a1a1aa' : '#888888')} />}
+    </TouchableOpacity>
+  );
+}
+
+const rowStyles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1 },
+  rowHighlight: { backgroundColor: '#faf5ff', borderRadius: 8, paddingHorizontal: 10, marginHorizontal: -10 },
+  rowHighlightDark: { backgroundColor: '#3b0764', borderRadius: 8, paddingHorizontal: 10, marginHorizontal: -10 },
+  label: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  value: { fontSize: 15, fontWeight: '500' },
+});
+
+function ProfileProgress({ pct, isDarkMode = false }: { pct: number; isDarkMode?: boolean }) {
+  const barColor = pct === 100 ? '#22c55e' : pct >= 60 ? colors.primary : '#f59e0b';
+  return (
+    <View style={[progStyles.wrapper, { backgroundColor: isDarkMode ? '#18181b' : 'white', borderColor: isDarkMode ? '#27272a' : 'transparent', borderWidth: isDarkMode ? 1 : 0 }]}>
+      <View style={progStyles.top}>
+        <Text style={[progStyles.label, { color: isDarkMode ? '#ffffff' : '#333333' }]}>Completitud del perfil</Text>
+        <Text style={[progStyles.pct, { color: barColor }]}>{pct}%</Text>
+      </View>
+      <View style={[progStyles.barBg, { backgroundColor: isDarkMode ? '#27272a' : '#eee' }]}>
+        <View style={[progStyles.barFill, { width: `${pct}%`, backgroundColor: barColor }]} />
+      </View>
+      {pct < 100 && <Text style={[progStyles.hint, { color: isDarkMode ? '#a1a1aa' : colors.textLight }]}>Completa tus datos para llegar al 100% ✨</Text>}
+    </View>
+  );
+}
+
+const progStyles = StyleSheet.create({
+  wrapper: { marginHorizontal: 20, marginBottom: 14, padding: 18, borderRadius: 16, elevation: 3 },
+  top: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  label: { fontWeight: '700', fontSize: 14 },
+  pct: { fontWeight: 'bold', fontSize: 16 },
+  barBg: { height: 8, borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
+  barFill: { height: '100%', borderRadius: 4 },
+  hint: { fontSize: 12, fontStyle: 'italic' },
+});
+
+export default function ProfileScreen() {
+  const { user } = useAuth();
+  const { isDarkMode, theme } = useTheme();
+
+  const [birthDate,   setBirthDate]   = useState('');
+  const [promiseDate, setPromiseDate] = useState('');
+  const [joinDate,    setJoinDate]    = useState('');
+  const [phone,       setPhone]       = useState('');
+  const [loading,     setLoading]     = useState(true);
+  const [saving,      setSaving]      = useState(false);
+
+  const [showPromisePicker, setShowPromisePicker] = useState(false);
+  const [showJoinPicker,    setShowJoinPicker]    = useState(false);
+  const [showPhoneEdit,     setShowPhoneEdit]     = useState(false);
+  const [phoneInput,        setPhoneInput]        = useState('');
+
+  const todayY = new Date().getFullYear();
+  const [pDay, setPDay] = useState(1);  const [pMonth, setPMonth] = useState(1);  const [pYear, setPYear] = useState(todayY);
+  const [jDay, setJDay] = useState(1);  const [jMonth, setJMonth] = useState(1);  const [jYear, setJYear] = useState(todayY);
+
+  useFocusEffect(useCallback(() => { loadProfile(); }, []));
+
+  const loadProfile = async () => {
+    setLoading(true);
+    if (!user?.id) { setLoading(false); return; }
+    const { data } = await supabase
+      .from('profiles')
+      .select('promise_date, birth_date, join_date, phone')
+      .eq('id', user.id)
+      .single();
+    if (data) {
+      setBirthDate(data.birth_date || '');
+      setPromiseDate(data.promise_date || '');
+      setJoinDate(data.join_date || '');
+      setPhone(data.phone || '');
+      if (data.promise_date) {
+        const [y,m,d] = data.promise_date.split('-');
+        setPYear(+y); setPMonth(+m); setPDay(+d);
+      }
+      if (data.join_date) {
+        const [y,m,d] = data.join_date.split('-');
+        setJYear(+y); setJMonth(+m); setJDay(+d);
+      }
+    }
+    setLoading(false);
+  };
+
+  const calcCompletion = () => {
+    const fields = [
+      user?.name, user?.email, user?.unit, user?.group_name,
+      user?.region, birthDate, promiseDate, joinDate, phone,
+    ];
+    const filled = fields.filter(Boolean).length;
+    return Math.round((filled / fields.length) * 100);
+  };
+
+  const formatDateDisplay = (dateStr: string) => {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('-');
+    return `${d} de ${MONTHS[+m - 1]} de ${y}`;
+  };
+
+  const saveField = async (field: string, val: string) => {
+    if (!user?.id) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ [field]: val })
+      .eq('id', user.id);
+    setSaving(false);
+    if (error) {
+      showAlert('Error al guardar', error.message);
+    } else {
+      loadProfile();
+    }
+  };
+
+  const confirmPromise = () => {
+    const val = `${pYear}-${String(pMonth).padStart(2,'0')}-${String(pDay).padStart(2,'0')}`;
+    setPromiseDate(val);
+    setShowPromisePicker(false);
+    saveField('promise_date', val);
+  };
+
+  const confirmJoin = () => {
+    const val = `${jYear}-${String(jMonth).padStart(2,'0')}-${String(jDay).padStart(2,'0')}`;
+    setJoinDate(val);
+    setShowJoinPicker(false);
+    saveField('join_date', val);
+  };
+
+  const confirmPhone = () => {
+    setPhone(phoneInput);
+    setShowPhoneEdit(false);
+    saveField('phone', phoneInput);
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.center, { backgroundColor: theme.bg }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  const completion = calcCompletion();
+
+  return (
+    <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ paddingBottom: 40 }}>
+      {/* TARJETA DE CABECERA */}
+      <View style={[styles.headerCard, isDarkMode && { backgroundColor: '#121214', borderBottomColor: '#27272a' }]}>
+        <View style={styles.avatarCircle}>
+          <UserScoutAvatar unit={user?.unit || undefined} role={user?.role} size={84} />
+        </View>
+        <Text style={[styles.name, { color: theme.text }]}>{user?.name || 'Scout'}</Text>
+        <Text style={styles.email}>{user?.email}</Text>
+        <View style={styles.badgeRow}>
+          <View style={styles.unitBadge}>
+            <Text style={styles.unitBadgeText}>
+              {(user?.unit || 'Manada').toUpperCase()}
+            </Text>
+          </View>
+          <View style={styles.roleBadge}>
+            <Text style={styles.roleBadgeText}>
+              {(user?.role || 'scout').toUpperCase()}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* BARRA DE COMPLETITUD */}
+      <ProfileProgress pct={completion} isDarkMode={isDarkMode} />
+
+      {/* SECCIÓN 1: DATOS SCOUT */}
+      <View style={[styles.section, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+        <Text style={[styles.sectionHeader, { color: isDarkMode ? '#c084fc' : colors.primary }]}>INFORMACIÓN SCOUT</Text>
+
+        <EditRow
+          label="Región"
+          value={user?.region ? user.region.toUpperCase() : ''}
+          readonly
+          isDarkMode={isDarkMode}
+        />
+        <EditRow
+          label="Distrito Scout"
+          value={user?.district ? user.district.toUpperCase() : 'GUARENAS GUATIRE'}
+          readonly
+          isDarkMode={isDarkMode}
+        />
+        <EditRow
+          label="Grupo Scout"
+          value={user?.group_name ? `Grupo ${user.group_name}` : ''}
+          readonly
+          isDarkMode={isDarkMode}
+        />
+        <EditRow
+          label="Unidad Actual"
+          value={user?.unit ? user.unit.toUpperCase() : ''}
+          readonly
+          isDarkMode={isDarkMode}
+        />
+        <EditRow
+          label="Fecha de Promesa"
+          value={formatDateDisplay(promiseDate)}
+          onEdit={() => setShowPromisePicker(true)}
+          placeholder="Añadir fecha de Promesa"
+          highlight={!promiseDate}
+          isDarkMode={isDarkMode}
+        />
+        <EditRow
+          label="Ingreso a la Unidad"
+          value={formatDateDisplay(joinDate)}
+          onEdit={() => setShowJoinPicker(true)}
+          placeholder="Añadir fecha de ingreso"
+          highlight={!joinDate}
+          isDarkMode={isDarkMode}
+        />
+      </View>
+
+      {/* SECCIÓN 2: CARNET SCOUT OFICIAL (GESTIONADO POR JEFATURA) */}
+      <View style={[styles.section, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+        <Text style={[styles.sectionHeader, { color: isDarkMode ? '#c084fc' : colors.primary }]}>CARNET SCOUT DIGITAL</Text>
+
+        {user?.scout_card_url ? (
+          <View style={[styles.cardAvailableBox, { backgroundColor: isDarkMode ? '#14532d' : '#dcfce7', borderColor: '#16a34a' }]}>
+            <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#86efac' : '#15803d', fontSize: 13 }}>
+              ✓ CARNET SCOUT VIGENTE Y OFICIAL
+            </Text>
+            <Text style={{ color: isDarkMode ? '#f4f4f5' : '#334155', fontSize: 12, marginTop: 4 }}>
+              Cargado oficialmente por la Jefatura de Grupo.
+            </Text>
+          </View>
+        ) : (
+          <View style={[styles.cardMissingBox, { backgroundColor: isDarkMode ? '#451a03' : '#fef3c7', borderColor: '#d97706' }]}>
+            <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fcd34d' : '#b45309', fontSize: 13, marginBottom: 4 }}>
+              ⚠️ CARNET SCOUT NO DISPONIBLE
+            </Text>
+            <Text style={{ color: isDarkMode ? '#f4f4f5' : '#451a03', fontSize: 12, lineHeight: 18 }}>
+              Aún no se ha cargado tu Carnet Scout Oficial. Por favor solicita a la Jefatura de Grupo que suba tu carnet digital para habilitar tu acreditación.
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* SECCIÓN 3: DATOS PERSONALES */}
+      <View style={[styles.section, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+        <Text style={[styles.sectionHeader, { color: isDarkMode ? '#c084fc' : colors.primary }]}>DATOS PERSONALES</Text>
+
+        <EditRow
+          label="Fecha de Nacimiento"
+          value={formatDateDisplay(birthDate)}
+          readonly
+          isDarkMode={isDarkMode}
+        />
+        <EditRow
+          label="Teléfono de Contacto"
+          value={phone}
+          onEdit={() => { setPhoneInput(phone); setShowPhoneEdit(true); }}
+          placeholder="Añadir teléfono"
+          highlight={!phone}
+          isDarkMode={isDarkMode}
+        />
+      </View>
+
+      {saving && (
+        <View style={styles.savingOverlay}>
+          <ActivityIndicator color="white" />
+          <Text style={{ color: 'white', marginTop: 8, fontWeight: 'bold' }}>Guardando cambios...</Text>
+        </View>
+      )}
+
+      <DatePickerModal
+        visible={showPromisePicker}
+        title="Fecha de Promesa Scout"
+        day={pDay} month={pMonth} year={pYear}
+        onDay={setPDay} onMonth={setPMonth} onYear={setPYear}
+        onConfirm={confirmPromise}
+        onCancel={() => setShowPromisePicker(false)}
+      />
+
+      <DatePickerModal
+        visible={showJoinPicker}
+        title="Fecha de Ingreso a la Unidad"
+        day={jDay} month={jMonth} year={jYear}
+        onDay={setJDay} onMonth={setJMonth} onYear={setJYear}
+        onConfirm={confirmJoin}
+        onCancel={() => setShowJoinPicker(false)}
+      />
+
+      <Modal visible={showPhoneEdit} transparent animationType="fade">
+        <View style={mStyles.overlay}>
+          <View style={[mStyles.sheet, { padding: 24, borderRadius: 20 }]}>
+            <Text style={{ fontSize: 17, fontWeight: 'bold', marginBottom: 12 }}>Teléfono de Contacto</Text>
+            <TextInput
+              style={{ backgroundColor: '#f5f5f5', borderRadius: 10, padding: 12, fontSize: 15, marginBottom: 20 }}
+              placeholder="Ej: +58 412 1234567"
+              value={phoneInput}
+              onChangeText={setPhoneInput}
+              keyboardType="phone-pad"
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10 }}>
+              <TouchableOpacity onPress={() => setShowPhoneEdit(false)} style={{ padding: 10 }}>
+                <Text style={{ color: '#888' }}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={confirmPhone} style={{ backgroundColor: colors.primary, padding: 10, borderRadius: 8 }}>
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  headerCard: {
+    backgroundColor: 'white', alignItems: 'center', padding: 24,
+    borderBottomWidth: 1, borderBottomColor: '#f0f0f0', marginBottom: 16,
+  },
+  avatarCircle: { marginBottom: 12 },
+  name: { fontSize: 22, fontWeight: 'bold' },
+  email: { fontSize: 13, color: colors.textLight, marginTop: 2 },
+  badgeRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  unitBadge: { backgroundColor: colors.primaryLight, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
+  unitBadgeText: { color: colors.primary, fontWeight: 'bold', fontSize: 12 },
+  roleBadge: { backgroundColor: '#f3f4f6', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
+  roleBadgeText: { color: '#4b5563', fontWeight: 'bold', fontSize: 12 },
+  section: {
+    marginHorizontal: 20, marginBottom: 16, padding: 20, borderRadius: 16,
+    borderWidth: 1, elevation: 2,
+  },
+  sectionHeader: {
+    fontSize: 12, fontWeight: '800', color: colors.primary,
+    letterSpacing: 1, marginBottom: 8,
+  },
+  cardAvailableBox: { padding: 14, borderRadius: 12, borderWidth: 1, marginTop: 4 },
+  cardMissingBox: { padding: 14, borderRadius: 12, borderWidth: 1, marginTop: 4 },
+  savingOverlay: {
+    position: 'absolute', top: 0, bottom: 0, left: 0, right: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center',
+  },
+});
+
+const mStyles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  sheet: { backgroundColor: 'white', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 36, paddingTop: 8 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  title: { fontSize: 16, fontWeight: 'bold', color: colors.text },
+  cancel: { fontSize: 15, color: colors.textLight },
+  confirm: { fontSize: 15, color: colors.primary, fontWeight: 'bold' },
+  labels: { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 12 },
+  colLabel: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '700', color: '#bbb' },
+  wheels: { flexDirection: 'row', paddingHorizontal: 20, backgroundColor: '#fafafa', marginHorizontal: 16, borderRadius: 16 },
+  sep: { width: 1, backgroundColor: '#eee', marginVertical: 8 },
+  preview: { textAlign: 'center', paddingTop: 14, color: colors.primary, fontWeight: 'bold', fontSize: 15 },
+});

@@ -1,0 +1,2298 @@
+[
+  {
+    "col": 111,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "2028",
+    "activity": "TIEMPO EN EL GRUPO (MESES)"
+  },
+  {
+    "col": 112,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "PRECURSOR",
+    "activity": "LEY"
+  },
+  {
+    "col": 113,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "PRECURSOR",
+    "activity": "PROMESA"
+  },
+  {
+    "col": 114,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "PRECURSOR",
+    "activity": "UNIFORME SCOUT"
+  },
+  {
+    "col": 115,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "PRECURSOR",
+    "activity": "INTROSPECCIÓN (COMPROMISO INICIAL)"
+  },
+  {
+    "col": 116,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "PRECURSOR",
+    "activity": "CAMPISMO ELEMENTAL"
+  },
+  {
+    "col": 117,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "PRECURSOR",
+    "activity": "PIONERISMO ELEMENTAL"
+  },
+  {
+    "col": 118,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "PRECURSOR",
+    "activity": "EXPLORACIÓN ELEMENTAL"
+  },
+  {
+    "col": 119,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "PRECURSOR",
+    "activity": "CONSERVACIONISMO ELEMENTAL"
+  },
+  {
+    "col": 120,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "PRECURSOR",
+    "activity": "NOCHES DE VIDA AL AIRE LIBRE (3 NOCHES)"
+  },
+  {
+    "col": 121,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "PRECURSOR",
+    "activity": "CONCURSO DE ACCIÓN COMUNITARIA (BUENAS ACCIONES)"
+  },
+  {
+    "col": 124,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "ACTIVIDADES BÁSICAS (12 Cualquier área)"
+  },
+  {
+    "col": 125,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "ACTIVIDADES OPCIONALES (9 Cualquier área)"
+  },
+  {
+    "col": 126,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "ESPECIALIDADES (1 BRONCE)"
+  },
+  {
+    "col": 127,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "ESPECIALIDADES (1 PLATA)"
+  },
+  {
+    "col": 128,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "ACCIÓN COMUNITARIA (4 CRÉDITOS)"
+  },
+  {
+    "col": 129,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "VIDA DE GRUPO (1 CAMPAMENTO)"
+  },
+  {
+    "col": 130,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "VIDA DE GRUPO (1 PEREGRINAJE)"
+  },
+  {
+    "col": 131,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "VIDA DE GRUPO (1 PROYECTO DE SERVICIO)"
+  },
+  {
+    "col": 132,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "CICLOS INSTITUCIONALES (1 ACTIVIDAD Cualquier nivel) DISTRITAL"
+  },
+  {
+    "col": 133,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "CICLOS INSTITUCIONALES (1 ACTIVIDAD Cualquier nivel) REGIONAL"
+  },
+  {
+    "col": 134,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "CICLOS INSTITUCIONALES (1 ACTIVIDAD Cualquier nivel) NACIONAL"
+  },
+  {
+    "col": 135,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "CURSOS Y TALLERES (HORQUETA EN BRONCE)"
+  },
+  {
+    "col": 136,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "NOCHES DE VIDA AL AIRE LIBRE (7 NOCHES)"
+  },
+  {
+    "col": 137,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "CONCURSO DE VIDA AL AIRE LIBRE (NIVEL BRONCE)"
+  },
+  {
+    "col": 138,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "CONCURSO DE ACCIÓN COMUNITARIA (NIVEL BRONCE)"
+  },
+  {
+    "col": 140,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "ACTIVIDADES BÁSICAS (9 Cualquier área)"
+  },
+  {
+    "col": 141,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "ACTIVIDADES OPCIONALES (6 Cualquier área)"
+  },
+  {
+    "col": 142,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "ESPECIALIDADES (1 BRONCE)"
+  },
+  {
+    "col": 143,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "ESPECIALIDADES (1 PLATA)"
+  },
+  {
+    "col": 144,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "ACCIÓN COMUNITARIA (8 CRÉDITOS)"
+  },
+  {
+    "col": 145,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "VIDA DE GRUPO (1 CAMPAMENTO)"
+  },
+  {
+    "col": 146,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "VIDA DE GRUPO (1 PEREGRINAJE)"
+  },
+  {
+    "col": 147,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "VIDA DE GRUPO (1 PROYECTO DE SERVICIO)"
+  },
+  {
+    "col": 148,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "CICLOS INSTITUCIONALES (2 ACTIVIDAD Cualquier nivel) DISTRITAL"
+  },
+  {
+    "col": 149,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "CICLOS INSTITUCIONALES (2 ACTIVIDADES Cualquier nivel) REGIONAL"
+  },
+  {
+    "col": 150,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "CICLOS INSTITUCIONALES (2 ACTIVIDADES Cualquier nivel) NACIONAL"
+  },
+  {
+    "col": 151,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "CURSOS Y TALLERES (REMO EN PLATA)"
+  },
+  {
+    "col": 152,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "NOCHES DE VIDA AL AIRE LIBRE (10 NOCHES)"
+  },
+  {
+    "col": 153,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "CONCURSO DE VIDA AL AIRE LIBRE (NIVEL PLATA)"
+  },
+  {
+    "col": 154,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "CONCURSO DE ACCIÓN COMUNITARIA (NIVEL PLATA)"
+  },
+  {
+    "col": 156,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "ACTIVIDADES BÁSICAS (9 Cualquier área)"
+  },
+  {
+    "col": 157,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "ACTIVIDADES OPCIONALES (6 Cualquier área)"
+  },
+  {
+    "col": 158,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "ACTIVIDADES PERSONALES (3 De su propia creación)"
+  },
+  {
+    "col": 159,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "ESPECIALIDADES (1 PLATA)"
+  },
+  {
+    "col": 160,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "ESPECIALIDADES (1 ORO)"
+  },
+  {
+    "col": 161,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "ACCIÓN COMUNITARIA (10 CRÉDITOS)"
+  },
+  {
+    "col": 162,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "VIDA DE GRUPO (2 CAMPAMENTOS)"
+  },
+  {
+    "col": 163,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "VIDA DE GRUPO (2 PEREGRINAJES)"
+  },
+  {
+    "col": 164,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "VIDA DE GRUPO (1 PROYECTO DE SERVICIO)"
+  },
+  {
+    "col": 165,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "CICLOS INSTITUCIONALES (3 ACTIVIDAD Cualquier nivel) DISTRITAL"
+  },
+  {
+    "col": 166,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "CICLOS INSTITUCIONALES (3 ACTIVIDADES Cualquier nivel) REGIONAL"
+  },
+  {
+    "col": 167,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "CICLOS INSTITUCIONALES (3 ACTIVIDADES Cualquier nivel) NACIONAL"
+  },
+  {
+    "col": 168,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "CURSOS Y TALLERES (CANOA EN ORO)"
+  },
+  {
+    "col": 169,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "NOCHES DE VIDA AL AIRE LIBRE (12 NOCHES)"
+  },
+  {
+    "col": 170,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "CONCURSO DE VIDA AL AIRE LIBRE (NIVEL ORO)"
+  },
+  {
+    "col": 171,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "FUNDADOR",
+    "activity": "CONCURSO DE ACCIÓN COMUNITARIA (NIVEL ORO)"
+  },
+  {
+    "col": 173,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "ACTIVIDADES OPCIONALES (9 Cualquier área)"
+  },
+  {
+    "col": 174,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "ACTIVIDADES PERSONALES (3 De su propia creación)"
+  },
+  {
+    "col": 175,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "ESPECIALIDADES (2 ORO)"
+  },
+  {
+    "col": 176,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "ACCIÓN COMUNITARIA (16 CRÉDITOS)"
+  },
+  {
+    "col": 177,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "VIDA DE GRUPO (2 CAMPAMENTOS)"
+  },
+  {
+    "col": 178,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "VIDA DE GRUPO (3 PEREGRINAJES)"
+  },
+  {
+    "col": 179,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "VIDA DE GRUPO (1 PROYECTO DE SERVICIO)"
+  },
+  {
+    "col": 180,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "CICLOS INSTITUCIONALES (3 ACTIVIDAD Cualquier nivel) DISTRITAL"
+  },
+  {
+    "col": 181,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "CICLOS INSTITUCIONALES (3 ACTIVIDADES Cualquier nivel) REGIONAL"
+  },
+  {
+    "col": 182,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "CICLOS INSTITUCIONALES (3 ACTIVIDADES Cualquier nivel) NACIONAL"
+  },
+  {
+    "col": 183,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "CURSOS Y TALLERES (CANOA EN ORO)"
+  },
+  {
+    "col": 184,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "NOCHES DE VIDA AL AIRE LIBRE (15 NOCHES)"
+  },
+  {
+    "col": 185,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "CONCURSO DE VIDA AL AIRE LIBRE (NIVEL ORO)"
+  },
+  {
+    "col": 186,
+    "super_area": "CUADRO DE ADELANTOS",
+    "area": "",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "CONCURSO DE ACCIÓN COMUNITARIA (NIVEL ORO)"
+  },
+  {
+    "col": 192,
+    "super_area": "PRECURSOR",
+    "area": "",
+    "sub_area": "BÁSICAS",
+    "activity": "Verbalizar la Ley Scout"
+  },
+  {
+    "col": 193,
+    "super_area": "PRECURSOR",
+    "area": "",
+    "sub_area": "BÁSICAS",
+    "activity": "Oración Scout"
+  },
+  {
+    "col": 194,
+    "super_area": "PRECURSOR",
+    "area": "",
+    "sub_area": "BÁSICAS",
+    "activity": "Promesa"
+  },
+  {
+    "col": 195,
+    "super_area": "PRECURSOR",
+    "area": "",
+    "sub_area": "BÁSICAS",
+    "activity": "Uniforme Scout"
+  },
+  {
+    "col": 196,
+    "super_area": "PRECURSOR",
+    "area": "",
+    "sub_area": "BÁSICAS",
+    "activity": "Introspección (Compromiso Inicial)"
+  },
+  {
+    "col": 197,
+    "super_area": "PRECURSOR",
+    "area": "",
+    "sub_area": "OPCIONALES (2)",
+    "activity": "Campismo elemental"
+  },
+  {
+    "col": 198,
+    "super_area": "PRECURSOR",
+    "area": "",
+    "sub_area": "OPCIONALES (2)",
+    "activity": "Pionerismos elemental"
+  },
+  {
+    "col": 199,
+    "super_area": "PRECURSOR",
+    "area": "",
+    "sub_area": "OPCIONALES (2)",
+    "activity": "Exploración elemental"
+  },
+  {
+    "col": 200,
+    "super_area": "PRECURSOR",
+    "area": "",
+    "sub_area": "OPCIONALES (2)",
+    "activity": "Conservacionismo elemental"
+  },
+  {
+    "col": 203,
+    "super_area": "EXPEDICIONARIO",
+    "area": "",
+    "sub_area": "BÁSICAS",
+    "activity": "12 Actividades cualesquiera"
+  },
+  {
+    "col": 205,
+    "super_area": "EXPEDICIONARIO",
+    "area": "",
+    "sub_area": "OPCIONALES",
+    "activity": "9 Actividades cualesquiera"
+  },
+  {
+    "col": 208,
+    "super_area": "DESCUBRIDOR",
+    "area": "",
+    "sub_area": "BÁSICAS",
+    "activity": "9 Actividades cualesquiera adicionales (21 en total)"
+  },
+  {
+    "col": 210,
+    "super_area": "DESCUBRIDOR",
+    "area": "",
+    "sub_area": "OPCIONALES",
+    "activity": "6 Actividades cualesquiera adicionales (15 en total)"
+  },
+  {
+    "col": 213,
+    "super_area": "FUNDADOR",
+    "area": "",
+    "sub_area": "BÁSICAS",
+    "activity": "6 Actividades cualesquiera adicionales (27 en total)"
+  },
+  {
+    "col": 215,
+    "super_area": "FUNDADOR",
+    "area": "",
+    "sub_area": "OPCIONALES",
+    "activity": "9 Actividades cualesquiera adicionales (24 en total)"
+  },
+  {
+    "col": 217,
+    "super_area": "FUNDADOR",
+    "area": "",
+    "sub_area": "PERSONALES",
+    "activity": "3 Actividades cualesquiera (FECHA DE REALIZACIÓN)"
+  },
+  {
+    "col": 222,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "RELIGIÓN",
+    "activity": "Participar en ceremonias de su religión"
+  },
+  {
+    "col": 223,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "RELIGIÓN",
+    "activity": "Participar en actividades de su religión"
+  },
+  {
+    "col": 224,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "RELIGIÓN",
+    "activity": "Aplicar preceptos de su fé en su vida"
+  },
+  {
+    "col": 225,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "RELIGIÓN",
+    "activity": "Mantener contacto con su guía espiritual"
+  },
+  {
+    "col": 226,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "RELIGIÓN",
+    "activity": "Planificar proyecto de servicio a su religión"
+  },
+  {
+    "col": 227,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "RELIGIÓN",
+    "activity": "Participar en 2 campañas humanitarias"
+  },
+  {
+    "col": 228,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "FAMILIA",
+    "activity": "Asumir obligaciones en el hogar"
+  },
+  {
+    "col": 229,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "FAMILIA",
+    "activity": "Dirigir un proyecto en el hogar"
+  },
+  {
+    "col": 230,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "FAMILIA",
+    "activity": "Promover actividades familiares"
+  },
+  {
+    "col": 231,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "FAMILIA",
+    "activity": "Mantener armonía en su núcleo familiar"
+  },
+  {
+    "col": 232,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "FAMILIA",
+    "activity": "Organizar paseo con su núcleo familiar"
+  },
+  {
+    "col": 233,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "FAMILIA",
+    "activity": "Realizar una actividad de cocina con su familia"
+  },
+  {
+    "col": 234,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "COMUNIDAD",
+    "activity": "Intervenir en actividad de la comunidad"
+  },
+  {
+    "col": 235,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "COMUNIDAD",
+    "activity": "Participar en mejoramiento de su comunidad"
+  },
+  {
+    "col": 236,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "COMUNIDAD",
+    "activity": "Promover creación de centro juvenil"
+  },
+  {
+    "col": 237,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "COMUNIDAD",
+    "activity": "Participar en campeonatos dentro de su comunidad"
+  },
+  {
+    "col": 238,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "COMUNIDAD",
+    "activity": "Inducir a jóvenes a tomar cursos de mejoramiento personal"
+  },
+  {
+    "col": 239,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "COMUNIDAD",
+    "activity": "Planificar un servicio para mejorar un sector de su comunidad"
+  },
+  {
+    "col": 240,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "ESCUELA O TRABAJO",
+    "activity": "Mejorar rendimiento académico en 1 punto"
+  },
+  {
+    "col": 241,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "ESCUELA O TRABAJO",
+    "activity": "Aumentar productividad en su trabajo en 5%"
+  },
+  {
+    "col": 242,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "ESCUELA O TRABAJO",
+    "activity": "Servir de facilitador a un compañero de estudios"
+  },
+  {
+    "col": 243,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "ESCUELA O TRABAJO",
+    "activity": "Crear un club de estudio"
+  },
+  {
+    "col": 244,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "ESCUELA O TRABAJO",
+    "activity": "Proponer una mejora en sistema de trabajo"
+  },
+  {
+    "col": 245,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "ESCUELA O TRABAJO",
+    "activity": "Aprender reglas de seguridad industrial"
+  },
+  {
+    "col": 246,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "IDENTIDAD NACIONAL",
+    "activity": "Integrarse a la Comunidad"
+  },
+  {
+    "col": 247,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "IDENTIDAD NACIONAL",
+    "activity": "Realizar investigaciones sobre sus raíces históricas"
+  },
+  {
+    "col": 248,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "IDENTIDAD NACIONAL",
+    "activity": "Buscar información sobre los cambios en su país"
+  },
+  {
+    "col": 249,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "IDENTIDAD NACIONAL",
+    "activity": "Conocer y verbalizar zona histórica de su región"
+  },
+  {
+    "col": 250,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "IDENTIDAD NACIONAL",
+    "activity": "Enumerar sus deberes y derechos ciudadanos"
+  },
+  {
+    "col": 251,
+    "super_area": "BÁSICAS",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "IDENTIDAD NACIONAL",
+    "activity": "Desmostrar el conocimiento sobre ceremonias a símbolos patrios"
+  },
+  {
+    "col": 252,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CAMPISMO",
+    "activity": "Ejecutar técnicas básicas de campismo"
+  },
+  {
+    "col": 253,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CAMPISMO",
+    "activity": "Participar en un curso de vivencia al aire libre"
+  },
+  {
+    "col": 254,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CAMPISMO",
+    "activity": "Tomar un curso de rescate y salvamento"
+  },
+  {
+    "col": 255,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CAMPISMO",
+    "activity": "Adquirir técnicas básicas de primeros auxilios"
+  },
+  {
+    "col": 256,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CAMPISMO",
+    "activity": "Servir de sinodal de campismo a las unidades intermedias"
+  },
+  {
+    "col": 257,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CAMPISMO",
+    "activity": "Servir de sinodal de primeros auxilios a las unidades menores"
+  },
+  {
+    "col": 258,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "PIONERISMO",
+    "activity": "Ejecutar los nudos: rizo plano, as de guía, margarita y vuelta escota"
+  },
+  {
+    "col": 259,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "PIONERISMO",
+    "activity": "Elaborar construcciones de campamento"
+  },
+  {
+    "col": 260,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "PIONERISMO",
+    "activity": "Ejecutar 3 amarres y 10 nudos"
+  },
+  {
+    "col": 261,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "PIONERISMO",
+    "activity": "Armar un refugio natural y organizar su morral"
+  },
+  {
+    "col": 262,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "PIONERISMO",
+    "activity": "Demostrar el correcto uso de herramientas"
+  },
+  {
+    "col": 263,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "PIONERISMO",
+    "activity": "Enseñar 10 nudos y 3 amarres"
+  },
+  {
+    "col": 264,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "ESPECIALIDADES (ACTIVIDADES)",
+    "activity": "Tomar un curso de especialización"
+  },
+  {
+    "col": 265,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "ESPECIALIDADES (ACTIVIDADES)",
+    "activity": "Participar en un seminario de actividades rover"
+  },
+  {
+    "col": 266,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "ESPECIALIDADES (ACTIVIDADES)",
+    "activity": "Tomar un curso de nuevas tecnologías"
+  },
+  {
+    "col": 267,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "ESPECIALIDADES (ACTIVIDADES)",
+    "activity": "Se reune con profesionales de distintas áreas"
+  },
+  {
+    "col": 268,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "ESPECIALIDADES (ACTIVIDADES)",
+    "activity": "Planificar, organizar y ejecutar 2 actividades rover"
+  },
+  {
+    "col": 269,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "ESPECIALIDADES (ACTIVIDADES)",
+    "activity": "Demostrar alcance de nuevas tecnologías"
+  },
+  {
+    "col": 270,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "EXPLORACIÓN",
+    "activity": "Participar en 2 excursiones a sitios  no explorados"
+  },
+  {
+    "col": 271,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "EXPLORACIÓN",
+    "activity": "Orientarse por medios no convencionales"
+  },
+  {
+    "col": 272,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "EXPLORACIÓN",
+    "activity": "Conocer el uso de la rosa de los vientos"
+  },
+  {
+    "col": 273,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "EXPLORACIÓN",
+    "activity": "Diseñar o acompañar  la caminata de un joven de su unidad"
+  },
+  {
+    "col": 274,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "EXPLORACIÓN",
+    "activity": "Diseñar y realizar excursión a una zona no explorada"
+  },
+  {
+    "col": 275,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "EXPLORACIÓN",
+    "activity": "Tomar un curso de montañismo o similar"
+  },
+  {
+    "col": 276,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "LEY Y PROMESA",
+    "activity": "Participar en discusiones de Ley y Promesa Scout"
+  },
+  {
+    "col": 277,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "LEY Y PROMESA",
+    "activity": "Participar en discusiones del libro \"Roverismo hacia el éxito\""
+  },
+  {
+    "col": 278,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "LEY Y PROMESA",
+    "activity": "Servir como sinodal en las unidades menores"
+  },
+  {
+    "col": 279,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "LEY Y PROMESA",
+    "activity": "Asistir regularente a las actividades"
+  },
+  {
+    "col": 280,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "LEY Y PROMESA",
+    "activity": "Asumir un cargo dentro del consejo de su unidad (1 año)"
+  },
+  {
+    "col": 281,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "LEY Y PROMESA",
+    "activity": "Intervenir en la planificación de actividades"
+  },
+  {
+    "col": 282,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CONSERVACIÓN",
+    "activity": "Participar en campañas de reforestación"
+  },
+  {
+    "col": 283,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CONSERVACIÓN",
+    "activity": "Promover la participación en cursos de conservación"
+  },
+  {
+    "col": 284,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CONSERVACIÓN",
+    "activity": "Participar en proyecto de mejora del medio ambiente"
+  },
+  {
+    "col": 285,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CONSERVACIÓN",
+    "activity": "Identificar recursos para mejorar el medio ambiente"
+  },
+  {
+    "col": 286,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CONSERVACIÓN",
+    "activity": "Diseñar y elaborar mural o grafitti alegórico al conservacionismo"
+  },
+  {
+    "col": 287,
+    "super_area": "BÁSICAS",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CONSERVACIÓN",
+    "activity": "Estudiar materiales reciclabes del sector que habita"
+  },
+  {
+    "col": 288,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CORPORAL",
+    "activity": "Realizar actividad al aire libre"
+  },
+  {
+    "col": 289,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CORPORAL",
+    "activity": "Promocionar un campeonato deportivo"
+  },
+  {
+    "col": 290,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CORPORAL",
+    "activity": "Mejorar su fortaleza física mediante actividades corporales"
+  },
+  {
+    "col": 291,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CORPORAL",
+    "activity": "Planificar y ejecutar como ejercitarse diariamente"
+  },
+  {
+    "col": 292,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CORPORAL",
+    "activity": "Participar en 2 excursiones donde se demuestre su fortaleza física"
+  },
+  {
+    "col": 293,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CORPORAL",
+    "activity": "Preparar y dictar charla de cómo mantenerse sano"
+  },
+  {
+    "col": 294,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CULTURAL",
+    "activity": "Promover 2 salidas a museo, sitios históricos, parques, exposiciones"
+  },
+  {
+    "col": 295,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CULTURAL",
+    "activity": "Realizar foro o charla de actividad cultural"
+  },
+  {
+    "col": 296,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CULTURAL",
+    "activity": "Diseñar y ejecutar una representación teatral de valores Scouts"
+  },
+  {
+    "col": 297,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CULTURAL",
+    "activity": "Diseñar y ejecutar cine-for"
+  },
+  {
+    "col": 298,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CULTURAL",
+    "activity": "Participar en evento cultural"
+  },
+  {
+    "col": 299,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CULTURAL",
+    "activity": "Participar en 2 cursos artesanales"
+  },
+  {
+    "col": 300,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO OCUPACIONAL",
+    "activity": "Practicar un oficio"
+  },
+  {
+    "col": 301,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO OCUPACIONAL",
+    "activity": "Describir el proceso productivo al cual se ha vinculado"
+  },
+  {
+    "col": 302,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO OCUPACIONAL",
+    "activity": "Inducir a un joven desocupado a integrarse a una labor"
+  },
+  {
+    "col": 303,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO OCUPACIONAL",
+    "activity": "Exponer normas de seguridad industrial"
+  },
+  {
+    "col": 304,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO OCUPACIONAL",
+    "activity": "Investigar posibilidades de mejorar su trabajo"
+  },
+  {
+    "col": 305,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO OCUPACIONAL",
+    "activity": "Asumir responsabilidad de su formación"
+  },
+  {
+    "col": 306,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO SOCIAL",
+    "activity": "Mantener documentación personal vigente"
+  },
+  {
+    "col": 307,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO SOCIAL",
+    "activity": "Dar a conocer a su Grupo en la comunidad"
+  },
+  {
+    "col": 308,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO SOCIAL",
+    "activity": "Integrar a los miembros del Clan en actividades con amigos no Scouts"
+  },
+  {
+    "col": 309,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO SOCIAL",
+    "activity": "Conocer y practicar normas de buena conducta"
+  },
+  {
+    "col": 310,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO SOCIAL",
+    "activity": "Participar en 3 noches Rovers o en 1 evento Nacional"
+  },
+  {
+    "col": 311,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO SOCIAL",
+    "activity": "Participar en un servicio en los campamentos de las unidades intermedias"
+  },
+  {
+    "col": 312,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO ESPIRITUAL",
+    "activity": "Inducir a miembros de su Grupo a participar en servicios de su iglesia"
+  },
+  {
+    "col": 313,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO ESPIRITUAL",
+    "activity": "Participar en charla sobre mística y Espíritu Scout"
+  },
+  {
+    "col": 314,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO ESPIRITUAL",
+    "activity": "Participar en convivencias y encuentros con otros clanes"
+  },
+  {
+    "col": 315,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO ESPIRITUAL",
+    "activity": "Realizar actividad de reflexión personal"
+  },
+  {
+    "col": 316,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO ESPIRITUAL",
+    "activity": "Demostrar los principios de su fé"
+  },
+  {
+    "col": 317,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO ESPIRITUAL",
+    "activity": "Planificar formas de superación personal"
+  },
+  {
+    "col": 318,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "Dirigir una mesa redonda o foro"
+  },
+  {
+    "col": 319,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "Participar en la programación de las actividades"
+  },
+  {
+    "col": 320,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "Participar en curso de toma de desiciones"
+  },
+  {
+    "col": 321,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "Organizar y dirigir 3 noches Rovers"
+  },
+  {
+    "col": 322,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "Dirigir actividad de comunicación"
+  },
+  {
+    "col": 323,
+    "super_area": "BÁSICAS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "Realizar curso de planificación y programación"
+  },
+  {
+    "col": 324,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "RELIGIÓN",
+    "activity": "Actuar como evangelizador"
+  },
+  {
+    "col": 325,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "RELIGIÓN",
+    "activity": "Conocer dogmas de otras religiones"
+  },
+  {
+    "col": 326,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "RELIGIÓN",
+    "activity": "Participar en servicio a su religión"
+  },
+  {
+    "col": 327,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "RELIGIÓN",
+    "activity": "Planificar y ejecutar actividades de introspección"
+  },
+  {
+    "col": 328,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "RELIGIÓN",
+    "activity": "Interesarse por las congregaciones de su religión"
+  },
+  {
+    "col": 329,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "RELIGIÓN",
+    "activity": "Fomentar paseos con niños de su religión"
+  },
+  {
+    "col": 330,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "FAMILIA",
+    "activity": "Participar en convivencias familiares"
+  },
+  {
+    "col": 331,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "FAMILIA",
+    "activity": "Inducir a sus familiares a tomar cursos de autoestima y relaciones humanas"
+  },
+  {
+    "col": 332,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "FAMILIA",
+    "activity": "Orientar a un familiar o amigo con problemas de conducta"
+  },
+  {
+    "col": 333,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "FAMILIA",
+    "activity": "Realizar actividad con valores familiares"
+  },
+  {
+    "col": 334,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "FAMILIA",
+    "activity": "Organizar actividad con su familia cercana"
+  },
+  {
+    "col": 335,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "FAMILIA",
+    "activity": "Inducir a su familia a participar en el Grupo Scout"
+  },
+  {
+    "col": 336,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "COMUNIDAD",
+    "activity": "Ejecutar un servicio para mejorar un sector de su comunidad"
+  },
+  {
+    "col": 337,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "COMUNIDAD",
+    "activity": "Defender el desarrollo de la naturaleza"
+  },
+  {
+    "col": 338,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "COMUNIDAD",
+    "activity": "Defender áreas comunes"
+  },
+  {
+    "col": 339,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "COMUNIDAD",
+    "activity": "Participar en campaña de vacunación"
+  },
+  {
+    "col": 340,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "COMUNIDAD",
+    "activity": "Crear campaña de mejoramiento de calidad de vida"
+  },
+  {
+    "col": 341,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "COMUNIDAD",
+    "activity": "Realizar evento e invitar autoridades civiles"
+  },
+  {
+    "col": 342,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "ESCUELA O TRABAJO",
+    "activity": "Tomar una materia o curso de verano"
+  },
+  {
+    "col": 343,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "ESCUELA O TRABAJO",
+    "activity": "Promover cursos de crecimiento personal"
+  },
+  {
+    "col": 344,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "ESCUELA O TRABAJO",
+    "activity": "Organizar foros, seminarios o charlas"
+  },
+  {
+    "col": 345,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "ESCUELA O TRABAJO",
+    "activity": "Promover y participar en la identificación del trabajo"
+  },
+  {
+    "col": 346,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "ESCUELA O TRABAJO",
+    "activity": "Organizar campeonatos deportivos o culturales"
+  },
+  {
+    "col": 347,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "ESCUELA O TRABAJO",
+    "activity": "Organizar cooperativa para formar o mejorar biblioteca"
+  },
+  {
+    "col": 348,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "IDENTIDAD NACIONAL",
+    "activity": "Participar en cursos, seminarios o eventos que refuerzan la venezolanidad"
+  },
+  {
+    "col": 349,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "IDENTIDAD NACIONAL",
+    "activity": "Actuar como guía histórico en su región"
+  },
+  {
+    "col": 350,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "IDENTIDAD NACIONAL",
+    "activity": "Asumir la defensa de sus derechos y obligaciones"
+  },
+  {
+    "col": 351,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "IDENTIDAD NACIONAL",
+    "activity": "Participar en elecciones nacionales o regionales"
+  },
+  {
+    "col": 352,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "IDENTIDAD NACIONAL",
+    "activity": "Participar en campañas en pro de la identidad nacional"
+  },
+  {
+    "col": 353,
+    "super_area": "OPCIONALES",
+    "area": "SERVICIO SOCIAL Y COMUNIDAD",
+    "sub_area": "IDENTIDAD NACIONAL",
+    "activity": "Elaborar y ejecutar un proyecto de servicio a una comunidad indígena"
+  },
+  {
+    "col": 354,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CAMPISMO",
+    "activity": "Participar en curso de supervivencia"
+  },
+  {
+    "col": 355,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CAMPISMO",
+    "activity": "Demostrar lo aprendido en curso de campismo"
+  },
+  {
+    "col": 356,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CAMPISMO",
+    "activity": "Especializarse en un curso de rescate y salvamento"
+  },
+  {
+    "col": 357,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CAMPISMO",
+    "activity": "Demostrar lo aprendido en primeros auxilios"
+  },
+  {
+    "col": 358,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CAMPISMO",
+    "activity": "Preparar y dictar charlas de primeros auxilios a las unidades intermedias"
+  },
+  {
+    "col": 359,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CAMPISMO",
+    "activity": "Preparar y dictar charlas de rescate y salvamento a las unidades intermedias"
+  },
+  {
+    "col": 360,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "PIONERISMO",
+    "activity": "Actuar como instructor en ramas menores en la construcción de una torre de observación (4 m)"
+  },
+  {
+    "col": 361,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "PIONERISMO",
+    "activity": "Elaborar exposición con maquetas de un campamento"
+  },
+  {
+    "col": 362,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "PIONERISMO",
+    "activity": "Elaborar campamento de pionerismo francés"
+  },
+  {
+    "col": 363,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "PIONERISMO",
+    "activity": "Tomar curso de cocina primitiva"
+  },
+  {
+    "col": 364,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "PIONERISMO",
+    "activity": "Elaborar en campamento 3 comidas sin utencilios"
+  },
+  {
+    "col": 365,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "PIONERISMO",
+    "activity": "Asumir el cargo de intendente por 6 meses"
+  },
+  {
+    "col": 366,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "ESPECIALIDADES (ACTIVIDADES)",
+    "activity": "Demostar lo aprendido en su especialidad"
+  },
+  {
+    "col": 367,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "ESPECIALIDADES (ACTIVIDADES)",
+    "activity": "Especializarse en un área de comunicación"
+  },
+  {
+    "col": 368,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "ESPECIALIDADES (ACTIVIDADES)",
+    "activity": "Participar en la planificación de un evento regional"
+  },
+  {
+    "col": 369,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "ESPECIALIDADES (ACTIVIDADES)",
+    "activity": "Crear y enseñar un tipo de comunicación"
+  },
+  {
+    "col": 370,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "ESPECIALIDADES (ACTIVIDADES)",
+    "activity": "Planificar y ejecutar una actividad del Jamboree del Aire"
+  },
+  {
+    "col": 371,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "ESPECIALIDADES (ACTIVIDADES)",
+    "activity": "Planificar y ejecutar actividades multitudinarias de su rama"
+  },
+  {
+    "col": 372,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "EXPLORACIÓN",
+    "activity": "Visitar 2 poblaciones desconocidas por él"
+  },
+  {
+    "col": 373,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "EXPLORACIÓN",
+    "activity": "Ayudar en actividades de exploración en unidades intermedias"
+  },
+  {
+    "col": 374,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "EXPLORACIÓN",
+    "activity": "Conocer 3 formas de comunicación no convencionales"
+  },
+  {
+    "col": 375,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "EXPLORACIÓN",
+    "activity": "Buscar sitios de adecuados de campamento"
+  },
+  {
+    "col": 376,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "EXPLORACIÓN",
+    "activity": "Participar en grupo excursionista"
+  },
+  {
+    "col": 377,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "EXPLORACIÓN",
+    "activity": "Promover 2 actividades de exploración con otros clanes"
+  },
+  {
+    "col": 378,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "LEY Y PROMESA",
+    "activity": "Servir de tutor de 2 jóvenes que inician la rama"
+  },
+  {
+    "col": 379,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "LEY Y PROMESA",
+    "activity": "Escoger y discutir un libro no Scout o película de crecimiento personal"
+  },
+  {
+    "col": 380,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "LEY Y PROMESA",
+    "activity": "Prestar un servicio a su Grupo"
+  },
+  {
+    "col": 381,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "LEY Y PROMESA",
+    "activity": "Participar en un curso de autoestima"
+  },
+  {
+    "col": 382,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "LEY Y PROMESA",
+    "activity": "Formar parte del equipo de servicio en un curso de autoestima"
+  },
+  {
+    "col": 383,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "LEY Y PROMESA",
+    "activity": "Respetar y acatar normas de su grupo y unidad"
+  },
+  {
+    "col": 384,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CONSERVACIÓN",
+    "activity": "Tomar curso de prevención de incendios forestales"
+  },
+  {
+    "col": 385,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CONSERVACIÓN",
+    "activity": "Involucrar a la comunidad y unidad en proyecto ecológico"
+  },
+  {
+    "col": 386,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CONSERVACIÓN",
+    "activity": "Prepara y dictar charla de prevención de incendios a las unidades menores"
+  },
+  {
+    "col": 387,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CONSERVACIÓN",
+    "activity": "Estudiar y dictar charla sobre flora y fauna de Venezuela"
+  },
+  {
+    "col": 388,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CONSERVACIÓN",
+    "activity": "Diseñar y llevar a cabo camaña de reciclaje"
+  },
+  {
+    "col": 389,
+    "super_area": "OPCIONALES",
+    "area": "VIVENCIA AL AIRE LIBRE",
+    "sub_area": "CONSERVACIÓN",
+    "activity": "Elaborar proyecto de cómo preservar nuestra etnias"
+  },
+  {
+    "col": 390,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CORPORAL",
+    "activity": "Formar parte de un equipo deportivo"
+  },
+  {
+    "col": 391,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CORPORAL",
+    "activity": "Participar en un curso de supervivencia, rapel, escalada libre, etc."
+  },
+  {
+    "col": 392,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CORPORAL",
+    "activity": "Tomar curso de rescate y salvamento"
+  },
+  {
+    "col": 393,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CORPORAL",
+    "activity": "Servir como sinodal en 2 actividades corporales de las unidades menores"
+  },
+  {
+    "col": 394,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CORPORAL",
+    "activity": "Crear actividades de bienestar físico"
+  },
+  {
+    "col": 395,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CORPORAL",
+    "activity": "Conocer su organismo y conservar un buen estado físico"
+  },
+  {
+    "col": 396,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CULTURAL",
+    "activity": "Inducir a miembros a participar en cursos artesanales"
+  },
+  {
+    "col": 397,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CULTURAL",
+    "activity": "Promover una exposición artesanal en su grupo"
+  },
+  {
+    "col": 398,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CULTURAL",
+    "activity": "Organizar un concierto en el grupo e invitar a organizaciones juveniles"
+  },
+  {
+    "col": 399,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CULTURAL",
+    "activity": "Organizar una fogata e invitar organizaciones juveniles"
+  },
+  {
+    "col": 400,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CULTURAL",
+    "activity": "Adquirir habilidades en una actividad artesanal"
+  },
+  {
+    "col": 401,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO CULTURAL",
+    "activity": "Organizar y participar en una feria artesanal en su grupo"
+  },
+  {
+    "col": 402,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO OCUPACIONAL",
+    "activity": "Ayudar a un compañero a conseguir empleo"
+  },
+  {
+    "col": 403,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO OCUPACIONAL",
+    "activity": "Tomar un curso (Computación. Electrónica, etc.)"
+  },
+  {
+    "col": 404,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO OCUPACIONAL",
+    "activity": "Elaborar metas para superar el puesto que ocupa en el trabajo"
+  },
+  {
+    "col": 405,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO OCUPACIONAL",
+    "activity": "Diseñar un proyecto para superar su producción"
+  },
+  {
+    "col": 406,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO OCUPACIONAL",
+    "activity": "Identificar medios para adquirir habilidades"
+  },
+  {
+    "col": 407,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO OCUPACIONAL",
+    "activity": "Demostrar sus capacidades personales para desempeñar labores"
+  },
+  {
+    "col": 408,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO SOCIAL",
+    "activity": "Visitar y comprenter instituciones nacionales (Ministerios, Congreso, etc.)"
+  },
+  {
+    "col": 409,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO SOCIAL",
+    "activity": "Integrarse a grupos de bienestar comunitario"
+  },
+  {
+    "col": 410,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO SOCIAL",
+    "activity": "Participar en actividades del Distrito"
+  },
+  {
+    "col": 411,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO SOCIAL",
+    "activity": "Participar por 1 mes en actividades de otro clan"
+  },
+  {
+    "col": 412,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO SOCIAL",
+    "activity": "Vincularse a proyectos de integración de los países"
+  },
+  {
+    "col": 413,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO SOCIAL",
+    "activity": "Mantener contacto con miembros de la hemandad Scout mundiales"
+  },
+  {
+    "col": 414,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO ESPIRITUAL",
+    "activity": "Ayudar a amigos a superar problemas"
+  },
+  {
+    "col": 415,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO ESPIRITUAL",
+    "activity": "Realizar servicio a la comunidad"
+  },
+  {
+    "col": 416,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO ESPIRITUAL",
+    "activity": "Preparar espiritualmente a un hermano Scout novato en la rama"
+  },
+  {
+    "col": 417,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO ESPIRITUAL",
+    "activity": "Escoger un grupo afín para un mejor crecimiento espiritual"
+  },
+  {
+    "col": 418,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO ESPIRITUAL",
+    "activity": "Participar en un retiro espiritual de su dogma de fé"
+  },
+  {
+    "col": 419,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESARROLLO ESPIRITUAL",
+    "activity": "Participar en 2 servicios espirituales de otra comunidad"
+  },
+  {
+    "col": 420,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "Organizar un foro con especialistas"
+  },
+  {
+    "col": 421,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "Proponer actividades donde se manifieste el liderazgo"
+  },
+  {
+    "col": 422,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "Participar en la programación de actividades de las unidades menores"
+  },
+  {
+    "col": 423,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "Dirigir una actividad artística"
+  },
+  {
+    "col": 424,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "Planificar, dirigir y desarrollar un servicio a la comunidad"
+  },
+  {
+    "col": 425,
+    "super_area": "OPCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "Tomar curso de idiomas o computación"
+  },
+  {
+    "col": 426,
+    "super_area": "ESPECIALIDADES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "BRONCE"
+  },
+  {
+    "col": 432,
+    "super_area": "ESPECIALIDADES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "PLATA"
+  },
+  {
+    "col": 438,
+    "super_area": "ESPECIALIDADES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "ORO"
+  },
+  {
+    "col": 444,
+    "super_area": "CURSOS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "HORQUETA BRONCE"
+  },
+  {
+    "col": 446,
+    "super_area": "CURSOS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "REMO PLATA"
+  },
+  {
+    "col": 448,
+    "super_area": "CURSOS",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "LIDERAZGO",
+    "activity": "CANOA ORO"
+  },
+  {
+    "col": 450,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "PRECRUSOR",
+    "activity": "NOCHES"
+  },
+  {
+    "col": 454,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "CAMPAMENTOS"
+  },
+  {
+    "col": 456,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "PEREGRINAJES"
+  },
+  {
+    "col": 458,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "PROYECTO CONTINUADO (3 MESES)"
+  },
+  {
+    "col": 460,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "EXPEDICIONARIO",
+    "activity": "NOCHES"
+  },
+  {
+    "col": 468,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "CAMPAMENTOS"
+  },
+  {
+    "col": 470,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "PEREGRINAJES"
+  },
+  {
+    "col": 472,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "PROYECTO CONTINUADO (6 MESES)"
+  },
+  {
+    "col": 474,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "DESCUBRIDOR",
+    "activity": "NOCHES"
+  },
+  {
+    "col": 485,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "FUNDADOR",
+    "activity": "CAMPAMENTOS"
+  },
+  {
+    "col": 488,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "FUNDADOR",
+    "activity": "PEREGRINAJES"
+  },
+  {
+    "col": 491,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "FUNDADOR",
+    "activity": "PROYECTO CONTINUADO (9 MESES)"
+  },
+  {
+    "col": 493,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "FUNDADOR",
+    "activity": "NOCHES"
+  },
+  {
+    "col": 506,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "CAMPAMENTOS"
+  },
+  {
+    "col": 509,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "PEREGRINAJES"
+  },
+  {
+    "col": 513,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "PROYECTO CONTINUADO (12 MESES)"
+  },
+  {
+    "col": 515,
+    "super_area": "VIDA DE GRUPO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "NOCHES"
+  },
+  {
+    "col": 531,
+    "super_area": "CONCURSO DE VIDA AL AIRE LIBRE",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "BRONCE"
+  },
+  {
+    "col": 533,
+    "super_area": "CONCURSO DE VIDA AL AIRE LIBRE",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "PLATA"
+  },
+  {
+    "col": 535,
+    "super_area": "CONCURSO DE VIDA AL AIRE LIBRE",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "ORO"
+  },
+  {
+    "col": 537,
+    "super_area": "CICLOS INSTITUCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "ACTIVIDADES A NIVEL DE GRUPO"
+  },
+  {
+    "col": 547,
+    "super_area": "CICLOS INSTITUCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "ACTIVIDADES A NIVEL DISTRITAL"
+  },
+  {
+    "col": 557,
+    "super_area": "CICLOS INSTITUCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "ACTIVIDADES A NIVEL REGIONAL"
+  },
+  {
+    "col": 567,
+    "super_area": "CICLOS INSTITUCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "ACTIVIDADES A NIVEL NACIONAL"
+  },
+  {
+    "col": 577,
+    "super_area": "CICLOS INSTITUCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "CREDITOS"
+  },
+  {
+    "col": 601,
+    "super_area": "CICLOS INSTITUCIONALES",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "TOTAL"
+  },
+  {
+    "col": 603,
+    "super_area": "CONCURSO DE ACCIÓN COMUNITARIA",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "BRONCE"
+  },
+  {
+    "col": 605,
+    "super_area": "CONCURSO DE ACCIÓN COMUNITARIA",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "PLATA"
+  },
+  {
+    "col": 607,
+    "super_area": "CONCURSO DE ACCIÓN COMUNITARIA",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "ROVER CIUDADANO",
+    "activity": "ORO"
+  },
+  {
+    "col": 609,
+    "super_area": "ROVER CIUDADANO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "OPCIONALES",
+    "activity": "9 Actividades cualesquiera adicionales (33 en total)"
+  },
+  {
+    "col": 611,
+    "super_area": "ROVER CIUDADANO",
+    "area": "DESARROLLO PERSONAL",
+    "sub_area": "PERSONALES",
+    "activity": "3 Actividades cualesquiera (FECHA DE REALIZACIÓN)"
+  }
+]
