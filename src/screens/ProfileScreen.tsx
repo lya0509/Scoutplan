@@ -237,6 +237,7 @@ export default function ProfileScreen() {
       cedula || user?.cedula,
     ];
     const filled = fields.filter(Boolean).length;
+    if (filled === fields.length) return 100;
     return Math.round((filled / fields.length) * 100);
   };
 
@@ -343,28 +344,18 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {/* BOTÓN PARA ABRIR CARNET SCOUT AL LLEGAR AL 100% */}
-        <TouchableOpacity
-          style={[
-            styles.carnetTriggerBtn,
-            { backgroundColor: completion === 100 ? colors.primary : (isDarkMode ? '#27272a' : '#f3f4f6') }
-          ]}
-          onPress={() => {
-            if (completion === 100) {
-              setShowCarnetModal(true);
-            } else {
-              showAlert('Perfil Incompleto', 'Debes completar el 100% de tus datos personales para acceder a tu Carnet Scout Oficial.');
-            }
-          }}
-        >
-          <ShieldCheck size={18} color={completion === 100 ? 'white' : (isDarkMode ? '#a1a1aa' : '#6b7280')} style={{ marginRight: 6 }} />
-          <Text style={[
-            styles.carnetTriggerText,
-            { color: completion === 100 ? 'white' : (isDarkMode ? '#a1a1aa' : '#6b7280') }
-          ]}>
-            {completion === 100 ? '🪪 VER Y DESCARGAR CARNET SCOUT OFICIAL' : `🪪 CARNET SCOUT (${completion}% COMPLETADO)`}
-          </Text>
-        </TouchableOpacity>
+        {/* ÚNICAMENTE CUANDO SE APRUEBE LA MEMBRESÍA/CARNET SE MUESTRA EL BOTÓN VERIFICADO */}
+        {membershipStatus === 'approved' && (
+          <TouchableOpacity
+            style={[styles.carnetTriggerBtn, { backgroundColor: colors.primary }]}
+            onPress={() => setShowCarnetModal(true)}
+          >
+            <ShieldCheck size={18} color="white" style={{ marginRight: 6 }} />
+            <Text style={[styles.carnetTriggerText, { color: 'white' }]}>
+              🪪 VER Y DESCARGAR CARNET SCOUT OFICIAL ✓
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* BARRA DE COMPLETITUD */}
