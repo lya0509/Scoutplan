@@ -463,45 +463,66 @@ export const dataService = {
   },
 
   // OBTENER Y GUARDAR PLAN TRIMESTRAL ÚNICO Y COMPARTIDO POR UNIDAD
-  async getUnitSharedQuarterlyPlan(unit: string, groupName: string, quarter: string, year: number) {
+  async getUnitSharedQuarterlyPlan(groupName: string, unit: string, quarter: string, year: number) {
     try {
       const { data: scouts } = await supabase
         .from('profiles')
         .select('id')
-        .eq('group_name', groupName || 'Grupo Scout Orión #84')
-        .eq('unit', (unit || 'clan').toLowerCase());
+        .eq('group_name', groupName)
+        .eq('unit', unit);
 
-      const scoutIds = scouts?.map(s => s.id) || [];
+      if (!scouts || scouts.length === 0) return null;
+      const scoutIds = scouts.map(s => s.id);
 
-      let query = supabase
+      const { data, error } = await supabase
         .from('quarterly_plans')
         .select('*')
+        .in('scout_id', scoutIds)
         .eq('quarter', quarter)
-        .eq('year', year);
+        .eq('year', year)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
 
-      if (scoutIds.length > 0) {
-        query = query.in('scout_id', scoutIds);
-      }
-
-      const { data, error } = await query.order('updated_at', { ascending: false }).limit(1).maybeSingle();
-
-      if (error && error.code !== 'PGRST116') {
-        console.warn('Aviso buscando plan trimestral compartido:', error.message);
-      }
-
-      if (data) {
-        if (typeof data.goals === 'string' && data.goals.startsWith('{')) {
-          try {
-            const parsed = JSON.parse(data.goals);
-            return { ...data, ...parsed };
-          } catch (e) {}
-        }
-        return data;
-      }
+      if (error && error.code !== 'PGRST116') console.warn('Aviso plan compartido:', error);
+      return data || null;
     } catch (e) {
-      console.error('Error en getUnitSharedQuarterlyPlan:', e);
+      return null;
     }
-    return null;
+  },
+
+  async updateLastSeen(scoutId: string) {
+    try {
+      await supabase.from('profiles').update({
+        updated_at: new Date().toISOString()
+      }).eq('id', scoutId);
+    } catch (e) {
+      console.warn('Aviso actualizando estado online:', e);
+    }
+  },
+
+  async getUnitRoversDirectory(groupName: string, unit: string) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, name, avatar_url, updated_at, unit, group_name, role')
+        .eq('group_name', groupName)
+        .eq('unit', unit);
+
+      if (error || !data) return [];
+      
+      const now = Date.now();
+      return data.map(p => {
+        const lastSeenTime = p.updated_at ? new Date(p.updated_at).getTime() : 0;
+        const isOnline = (now - lastSeenTime) < (5 * 60 * 1000);
+        return {
+          ...p,
+          isOnline
+        };
+      });
+    } catch (e) {
+      return [];
+    }
   },
 
   async updateQuarterlyPlanByScouter(planId: string, feedback: string, status: string) {

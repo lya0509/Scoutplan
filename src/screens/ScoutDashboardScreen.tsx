@@ -88,9 +88,18 @@ export default function ScoutDashboardScreen({ navigation }: any) {
     }, [])
   );
 
+  const [roversList, setRoversList] = useState<any[]>([]);
+
   const loadDashboardData = async () => {
     setLoading(true);
     if (!user) return;
+
+    // Actualizar estado online del usuario actual
+    await dataService.updateLastSeen(user.id);
+
+    // Obtener directorio de Rovers de la misma unidad
+    const rovers = await dataService.getUnitRoversDirectory(user.group_name || 'Grupo Scout Orión #84', user.unit || 'clan');
+    setRoversList(rovers);
 
     const unreadNotifs = await dataService.getUnreadNotifications(user.id);
     setNotifications(unreadNotifs);
@@ -225,6 +234,65 @@ export default function ScoutDashboardScreen({ navigation }: any) {
       ) : (
         <Text style={[styles.emptyText, { color: theme.subText }]}>No tienes etapas activas cargadas.</Text>
       )}
+
+      {/* DIRECTORIO Y ESTADO ONLINE DE ROVERS DE LA UNIDAD */}
+      <View style={{ marginBottom: 20 }}>
+        <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 8 }]}>⚜️ Comunidad Rover de la Unidad ({roversList.length})</Text>
+        {roversList.length === 0 ? (
+          <View style={[styles.emptyEventsCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+            <Text style={{ color: theme.subText, fontSize: 13 }}>Sé el primer Rover registrado en esta unidad.</Text>
+          </View>
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={{ flexDirection: 'row', gap: 10, paddingVertical: 4 }}>
+              {roversList.map(rover => (
+                <View
+                  key={rover.id}
+                  style={{
+                    backgroundColor: theme.cardBg,
+                    borderColor: theme.border,
+                    borderWidth: 1,
+                    borderRadius: 16,
+                    padding: 12,
+                    alignItems: 'center',
+                    minWidth: 110,
+                    elevation: 2,
+                  }}
+                >
+                  <View style={{ position: 'relative', marginBottom: 6 }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
+                      <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+                        {rover.name?.charAt(0)?.toUpperCase() || 'R'}
+                      </Text>
+                    </View>
+                    <View style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      right: 0,
+                      width: 12,
+                      height: 12,
+                      borderRadius: 6,
+                      backgroundColor: rover.isOnline ? '#22c55e' : '#9ca3af',
+                      borderWidth: 2,
+                      borderColor: 'white'
+                    }} />
+                  </View>
+
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text, textAlign: 'center' }} numberOfLines={1}>
+                    {rover.name || 'Rover'}
+                  </Text>
+                  
+                  <View style={{ backgroundColor: rover.isOnline ? 'rgba(34, 197, 94, 0.15)' : 'rgba(156, 163, 175, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginTop: 4 }}>
+                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: rover.isOnline ? '#16a34a' : '#6b7280' }}>
+                      {rover.isOnline ? '🟢 En línea' : '⚪ Desconectado'}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        )}
+      </View>
 
       {/* Próximos Eventos */}
       <View style={styles.sectionHeader}>
