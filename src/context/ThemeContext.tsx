@@ -5,12 +5,12 @@ import { colors as defaultColors } from '../theme/colors';
 export const THEME_COLOR_PRESETS = [
   { id: 'scout_purple', name: 'Morado Scout', hex: '#612499' },
   { id: 'scout_blue', name: 'Azul Marino', hex: '#1d4ed8' },
-  { id: 'scout_green', name: 'Verde Bosque', hex: '#15803d' },
-  { id: 'scout_red', name: 'Rojo Rover', hex: '#dc2626' },
-  { id: 'scout_orange', name: 'Naranja Fuego', hex: '#ea580c' },
-  { id: 'scout_yellow', name: 'Dorado Manada', hex: '#d97706' },
-  { id: 'scout_pink', name: 'Rosa Flor de Lis', hex: '#db2777' },
-  { id: 'scout_cyan', name: 'Cyan Aventura', hex: '#0891b2' },
+  { id: 'scout_green', name: 'Verde', hex: '#15803d' },
+  { id: 'scout_red', name: 'Rojo', hex: '#dc2626' },
+  { id: 'scout_orange', name: 'Naranja', hex: '#ea580c' },
+  { id: 'scout_yellow', name: 'Dorado', hex: '#d97706' },
+  { id: 'scout_pink', name: 'Rosa', hex: '#db2777' },
+  { id: 'scout_cyan', name: 'Cian', hex: '#0891b2' },
 ];
 
 interface ThemeContextType {

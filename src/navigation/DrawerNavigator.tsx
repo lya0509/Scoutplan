@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { colors } from '../theme/colors';
 import { UserScoutAvatar } from '../components/UserScoutAvatar';
-import { Moon, Sun, Palette, Download } from 'lucide-react-native';
+import { Moon, Sun, Palette } from 'lucide-react-native';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
 import { PWAInstallModal } from '../components/PWAInstallModal';
 
@@ -25,17 +25,10 @@ import CancioneroScreen from '../screens/CancioneroScreen';
 
 const Drawer = createDrawerNavigator();
 
-function HeaderRightButtons({ onOpenCustomizer, onOpenInstall }: { onOpenCustomizer: () => void; onOpenInstall: () => void }) {
+function HeaderRightButtons({ onOpenCustomizer }: { onOpenCustomizer: () => void }) {
   const { isDarkMode, toggleDarkMode } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginRight: 14 }}>
-      <TouchableOpacity
-        style={[styles.headerThemeBtn, { backgroundColor: '#16a34a' }]}
-        onPress={onOpenInstall}
-        activeOpacity={0.8}
-      >
-        <Download size={18} color="#ffffff" />
-      </TouchableOpacity>
       <TouchableOpacity
         style={styles.headerThemeBtn}
         onPress={onOpenCustomizer}
@@ -128,7 +121,6 @@ export default function DrawerNavigator() {
           headerRight: () => (
             <HeaderRightButtons 
               onOpenCustomizer={() => setShowCustomizer(true)} 
-              onOpenInstall={() => setShowInstall(true)} 
             />
           ),
           drawerStyle: { backgroundColor: isDarkMode ? '#000000' : '#ffffff' },

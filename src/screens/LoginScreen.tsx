@@ -11,11 +11,10 @@ import {
   Modal,
   useWindowDimensions
 } from 'react-native';
-import { Mail, Lock, Eye, EyeOff, Moon, Sun, KeyRound, CheckCircle2, Download } from 'lucide-react-native';
+import { Mail, Lock, Eye, EyeOff, Moon, Sun, KeyRound, CheckCircle2 } from 'lucide-react-native';
 import { supabase } from '../lib/supabaseClient';
 import { colors } from '../theme/colors';
 import { useTheme } from '../context/ThemeContext';
-import { PWAInstallModal } from '../components/PWAInstallModal';
 
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
@@ -30,7 +29,6 @@ export default function LoginScreen({ navigation }: any) {
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
-  const [showInstallModal, setShowInstallModal] = useState(false);
 
   const { width } = useWindowDimensions();
   const isWebLarge = width > 768;
@@ -206,22 +204,7 @@ export default function LoginScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Botón Instalar App */}
-        <TouchableOpacity
-          style={[styles.installPwaBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: theme.border }]}
-          onPress={() => setShowInstallModal(true)}
-          activeOpacity={0.8}
-        >
-          <Download size={16} color="#16a34a" style={{ marginRight: 8 }} />
-          <Text style={[styles.installPwaBtnText, { color: theme.text }]}>📲 Instalar App en tu Dispositivo</Text>
-        </TouchableOpacity>
-
       </View>
-
-      <PWAInstallModal
-        visible={showInstallModal}
-        onClose={() => setShowInstallModal(false)}
-      />
 
       {/* MODAL PARA RESTABLECER CONTRASEÑA */}
       <Modal visible={showForgotModal} transparent animationType="fade">

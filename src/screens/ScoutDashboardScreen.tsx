@@ -8,8 +8,7 @@ import { supabase } from '../lib/supabaseClient';
 import { dataService } from '../lib/dataService';
 import { colors } from '../theme/colors';
 import { useFocusEffect } from '@react-navigation/native';
-import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, Target, FileText, CheckCircle, Download } from 'lucide-react-native';
-import { PWAInstallModal } from '../components/PWAInstallModal';
+import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, Target, FileText, CheckCircle } from 'lucide-react-native';
 
 const UNIT_COLORS: Record<string, string> = {
   'manada': '#ffb300',
@@ -55,7 +54,6 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentSlide, setCurrentSlide]     = useState(0);
-  const [showInstallModal, setShowInstallModal] = useState(false);
 
   useEffect(() => {
     checkOnboarding();
@@ -217,26 +215,6 @@ export default function ScoutDashboardScreen({ navigation }: any) {
           </View>
         );
       })()}
-
-      {/* BANNER INSTALACIÓN DE APP */}
-      <TouchableOpacity
-        style={[styles.installCard, { backgroundColor: isDarkMode ? '#14532d' : '#f0fdf4', borderColor: '#16a34a' }]}
-        onPress={() => setShowInstallModal(true)}
-        activeOpacity={0.85}
-      >
-        <View style={[styles.installCardIcon, { backgroundColor: isDarkMode ? '#166534' : '#dcfce7' }]}>
-          <Download size={20} color="#16a34a" />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.installCardTitle, { color: isDarkMode ? '#86efac' : '#15803d' }]}>
-            📲 Instalar Plan Progresivo
-          </Text>
-          <Text style={[styles.installCardSubtitle, { color: isDarkMode ? '#bbf7d0' : '#166534' }]}>
-            Toca aquí para usarla como app en pantalla completa y offline
-          </Text>
-        </View>
-        <ChevronRight size={18} color="#16a34a" />
-      </TouchableOpacity>
 
       {/* Etapa Actual */}
       <View style={styles.sectionHeader}>
@@ -428,11 +406,6 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
       {/* BOTÓN FLOTANTE DE AYUDA Y REPORTES */}
       <HelpFloatingFAB />
-
-      <PWAInstallModal
-        visible={showInstallModal}
-        onClose={() => setShowInstallModal(false)}
-      />
     </View>
   );
 }
