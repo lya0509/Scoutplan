@@ -22,7 +22,7 @@ export default function LoginScreen({ navigation }: any) {
   const [loading, setLoading] = useState(false);
   
   const [showPassword, setShowPassword] = useState(false);
-  const { isDarkMode, toggleDarkMode } = useTheme();
+  const { isDarkMode, toggleDarkMode, theme } = useTheme();
 
   // Modal para restablecer contraseña
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -102,7 +102,7 @@ export default function LoginScreen({ navigation }: any) {
       color: isDarkMode ? '#ffffff' : '#09090b',
     },
     logoBg: {
-      backgroundColor: isDarkMode ? '#000000' : colors.primary,
+      backgroundColor: isDarkMode ? '#000000' : theme.primary,
     }
   };
 
@@ -183,11 +183,11 @@ export default function LoginScreen({ navigation }: any) {
               setShowForgotModal(true);
             }}
           >
-            <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+            <Text style={[styles.forgotText, { color: theme.primary }]}>¿Olvidaste tu contraseña?</Text>
           </TouchableOpacity>
 
           {/* Botón de Ingreso */}
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
+          <TouchableOpacity style={[styles.loginButton, { backgroundColor: theme.primary }]} onPress={handleLogin} disabled={loading}>
             {loading ? (
               <ActivityIndicator color="white" />
             ) : (
@@ -200,7 +200,7 @@ export default function LoginScreen({ navigation }: any) {
         <View style={styles.footerContainer}>
           <Text style={{ color: isDarkMode ? '#a1a1aa' : '#71717a', fontSize: 14 }}>¿No tienes cuenta? </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={styles.registerText}>Regístrate aquí</Text>
+            <Text style={[styles.registerText, { color: theme.primary }]}>Regístrate aquí</Text>
           </TouchableOpacity>
         </View>
 
