@@ -19,11 +19,18 @@ interface Props {
 
 // Variable global para capturar el evento de instalación nativo en Web
 let deferredInstallPrompt: any = null;
+const promptListeners = new Set<(prompt: any) => void>();
 
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeinstallprompt', (e: any) => {
     e.preventDefault();
     deferredInstallPrompt = e;
+    promptListeners.forEach(listener => listener(e));
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    promptListeners.forEach(listener => listener(null));
   });
 }
 
@@ -31,8 +38,15 @@ export function PWAInstallModal({ visible, onClose }: Props) {
   const { isDarkMode, theme, primaryColor } = useTheme();
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<any>(deferredInstallPrompt);
 
   useEffect(() => {
+    const handlePromptUpdate = (prompt: any) => {
+      setInstallPrompt(prompt);
+    };
+
+    promptListeners.add(handlePromptUpdate);
+
     if (typeof window !== 'undefined') {
       const isRunningStandalone =
         window.matchMedia('(display-mode: standalone)').matches ||
@@ -42,15 +56,21 @@ export function PWAInstallModal({ visible, onClose }: Props) {
       const userAgent = window.navigator.userAgent.toLowerCase();
       setIsIOS(/iphone|ipad|ipod/.test(userAgent));
     }
+
+    return () => {
+      promptListeners.delete(handlePromptUpdate);
+    };
   }, [visible]);
 
   const handleNativeInstall = async () => {
-    if (deferredInstallPrompt) {
-      deferredInstallPrompt.prompt();
-      const { outcome } = await deferredInstallPrompt.userChoice;
+    const promptToUse = installPrompt || deferredInstallPrompt;
+    if (promptToUse) {
+      promptToUse.prompt();
+      const { outcome } = await promptToUse.userChoice;
       if (outcome === 'accepted') {
-        showAlert('🎉 ¡Instalación Iniciada!', 'La aplicación de Plan Progresivo Scout se ha instalado en tu dispositivo.');
+        showAlert('🎉 ¡Instalación Iniciada!', 'La aplicación de Plan Progresivo se ha instalado en tu dispositivo.');
         deferredInstallPrompt = null;
+        setInstallPrompt(null);
         onClose();
       }
     } else if (isIOS) {
@@ -97,14 +117,14 @@ export function PWAInstallModal({ visible, onClose }: Props) {
                   Instala la aplicación en tu teléfono o PC para acceder sin barras de navegación, con carga instantánea y soporte 100% offline en campamentos.
                 </Text>
 
-                {deferredInstallPrompt ? (
+                {(installPrompt || deferredInstallPrompt) ? (
                   <TouchableOpacity
                     style={[styles.primaryInstallBtn, { backgroundColor: primaryColor }]}
                     onPress={handleNativeInstall}
                     activeOpacity={0.85}
                   >
                     <Download size={20} color="#ffffff" style={{ marginRight: 8 }} />
-                    <Text style={styles.primaryInstallBtnText}>Instalar Aplicación Ahora</Text>
+                    <Text style={styles.primaryInstallBtnText}>Instalar Aplicación Ahora (1-Clic)</Text>
                   </TouchableOpacity>
                 ) : isIOS ? (
                   <View style={[styles.iosInstructions, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }]}>
