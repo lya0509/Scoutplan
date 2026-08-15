@@ -1,26 +1,41 @@
 {
+  "id": "/",
   "short_name": "Plan Scout",
   "name": "Plan Progresivo Scout - ASV",
+  "description": "Aplicación oficial del Plan Progresivo Scout de la Asociación de Scouts de Venezuela (ASV).",
   "icons": [
     {
       "src": "/icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
     },
     {
       "src": "/icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
   "start_url": "/",
   "scope": "/",
-  "description": "Aplicación oficial del Plan Progresivo Scout de la Asociación de Scouts de Venezuela (ASV).",
   "background_color": "#612499",
   "theme_color": "#612499",
   "display": "standalone",
   "orientation": "portrait",
+  "prefer_related_applications": false,
   "categories": ["education", "productivity", "lifestyle"]
 }
+

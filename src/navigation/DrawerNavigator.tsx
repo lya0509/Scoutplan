@@ -7,6 +7,7 @@ import { colors } from '../theme/colors';
 import { UserScoutAvatar } from '../components/UserScoutAvatar';
 import { Moon, Sun, Palette } from 'lucide-react-native';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
+import { PWAInstallModal } from '../components/PWAInstallModal';
 
 // Pantallas del Drawer
 import ProfileScreen from '../screens/ProfileScreen';
@@ -50,7 +51,7 @@ function HeaderRightButtons({ onOpenCustomizer }: { onOpenCustomizer: () => void
   );
 }
 
-function CustomDrawerContent(props: any & { onOpenCustomizer: () => void }) {
+function CustomDrawerContent(props: any & { onOpenCustomizer: () => void; onOpenInstall: () => void }) {
   const { user, signOut } = useAuth();
   const { isDarkMode, primaryColor } = useTheme();
 
@@ -75,6 +76,12 @@ function CustomDrawerContent(props: any & { onOpenCustomizer: () => void }) {
         <DrawerItemList {...props} />
         
         <DrawerItem
+          label="📲 Instalar Aplicación"
+          onPress={props.onOpenInstall}
+          labelStyle={{ color: '#16a34a', fontWeight: 'bold' }}
+        />
+
+        <DrawerItem
           label="🎨 Personalizar Color"
           onPress={props.onOpenCustomizer}
           labelStyle={{ color: primaryColor, fontWeight: 'bold' }}
@@ -95,12 +102,19 @@ function CustomDrawerContent(props: any & { onOpenCustomizer: () => void }) {
 export default function DrawerNavigator() {
   const { isDarkMode, primaryColor } = useTheme();
   const [showCustomizer, setShowCustomizer] = useState(false);
+  const [showInstall, setShowInstall] = useState(false);
 
   return (
     <>
       <Drawer.Navigator
         backBehavior="history"
-        drawerContent={(props) => <CustomDrawerContent {...props} onOpenCustomizer={() => setShowCustomizer(true)} />}
+        drawerContent={(props) => (
+          <CustomDrawerContent 
+            {...props} 
+            onOpenCustomizer={() => setShowCustomizer(true)} 
+            onOpenInstall={() => setShowInstall(true)}
+          />
+        )}
         screenOptions={{
           headerStyle: { backgroundColor: isDarkMode ? '#000000' : primaryColor },
           headerTintColor: '#fff',
@@ -128,6 +142,11 @@ export default function DrawerNavigator() {
       <ThemeCustomizerModal
         visible={showCustomizer}
         onClose={() => setShowCustomizer(false)}
+      />
+
+      <PWAInstallModal
+        visible={showInstall}
+        onClose={() => setShowInstall(false)}
       />
     </>
   );
