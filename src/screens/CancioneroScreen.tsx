@@ -29,7 +29,14 @@ const SONGS_DATA: SongItem[] = [
     id: 'oracion_clan',
     title: 'Oración del Rover / Clan',
     category: 'oracion',
-    lyrics: `Dame Señor:\nUn corazón vigilante,\nque ningún pensamiento vano lo me alaje de Ti;\nun corazón noble,\nque ningún afecto indigno lo rebaje;\nun corazón recto,\nque ninguna intención mala lo desvíe;\nun corazón fuerte,\nque ninguna tribulación lo doblegue;\ny un corazón libre,\nque ninguna pasión lo esclavice.\n\nAmén.`
+    lyrics: `Dame Señor:
+Un corazón vigilante, que ningún pensamiento vano lo aleje de Ti;
+un corazón noble, que ningún afecto indigno rebaje;
+un corazón recto, que ninguna maldad lo desvíe;
+un corazón fuerte, que ninguna pasión lo esclavice;
+un corazón generoso, para siempre servir.
+
+Que así sea...`
   },
   {
     id: 'cancion_flor_de_lis',

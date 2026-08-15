@@ -16,8 +16,11 @@
     }
   ],
   "start_url": "/",
+  "scope": "/",
+  "description": "Aplicación oficial del Plan Progresivo Scout de la Asociación de Scouts de Venezuela (ASV).",
   "background_color": "#612499",
   "theme_color": "#612499",
   "display": "standalone",
-  "orientation": "portrait"
+  "orientation": "portrait",
+  "categories": ["education", "productivity", "lifestyle"]
 }

@@ -1,76 +1,205 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabaseClient';
 import { RequirementProgress, StageStatus } from '../types/progression';
 import { stagesData } from '../data/progressionTemplate';
 
+const SYNC_QUEUE_KEY = '@scout_offline_sync_queue';
+
+interface SyncQueueItem {
+  id: string;
+  scoutId: string;
+  stageId: string;
+  reqId: string;
+  completed: boolean;
+  timestamp: number;
+}
+
 export const dataService = {
-  async initializeScout(scoutId: string) {
-    const { data: existing } = await supabase
-      .from('stage_progress')
-      .select('id')
-      .eq('scout_id', scoutId)
-      .eq('stage_id', 'precursor')
-      .single();
-      
-    if (!existing) {
-      await supabase.from('stage_progress').insert({
-        scout_id: scoutId,
-        stage_id: 'precursor',
-        status: 'En Progreso'
+  // --- MOTOR DE SINCRONIZACIÓN OFFLINE ---
+  async getSyncQueue(): Promise<SyncQueueItem[]> {
+    try {
+      const raw = await AsyncStorage.getItem(SYNC_QUEUE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async addToSyncQueue(item: Omit<SyncQueueItem, 'id' | 'timestamp'>) {
+    try {
+      const queue = await this.getSyncQueue();
+      // Eliminar elementos previos del mismo requisito para no duplicar
+      const filtered = queue.filter(q => !(q.scoutId === item.scoutId && q.stageId === item.stageId && q.reqId === item.reqId));
+      filtered.push({
+        ...item,
+        id: `${item.scoutId}_${item.stageId}_${item.reqId}_${Date.now()}`,
+        timestamp: Date.now()
       });
+      await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(filtered));
+    } catch (e) {
+      console.warn('Error guardando en cola offline:', e);
+    }
+  },
+
+  async syncPendingRequirements(): Promise<{ synced: number; remaining: number }> {
+    const queue = await this.getSyncQueue();
+    if (queue.length === 0) return { synced: 0, remaining: 0 };
+
+    const remainingItems: SyncQueueItem[] = [];
+    let syncedCount = 0;
+
+    for (const item of queue) {
+      try {
+        const { data: existing } = await supabase
+          .from('requirement_progress')
+          .select('id')
+          .eq('scout_id', item.scoutId)
+          .eq('stage_id', item.stageId)
+          .eq('requirement_id', item.reqId)
+          .single();
+
+        if (existing) {
+          await supabase
+            .from('requirement_progress')
+            .update({ completed: item.completed, updated_at: new Date().toISOString() })
+            .eq('id', existing.id);
+        } else {
+          await supabase
+            .from('requirement_progress')
+            .insert({
+              scout_id: item.scoutId,
+              stage_id: item.stageId,
+              requirement_id: item.reqId,
+              completed: item.completed
+            });
+        }
+        syncedCount++;
+      } catch (err) {
+        // Si aún no hay conexión, se mantiene en la cola
+        remainingItems.push(item);
+      }
+    }
+
+    try {
+      await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(remainingItems));
+    } catch {}
+
+    return { synced: syncedCount, remaining: remainingItems.length };
+  },
+
+  async initializeScout(scoutId: string) {
+    try {
+      const { data: existing } = await supabase
+        .from('stage_progress')
+        .select('id')
+        .eq('scout_id', scoutId)
+        .eq('stage_id', 'precursor')
+        .single();
+        
+      if (!existing) {
+        await supabase.from('stage_progress').insert({
+          scout_id: scoutId,
+          stage_id: 'precursor',
+          status: 'En Progreso'
+        });
+      }
+    } catch (e) {
+      console.warn('Initialize scout offline/cache mode');
     }
   },
 
   async getStageStatus(scoutId: string, stageId: string): Promise<StageStatus> {
-    const { data } = await supabase
-      .from('stage_progress')
-      .select('status')
-      .eq('scout_id', scoutId)
-      .eq('stage_id', stageId)
-      .single();
-      
-    return (data?.status as StageStatus) || 'En Progreso';
+    try {
+      const { data } = await supabase
+        .from('stage_progress')
+        .select('status')
+        .eq('scout_id', scoutId)
+        .eq('stage_id', stageId)
+        .single();
+        
+      if (data?.status) {
+        AsyncStorage.setItem(`@scout_stage_status_${scoutId}_${stageId}`, data.status).catch(() => {});
+        return data.status as StageStatus;
+      }
+    } catch (e) {
+      // Fallback a almacenamiento local offline
+      const local = await AsyncStorage.getItem(`@scout_stage_status_${scoutId}_${stageId}`);
+      if (local) return local as StageStatus;
+    }
+    return 'En Progreso';
   },
 
   async getRequirement(scoutId: string, stageId: string, reqId: string): Promise<boolean> {
-    const { data } = await supabase
-      .from('requirement_progress')
-      .select('completed')
-      .eq('scout_id', scoutId)
-      .eq('stage_id', stageId)
-      .eq('requirement_id', reqId)
-      .single();
-      
-    return data?.completed || false;
+    const localKey = `@scout_req_${scoutId}_${stageId}_${reqId}`;
+    try {
+      const { data } = await supabase
+        .from('requirement_progress')
+        .select('completed')
+        .eq('scout_id', scoutId)
+        .eq('stage_id', stageId)
+        .eq('requirement_id', reqId)
+        .single();
+        
+      if (data !== undefined && data !== null) {
+        AsyncStorage.setItem(localKey, String(data.completed)).catch(() => {});
+        return data.completed;
+      }
+    } catch (e) {
+      // Si estamos sin conexión, leer del almacenamiento local
+      const local = await AsyncStorage.getItem(localKey);
+      if (local !== null) {
+        return local === 'true';
+      }
+    }
+    const local = await AsyncStorage.getItem(localKey);
+    return local === 'true';
   },
 
   async getCompletedCatalogActivityIds(scoutId: string): Promise<string[]> {
-    const { data } = await supabase
-      .from('requirement_progress')
-      .select('requirement_id')
-      .eq('scout_id', scoutId)
-      .eq('completed', true);
+    try {
+      const { data } = await supabase
+        .from('requirement_progress')
+        .select('requirement_id')
+        .eq('scout_id', scoutId)
+        .eq('completed', true);
 
-    if (!data) return [];
-    return data.map(item => item.requirement_id);
+      if (data) {
+        const ids = data.map(item => item.requirement_id);
+        AsyncStorage.setItem(`@scout_catalog_ids_${scoutId}`, JSON.stringify(ids)).catch(() => {});
+        return ids;
+      }
+    } catch (e) {
+      const local = await AsyncStorage.getItem(`@scout_catalog_ids_${scoutId}`);
+      if (local) return JSON.parse(local);
+    }
+    return [];
   },
 
   async getProgressForAllStages(scoutId: string) {
-    const { data: completedReqs } = await supabase
-      .from('requirement_progress')
-      .select('stage_id, requirement_id')
-      .eq('scout_id', scoutId)
-      .eq('completed', true);
+    let completedReqSet = new Set<string>();
+    try {
+      const { data: completedReqs } = await supabase
+        .from('requirement_progress')
+        .select('stage_id, requirement_id')
+        .eq('scout_id', scoutId)
+        .eq('completed', true);
 
-    const completedReqSet = new Set<string>();
-    if (completedReqs) {
-      completedReqs.forEach(req => {
-        completedReqSet.add(`${req.stage_id}:${req.requirement_id}`);
-      });
+      if (completedReqs) {
+        completedReqs.forEach(req => {
+          completedReqSet.add(`${req.stage_id}:${req.requirement_id}`);
+        });
+        AsyncStorage.setItem(`@scout_all_completed_${scoutId}`, JSON.stringify(Array.from(completedReqSet))).catch(() => {});
+      }
+    } catch (e) {
+      const local = await AsyncStorage.getItem(`@scout_all_completed_${scoutId}`);
+      if (local) {
+        const arr = JSON.parse(local);
+        completedReqSet = new Set(arr);
+      }
     }
 
     return stagesData.map(stageTemplate => {
       const totalReqs = stageTemplate.requirements.length;
-      // Solo contar requisitos principales de la plantilla de la etapa
       const completed = stageTemplate.requirements.filter(r => 
         completedReqSet.has(`${stageTemplate.id}:${r.id}`)
       ).length;
@@ -89,28 +218,45 @@ export const dataService = {
   },
 
   async toggleRequirement(scoutId: string, stageId: string, reqId: string, completed: boolean) {
-    const { data: existing } = await supabase
-      .from('requirement_progress')
-      .select('id')
-      .eq('scout_id', scoutId)
-      .eq('stage_id', stageId)
-      .eq('requirement_id', reqId)
-      .single();
+    const localKey = `@scout_req_${scoutId}_${stageId}_${reqId}`;
+    // 1. Guardar de inmediato en almacenamiento local para respuesta instantánea (Offline-first)
+    await AsyncStorage.setItem(localKey, String(completed));
 
-    if (existing) {
-      await supabase
+    // 2. Registrar en la cola de sincronización pendiente
+    await this.addToSyncQueue({ scoutId, stageId, reqId, completed });
+
+    // 3. Intentar enviar a Supabase de inmediato si hay conexión
+    try {
+      const { data: existing } = await supabase
         .from('requirement_progress')
-        .update({ completed, updated_at: new Date().toISOString() })
-        .eq('id', existing.id);
-    } else {
-      await supabase
-        .from('requirement_progress')
-        .insert({
-          scout_id: scoutId,
-          stage_id: stageId,
-          requirement_id: reqId,
-          completed
-        });
+        .select('id')
+        .eq('scout_id', scoutId)
+        .eq('stage_id', stageId)
+        .eq('requirement_id', reqId)
+        .single();
+
+      if (existing) {
+        await supabase
+          .from('requirement_progress')
+          .update({ completed, updated_at: new Date().toISOString() })
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('requirement_progress')
+          .insert({
+            scout_id: scoutId,
+            stage_id: stageId,
+            requirement_id: reqId,
+            completed
+          });
+      }
+
+      // Si se envió exitosamente, limpiar de la cola pendiente
+      const queue = await this.getSyncQueue();
+      const filtered = queue.filter(q => !(q.scoutId === scoutId && q.stageId === stageId && q.reqId === reqId));
+      await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(filtered));
+    } catch (err) {
+      console.log('Guardado localmente en modo Offline. Se sincronizará al volver la conexión.');
     }
   },
 

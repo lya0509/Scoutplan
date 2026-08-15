@@ -66,18 +66,11 @@ export default function AppNavigator() {
   const { user, isLoading } = useAuth();
   const navigationRef = React.useRef<any>(null);
 
-  // Interceptar la navegación del navegador para que la tecla Atras navegue por las pantallas de la app en bucle seguro
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.history.pushState({ appPage: true }, '', window.location.href);
-
       const handlePopState = (event: PopStateEvent) => {
         if (navigationRef.current && navigationRef.current.canGoBack()) {
           navigationRef.current.goBack();
-          window.history.pushState({ appPage: true }, '', window.location.href);
-        } else {
-          // Prevenir salida accidental a Google si estamos en la pantalla inicial
-          window.history.pushState({ appPage: true }, '', window.location.href);
         }
       };
 
