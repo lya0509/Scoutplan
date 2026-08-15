@@ -20,8 +20,8 @@
     },
     "web": {
       "favicon": "./assets/favicon.png",
-      "name": "Plan Progresivo Scout",
-      "shortName": "Plan Scout",
+      "name": "Plan Progresivo",
+      "shortName": "Plan Progresivo",
       "themeColor": "#612499",
       "backgroundColor": "#612499",
       "display": "standalone",

@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "short_name": "Plan Scout",
-  "name": "Plan Progresivo Scout - ASV",
+  "short_name": "Plan Progresivo",
+  "name": "Plan Progresivo",
   "description": "Aplicación oficial del Plan Progresivo Scout de la Asociación de Scouts de Venezuela (ASV).",
   "icons": [
     {
