@@ -20,9 +20,10 @@ import { stagesData } from '../data/progressionTemplate';
 import { colors } from '../theme/colors';
 import {
   Users, ChevronDown, ChevronUp,
-  Calendar, LogOut, Trash2, Plus, Flag, X, Moon, Sun, Compass, Camera, ShieldCheck, Ban, CheckCircle, ImageOff
+  Calendar, LogOut, Trash2, Plus, Flag, X, Moon, Sun, Compass, Camera, ShieldCheck, Ban, CheckCircle, ImageOff, Download
 } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
+import { PWAInstallModal } from '../components/PWAInstallModal';
 
 const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
   'Aprobada':    { color: '#22c55e', label: 'Aprobada' },
@@ -376,6 +377,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
   const [showPhotoRejectModal, setShowPhotoRejectModal] = useState(false);
   const [photoRejectReason, setPhotoRejectReason] = useState('');
   const [photoRejectScout, setPhotoRejectScout] = useState<any>(null);
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   useFocusEffect(
     useCallback(() => { loadScouts(); }, [])
@@ -469,6 +471,13 @@ export default function ScouterDashboardScreen({ navigation }: any) {
         </View>
 
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+          <TouchableOpacity 
+            style={[styles.calendarIconBtn, { backgroundColor: '#16a34a' }]}
+            onPress={() => setShowInstallModal(true)}
+          >
+            <Download color="white" size={20} />
+          </TouchableOpacity>
+
           <TouchableOpacity 
             style={[styles.calendarIconBtn, { backgroundColor: isDarkMode ? '#27272a' : 'rgba(255,255,255,0.2)' }]}
             onPress={toggleDarkMode}
@@ -869,6 +878,11 @@ export default function ScouterDashboardScreen({ navigation }: any) {
 
       {/* BOTÓN FLOTANTE DE AYUDA Y REPORTES */}
       <HelpFloatingFAB />
+
+      <PWAInstallModal
+        visible={showInstallModal}
+        onClose={() => setShowInstallModal(false)}
+      />
     </View>
   );
 }

@@ -6,7 +6,8 @@ import { useTheme } from '../context/ThemeContext';
 import HelpFloatingFAB from '../components/HelpFloatingFAB';
 import { supabase } from '../lib/supabaseClient';
 import { colors } from '../theme/colors';
-import { Users, Award, Calendar, Moon, Sun, FileText, ChevronRight, Camera } from 'lucide-react-native';
+import { Users, Award, Calendar, Moon, Sun, FileText, ChevronRight, Camera, Download } from 'lucide-react-native';
+import { PWAInstallModal } from '../components/PWAInstallModal';
 
 export default function JefeGrupoScreen({ navigation }: any) {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
   const [groupScouts, setGroupScouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -81,6 +83,13 @@ export default function JefeGrupoScreen({ navigation }: any) {
         </View>
 
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+          <TouchableOpacity 
+            style={[styles.iconBtn, { backgroundColor: '#16a34a' }]} 
+            onPress={() => setShowInstallModal(true)}
+          >
+            <Download color="white" size={20} />
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.iconBtn} onPress={toggleDarkMode}>
             {isDarkMode ? <Sun color="#f59e0b" size={20} /> : <Moon color="white" size={20} />}
           </TouchableOpacity>
@@ -178,6 +187,11 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
       {/* BOTÓN FLOTANTE DE AYUDA Y REPORTES */}
       <HelpFloatingFAB />
+
+      <PWAInstallModal
+        visible={showInstallModal}
+        onClose={() => setShowInstallModal(false)}
+      />
     </View>
   );
 }

@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { colors } from '../theme/colors';
 import { UserScoutAvatar } from '../components/UserScoutAvatar';
-import { Moon, Sun, Palette } from 'lucide-react-native';
+import { Moon, Sun, Palette, Download } from 'lucide-react-native';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
 import { PWAInstallModal } from '../components/PWAInstallModal';
 
@@ -25,16 +25,23 @@ import CancioneroScreen from '../screens/CancioneroScreen';
 
 const Drawer = createDrawerNavigator();
 
-function HeaderRightButtons({ onOpenCustomizer }: { onOpenCustomizer: () => void }) {
+function HeaderRightButtons({ onOpenCustomizer, onOpenInstall }: { onOpenCustomizer: () => void; onOpenInstall: () => void }) {
   const { isDarkMode, toggleDarkMode } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginRight: 14 }}>
+      <TouchableOpacity
+        style={[styles.headerThemeBtn, { backgroundColor: '#16a34a' }]}
+        onPress={onOpenInstall}
+        activeOpacity={0.8}
+      >
+        <Download size={18} color="#ffffff" />
+      </TouchableOpacity>
       <TouchableOpacity
         style={styles.headerThemeBtn}
         onPress={onOpenCustomizer}
         activeOpacity={0.8}
       >
-        <Palette size={19} color="#ffffff" />
+        <Palette size={18} color="#ffffff" />
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.headerThemeBtn}
@@ -42,9 +49,9 @@ function HeaderRightButtons({ onOpenCustomizer }: { onOpenCustomizer: () => void
         activeOpacity={0.8}
       >
         {isDarkMode ? (
-          <Sun size={19} color="#f59e0b" />
+          <Sun size={18} color="#f59e0b" />
         ) : (
-          <Moon size={19} color="#ffffff" />
+          <Moon size={18} color="#ffffff" />
         )}
       </TouchableOpacity>
     </View>
@@ -118,7 +125,12 @@ export default function DrawerNavigator() {
         screenOptions={{
           headerStyle: { backgroundColor: isDarkMode ? '#000000' : primaryColor },
           headerTintColor: '#fff',
-          headerRight: () => <HeaderRightButtons onOpenCustomizer={() => setShowCustomizer(true)} />,
+          headerRight: () => (
+            <HeaderRightButtons 
+              onOpenCustomizer={() => setShowCustomizer(true)} 
+              onOpenInstall={() => setShowInstall(true)} 
+            />
+          ),
           drawerStyle: { backgroundColor: isDarkMode ? '#000000' : '#ffffff' },
           drawerActiveBackgroundColor: primaryColor,
           drawerActiveTintColor: '#ffffff',

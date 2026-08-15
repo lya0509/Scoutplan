@@ -8,7 +8,8 @@ import { supabase } from '../lib/supabaseClient';
 import { dataService } from '../lib/dataService';
 import { colors } from '../theme/colors';
 import { useFocusEffect } from '@react-navigation/native';
-import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, Target, FileText, CheckCircle } from 'lucide-react-native';
+import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, Target, FileText, CheckCircle, Download } from 'lucide-react-native';
+import { PWAInstallModal } from '../components/PWAInstallModal';
 
 const UNIT_COLORS: Record<string, string> = {
   'manada': '#ffb300',
@@ -54,6 +55,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentSlide, setCurrentSlide]     = useState(0);
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   useEffect(() => {
     checkOnboarding();
@@ -215,6 +217,26 @@ export default function ScoutDashboardScreen({ navigation }: any) {
           </View>
         );
       })()}
+
+      {/* BANNER INSTALACIÓN DE APP */}
+      <TouchableOpacity
+        style={[styles.installCard, { backgroundColor: isDarkMode ? '#14532d' : '#f0fdf4', borderColor: '#16a34a' }]}
+        onPress={() => setShowInstallModal(true)}
+        activeOpacity={0.85}
+      >
+        <View style={[styles.installCardIcon, { backgroundColor: isDarkMode ? '#166534' : '#dcfce7' }]}>
+          <Download size={20} color="#16a34a" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.installCardTitle, { color: isDarkMode ? '#86efac' : '#15803d' }]}>
+            📲 Instalar Plan Progresivo
+          </Text>
+          <Text style={[styles.installCardSubtitle, { color: isDarkMode ? '#bbf7d0' : '#166534' }]}>
+            Toca aquí para usarla como app en pantalla completa y offline
+          </Text>
+        </View>
+        <ChevronRight size={18} color="#16a34a" />
+      </TouchableOpacity>
 
       {/* Etapa Actual */}
       <View style={styles.sectionHeader}>
@@ -406,6 +428,11 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
       {/* BOTÓN FLOTANTE DE AYUDA Y REPORTES */}
       <HelpFloatingFAB />
+
+      <PWAInstallModal
+        visible={showInstallModal}
+        onClose={() => setShowInstallModal(false)}
+      />
     </View>
   );
 }
@@ -426,15 +453,40 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between'
   },
   notifTitle: { fontWeight: 'bold', color: '#991B1B', fontSize: 13 },
+  notifBody: { color: '#7F1D1D', fontSize: 12, marginTop: 2 },
   notifReason: { color: '#B91C1C', fontSize: 12, marginTop: 2 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 8 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginLeft: 8 },
+  installCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    marginBottom: 16,
+    gap: 12
+  },
+  installCardIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  installCardTitle: {
+    fontSize: 14,
+    fontWeight: 'bold'
+  },
+  installCardSubtitle: {
+    fontSize: 11,
+    marginTop: 2
+  },
   welcomeCard: { backgroundColor: colors.primary, borderRadius: 16, padding: 20, marginBottom: 20 },
   welcomeTag: { color: '#E0D4F7', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 4 },
   welcomeName: { color: '#FFF', fontSize: 22, fontWeight: 'bold' },
   welcomeGroup: { color: '#E0D4F7', fontSize: 13, marginTop: 4 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 4 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', marginLeft: 8 },
   seeAllText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
-  stageCard: { borderRadius: 14, padding: 16, marginBottom: 20, borderWidth: 1 },
+  stageCard: { borderRadius: 16, padding: 16, marginBottom: 20, borderWidth: 1 },
   stageCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   stageName: { fontSize: 18, fontWeight: 'bold' },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
