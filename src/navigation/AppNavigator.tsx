@@ -22,6 +22,7 @@ import FichaMedicaScreen from '../screens/FichaMedicaScreen';
 import CurriculumScoutScreen from '../screens/CurriculumScoutScreen';
 import NudosManualScreen from '../screens/NudosManualScreen';
 import CancioneroScreen from '../screens/CancioneroScreen';
+import DocumentosScreen from '../screens/DocumentosScreen';
 
 import DrawerNavigator from './DrawerNavigator';
 
@@ -57,7 +58,8 @@ const linking = {
       FichaMedica: 'ficha-medica',
       CurriculumScout: 'curriculo',
       NudosManual: 'manual-nudos',
-      Cancionero: 'cancionero-scout'
+      Cancionero: 'cancionero-scout',
+      Documentos: 'documentos'
     }
   }
 };
@@ -131,6 +133,7 @@ export default function AppNavigator() {
             <Stack.Screen name="CurriculumScout" component={CurriculumScoutScreen} options={{ headerShown: true, title: 'Currículum Scout Joven' }} />
             <Stack.Screen name="NudosManual" component={NudosManualScreen} options={{ headerShown: true, title: 'Manual de Nudos (Offline)' }} />
             <Stack.Screen name="Cancionero" component={CancioneroScreen} options={{ headerShown: true, title: 'Cancionero Scout (Offline)' }} />
+            <Stack.Screen name="Documentos" component={DocumentosScreen} options={{ headerShown: true, title: 'Documentos y Guías Scout' }} />
           </Stack.Group>
         )}
       </Stack.Navigator>

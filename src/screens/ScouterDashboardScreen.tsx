@@ -20,7 +20,7 @@ import { stagesData } from '../data/progressionTemplate';
 import { colors } from '../theme/colors';
 import {
   Users, ChevronDown, ChevronUp,
-  Calendar, LogOut, Trash2, Plus, Flag, X, Moon, Sun, Compass, Camera, ShieldCheck, Ban, CheckCircle, ImageOff
+  Calendar, LogOut, Trash2, Plus, Flag, X, Moon, Sun, Compass, Camera, ShieldCheck, Ban, CheckCircle, ImageOff, BookOpen
 } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 
@@ -488,6 +488,13 @@ export default function ScouterDashboardScreen({ navigation }: any) {
             onPress={() => navigation.navigate('QuarterlyPlan')}
           >
             <Compass color="white" size={20} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.calendarIconBtn, { backgroundColor: isDarkMode ? '#3f3f46' : colors.primaryLight }]}
+            onPress={() => navigation.navigate('Documentos')}
+          >
+            <BookOpen color="white" size={20} />
           </TouchableOpacity>
 
           <TouchableOpacity 

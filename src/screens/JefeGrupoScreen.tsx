@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import HelpFloatingFAB from '../components/HelpFloatingFAB';
 import { supabase } from '../lib/supabaseClient';
 import { colors } from '../theme/colors';
-import { Users, Award, Calendar, Moon, Sun, FileText, ChevronRight, Camera } from 'lucide-react-native';
+import { Users, Award, Calendar, Moon, Sun, FileText, ChevronRight, Camera, BookOpen } from 'lucide-react-native';
 
 export default function JefeGrupoScreen({ navigation }: any) {
   const { user } = useAuth();
@@ -87,6 +87,10 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('TemporalDrive')}>
             <Camera color="white" size={20} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Documentos')}>
+            <BookOpen color="white" size={20} />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('CalendarStandalone')}>

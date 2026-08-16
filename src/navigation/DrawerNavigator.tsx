@@ -22,6 +22,7 @@ import FichaMedicaScreen from '../screens/FichaMedicaScreen';
 import CurriculumScoutScreen from '../screens/CurriculumScoutScreen';
 import NudosManualScreen from '../screens/NudosManualScreen';
 import CancioneroScreen from '../screens/CancioneroScreen';
+import DocumentosScreen from '../screens/DocumentosScreen';
 
 const Drawer = createDrawerNavigator();
 
@@ -138,6 +139,7 @@ export default function DrawerNavigator() {
         <Drawer.Screen name="CurriculumScoutDrawer" component={CurriculumScoutScreen} options={{ drawerLabel: 'Currículum Scout Joven', title: 'Currículum Scout Joven' }} />
         <Drawer.Screen name="NudosManualDrawer" component={NudosManualScreen} options={{ drawerLabel: 'Manual de Nudos (Offline)', title: 'Manual de Nudos y Amarres' }} />
         <Drawer.Screen name="CancioneroDrawer" component={CancioneroScreen} options={{ drawerLabel: 'Cancionero y Oraciones (Offline)', title: 'Cancionero & Oraciones Scout' }} />
+        <Drawer.Screen name="DocumentosDrawer" component={DocumentosScreen} options={{ drawerLabel: 'Documentos y Guías (PDF)', title: 'Documentos y Guías Scout' }} />
         <Drawer.Screen name="CertificadosDrawer" component={CertificateUploadScreen} options={{ drawerLabel: 'Mis Certificados', title: 'Mis Certificados' }} />
         <Drawer.Screen name="CentroActividades" component={ActivityCenterScreen} options={{ drawerLabel: 'Centro de Actividades', title: 'Actividades' }} />
         <Drawer.Screen name="Calendario" component={CalendarScreen} />
