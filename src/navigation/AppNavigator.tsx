@@ -93,7 +93,14 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer ref={navigationRef} linking={linking}>
-      <Stack.Navigator screenOptions={{ headerShown: false, gestureEnabled: true, fullScreenGestureEnabled: true, animation: 'slide_from_right' }}>
+      <Stack.Navigator 
+        screenOptions={{ 
+          headerShown: false, 
+          gestureEnabled: Platform.OS === 'ios', 
+          fullScreenGestureEnabled: false, 
+          animation: 'slide_from_right' 
+        }}
+      >
         {!user ? (
           <Stack.Group>
             <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Ingresar' }} />
