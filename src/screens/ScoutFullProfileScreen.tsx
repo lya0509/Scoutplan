@@ -16,6 +16,7 @@ import { supabase } from '../lib/supabaseClient';
 import { dataService } from '../lib/dataService';
 import { stagesData } from '../data/progressionTemplate';
 import { UserScoutAvatar } from '../components/UserScoutAvatar';
+import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import { StageBadgeIcon } from '../components/StageBadgeIcon';
 import { certificateCategories, specialtyLevels } from '../data/specialtiesData';
 import { colors } from '../theme/colors';
@@ -159,7 +160,14 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
       {/* TARJETA SUPERIOR DE PERFIL DE SCOUT */}
       <View style={[styles.profileHeaderCard, { backgroundColor: isDarkMode ? '#121214' : 'white', borderColor: theme.border }]}>
         <View style={styles.avatarRow}>
-          <UserScoutAvatar unit={profile?.unit} role="scout" size={80} />
+          <DualProfileAvatar
+            scoutAvatarUrl={profile?.avatar_url}
+            customAvatarUrl={profile?.custom_avatar_url}
+            unit={profile?.unit}
+            role="scout"
+            size={80}
+            editable={false}
+          />
           <View style={{ flex: 1, marginLeft: 16 }}>
             <Text style={[styles.scoutName, { color: theme.text }]}>{profile?.name || 'Scout'}</Text>
             <View style={styles.badgePill}>

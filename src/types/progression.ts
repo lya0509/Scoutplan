@@ -11,6 +11,7 @@ export interface Profile {
   region?: string | null;
   district?: string | null;
   avatar_url: string | null;
+  custom_avatar_url?: string | null;
   scout_card_url?: string | null;
   role: Role;
   unit: Unit | null;

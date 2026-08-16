@@ -10,7 +10,9 @@ import { supabase } from '../lib/supabaseClient';
 import { colors } from '../theme/colors';
 import { Edit2, ShieldCheck, AlertTriangle, Plus, Camera, CheckCircle } from 'lucide-react-native';
 import { UserScoutAvatar } from '../components/UserScoutAvatar';
+import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import { CarnetScoutModal } from '../components/CarnetScoutModal';
+import { storageService } from '../lib/storageService';
 import { showAlert } from '../utils/alert';
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
@@ -195,6 +197,9 @@ export default function ProfileScreen() {
   const [membershipStatus,    setMembershipStatus]    = useState('');
   const [membershipRejectedReason, setMembershipRejectedReason] = useState('');
 
+  const [scoutAvatarUrl, setScoutAvatarUrl] = useState(user?.avatar_url || '');
+  const [customAvatarUrl, setCustomAvatarUrl] = useState(user?.custom_avatar_url || '');
+
   useFocusEffect(useCallback(() => { loadProfile(); }, []));
 
   const loadProfile = async () => {
@@ -202,7 +207,7 @@ export default function ProfileScreen() {
     if (!user?.id) { setLoading(false); return; }
     const { data } = await supabase
       .from('profiles')
-      .select('promise_date, birth_date, join_date, phone, cedula, membership_expires_at, membership_status, membership_rejected_reason')
+      .select('promise_date, birth_date, join_date, phone, cedula, membership_expires_at, membership_status, membership_rejected_reason, avatar_url, custom_avatar_url')
       .eq('id', user.id)
       .single();
     if (data) {
@@ -214,6 +219,8 @@ export default function ProfileScreen() {
       setMembershipExpiresAt(data.membership_expires_at || '');
       setMembershipStatus(data.membership_status || 'none');
       setMembershipRejectedReason(data.membership_rejected_reason || '');
+      if (data.avatar_url) setScoutAvatarUrl(data.avatar_url);
+      if (data.custom_avatar_url) setCustomAvatarUrl(data.custom_avatar_url);
       if (data.promise_date) {
         const [y,m,d] = data.promise_date.split('-');
         setPYear(+y); setPMonth(+m); setPDay(+d);
@@ -224,6 +231,30 @@ export default function ProfileScreen() {
       }
     }
     setLoading(false);
+  };
+
+  const handlePhotoChange = async (type: 'scout' | 'custom', newUrl: string) => {
+    if (!user?.id) return;
+    if (type === 'scout') {
+      setScoutAvatarUrl(newUrl);
+    } else {
+      setCustomAvatarUrl(newUrl);
+    }
+
+    try {
+      const fileName = `${type}_avatar_${user.id}_${Date.now()}.jpg`;
+      const uploadedUrl = await storageService.uploadImage(
+        'scout-files',
+        `avatars/${user.id}`,
+        fileName,
+        newUrl
+      );
+
+      const fieldToUpdate = type === 'scout' ? 'avatar_url' : 'custom_avatar_url';
+      await supabase.from('profiles').update({ [fieldToUpdate]: uploadedUrl }).eq('id', user.id);
+    } catch (err: any) {
+      console.warn('Error subiendo foto de perfil:', err);
+    }
   };
 
   const calcCompletion = () => {
@@ -307,21 +338,19 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ paddingBottom: 40 }}>
-      {/* TARJETA DE CABECERA */}
+      {/* TARJETA DE CABECERA CON AVATAR DUAL SWIPEABLE */}
       <View style={[styles.headerCard, isDarkMode && { backgroundColor: '#121214', borderBottomColor: '#27272a' }]}>
-        <TouchableOpacity style={styles.avatarCircle} onPress={handleAvatarPress} activeOpacity={0.8}>
-          <View style={{ position: 'relative' }}>
-            <UserScoutAvatar unit={user?.unit || undefined} role={user?.role} size={84} />
-            <View style={{
-              position: 'absolute', bottom: 2, right: 2,
-              backgroundColor: colors.primary, width: 26, height: 26,
-              borderRadius: 13, borderWidth: 2, borderColor: isDarkMode ? '#121214' : 'white',
-              justifyContent: 'center', alignItems: 'center'
-            }}>
-              <Camera size={13} color="white" />
-            </View>
-          </View>
-        </TouchableOpacity>
+        <View style={{ marginBottom: 12 }}>
+          <DualProfileAvatar
+            scoutAvatarUrl={scoutAvatarUrl || user?.avatar_url}
+            customAvatarUrl={customAvatarUrl || user?.custom_avatar_url}
+            unit={user?.unit || undefined}
+            role={user?.role}
+            size={96}
+            editable={true}
+            onPhotoChange={handlePhotoChange}
+          />
+        </View>
         <Text style={[styles.name, { color: theme.text }]}>{user?.name || 'Scout'}</Text>
         <Text style={styles.email}>{user?.email}</Text>
         <View style={styles.badgeRow}>
