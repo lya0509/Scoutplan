@@ -183,6 +183,7 @@ export default function ProfileScreen() {
 
   const [showPromisePicker, setShowPromisePicker] = useState(false);
   const [showJoinPicker,    setShowJoinPicker]    = useState(false);
+  const [showBirthPicker,   setShowBirthPicker]   = useState(false);
   const [showPhoneEdit,     setShowPhoneEdit]     = useState(false);
   const [showCedulaEdit,    setShowCedulaEdit]    = useState(false);
   const [phoneInput,        setPhoneInput]        = useState('');
@@ -192,6 +193,7 @@ export default function ProfileScreen() {
   const todayY = new Date().getFullYear();
   const [pDay, setPDay] = useState(1);  const [pMonth, setPMonth] = useState(1);  const [pYear, setPYear] = useState(todayY);
   const [jDay, setJDay] = useState(1);  const [jMonth, setJMonth] = useState(1);  const [jYear, setJYear] = useState(todayY);
+  const [bDay, setBDay] = useState(1);  const [bMonth, setBMonth] = useState(1);  const [bYear, setBYear] = useState(2010);
 
   const [membershipExpiresAt, setMembershipExpiresAt] = useState('');
   const [membershipStatus,    setMembershipStatus]    = useState('');
@@ -221,6 +223,10 @@ export default function ProfileScreen() {
       setMembershipRejectedReason(data.membership_rejected_reason || '');
       if (data.avatar_url) setScoutAvatarUrl(data.avatar_url);
       if (data.custom_avatar_url) setCustomAvatarUrl(data.custom_avatar_url);
+      if (data.birth_date) {
+        const [y,m,d] = data.birth_date.split('-');
+        setBYear(+y); setBMonth(+m); setBDay(+d);
+      }
       if (data.promise_date) {
         const [y,m,d] = data.promise_date.split('-');
         setPYear(+y); setPMonth(+m); setPDay(+d);
@@ -263,9 +269,9 @@ export default function ProfileScreen() {
       user?.email,
       user?.unit,
       user?.group_name,
-      user?.region,
-      user?.district || 'guarenas_guatire',
       cedula || user?.cedula,
+      birthDate || user?.birth_date,
+      phone || user?.phone,
     ];
     const filled = fields.filter(Boolean).length;
     if (filled === fields.length) return 100;
@@ -291,6 +297,13 @@ export default function ProfileScreen() {
     } else {
       loadProfile();
     }
+  };
+
+  const confirmBirth = () => {
+    const val = `${bYear}-${String(bMonth).padStart(2,'0')}-${String(bDay).padStart(2,'0')}`;
+    setBirthDate(val);
+    setShowBirthPicker(false);
+    saveField('birth_date', val);
   };
 
   const confirmPromise = () => {
@@ -495,7 +508,9 @@ export default function ProfileScreen() {
         <EditRow
           label="Fecha de Nacimiento"
           value={formatDateDisplay(birthDate)}
-          readonly
+          onEdit={() => setShowBirthPicker(true)}
+          placeholder="Añadir fecha de nacimiento"
+          highlight={!birthDate}
           isDarkMode={isDarkMode}
         />
         <EditRow
@@ -514,6 +529,15 @@ export default function ProfileScreen() {
           <Text style={{ color: 'white', marginTop: 8, fontWeight: 'bold' }}>Guardando cambios...</Text>
         </View>
       )}
+
+      <DatePickerModal
+        visible={showBirthPicker}
+        title="Fecha de Nacimiento"
+        day={bDay} month={bMonth} year={bYear}
+        onDay={setBDay} onMonth={setBMonth} onYear={setBYear}
+        onConfirm={confirmBirth}
+        onCancel={() => setShowBirthPicker(false)}
+      />
 
       <DatePickerModal
         visible={showPromisePicker}
