@@ -1,0 +1,16 @@
+========================================================================
+           CARPETA DE DOCUMENTOS Y MANUALES PDF OFICIALES
+========================================================================
+
+Aquí puedes colocar todos los archivos PDF que desees mostrar en la 
+aplicación Plan Progresivo (Guías de Insignias, Especialidades, Manuales, etc.).
+
+Ejemplos de nombres de archivo recomendados:
+- guia_adelanto_tropa.pdf
+- manual_campismo_2026.pdf
+- reglamento_uniformes_asv.pdf
+- requisitos_insignia_madera.pdf
+
+Una vez colocados aquí, cualquier PDF se puede acceder desde la app con la ruta:
+/documentos/nombre_del_archivo.pdf
+========================================================================
