@@ -74,7 +74,35 @@ function CustomDrawerContent(props: any & { onOpenCustomizer: () => void; onOpen
       </View>
       
       <View style={{ paddingTop: 10, backgroundColor: isDarkMode ? '#000000' : '#ffffff' }}>
-        <DrawerItemList {...props} />
+        {props.state.routes.map((route: any, index: number) => {
+          const isFocused = props.state.index === index;
+          const descriptor = props.descriptors[route.key];
+          const options = descriptor.options;
+          const label =
+            options.drawerLabel !== undefined
+              ? options.drawerLabel
+              : options.title !== undefined
+              ? options.title
+              : route.name;
+
+          return (
+            <DrawerItem
+              key={route.key}
+              label={label}
+              focused={isFocused}
+              activeBackgroundColor={primaryColor}
+              activeTintColor="#ffffff"
+              inactiveTintColor={isDarkMode ? '#e4e4e7' : '#333333'}
+              onPress={() => {
+                if (isFocused) {
+                  props.navigation.closeDrawer();
+                } else {
+                  props.navigation.navigate(route.name);
+                }
+              }}
+            />
+          );
+        })}
         
         <DrawerItem
           label="📲 Instalar Aplicación"
@@ -108,7 +136,7 @@ export default function DrawerNavigator() {
   return (
     <>
       <Drawer.Navigator
-        backBehavior="history"
+        backBehavior="none"
         drawerContent={(props) => (
           <CustomDrawerContent 
             {...props} 
@@ -117,6 +145,8 @@ export default function DrawerNavigator() {
           />
         )}
         screenOptions={{
+          drawerType: 'front',
+          overlayColor: isDarkMode ? 'rgba(0, 0, 0, 0.75)' : 'rgba(0, 0, 0, 0.5)',
           headerStyle: { backgroundColor: isDarkMode ? '#000000' : primaryColor },
           headerTintColor: '#fff',
           headerRight: () => (

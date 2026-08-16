@@ -68,21 +68,6 @@ export default function AppNavigator() {
   const { user, isLoading } = useAuth();
   const navigationRef = React.useRef<any>(null);
 
-  useEffect(() => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const handlePopState = (event: PopStateEvent) => {
-        if (navigationRef.current && navigationRef.current.canGoBack()) {
-          navigationRef.current.goBack();
-        }
-      };
-
-      window.addEventListener('popstate', handlePopState);
-      return () => {
-        window.removeEventListener('popstate', handlePopState);
-      };
-    }
-  }, []);
-
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
