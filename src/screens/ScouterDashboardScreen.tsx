@@ -20,9 +20,10 @@ import { stagesData } from '../data/progressionTemplate';
 import { colors } from '../theme/colors';
 import {
   Users, ChevronDown, ChevronUp,
-  Calendar, LogOut, Trash2, Plus, Flag, X, Moon, Sun, Compass, Camera, ShieldCheck, Ban, CheckCircle, ImageOff, BookOpen
+  Calendar, LogOut, Trash2, Plus, Flag, X, Moon, Sun, Compass, Camera, ShieldCheck, Ban, CheckCircle, ImageOff, BookOpen, Palette, FileText, Music, Sparkles
 } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
+import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
 
 const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
   'Aprobada':    { color: '#22c55e', label: 'Aprobada' },
@@ -352,8 +353,9 @@ function OnlineRosterPanel({ unit, groupName, isDarkMode, theme }: { unit: strin
 
 export default function ScouterDashboardScreen({ navigation }: any) {
   const { user, signOut } = useAuth();
-  const { isDarkMode, theme, toggleDarkMode } = useTheme();
+  const { isDarkMode, theme, primaryColor, toggleDarkMode } = useTheme();
 
+  const [showCustomizer, setShowCustomizer] = useState(false);
   const [scouts, setScouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats]   = useState({ total: 0, inReview: 0, approved: 0 });
@@ -459,8 +461,8 @@ export default function ScouterDashboardScreen({ navigation }: any) {
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       
       {/* HEADER */}
-      <View style={[styles.header, isDarkMode && { backgroundColor: '#121214', borderBottomLeftRadius: 0, borderBottomRightRadius: 0, borderBottomWidth: 1, borderBottomColor: '#27272a' }]}>
-        <View>
+      <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : primaryColor }, isDarkMode && { borderBottomLeftRadius: 0, borderBottomRightRadius: 0, borderBottomWidth: 1, borderBottomColor: '#27272a' }]}>
+        <View style={{ flex: 1 }}>
           <Text style={styles.headerGreeting}>Bienvenido/a,</Text>
           <Text style={styles.headerName}>{user?.name}</Text>
           <View style={styles.unitBadge}>
@@ -470,45 +472,85 @@ export default function ScouterDashboardScreen({ navigation }: any) {
 
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
           <TouchableOpacity 
+            style={[styles.calendarIconBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+            onPress={() => setShowCustomizer(true)}
+            activeOpacity={0.8}
+          >
+            <Palette color="#ffffff" size={20} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
             style={[styles.calendarIconBtn, { backgroundColor: isDarkMode ? '#27272a' : 'rgba(255,255,255,0.2)' }]}
             onPress={toggleDarkMode}
+            activeOpacity={0.8}
           >
             {isDarkMode ? <Sun color="#f59e0b" size={20} /> : <Moon color="white" size={20} />}
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.calendarIconBtn, { backgroundColor: isDarkMode ? '#3f3f46' : colors.primaryLight }]}
-            onPress={() => navigation.navigate('TemporalDrive')}
-          >
-            <Camera color="white" size={20} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.calendarIconBtn, { backgroundColor: isDarkMode ? '#3f3f46' : colors.primaryLight }]}
-            onPress={() => navigation.navigate('QuarterlyPlan')}
-          >
-            <Compass color="white" size={20} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.calendarIconBtn, { backgroundColor: isDarkMode ? '#3f3f46' : colors.primaryLight }]}
-            onPress={() => navigation.navigate('Documentos')}
-          >
-            <BookOpen color="white" size={20} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.calendarIconBtn}
-            onPress={() => navigation.navigate('CalendarStandalone')}
-          >
-            <Calendar color="white" size={20} />
           </TouchableOpacity>
         </View>
       </View>
 
+      {/* BARRA DE HERRAMIENTAS Y ACCESOS RÁPIDOS */}
+      <View style={{ paddingVertical: 10, paddingHorizontal: 16 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+          <TouchableOpacity
+            style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+            onPress={() => navigation.navigate('Documentos')}
+            activeOpacity={0.8}
+          >
+            <BookOpen size={18} color={primaryColor} />
+            <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Documentos & PDFs</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+            onPress={() => navigation.navigate('QuarterlyPlan')}
+            activeOpacity={0.8}
+          >
+            <Compass size={18} color={primaryColor} />
+            <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Plan Trimestral</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+            onPress={() => navigation.navigate('TemporalDrive')}
+            activeOpacity={0.8}
+          >
+            <Camera size={18} color={primaryColor} />
+            <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Drive Fotos</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+            onPress={() => navigation.navigate('CalendarStandalone')}
+            activeOpacity={0.8}
+          >
+            <Calendar size={18} color={primaryColor} />
+            <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Calendario</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+            onPress={() => navigation.navigate('NudosManual')}
+            activeOpacity={0.8}
+          >
+            <FileText size={18} color={primaryColor} />
+            <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Manual Nudos</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+            onPress={() => navigation.navigate('Cancionero')}
+            activeOpacity={0.8}
+          >
+            <Music size={18} color={primaryColor} />
+            <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Cancionero</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+
       {/* ESTADÍSTICAS */}
       <View style={styles.statsRow}>
-        <View style={[styles.statCard, { borderTopColor: colors.primary, backgroundColor: theme.cardBg }]}>
+        <View style={[styles.statCard, { borderTopColor: primaryColor, backgroundColor: theme.cardBg }]}>
           <Text style={[styles.statNumber, { color: theme.text }]}>{stats.total}</Text>
           <Text style={styles.statLabel}>Scouts</Text>
         </View>
@@ -876,12 +918,34 @@ export default function ScouterDashboardScreen({ navigation }: any) {
 
       {/* BOTÓN FLOTANTE DE AYUDA Y REPORTES */}
       <HelpFloatingFAB />
+
+      <ThemeCustomizerModal
+        visible={showCustomizer}
+        onClose={() => setShowCustomizer(false)}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  scouterQuickBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  scouterQuickBtnText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   header: {
     backgroundColor: colors.primary,
     paddingTop: 50, paddingBottom: 28, paddingHorizontal: 24,

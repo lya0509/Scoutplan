@@ -6,12 +6,14 @@ import { useTheme } from '../context/ThemeContext';
 import HelpFloatingFAB from '../components/HelpFloatingFAB';
 import { supabase } from '../lib/supabaseClient';
 import { colors } from '../theme/colors';
-import { Users, Award, Calendar, Moon, Sun, FileText, ChevronRight, Camera, BookOpen } from 'lucide-react-native';
+import { Users, Award, Calendar, Moon, Sun, FileText, ChevronRight, Camera, BookOpen, Palette } from 'lucide-react-native';
+import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
 
 export default function JefeGrupoScreen({ navigation }: any) {
   const { user } = useAuth();
-  const { isDarkMode, theme, toggleDarkMode } = useTheme();
+  const { isDarkMode, theme, primaryColor, toggleDarkMode } = useTheme();
 
+  const [showCustomizer, setShowCustomizer] = useState(false);
   const [stats, setStats] = useState({
     manada: 0,
     tropa: 0,
@@ -40,32 +42,30 @@ export default function JefeGrupoScreen({ navigation }: any) {
     const { data: scouts } = await supabase
       .from('profiles')
       .select('*')
-      .eq('role', 'scout')
-      .eq('group_name', user.group_name);
+      .eq('group_name', user.group_name)
+      .eq('role', 'scout');
 
-    let m = 0, t = 0, c = 0, cl = 0;
     if (scouts) {
       setGroupScouts(scouts);
-      scouts.forEach(s => {
-        if (s.unit === 'manada') m++;
-        if (s.unit === 'tropa') t++;
-        if (s.unit === 'comunidad') c++;
-        if (s.unit === 'clan') cl++;
+      const manada = scouts.filter(s => s.unit === 'manada').length;
+      const tropa = scouts.filter(s => s.unit === 'tropa').length;
+      const comunidad = scouts.filter(s => s.unit === 'caminantes' || s.unit === 'comunidad').length;
+      const clan = scouts.filter(s => s.unit === 'clan').length;
+
+      // Contar insignias aprobadas del grupo
+      const { count } = await supabase
+        .from('user_requirements')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'Aprobada');
+
+      setStats({
+        manada,
+        tropa,
+        comunidad,
+        clan,
+        insigniasAprobadas: count || 0
       });
     }
-
-    const { count: approvedCount } = await supabase
-      .from('stage_progress')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'Aprobada');
-
-    setStats({
-      manada: m,
-      tropa: t,
-      comunidad: c,
-      clan: cl,
-      insigniasAprobadas: approvedCount || 0
-    });
     setLoading(false);
   };
 
@@ -74,33 +74,65 @@ export default function JefeGrupoScreen({ navigation }: any) {
       <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ paddingBottom: 40 }}>
       
       {/* CABECERA JEFE DE GRUPO */}
-      <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : colors.primary }]}>
+      <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : primaryColor }]}>
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>Panel Jefe de Grupo</Text>
           <Text style={styles.subtitle}>Grupo: {user?.group_name || 'Sin Asignar'}</Text>
         </View>
 
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-          <TouchableOpacity style={styles.iconBtn} onPress={toggleDarkMode}>
+          <TouchableOpacity 
+            style={styles.iconBtn} 
+            onPress={() => setShowCustomizer(true)}
+            activeOpacity={0.8}
+          >
+            <Palette color="#ffffff" size={20} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.iconBtn} 
+            onPress={toggleDarkMode}
+            activeOpacity={0.8}
+          >
             {isDarkMode ? <Sun color="#f59e0b" size={20} /> : <Moon color="white" size={20} />}
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('TemporalDrive')}>
-            <Camera color="white" size={20} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Documentos')}>
-            <BookOpen color="white" size={20} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('CalendarStandalone')}>
-            <Calendar color="white" size={20} />
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* BARRA DE HERRAMIENTAS JEFE DE GRUPO */}
+      <View style={{ paddingVertical: 10, paddingHorizontal: 16 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+          <TouchableOpacity
+            style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+            onPress={() => navigation.navigate('Documentos')}
+            activeOpacity={0.8}
+          >
+            <BookOpen size={18} color={primaryColor} />
+            <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Documentos & PDFs</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+            onPress={() => navigation.navigate('TemporalDrive')}
+            activeOpacity={0.8}
+          >
+            <Camera size={18} color={primaryColor} />
+            <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Drive Fotos</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+            onPress={() => navigation.navigate('CalendarStandalone')}
+            activeOpacity={0.8}
+          >
+            <Calendar size={18} color={primaryColor} />
+            <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Calendario</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
       
       {loading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color={primaryColor} style={{ marginTop: 40 }} />
       ) : (
         <View style={{ padding: 16 }}>
 
@@ -182,12 +214,34 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
       {/* BOTÓN FLOTANTE DE AYUDA Y REPORTES */}
       <HelpFloatingFAB />
+
+      <ThemeCustomizerModal
+        visible={showCustomizer}
+        onClose={() => setShowCustomizer(false)}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  quickToolBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  quickToolBtnText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   header: { padding: 20, paddingTop: 30, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 20, fontWeight: 'bold', color: 'white' },
   subtitle: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
