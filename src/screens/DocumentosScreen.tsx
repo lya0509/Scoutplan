@@ -62,7 +62,13 @@ export default function DocumentosScreen() {
 
   const handleDownloadDoc = (doc: ScoutDocument) => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.open(doc.pdfUrl, '_blank');
+      const a = document.createElement('a');
+      a.href = doc.pdfUrl;
+      a.download = `${doc.title}.pdf`;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } else {
       Linking.openURL(doc.pdfUrl).catch(() => {
         showAlert('Descarga', 'Abriendo documento en el navegador...');
@@ -191,8 +197,8 @@ export default function DocumentosScreen() {
                 {/* Ficha de Metadatos */}
                 <View style={[styles.metaRow, { borderTopColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
                   <View style={styles.metaItem}>
-                    <Text style={[styles.metaLabel, { color: theme.subText }]}>Páginas:</Text>
-                    <Text style={[styles.metaValue, { color: theme.text }]}>{doc.pages} págs</Text>
+                    <Text style={[styles.metaLabel, { color: theme.subText }]}>Acceso:</Text>
+                    <Text style={[styles.metaValue, { color: theme.text }]}>Todos los Scouts</Text>
                   </View>
                   <View style={styles.metaDivider} />
                   <View style={styles.metaItem}>
@@ -243,7 +249,7 @@ export default function DocumentosScreen() {
                   {selectedDoc?.title}
                 </Text>
                 <Text style={[styles.viewerSub, { color: theme.subText }]}>
-                  {selectedDoc?.categoryLabel} • {selectedDoc?.pages} Páginas ({selectedDoc?.size})
+                  {selectedDoc?.categoryLabel} • {selectedDoc?.size} • Documento Oficial
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setViewModalVisible(false)} style={styles.viewerCloseBtn}>

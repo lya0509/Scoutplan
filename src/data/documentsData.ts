@@ -6,185 +6,131 @@ export interface ScoutDocument {
   description: string;
   badgeIcon: string;
   size: string;
-  pages: number;
+  pages?: number;
   pdfUrl: string;
-  targetUnit?: 'manada' | 'tropa' | 'caminantes' | 'clan' | 'todos';
+  targetUnit: 'todos' | 'manada' | 'tropa' | 'caminantes' | 'clan';
 }
 
 export const SCOUT_DOCUMENTS: ScoutDocument[] = [
-  // --- GUÍAS DE ADELANTO E INSIGNIAS ---
   {
-    id: 'guia_adelanto_clan',
-    title: 'Guía de Adelanto del Clan Rover (ASV)',
+    id: 'adelanto_progresivo_asv',
+    title: 'Adelanto Progresivo ASV',
     category: 'adelanto',
     categoryLabel: 'Adelanto e Insignias',
-    description: 'Manual oficial de progresión para Rovers. Requisitos de Precursor, Expedicionario, Descubridor, Fundador e Insignia B-P / Rover Ciudadano.',
+    description: 'Marco curricular oficial y etapas de desarrollo del Plan Progresivo de la Asociación de Scouts de Venezuela.',
     badgeIcon: '⚜️',
-    size: '3.8 MB',
-    pages: 48,
-    pdfUrl: 'https://scout.org/sites/default/files/2023-01/Rover_Scout_Progression_Guide.pdf',
-    targetUnit: 'clan'
-  },
-  {
-    id: 'guia_adelanto_caminantes',
-    title: 'Guía de Adelanto de la Comunidad de Caminantes',
-    category: 'adelanto',
-    categoryLabel: 'Adelanto e Insignias',
-    description: 'Etapas de Búsqueda, Encuentro y Desafío. Proyecto de servicio a la comunidad y especialidades para jóvenes de 15 a 18 años.',
-    badgeIcon: '🧭',
-    size: '3.2 MB',
-    pages: 42,
-    pdfUrl: 'https://scout.org/sites/default/files/2023-01/Caminantes_Guia_Programa.pdf',
-    targetUnit: 'caminantes'
-  },
-  {
-    id: 'guia_adelanto_tropa',
-    title: 'Guía de Progresión de la Tropa Scout',
-    category: 'adelanto',
-    categoryLabel: 'Adelanto e Insignias',
-    description: 'Manual del Sistema de Patrullas, etapas de Pistas, Sendas, Rumbo y Travesía. Insignia de Caballero Scout.',
-    badgeIcon: '🏕️',
-    size: '4.5 MB',
-    pages: 64,
-    pdfUrl: 'https://scout.org/sites/default/files/2023-01/Tropa_Scout_Manual_Adelanto.pdf',
-    targetUnit: 'tropa'
-  },
-  {
-    id: 'guia_adelanto_manada',
-    title: 'Guía de Progresión de la Manada de Lobatos',
-    category: 'adelanto',
-    categoryLabel: 'Adelanto e Insignias',
-    description: 'Fondo motivador del Libro de las Tierras Vírgenes. Huellas, Cacerías y Lobo Saltador.',
-    badgeIcon: '🐺',
-    size: '2.9 MB',
-    pages: 36,
-    pdfUrl: 'https://scout.org/sites/default/files/2023-01/Manada_Lobatos_Adelanto.pdf',
-    targetUnit: 'manada'
-  },
-  {
-    id: 'catalogo_especialidades_asv',
-    title: 'Catálogo Oficial de Especialidades Scout (ASV)',
-    category: 'adelanto',
-    categoryLabel: 'Adelanto e Insignias',
-    description: 'Requisitos y proyectos para obtener especialidades en Arte, Ciencia, Deportes, Ecología, Servicios y Técnicas Scout en niveles Bronce, Plata y Oro.',
-    badgeIcon: '🎖️',
-    size: '5.1 MB',
-    pages: 78,
-    pdfUrl: 'https://scout.org/sites/default/files/2023-01/Catalogo_Especialidades_Scout.pdf',
-    targetUnit: 'todos'
-  },
-
-  // --- MANUALES TÉCNICOS Y CAMPISMO ---
-  {
-    id: 'manual_campismo_tecnicas',
-    title: 'Manual de Campismo y Técnicas al Aire Libre',
-    category: 'manuales',
-    categoryLabel: 'Manuales Técnicos',
-    description: 'Instalación de campamentos, armado de carpas, cocinas de campo, refugios naturales, fuego seguro y sin dejar rastro.',
-    badgeIcon: '⛺',
-    size: '6.4 MB',
-    pages: 92,
-    pdfUrl: 'https://scout.org/sites/default/files/2023-01/Manual_Campismo_Scout.pdf',
+    size: '971 KB',
+    pdfUrl: '/documentos/Adelanto%20progresivo%20ASV.pdf',
     targetUnit: 'todos'
   },
   {
-    id: 'manual_primeros_auxilios_scout',
-    title: 'Manual de Primeros Auxilios y Emergencias Scout',
-    category: 'manuales',
-    categoryLabel: 'Manuales Técnicos',
-    description: 'Protocolos de atención inicial, RCP, vendajes, inmovilizaciones, picaduras, deshidratación y rescate en zonas agrestes.',
-    badgeIcon: '🩹',
-    size: '4.1 MB',
-    pages: 56,
-    pdfUrl: 'https://scout.org/sites/default/files/2023-01/Primeros_Auxilios_Scout_Guia.pdf',
-    targetUnit: 'todos'
-  },
-  {
-    id: 'manual_orientacion_topografia',
-    title: 'Manual de Orientación, Brújula y Topografía',
-    category: 'manuales',
-    categoryLabel: 'Manuales Técnicos',
-    description: 'Uso de la brújula cartográfica y lensática, lectura de curvas de nivel, coordenadas UTM, triangulación y orientación por estrellas.',
-    badgeIcon: '🧭',
+    id: 'mensajeros_de_la_paz',
+    title: 'Mensajeros de la Paz (MoP)',
+    category: 'adelanto',
+    categoryLabel: 'Iniciativas Mundiales',
+    description: 'Guía oficial para la formulación, registro y ejecución de proyectos scouts que construyen una cultura de paz en la comunidad.',
+    badgeIcon: '🕊️',
     size: '3.6 MB',
-    pages: 44,
-    pdfUrl: 'https://scout.org/sites/default/files/2023-01/Orientacion_Brujula_Scout.pdf',
+    pdfUrl: '/documentos/Mensajeros%20de%20la%20paz.pdf',
     targetUnit: 'todos'
   },
   {
-    id: 'manual_pionerismo_amarres',
-    title: 'Manual Completo de Pionerismo y Amarres',
+    id: 'aliados_de_la_salud',
+    title: 'Aliados de la Salud',
+    category: 'adelanto',
+    categoryLabel: 'Iniciativas Mundiales',
+    description: 'Programa del marco Mundo Mejor para promover hábitos saludables, bienestar físico, salud mental y prevención en la juventud scout.',
+    badgeIcon: '🩺',
+    size: '11.9 MB',
+    pdfUrl: '/documentos/Aliados%20de%20la%20salud.pdf',
+    targetUnit: 'todos'
+  },
+  {
+    id: 'campeones_por_la_naturaleza',
+    title: 'Campeones por la Naturaleza (Champions for Nature)',
+    category: 'adelanto',
+    categoryLabel: 'Iniciativas Mundiales',
+    description: 'Desafío ecológico de la Tribu de la Tierra y WOSM para la protección de la biodiversidad, ecosistemas y consumo responsable.',
+    badgeIcon: '🌿',
+    size: '4.3 MB',
+    pdfUrl: '/documentos/Campeones%20por%20la%20naturaleza.pdf',
+    targetUnit: 'todos'
+  },
+  {
+    id: 'embajadores_marea_plastico',
+    title: 'Embajadores de la Marea de Plástico (Tide Turners)',
+    category: 'adelanto',
+    categoryLabel: 'Iniciativas Mundiales',
+    description: 'Iniciativa mundial de ONU Medio Ambiente y WOSM para erradicar la contaminación por plásticos de un solo uso en costas y ciudades.',
+    badgeIcon: '🌊',
+    size: '3.7 MB',
+    pdfUrl: '/documentos/Embajadores%20de%20la%20marea%20de%20plastico.pdf',
+    targetUnit: 'todos'
+  },
+  {
+    id: 'go_solar',
+    title: 'Go Solar (Energía Limpia y Renovable)',
+    category: 'adelanto',
+    categoryLabel: 'Ciencia y Tecnología',
+    description: 'Guía de aprendizaje práctico sobre energía solar, tecnologías limpias y acciones scouts contra el cambio climático.',
+    badgeIcon: '☀️',
+    size: '3.4 MB',
+    pdfUrl: '/documentos/Go%20solar.pdf',
+    targetUnit: 'todos'
+  },
+  {
+    id: 'en_senas',
+    title: 'En Señas (Inclusión y Lengua de Señas Scout)',
     category: 'manuales',
     categoryLabel: 'Manuales Técnicos',
-    description: 'Construcción de puentes, torres de observación, mesas de campamento, balsas y anclajes pesados.',
-    badgeIcon: '🪢',
-    size: '5.8 MB',
-    pages: 70,
-    pdfUrl: 'https://scout.org/sites/default/files/2023-01/Pionerismo_Amarres_Construcciones.pdf',
-    targetUnit: 'todos'
-  },
-
-  // --- REGLAMENTOS Y DOCUMENTOS ASV ---
-  {
-    id: 'por_reglamento_asv',
-    title: 'P.O.R. - Principios, Organización y Reglamentos ASV',
-    category: 'reglamentos',
-    categoryLabel: 'Reglamentos ASV',
-    description: 'Documento normativo fundamental de la Asociación de Scouts de Venezuela. Estructura de grupos, deberes, uniformes y normas de seguridad.',
-    badgeIcon: '⚖️',
-    size: '7.2 MB',
-    pages: 120,
-    pdfUrl: 'https://scout.org/sites/default/files/2023-01/POR_Reglamento_Oficial_ASV.pdf',
+    description: 'Manual de lengua de señas, comunicación accesible e integración de personas con discapacidad auditiva en el Movimiento Scout.',
+    badgeIcon: '🤟',
+    size: '5.0 MB',
+    pdfUrl: '/documentos/En%20se%C3%B1as.pdf',
     targetUnit: 'todos'
   },
   {
-    id: 'politica_salvo_del_dano_asv',
-    title: 'Política Nacional "A Salvo del Daño" (Safe from Harm)',
-    category: 'reglamentos',
-    categoryLabel: 'Reglamentos ASV',
-    description: 'Código de conducta y directrices para garantizar entornos seguros, protección de niños, niñas y jóvenes en actividades scouts.',
-    badgeIcon: '🛡️',
-    size: '2.5 MB',
-    pages: 32,
-    pdfUrl: 'https://scout.org/sites/default/files/2023-01/Politica_ASV_A_Salvo_del_Dano.pdf',
-    targetUnit: 'todos'
-  },
-  {
-    id: 'manual_uniforme_insignias_asv',
-    title: 'Reglamento Oficial de Uniformes e Insignias (ASV)',
-    category: 'reglamentos',
-    categoryLabel: 'Reglamentos ASV',
-    description: 'Ubicación correcta de cintas de grupo, insignias de progresión, especialidades, condecoraciones y pañoletas en la camisa scout.',
-    badgeIcon: '👔',
-    size: '3.9 MB',
-    pages: 40,
-    pdfUrl: 'https://scout.org/sites/default/files/2023-01/Reglamento_Uniformes_Insignias_ASV.pdf',
-    targetUnit: 'todos'
-  },
-
-  // --- FORMACIÓN Y DIRIGENTES ---
-  {
-    id: 'esquema_nacional_formacion_asv',
-    title: 'Esquema Nacional de Formación de Dirigentes (ASV)',
-    category: 'formacion',
-    categoryLabel: 'Formación y Scouters',
-    description: 'Trayectoria formativa de adultos: Cursos Básicos, Cursos de Rama (Horqueta, Remo, Canoa) y Proceso de Insignia de Madera.',
-    badgeIcon: '🎓',
-    size: '4.8 MB',
-    pages: 60,
-    pdfUrl: 'https://scout.org/sites/default/files/2023-01/Esquema_Formacion_Dirigentes_ASV.pdf',
-    targetUnit: 'todos'
-  },
-  {
-    id: 'guia_animador_rover_asv',
-    title: 'Manual del Asesor y Animador del Clan Rover',
-    category: 'formacion',
-    categoryLabel: 'Formación y Scouters',
-    description: 'Herramientas pedagógicas para el acompañamiento de jóvenes adultos en el Clan, formulación de proyectos de vida y servicio comunitario.',
+    id: 'dialogo_interreligioso',
+    title: 'Diálogo Interreligioso',
+    category: 'adelanto',
+    categoryLabel: 'Valores y Espiritualidad',
+    description: 'Guía para fomentar el respeto, la fraternidad universal y el entendimiento entre jóvenes de diversas tradiciones espirituales.',
     badgeIcon: '🤝',
-    size: '3.4 MB',
-    pages: 50,
-    pdfUrl: 'https://scout.org/sites/default/files/2023-01/Guia_Asesor_Clan_Rover.pdf',
-    targetUnit: 'clan'
+    size: '2.0 MB',
+    pdfUrl: '/documentos/Dialogo%20interreligioso.pdf',
+    targetUnit: 'todos'
+  },
+  {
+    id: 'robots_letales',
+    title: 'Robots Letales (Detengamos los Robots Asesinos)',
+    category: 'adelanto',
+    categoryLabel: 'Cultura de Paz',
+    description: 'Concienciación juvenil sobre la ética en la inteligencia artificial, tecnología armamentista, derechos humanos y desarme humanitario.',
+    badgeIcon: '🤖',
+    size: '2.3 MB',
+    pdfUrl: '/documentos/Robots%20Letales.pdf',
+    targetUnit: 'todos'
+  },
+  {
+    id: 'competencias_educativas_asv',
+    title: 'Competencias Educativas ASV',
+    category: 'formacion',
+    categoryLabel: 'Formación y Pedagogía',
+    description: 'Definición de las áreas de crecimiento, objetivos formativos y competencias por ramas de la Asociación de Scouts de Venezuela.',
+    badgeIcon: '🎓',
+    size: '1.2 MB',
+    pdfUrl: '/documentos/Competencias%20educativas%20ASV.pdf',
+    targetUnit: 'todos'
+  },
+  {
+    id: 'indicadores_de_logros_asv',
+    title: 'Indicadores de Logros ASV',
+    category: 'reglamentos',
+    categoryLabel: 'Evaluación Oficial',
+    description: 'Instrumento de evaluación con indicadores de logro y conductas observables para el seguimiento del adelanto scout.',
+    badgeIcon: '📊',
+    size: '2.1 MB',
+    pdfUrl: '/documentos/Indicadores%20de%20logros%20ASV.pdf',
+    targetUnit: 'todos'
   }
 ];
