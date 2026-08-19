@@ -29,6 +29,32 @@ export const docxProgramaGenerator = {
       // 2. Abrir con JSZip
       const zip = await JSZip.loadAsync(arrayBuffer);
 
+      // Inyectar insignia de registro 2026 oficial en el Word
+      try {
+        const badgeRes = await fetch('/programa_assets/registro_2026.png');
+        if (badgeRes.ok) {
+          const badgeBuf = await badgeRes.arrayBuffer();
+          zip.file('word/media/image6.png', badgeBuf);
+        }
+      } catch (e) {
+        console.warn('Insignia 2026 cargada por defecto');
+      }
+
+      // Inyectar el logo de la unidad según la rama seleccionada
+      try {
+        let logoFile = '/programa_assets/logo_clan.jpg';
+        if (programa.unit === 'manada') logoFile = '/programa_assets/logo_manada.jpg';
+        else if (programa.unit === 'tropa') logoFile = '/programa_assets/logo_tropa.png';
+        
+        const logoRes = await fetch(logoFile);
+        if (logoRes.ok) {
+          const logoBuf = await logoRes.arrayBuffer();
+          zip.file('word/media/image3.jpeg', logoBuf);
+        }
+      } catch (e) {
+        console.warn('Logo de unidad cargado por defecto');
+      }
+
       // 3. Modificar document.xml con los datos del programa
       let docXml = await zip.file('word/document.xml')?.async('string');
       if (!docXml) {
