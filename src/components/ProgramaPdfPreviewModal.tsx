@@ -207,19 +207,21 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             <View style={styles.asvTableBox}>
               <View style={styles.asvBoxContent}>
                 <Text style={styles.asvBoxHeaderTitle}>Indicadores de Logro:</Text>
-                {Object.keys(GROWTH_AREAS).map(areaKey => {
-                  const areaInfo = GROWTH_AREAS[areaKey as GrowthAreaKey];
-                  const list = programa.indicators[areaKey as GrowthAreaKey] || [];
-                  if (!list || list.length === 0) return null;
-                  return (
-                    <View key={areaKey} style={{ marginTop: 4 }}>
-                      <Text style={styles.indicatorAreaSubtitle}>-{areaInfo.name}:</Text>
-                      {list.map((ind, idx) => (
-                        <Text key={idx} style={styles.asvBulletItem}>* {ind}</Text>
-                      ))}
-                    </View>
-                  );
-                })}
+                {(() => {
+                  const allIndicators: string[] = [];
+                  Object.keys(GROWTH_AREAS).forEach(areaKey => {
+                    const list = programa.indicators[areaKey as GrowthAreaKey] || [];
+                    list.forEach(ind => {
+                      if (ind && ind.trim()) allIndicators.push(ind.trim());
+                    });
+                  });
+                  if (allIndicators.length === 0) {
+                    return <Text style={styles.asvBoxParagraph}>Sin indicadores seleccionados.</Text>;
+                  }
+                  return allIndicators.map((ind, idx) => (
+                    <Text key={idx} style={styles.asvBulletItem}>* {ind}</Text>
+                  ));
+                })()}
               </View>
               {/* Barra inferior de las 6 áreas de crecimiento del formato oficial */}
               <View style={styles.asvAreasFooterRow}>
@@ -236,20 +238,14 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             <View style={styles.asvTableBox}>
               <View style={styles.asvBoxContent}>
                 <Text style={styles.asvBoxHeaderTitle}>Objetivos de Desarrollo Sostenible (ODS):</Text>
-                {programa.selectedSDGs && programa.selectedSDGs.length > 0 ? (
-                  <View style={styles.sdgChipsWrapper}>
-                    {programa.selectedSDGs.map(num => {
-                      const sdg = SDG_LIST.find(s => s.number === num);
-                      return (
-                        <View key={num} style={[styles.sdgBadge, { backgroundColor: sdg?.color || '#3b82f6' }]}>
-                          <Text style={styles.sdgBadgeText}>ODS #{num}: {sdg?.name || sdg?.shortName}</Text>
-                        </View>
-                      );
-                    })}
-                  </View>
-                ) : (
-                  <Text style={styles.asvBoxParagraph}>Ningún ODS seleccionado.</Text>
-                )}
+                <Text style={styles.asvBoxParagraph}>
+                  {programa.selectedSDGs && programa.selectedSDGs.length > 0
+                    ? programa.selectedSDGs.map(num => {
+                        const sdg = SDG_LIST.find(s => s.number === num);
+                        return `ODS #${num}: ${sdg?.name || sdg?.shortName || ''}`;
+                      }).join('   ')
+                    : 'Ningún ODS seleccionado.'}
+                </Text>
               </View>
             </View>
 

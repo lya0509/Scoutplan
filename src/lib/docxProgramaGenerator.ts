@@ -131,15 +131,17 @@ export const docxProgramaGenerator = {
       `;
 
       // 4. Tabla de Indicadores de Logro (Table 4)
-      const indicatorsListParas = Object.keys(GROWTH_AREAS).map(areaKey => {
-        const areaInfo = GROWTH_AREAS[areaKey as GrowthAreaKey];
+      const allIndicatorsList: string[] = [];
+      Object.keys(GROWTH_AREAS).forEach(areaKey => {
         const list = programa.indicators[areaKey as GrowthAreaKey] || [];
-        if (!list || list.length === 0) return '';
-        return `
-          <w:p><w:pPr><w:spacing w:before="60"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/><w:color w:val="4C1D95"/></w:rPr><w:t>- ${escapeXml(areaInfo.name)}:</w:t></w:r></w:p>
-          ${list.map(ind => `<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>* ${escapeXml(ind)}</w:t></w:r></w:p>`).join('')}
-        `;
-      }).filter(Boolean).join('');
+        list.forEach(ind => {
+          if (ind && ind.trim()) allIndicatorsList.push(ind.trim());
+        });
+      });
+
+      const indicatorsListParas = allIndicatorsList.map(ind => `
+        <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>* ${escapeXml(ind)}</w:t></w:r></w:p>
+      `).join('');
 
       const table4Xml = `
         <w:tbl>
