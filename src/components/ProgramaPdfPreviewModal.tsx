@@ -195,34 +195,36 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
               <View style={styles.asvBoxContent}>
                 <Text style={styles.asvBoxHeaderTitle}>Indicadores de Logro:</Text>
                 {(() => {
-                  const allIndicators: string[] = [];
-                  Object.keys(GROWTH_AREAS).forEach(areaKey => {
-                    const list = programa.indicators[areaKey as GrowthAreaKey] || [];
-                    list.forEach(ind => {
-                      if (ind && ind.trim()) allIndicators.push(ind.trim());
-                    });
-                  });
-                  if (allIndicators.length === 0) {
+                  const areaKeys = Object.keys(GROWTH_AREAS) as GrowthAreaKey[];
+                  const renderedAreas = areaKeys.map(areaKey => {
+                    const areaInfo = GROWTH_AREAS[areaKey];
+                    const list = programa.indicators[areaKey] || [];
+                    if (!list || list.length === 0) return null;
                     return (
-                      <>
-                        <Text style={styles.asvBulletItem}>* Disfruta de las actividades scouts y proyectos de unidad.</Text>
-                        <Text style={styles.asvBulletItem}>* Vela porque la conducta y accionar vaya acorde a la Ley y la Promesa.</Text>
-                      </>
+                      <View key={areaKey} style={{ marginTop: 4, marginBottom: 2 }}>
+                        <Text style={styles.indicatorAreaHeading}>-{areaInfo.name}:</Text>
+                        {list.map((ind, idx) => (
+                          <Text key={idx} style={styles.indicatorDotItem}>. {ind}</Text>
+                        ))}
+                      </View>
+                    );
+                  }).filter(Boolean);
+
+                  if (renderedAreas.length === 0) {
+                    return (
+                      <View style={{ marginTop: 4 }}>
+                        <Text style={styles.indicatorAreaHeading}>-Corporalidad:</Text>
+                        <Text style={styles.indicatorDotItem}>. Analiza su uso del tiempo y se impone correctivos.</Text>
+                        <Text style={styles.indicatorDotItem}>. Valora y mantiene una imagen adecuada de sí mismo y cuida la higiene personal.</Text>
+                        <Text style={[styles.indicatorAreaHeading, { marginTop: 4 }]}>-Creatividad:</Text>
+                        <Text style={styles.indicatorDotItem}>. Actúa con agilidad mental ante las situaciones más diversas, innovando y proponiendo soluciones.</Text>
+                        <Text style={[styles.indicatorAreaHeading, { marginTop: 4 }]}>-Carácter:</Text>
+                        <Text style={styles.indicatorDotItem}>. Mantiene autenticidad al demostrar coherencia entre su pensamiento y su acción.</Text>
+                      </View>
                     );
                   }
-                  return allIndicators.map((ind, idx) => (
-                    <Text key={idx} style={styles.asvBulletItem}>* {ind}</Text>
-                  ));
+                  return renderedAreas;
                 })()}
-              </View>
-              {/* Barra inferior de las 6 áreas de crecimiento del formato oficial */}
-              <View style={styles.asvAreasFooterRow}>
-                <Text style={styles.asvAreaNameCell}>Corporalidad</Text>
-                <Text style={styles.asvAreaNameCell}>Carácter</Text>
-                <Text style={styles.asvAreaNameCell}>Espiritualidad</Text>
-                <Text style={styles.asvAreaNameCell}>Sociabilidad</Text>
-                <Text style={styles.asvAreaNameCell}>Creatividad</Text>
-                <Text style={styles.asvAreaNameCell}>Afectividad</Text>
               </View>
             </View>
 
@@ -470,6 +472,20 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     color: '#000000',
     marginLeft: 4,
+    lineHeight: 14,
+    marginBottom: 2,
+  },
+  indicatorAreaHeading: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginTop: 3,
+    marginBottom: 1,
+  },
+  indicatorDotItem: {
+    fontSize: 9.5,
+    color: '#000000',
+    marginLeft: 6,
     lineHeight: 14,
     marginBottom: 2,
   },

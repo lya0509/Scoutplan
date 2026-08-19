@@ -29,18 +29,18 @@ export const docxProgramaGenerator = {
       // 2. Abrir con JSZip
       const zip = await JSZip.loadAsync(arrayBuffer);
 
-      // Inyectar insignia de registro 2026 oficial en el Word
+      // Inyectar el logo de Grupo Orion #84 a la izquierda (image3.jpeg)
       try {
-        const badgeRes = await fetch('/programa_assets/registro_2026.png');
-        if (badgeRes.ok) {
-          const badgeBuf = await badgeRes.arrayBuffer();
-          zip.file('word/media/image6.png', badgeBuf);
+        const orionRes = await fetch('/programa_assets/orion.png');
+        if (orionRes.ok) {
+          const orionBuf = await orionRes.arrayBuffer();
+          zip.file('word/media/image3.jpeg', orionBuf);
         }
       } catch (e) {
-        console.warn('Insignia 2026 cargada por defecto');
+        console.warn('Logo Orion cargado por defecto');
       }
 
-      // Inyectar el logo de la unidad según la rama seleccionada
+      // Inyectar el logo de la unidad a la derecha (image4.png)
       try {
         let logoFile = '/programa_assets/logo_clan.jpg';
         if (programa.unit === 'manada') logoFile = '/programa_assets/logo_manada.jpg';
@@ -49,10 +49,32 @@ export const docxProgramaGenerator = {
         const logoRes = await fetch(logoFile);
         if (logoRes.ok) {
           const logoBuf = await logoRes.arrayBuffer();
-          zip.file('word/media/image3.jpeg', logoBuf);
+          zip.file('word/media/image4.png', logoBuf);
         }
       } catch (e) {
         console.warn('Logo de unidad cargado por defecto');
+      }
+
+      // Inyectar el logo Scout Mundial WOSM a la derecha (image5.png)
+      try {
+        const scoutRes = await fetch('/programa_assets/logo_scout.png');
+        if (scoutRes.ok) {
+          const scoutBuf = await scoutRes.arrayBuffer();
+          zip.file('word/media/image5.png', scoutBuf);
+        }
+      } catch (e) {
+        console.warn('Logo Scout cargado por defecto');
+      }
+
+      // Inyectar insignia de registro 2026 oficial en el Word (image6.png)
+      try {
+        const badgeRes = await fetch('/programa_assets/registro_2026.png');
+        if (badgeRes.ok) {
+          const badgeBuf = await badgeRes.arrayBuffer();
+          zip.file('word/media/image6.png', badgeBuf);
+        }
+      } catch (e) {
+        console.warn('Insignia 2026 cargada por defecto');
       }
 
       // 3. Modificar document.xml con los datos del programa
@@ -121,10 +143,10 @@ export const docxProgramaGenerator = {
           <w:tr>
             <w:tc>
               <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
-              <w:p><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="4C1D95"/></w:rPr><w:t>Objetivo General:</w:t></w:r></w:p>
-              <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${escapeXml(programa.generalObjective || 'No especificado')}</w:t></w:r></w:p>
-              <w:p><w:pPr><w:spacing w:before="120"/></w:pPr><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="4C1D95"/></w:rPr><w:t>Objetivos Específicos:</w:t></w:r></w:p>
-              ${specObjParas || '<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>Sin objetivos específicos registrados.</w:t></w:r></w:p>'}
+              <w:p><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t>Objetivo General:</w:t></w:r></w:p>
+              <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${escapeXml(programa.generalObjective || 'Fomentar competencias clave para actividades al aire libre y crecimiento integral.')}</w:t></w:r></w:p>
+              <w:p><w:pPr><w:spacing w:before="120"/></w:pPr><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t>Objetivos Específicos:</w:t></w:r></w:p>
+              ${specObjParas || '<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>* Enseñar y aplicar las técnicas scouts correspondientes a la actividad.</w:t></w:r></w:p>'}
             </w:tc>
           </w:tr>
         </w:tbl>
@@ -149,25 +171,24 @@ export const docxProgramaGenerator = {
           <w:tr>
             <w:tc>
               <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
-              <w:p><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="4C1D95"/></w:rPr><w:t>Metas Específicas:</w:t></w:r></w:p>
-              ${specMetaParas || '<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>Sin metas específicas registradas.</w:t></w:r></w:p>'}
+              <w:p><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t>Metas Específicas:</w:t></w:r></w:p>
+              ${specMetaParas || '<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>* Lograr la participación activa y el aprendizaje de todos los integrantes.</w:t></w:r></w:p>'}
             </w:tc>
           </w:tr>
         </w:tbl>
       `;
 
       // 4. Tabla de Indicadores de Logro (Table 4)
-      const allIndicatorsList: string[] = [];
-      Object.keys(GROWTH_AREAS).forEach(areaKey => {
-        const list = programa.indicators[areaKey as GrowthAreaKey] || [];
-        list.forEach(ind => {
-          if (ind && ind.trim()) allIndicatorsList.push(ind.trim());
-        });
-      });
-
-      const indicatorsListParas = allIndicatorsList.map(ind => `
-        <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>* ${escapeXml(ind)}</w:t></w:r></w:p>
-      `).join('');
+      const areaKeys = Object.keys(GROWTH_AREAS) as GrowthAreaKey[];
+      const indicatorsListParas = areaKeys.map(areaKey => {
+        const areaInfo = GROWTH_AREAS[areaKey];
+        const list = programa.indicators[areaKey] || [];
+        if (!list || list.length === 0) return '';
+        return `
+          <w:p><w:pPr><w:spacing w:before="60"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t>-${escapeXml(areaInfo.name)}:</w:t></w:r></w:p>
+          ${list.map(ind => `<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>. ${escapeXml(ind)}</w:t></w:r></w:p>`).join('')}
+        `;
+      }).filter(Boolean).join('');
 
       const table4Xml = `
         <w:tbl>
@@ -178,23 +199,21 @@ export const docxProgramaGenerator = {
               <w:left w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
               <w:bottom w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
               <w:right w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:insideH w:val="single" w:sz="4" w:space="0" w:color="7030A0"/>
             </w:tblBorders>
           </w:tblPr>
           <w:tr>
             <w:tc>
               <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
-              <w:p><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="4C1D95"/></w:rPr><w:t>Indicadores de Logro:</w:t></w:r></w:p>
-              ${indicatorsListParas || '<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>Sin indicadores seleccionados.</w:t></w:r></w:p>'}
-            </w:tc>
-          </w:tr>
-          <w:tr>
-            <w:tc>
-              <w:tcPr><w:tcW w:w="11023" w:type="dxa"/><w:shd w:fill="F3E8FF"/></w:tcPr>
-              <w:p>
-                <w:pPr><w:jc w:val="center"/></w:pPr>
-                <w:r><w:rPr><w:b/><w:sz w:val="17"/><w:color w:val="4C1D95"/></w:rPr><w:t>Corporalidad       Carácter       Espiritualidad       Sociabilidad       Creatividad       Afectividad</w:t></w:r>
-              </w:p>
+              <w:p><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t>Indicadores de Logro:</w:t></w:r></w:p>
+              ${indicatorsListParas || `
+                <w:p><w:pPr><w:spacing w:before="60"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t>-Corporalidad:</w:t></w:r></w:p>
+                <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>. Analiza su uso del tiempo y se impone correctivos.</w:t></w:r></w:p>
+                <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>. Valora y mantiene una imagen adecuada de sí mismo y cuida la higiene personal.</w:t></w:r></w:p>
+                <w:p><w:pPr><w:spacing w:before="60"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t>-Creatividad:</w:t></w:r></w:p>
+                <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>. Actúa con agilidad mental ante situaciones diversas, desarrollando capacidad de pensar e innovar.</w:t></w:r></w:p>
+                <w:p><w:pPr><w:spacing w:before="60"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t>-Carácter:</w:t></w:r></w:p>
+                <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>. Mantiene autenticidad al demostrar coherencia entre su pensamiento y su acción.</w:t></w:r></w:p>
+              `}
             </w:tc>
           </w:tr>
         </w:tbl>
