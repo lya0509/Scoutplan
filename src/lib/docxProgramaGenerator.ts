@@ -35,43 +35,240 @@ export const docxProgramaGenerator = {
         throw new Error('El archivo de plantilla no contiene word/document.xml');
       }
 
-      // Preparar textos
+      // Preparar textos formateados
+      const cleanTitle = escapeXml(programa.title);
+      const cleanDate = escapeXml(programa.date || 'Sin fecha');
+      const cleanLocation = escapeXml(programa.location || 'Por definir');
+      const cleanActivityType = escapeXml(programa.activityType || 'Actividad');
+      const unitLabel = programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
+        ? `${programa.selectedUnits.map(u => u.toUpperCase()).join(' + ')} (Sinodal)`
+        : programa.unit.toUpperCase();
+      const cleanParticipants = escapeXml(programa.participantProjection || 'N/A');
+
+      // 1. Tabla de Resumen (Table 1)
+      const table1Xml = `
+        <w:tbl>
+          <w:tblPr>
+            <w:tblW w:w="11023" w:type="dxa"/>
+            <w:tblBorders>
+              <w:top w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:left w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:right w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:insideH w:val="single" w:sz="4" w:space="0" w:color="7030A0"/>
+              <w:insideV w:val="single" w:sz="4" w:space="0" w:color="7030A0"/>
+            </w:tblBorders>
+          </w:tblPr>
+          <w:tr>
+            <w:tc><w:tcPr><w:tcW w:w="1800" w:type="dxa"/><w:shd w:fill="B2A1C7"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Fecha</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2300" w:type="dxa"/><w:shd w:fill="B2A1C7"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Lugar:</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2500" w:type="dxa"/><w:shd w:fill="B2A1C7"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Tipo de Actividad:</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2000" w:type="dxa"/><w:shd w:fill="B2A1C7"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Rama:</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2423" w:type="dxa"/><w:shd w:fill="B2A1C7"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Número de Participante</w:t></w:r></w:p></w:tc>
+          </w:tr>
+          <w:tr>
+            <w:tc><w:tcPr><w:tcW w:w="1800" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${cleanDate}</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2300" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${cleanLocation}</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2500" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${cleanActivityType}</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2000" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>${escapeXml(unitLabel)}</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2423" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${cleanParticipants}</w:t></w:r></w:p></w:tc>
+          </w:tr>
+        </w:tbl>
+      `;
+
+      // 2. Tabla de Objetivos (Table 2)
+      const specObjParas = (programa.specificObjectives || []).map(obj => `
+        <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>* ${escapeXml(obj)}</w:t></w:r></w:p>
+      `).join('');
+
+      const table2Xml = `
+        <w:tbl>
+          <w:tblPr>
+            <w:tblW w:w="11023" w:type="dxa"/>
+            <w:tblBorders>
+              <w:top w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:left w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:right w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+            </w:tblBorders>
+          </w:tblPr>
+          <w:tr>
+            <w:tc>
+              <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
+              <w:p><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="4C1D95"/></w:rPr><w:t>Objetivo General:</w:t></w:r></w:p>
+              <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${escapeXml(programa.generalObjective || 'No especificado')}</w:t></w:r></w:p>
+              <w:p><w:pPr><w:spacing w:before="120"/></w:pPr><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="4C1D95"/></w:rPr><w:t>Objetivos Específicos:</w:t></w:r></w:p>
+              ${specObjParas || '<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>Sin objetivos específicos registrados.</w:t></w:r></w:p>'}
+            </w:tc>
+          </w:tr>
+        </w:tbl>
+      `;
+
+      // 3. Tabla de Metas Específicas (Table 3)
+      const specMetaParas = (programa.specificMetas || []).map(meta => `
+        <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>* ${escapeXml(meta)}</w:t></w:r></w:p>
+      `).join('');
+
+      const table3Xml = `
+        <w:tbl>
+          <w:tblPr>
+            <w:tblW w:w="11023" w:type="dxa"/>
+            <w:tblBorders>
+              <w:top w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:left w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:right w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+            </w:tblBorders>
+          </w:tblPr>
+          <w:tr>
+            <w:tc>
+              <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
+              <w:p><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="4C1D95"/></w:rPr><w:t>Metas Específicas:</w:t></w:r></w:p>
+              ${specMetaParas || '<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>Sin metas específicas registradas.</w:t></w:r></w:p>'}
+            </w:tc>
+          </w:tr>
+        </w:tbl>
+      `;
+
+      // 4. Tabla de Indicadores de Logro (Table 4)
+      const indicatorsListParas = Object.keys(GROWTH_AREAS).map(areaKey => {
+        const areaInfo = GROWTH_AREAS[areaKey as GrowthAreaKey];
+        const list = programa.indicators[areaKey as GrowthAreaKey] || [];
+        if (!list || list.length === 0) return '';
+        return `
+          <w:p><w:pPr><w:spacing w:before="60"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/><w:color w:val="4C1D95"/></w:rPr><w:t>- ${escapeXml(areaInfo.name)}:</w:t></w:r></w:p>
+          ${list.map(ind => `<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>* ${escapeXml(ind)}</w:t></w:r></w:p>`).join('')}
+        `;
+      }).filter(Boolean).join('');
+
+      const table4Xml = `
+        <w:tbl>
+          <w:tblPr>
+            <w:tblW w:w="11023" w:type="dxa"/>
+            <w:tblBorders>
+              <w:top w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:left w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:right w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:insideH w:val="single" w:sz="4" w:space="0" w:color="7030A0"/>
+            </w:tblBorders>
+          </w:tblPr>
+          <w:tr>
+            <w:tc>
+              <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
+              <w:p><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="4C1D95"/></w:rPr><w:t>Indicadores de Logro:</w:t></w:r></w:p>
+              ${indicatorsListParas || '<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>Sin indicadores seleccionados.</w:t></w:r></w:p>'}
+            </w:tc>
+          </w:tr>
+          <w:tr>
+            <w:tc>
+              <w:tcPr><w:tcW w:w="11023" w:type="dxa"/><w:shd w:fill="F3E8FF"/></w:tcPr>
+              <w:p>
+                <w:pPr><w:jc w:val="center"/></w:pPr>
+                <w:r><w:rPr><w:b/><w:sz w:val="17"/><w:color w:val="4C1D95"/></w:rPr><w:t>Corporalidad       Carácter       Espiritualidad       Sociabilidad       Creatividad       Afectividad</w:t></w:r>
+              </w:p>
+            </w:tc>
+          </w:tr>
+        </w:tbl>
+      `;
+
+      // 5. Tabla de ODS (Table 5)
       const sdgText = programa.selectedSDGs && programa.selectedSDGs.length > 0
         ? programa.selectedSDGs.map(num => {
             const sdg = SDG_LIST.find(s => s.number === num);
-            return `ODS #${num} ${sdg?.name || ''}`;
-          }).join('; ')
-        : 'Sin ODS asignados';
+            return `ODS #${num}: ${sdg?.name || sdg?.shortName || ''}`;
+          }).join(';  ')
+        : 'Ningún ODS seleccionado';
 
-      const indicatorsFormatted = Object.keys(GROWTH_AREAS).map(areaKey => {
-        const areaInfo = GROWTH_AREAS[areaKey as GrowthAreaKey];
-        const list = programa.indicators[areaKey as GrowthAreaKey] || [];
-        const lines = list.map(item => `  • ${escapeXml(item)}`).join('\n');
-        return `-${areaInfo.name}:\n${lines || '  • Sin indicadores asignados'}`;
-      }).join('\n');
+      const table5Xml = `
+        <w:tbl>
+          <w:tblPr>
+            <w:tblW w:w="11023" w:type="dxa"/>
+            <w:tblBorders>
+              <w:top w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:left w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:right w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+            </w:tblBorders>
+          </w:tblPr>
+          <w:tr>
+            <w:tc>
+              <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
+              <w:p>
+                <w:r><w:rPr><w:b/><w:sz w:val="19"/><w:color w:val="4C1D95"/></w:rPr><w:t>Objetivos de Desarrollo Sostenible (ODS):  </w:t></w:r>
+                <w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${escapeXml(sdgText)}</w:t></w:r>
+              </w:p>
+            </w:tc>
+          </w:tr>
+        </w:tbl>
+      `;
 
-      // Generar filas XML para la tabla de cronograma
-      const scheduleRowsXml = programa.schedule.map(item => `
+      // 6. Tabla de Cronograma (Table 6)
+      const scheduleRowsXml = (programa.schedule || []).map(item => `
         <w:tr>
           <w:tc>
-            <w:tcPr><w:tcW w:w="1800" w:type="dxa"/><w:shd w:fill="auto"/></w:tcPr>
-            <w:p><w:r><w:rPr><w:sz w:val="18"/><w:b/></w:rPr><w:t>${escapeXml(item.timeRange)}</w:t></w:r></w:p>
+            <w:tcPr><w:tcW w:w="1800" w:type="dxa"/></w:tcPr>
+            <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="17"/></w:rPr><w:t>${escapeXml(item.timeRange)}</w:t></w:r></w:p>
           </w:tc>
           <w:tc>
-            <w:tcPr><w:tcW w:w="4200" w:type="dxa"/><w:shd w:fill="auto"/></w:tcPr>
-            <w:p><w:r><w:rPr><w:sz w:val="18"/><w:b/></w:rPr><w:t>${escapeXml(item.title)}</w:t></w:r></w:p>
-            ${item.description ? `<w:p><w:r><w:rPr><w:sz w:val="16"/></w:rPr><w:t>${escapeXml(item.description)}</w:t></w:r></w:p>` : ''}
+            <w:tcPr><w:tcW w:w="4623" w:type="dxa"/></w:tcPr>
+            <w:p><w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>${escapeXml(item.title)}</w:t></w:r></w:p>
+            ${item.description ? `<w:p><w:r><w:rPr><w:sz w:val="16"/><w:color w:val="4B5563"/></w:rPr><w:t>${escapeXml(item.description)}</w:t></w:r></w:p>` : ''}
           </w:tc>
           <w:tc>
-            <w:tcPr><w:tcW w:w="1600" w:type="dxa"/><w:shd w:fill="auto"/></w:tcPr>
-            <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${escapeXml(item.responsible)}</w:t></w:r></w:p>
+            <w:tcPr><w:tcW w:w="2300" w:type="dxa"/></w:tcPr>
+            <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${escapeXml(item.responsible)}</w:t></w:r></w:p>
           </w:tc>
           <w:tc>
-            <w:tcPr><w:tcW w:w="1600" w:type="dxa"/><w:shd w:fill="auto"/></w:tcPr>
-            <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${escapeXml(item.materials || 'N/A')}</w:t></w:r></w:p>
+            <w:tcPr><w:tcW w:w="2300" w:type="dxa"/></w:tcPr>
+            <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${escapeXml(item.materials || '-')}</w:t></w:r></w:p>
           </w:tc>
         </w:tr>
       `).join('');
+
+      const table6Xml = `
+        <w:tbl>
+          <w:tblPr>
+            <w:tblW w:w="11023" w:type="dxa"/>
+            <w:tblBorders>
+              <w:top w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:left w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:right w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:insideH w:val="single" w:sz="4" w:space="0" w:color="7030A0"/>
+              <w:insideV w:val="single" w:sz="4" w:space="0" w:color="7030A0"/>
+            </w:tblBorders>
+          </w:tblPr>
+          <w:tr>
+            <w:tc><w:tcPr><w:tcW w:w="1800" w:type="dxa"/><w:shd w:fill="B2A1C7"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Horario (AM - PM)</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="4623" w:type="dxa"/><w:shd w:fill="B2A1C7"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Actividad / Descripción</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2300" w:type="dxa"/><w:shd w:fill="B2A1C7"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Responsable</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2300" w:type="dxa"/><w:shd w:fill="B2A1C7"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Materiales</w:t></w:r></w:p></w:tc>
+          </w:tr>
+          ${scheduleRowsXml || '<w:tr><w:tc><w:tcPr><w:gridSpan w:val="4"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:i/><w:sz w:val="18"/></w:rPr><w:t>Sin actividades en el cronograma.</w:t></w:r></w:p></w:tc></w:tr>'}
+          <w:tr>
+            <w:tc><w:tcPr><w:tcW w:w="1800" w:type="dxa"/><w:shd w:fill="B2A1C7"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="17"/></w:rPr><w:t>NOTAS IMPORTANTES</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:gridSpan w:val="3"/><w:tcW w:w="9223" w:type="dxa"/></w:tcPr><w:p><w:r><w:rPr><w:sz w:val="17"/></w:rPr><w:t>${escapeXml(programa.importantNotes || 'Cada integrante debe dominar su ponencia y dar lo mejor de sí en este servicio scout.')}</w:t></w:r></w:p></w:tc>
+          </w:tr>
+        </w:tbl>
+      `;
+
+      // Reemplazar las 6 tablas en document.xml
+      const tableRegex = /<w:tbl[\s\S]*?<\/w:tbl>/g;
+      const tablesMatch = docXml.match(tableRegex);
+
+      if (tablesMatch && tablesMatch.length >= 6) {
+        docXml = docXml
+          .replace(tablesMatch[0], table1Xml)
+          .replace(tablesMatch[1], table2Xml)
+          .replace(tablesMatch[2], table3Xml)
+          .replace(tablesMatch[3], table4Xml)
+          .replace(tablesMatch[4], table5Xml)
+          .replace(tablesMatch[5], table6Xml);
+      }
+
+      // Reemplazar título principal
+      docXml = docXml.replace(/Programa de Actividades de la Unidad del Clan/g, `Programa de Actividades de la Unidad ${escapeXml(unitLabel)}`);
 
       // Guardar el XML modificado en el zip
       zip.file('word/document.xml', docXml);
@@ -79,11 +276,10 @@ export const docxProgramaGenerator = {
       // 4. Generar blob y descargar
       const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
       
-      const cleanTitle = programa.title.replace(/[^a-zA-Z0-9_-]/g, '_');
-      const unitLabel = programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
+      const fileUnitLabel = programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
         ? `${programa.selectedUnits.map(u => u.toUpperCase()).join('_')}_SINODAL`
         : programa.unit.toUpperCase();
-      const filename = `Programa_${unitLabel}_${cleanTitle}_${programa.date || 'Actividad'}.docx`;
+      const filename = `Programa_${fileUnitLabel}_${cleanTitle}_${cleanDate}.docx`;
 
       if (typeof window !== 'undefined') {
         const link = document.createElement('a');
