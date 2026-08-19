@@ -30,7 +30,8 @@ import {
   ChevronUp,
   Search,
   Eye,
-  Download
+  Download,
+  Lock
 } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -40,7 +41,8 @@ import {
   GROWTH_AREAS,
   GrowthAreaKey,
   getIndicatorsForAreaAndUnit,
-  getStagesForUnit
+  getStagesForUnit,
+  getStagesForUnits
 } from '../data/achievementIndicatorsData';
 import { REGISTRATION_BADGES } from '../data/registrationBadgesData';
 import { programaService } from '../lib/programaService';
@@ -53,7 +55,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
   const { isDarkMode, theme, primaryColor } = useTheme();
 
   const existingPrograma: ProgramaScout | undefined = route.params?.programa;
-  const initialUnit = existingPrograma?.unit || user?.unit || 'clan';
+  const userUnit = (user?.unit || existingPrograma?.unit || 'clan').toLowerCase() as 'manada' | 'tropa' | 'caminantes' | 'clan';
 
   const [saving, setSaving] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -67,14 +69,20 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
   const [date, setDate] = useState(existingPrograma?.date || new Date().toISOString().split('T')[0]);
   const [location, setLocation] = useState(existingPrograma?.location || '');
   const [activityType, setActivityType] = useState(existingPrograma?.activityType || '');
-  const [unit, setUnit] = useState<'manada' | 'tropa' | 'caminantes' | 'clan'>(initialUnit as any);
+  const [unit] = useState<'manada' | 'tropa' | 'caminantes' | 'clan'>(userUnit);
+  const [isSinodal, setIsSinodal] = useState<boolean>(existingPrograma?.isSinodal || false);
+  const [selectedUnits, setSelectedUnits] = useState<('manada' | 'tropa' | 'caminantes' | 'clan')[]>(
+    existingPrograma?.selectedUnits && existingPrograma.selectedUnits.length > 0
+      ? existingPrograma.selectedUnits
+      : [userUnit]
+  );
   const [participantProjection, setParticipantProjection] = useState(existingPrograma?.participantProjection || '4 Jóvenes');
   const [generalObjective, setGeneralObjective] = useState(existingPrograma?.generalObjective || '');
   const [specificObjectives, setSpecificObjectives] = useState<string[]>(existingPrograma?.specificObjectives || ['']);
   const [specificMetas, setSpecificMetas] = useState<string[]>(existingPrograma?.specificMetas || ['']);
   const [selectedSDGs, setSelectedSDGs] = useState<number[]>(existingPrograma?.selectedSDGs || []);
   const [importantNotes, setImportantNotes] = useState(existingPrograma?.importantNotes || '');
-  const [registrationBadgeId, setRegistrationBadgeId] = useState(existingPrograma?.registrationBadgeId || 'reg_2026');
+  const [registrationBadgeId] = useState('reg_2026');
 
   // Indicadores de logro por las 6 áreas
   const [indicators, setIndicators] = useState<Record<GrowthAreaKey, string[]>>(
@@ -107,6 +115,32 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
   const [indicatorSearchQuery, setIndicatorSearchQuery] = useState('');
   const [expandedArea, setExpandedArea] = useState<GrowthAreaKey | null>('corporalidad');
   const [customIndicatorInput, setCustomIndicatorInput] = useState('');
+
+  // Unidades activas para indicadores
+  const activeUnitsForIndicators = isSinodal ? selectedUnits : [unit];
+  const activeStages = getStagesForUnits(activeUnitsForIndicators);
+
+  // Manejador para alternar unidades en modo Sinodal
+  const handleToggleSinodalUnit = (u: 'manada' | 'tropa' | 'caminantes' | 'clan') => {
+    if (u === unit) {
+      showAlert('Unidad Principal', `Tu unidad (${unit.toUpperCase()}) es la anfitriona del programa y no se puede deseleccionar.`);
+      return;
+    }
+    if (selectedUnits.includes(u)) {
+      setSelectedUnits(selectedUnits.filter(x => x !== u));
+    } else {
+      setSelectedUnits([...selectedUnits, u]);
+    }
+  };
+
+  const handleToggleSinodalMode = () => {
+    if (isSinodal) {
+      setIsSinodal(false);
+      setSelectedUnits([unit]);
+    } else {
+      setIsSinodal(true);
+    }
+  };
 
   // Cargar actividades del Plan Trimestral para importar
   const loadTrimestreActivities = async () => {
@@ -265,6 +299,8 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         location: location.trim(),
         activityType: activityType.trim() || 'Actividad Scout',
         unit,
+        isSinodal,
+        selectedUnits: isSinodal ? selectedUnits : [unit],
         participantProjection: participantProjection.trim() || '4 Jóvenes',
         generalObjective: generalObjective.trim(),
         specificObjectives: specificObjectives.filter(o => o.trim()),
@@ -301,6 +337,8 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
     location,
     activityType,
     unit,
+    isSinodal,
+    selectedUnits: isSinodal ? selectedUnits : [unit],
     participantProjection,
     generalObjective,
     specificObjectives: specificObjectives.filter(o => o.trim()),
@@ -433,58 +471,84 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
             </View>
           </View>
 
-          {/* Selector de Rama */}
+          {/* Selector de Rama y Modo Sinodal */}
           <View style={styles.fieldGroup}>
-            <Text style={[styles.fieldLabel, { color: theme.text }]}>Rama Scout</Text>
-            <View style={styles.unitSelectorRow}>
-              {(['manada', 'tropa', 'caminantes', 'clan'] as const).map(u => (
-                <TouchableOpacity
-                  key={u}
-                  style={[
-                    styles.unitChip,
-                    unit === u && { backgroundColor: primaryColor, borderColor: primaryColor },
-                    { borderColor: theme.border }
-                  ]}
-                  onPress={() => setUnit(u)}
-                >
-                  <Text
-                    style={[
-                      styles.unitChipText,
-                      unit === u ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }
-                    ]}
-                  >
-                    {u.toUpperCase()}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+            <View style={styles.labelWithAction}>
+              <Text style={[styles.fieldLabel, { color: theme.text }]}>Rama Scout</Text>
+              <TouchableOpacity
+                style={[
+                  styles.sinodalToggleBtn,
+                  isSinodal ? { backgroundColor: '#7c3aed', borderColor: '#7c3aed' } : { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: theme.border }
+                ]}
+                onPress={handleToggleSinodalMode}
+                activeOpacity={0.8}
+              >
+                <Users size={13} color={isSinodal ? '#ffffff' : theme.subText} style={{ marginRight: 4 }} />
+                <Text style={[styles.sinodalToggleText, isSinodal ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.subText }]}>
+                  {isSinodal ? '🤝 Sinodal: Activada' : '🤝 ¿Actividad Sinodal?'}
+                </Text>
+              </TouchableOpacity>
             </View>
+
+            {!isSinodal ? (
+              /* MODO NORMAL: Tu unidad fijada */
+              <View style={[styles.fixedUnitBox, { backgroundColor: primaryColor + '15', borderColor: primaryColor }]}>
+                <Text style={[styles.fixedUnitText, { color: primaryColor }]}>
+                  ⚜️ Rama: <Text style={{ fontWeight: 'bold' }}>{unit.toUpperCase()}</Text>
+                </Text>
+                <View style={[styles.fixedUnitBadge, { backgroundColor: primaryColor }]}>
+                  <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: 'bold' }}>Tu Unidad</Text>
+                </View>
+              </View>
+            ) : (
+              /* MODO SINODAL: Selección múltiple con tu unidad bloqueada */
+              <View style={[styles.sinodalBox, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: '#7c3aed' }]}>
+                <Text style={{ fontSize: 11, color: theme.subText, marginBottom: 8 }}>
+                  Selecciona las otras unidades participantes (tu unidad <Text style={{ fontWeight: 'bold', color: primaryColor }}>{unit.toUpperCase()}</Text> está fija):
+                </Text>
+                <View style={styles.unitSelectorRow}>
+                  {(['manada', 'tropa', 'caminantes', 'clan'] as const).map(u => {
+                    const isSelected = selectedUnits.includes(u);
+                    const isMyUnit = u === unit;
+                    return (
+                      <TouchableOpacity
+                        key={u}
+                        style={[
+                          styles.unitChip,
+                          isSelected && { backgroundColor: isMyUnit ? primaryColor : '#7c3aed', borderColor: isMyUnit ? primaryColor : '#7c3aed' },
+                          { borderColor: theme.border }
+                        ]}
+                        onPress={() => handleToggleSinodalUnit(u)}
+                      >
+                        <Text
+                          style={[
+                            styles.unitChipText,
+                            isSelected ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }
+                          ]}
+                        >
+                          {isMyUnit ? `🔒 ${u.toUpperCase()}` : isSelected ? `✓ ${u.toUpperCase()}` : u.toUpperCase()}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
           </View>
 
-          {/* Selector de Insignia de Registro Anual */}
+          {/* Insignia Anual de Registro (Solo año en curso 2026) */}
           <View style={styles.fieldGroup}>
-            <Text style={[styles.fieldLabel, { color: theme.text }]}>Insignia Anual de Registro</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
-              {REGISTRATION_BADGES.map(badge => (
-                <TouchableOpacity
-                  key={badge.id}
-                  style={[
-                    styles.badgeOptionChip,
-                    registrationBadgeId === badge.id && { borderColor: primaryColor, backgroundColor: primaryColor + '15' },
-                    { borderColor: theme.border }
-                  ]}
-                  onPress={() => setRegistrationBadgeId(badge.id)}
-                >
-                  <Text
-                    style={[
-                      styles.badgeOptionText,
-                      registrationBadgeId === badge.id ? { color: primaryColor, fontWeight: 'bold' } : { color: theme.text }
-                    ]}
-                  >
-                    🎖️ {badge.title}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <Text style={[styles.fieldLabel, { color: theme.text }]}>Insignia Anual de Registro Nacional</Text>
+            <View style={[styles.activeBadgePill, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: primaryColor }]}>
+              <Text style={{ fontSize: 14, marginRight: 8 }}>🎖️</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.activeBadgeTitle, { color: theme.text }]}>Bienestar en Acción 2026</Text>
+                <Text style={{ fontSize: 10, color: theme.subText }}>Insignia Oficial ASV activa para el periodo en curso</Text>
+              </View>
+              <View style={[styles.activeBadgeStatus, { backgroundColor: '#dcfce7' }]}>
+                <Text style={{ color: '#15803d', fontSize: 10, fontWeight: 'bold' }}>Año 2026</Text>
+              </View>
+            </View>
           </View>
         </View>
 
@@ -611,8 +675,11 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
           </View>
 
           <Text style={[styles.subTextHint, { color: theme.subText }]}>
-            Selecciona al menos 1 indicador en cada una de las 6 áreas para la rama{' '}
-            <Text style={{ fontWeight: 'bold', color: primaryColor }}>{unit.toUpperCase()}</Text> (Etapas {getStagesForUnit(unit).join(' y ')}):
+            Selecciona al menos 1 indicador en cada una de las 6 áreas para{' '}
+            <Text style={{ fontWeight: 'bold', color: primaryColor }}>
+              {isSinodal ? selectedUnits.map(u => u.toUpperCase()).join(' + ') + ' (Sinodal)' : unit.toUpperCase()}
+            </Text>{' '}
+            (Etapas {activeStages.join(', ')}):
           </Text>
 
           {/* Acordeones para las 6 áreas */}
@@ -811,7 +878,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
               </View>
 
               <Text style={{ fontSize: 11, color: theme.subText, marginBottom: 10 }}>
-                Rama {unit.toUpperCase()} (Etapas {getStagesForUnit(unit).join(' y ')}):
+                {isSinodal ? selectedUnits.map(u => u.toUpperCase()).join(' + ') + ' (Sinodal)' : unit.toUpperCase()} (Etapas {activeStages.join(', ')}):
               </Text>
 
               {/* Buscador en vivo */}
@@ -828,7 +895,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
               {/* Lista filtrada */}
               <ScrollView style={{ maxHeight: 340, marginTop: 10 }}>
-                {getIndicatorsForAreaAndUnit(indicatorPickerArea, unit)
+                {getIndicatorsForAreaAndUnit(indicatorPickerArea, activeUnitsForIndicators)
                   .filter(item => item.text.toLowerCase().includes(indicatorSearchQuery.toLowerCase()))
                   .map((item, idx) => {
                     const isAlreadySelected = (indicators[indicatorPickerArea] || []).includes(item.text);
@@ -1030,6 +1097,43 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   rowTwo: { flexDirection: 'row' },
+  labelWithAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  sinodalToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  sinodalToggleText: { fontSize: 11 },
+  fixedUnitBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 4,
+  },
+  fixedUnitText: { fontSize: 13 },
+  fixedUnitBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  sinodalBox: {
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 4,
+  },
   unitSelectorRow: { flexDirection: 'row', gap: 6, marginTop: 4 },
   unitChip: {
     flex: 1,
@@ -1038,20 +1142,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
   },
-  unitChipText: { fontSize: 11 },
-  badgeOptionChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginRight: 8,
-  },
-  badgeOptionText: { fontSize: 11 },
-  labelWithAction: {
+  unitChipText: { fontSize: 10 },
+  activeBadgePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 4,
+  },
+  activeBadgeTitle: { fontSize: 13, fontWeight: 'bold' },
+  activeBadgeStatus: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   addSmallBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   addSmallBtnText: { fontSize: 12, fontWeight: 'bold' },

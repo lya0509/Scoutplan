@@ -80,7 +80,10 @@ export const docxProgramaGenerator = {
       const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
       
       const cleanTitle = programa.title.replace(/[^a-zA-Z0-9_-]/g, '_');
-      const filename = `Programa_${programa.unit.toUpperCase()}_${cleanTitle}_${programa.date || 'Actividad'}.docx`;
+      const unitLabel = programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
+        ? `${programa.selectedUnits.map(u => u.toUpperCase()).join('_')}_SINODAL`
+        : programa.unit.toUpperCase();
+      const filename = `Programa_${unitLabel}_${cleanTitle}_${programa.date || 'Actividad'}.docx`;
 
       if (typeof window !== 'undefined') {
         const link = document.createElement('a');

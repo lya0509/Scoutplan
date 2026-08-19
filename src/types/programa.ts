@@ -16,6 +16,8 @@ export interface ProgramaScout {
   location: string;
   activityType: string;
   unit: 'manada' | 'tropa' | 'caminantes' | 'clan';
+  isSinodal?: boolean;
+  selectedUnits?: ('manada' | 'tropa' | 'caminantes' | 'clan')[];
   participantProjection: string;
   generalObjective: string;
   specificObjectives: string[];

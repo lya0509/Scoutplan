@@ -824,10 +824,22 @@ export function getStagesForUnit(unit?: string | null): string[] {
 }
 
 /**
- * Obtiene todos los indicadores de un area para una rama especifica
+ * Retorna todas las etapas combinadas para una o más unidades (Sinodal)
  */
-export function getIndicatorsForAreaAndUnit(area: GrowthAreaKey, unit?: string | null): { stage: string; text: string }[] {
-  const stages = getStagesForUnit(unit);
+export function getStagesForUnits(units: string[]): string[] {
+  const stageSet = new Set<string>();
+  units.forEach(u => {
+    getStagesForUnit(u).forEach(st => stageSet.add(st));
+  });
+  return Array.from(stageSet).sort();
+}
+
+/**
+ * Obtiene todos los indicadores de un area para una rama o ramas especificas
+ */
+export function getIndicatorsForAreaAndUnit(area: GrowthAreaKey, unitOrUnits?: string | string[] | null): { stage: string; text: string }[] {
+  const units = Array.isArray(unitOrUnits) ? unitOrUnits : [unitOrUnits || ''];
+  const stages = getStagesForUnits(units);
   const areaData = ACHIEVEMENT_INDICATORS_BY_STAGE[area] || {};
   const result: { stage: string; text: string }[] = [];
 

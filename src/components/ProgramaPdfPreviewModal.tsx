@@ -121,7 +121,18 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
 
             {/* TIRA DE LOGOS OFICIALES */}
             <View style={styles.logosStrip}>
-              <Image source={{ uri: unitLogo }} style={styles.logoItem} resizeMode="contain" />
+              {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 0 ? (
+                programa.selectedUnits.map(u => (
+                  <Image
+                    key={u}
+                    source={{ uri: UNIT_PROGRAMA_LOGOS[u] || SCOUT_WOSM_LOGO }}
+                    style={styles.logoItem}
+                    resizeMode="contain"
+                  />
+                ))
+              ) : (
+                <Image source={{ uri: unitLogo }} style={styles.logoItem} resizeMode="contain" />
+              )}
               <Image source={{ uri: SCOUT_WOSM_LOGO }} style={styles.logoItem} resizeMode="contain" />
               <Image source={{ uri: GROUP_ORION_LOGO }} style={styles.logoItem} resizeMode="contain" />
               <Image source={{ uri: regBadge.imageUri }} style={[styles.logoItem, { width: 110, height: 42 }]} resizeMode="contain" />
@@ -138,14 +149,18 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
                 <Text style={[styles.tableHeadCell, { flex: 1.2 }]}>Fecha</Text>
                 <Text style={[styles.tableHeadCell, { flex: 1.5 }]}>Lugar:</Text>
                 <Text style={[styles.tableHeadCell, { flex: 2 }]}>Tipo de Actividad:</Text>
-                <Text style={[styles.tableHeadCell, { flex: 1 }]}>Rama:</Text>
+                <Text style={[styles.tableHeadCell, { flex: 1.2 }]}>Rama:</Text>
                 <Text style={[styles.tableHeadCell, { flex: 1.5 }]}>Proyección de Participantes</Text>
               </View>
               <View style={styles.tableDataRow}>
                 <Text style={[styles.tableBodyCell, { flex: 1.2 }]}>{programa.date || 'Sin fecha'}</Text>
                 <Text style={[styles.tableBodyCell, { flex: 1.5 }]}>{programa.location || 'Por definir'}</Text>
                 <Text style={[styles.tableBodyCell, { flex: 2 }]}>{programa.activityType || 'Actividad'}</Text>
-                <Text style={[styles.tableBodyCell, { flex: 1, fontWeight: 'bold', textTransform: 'capitalize' }]}>{programa.unit}</Text>
+                <Text style={[styles.tableBodyCell, { flex: 1.2, fontWeight: 'bold', textTransform: 'capitalize' }]}>
+                  {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
+                    ? `${programa.selectedUnits.map(u => u.toUpperCase()).join(' + ')} (Sinodal)`
+                    : programa.unit}
+                </Text>
                 <Text style={[styles.tableBodyCell, { flex: 1.5 }]}>{programa.participantProjection || 'N/A'}</Text>
               </View>
             </View>
