@@ -35,89 +35,112 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
   const unitLogo = UNIT_PROGRAMA_LOGOS[programa.unit] || SCOUT_WOSM_LOGO;
   const regBadge = REGISTRATION_BADGES.find(r => r.id === programa.registrationBadgeId) || REGISTRATION_BADGES[0];
 
-  const handleDownloadPdf = async () => {
-    setDownloadingPdf(true);
-    try {
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        const element = document.getElementById('printable-scout-programa');
-        if (element) {
-          const html2pdfModule = await import('html2pdf.js');
-          const html2pdf = (html2pdfModule as any).default || html2pdfModule;
-          const unitStr = programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
-            ? `${programa.selectedUnits.map(u => u.toUpperCase()).join('_')}_SINODAL`
-            : programa.unit.toUpperCase();
-          const cleanTitle = (programa.title || 'Programa').replace(/[^a-zA-Z0-9_-]/g, '_');
-          const opt = {
-            margin: 0,
-            filename: `Programa_${unitStr}_${cleanTitle}_${programa.date || 'Actividad'}.pdf`,
-            image: { type: 'png' },
-            html2canvas: {
-              scale: 4,
-              useCORS: true,
-              logging: false,
-              backgroundColor: '#ffffff',
-              scrollY: 0,
-              imageTimeout: 0,
-            },
-            jsPDF: {
-              unit: 'mm',
-              format: 'letter',
-              orientation: 'portrait'
-            }
-          };
-          await html2pdf().set(opt).from(element).save();
-          showAlert('Descarga Exitosa', 'El archivo PDF se ha descargado en Ultra Alta Definición (HD).');
-          return;
-        }
-      }
-      // Fallback
-      handlePrintVectorPdf();
-    } catch (err: any) {
-      console.error('Error generando PDF:', err);
-      handlePrintVectorPdf();
-    } finally {
-      setDownloadingPdf(false);
-    }
-  };
-
-  const handlePrintVectorPdf = () => {
+  const handleDownloadPdf = () => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      // ── Asignar IDs directamente en el DOM para selectores CSS de impresión ──
+      const container = document.getElementById('printable-scout-programa');
+      if (container) {
+        const children = container.children;
+        // Structure: [0]=watermark, [1]=header, [2]=content, [3]=footer
+        if (children[1]) (children[1] as HTMLElement).id = 'asv-print-header';
+        if (children[2]) (children[2] as HTMLElement).id = 'asv-print-content';
+        if (children[3]) (children[3] as HTMLElement).id = 'asv-print-footer';
+      }
+
       const existingStyle = document.getElementById('scout-print-styles');
+      const cssContent = `
+        @page {
+          size: letter portrait;
+          margin: 0mm !important;
+        }
+        @media print {
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: #ffffff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          body * {
+            visibility: hidden !important;
+          }
+          #printable-scout-programa, #printable-scout-programa * {
+            visibility: visible !important;
+          }
+          #printable-scout-programa {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: #ffffff !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
+            overflow: hidden !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            page-break-after: avoid !important;
+            page-break-inside: avoid !important;
+          }
+          #asv-print-header,
+          #asv-print-header img,
+          #asv-print-header > div {
+            width: 100% !important;
+            height: 82px !important;
+            min-height: 82px !important;
+            max-height: 82px !important;
+            display: block !important;
+            object-fit: fill !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            flex-shrink: 0 !important;
+          }
+          #asv-print-footer,
+          #asv-print-footer img,
+          #asv-print-footer > div {
+            width: 100% !important;
+            height: 86px !important;
+            min-height: 86px !important;
+            max-height: 86px !important;
+            display: block !important;
+            object-fit: fill !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            flex-shrink: 0 !important;
+            margin-top: auto !important;
+          }
+          #asv-print-content {
+            padding-left: 28px !important;
+            padding-right: 28px !important;
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+            flex: 1 1 auto !important;
+            overflow: hidden !important;
+          }
+        }
+      `;
       if (!existingStyle) {
         const style = document.createElement('style');
         style.id = 'scout-print-styles';
-        style.innerHTML = `
-          @media print {
-            body * {
-              visibility: hidden !important;
-            }
-            #printable-scout-programa, #printable-scout-programa * {
-              visibility: visible !important;
-            }
-            #printable-scout-programa {
-              position: absolute !important;
-              left: 0 !important;
-              top: 0 !important;
-              width: 100% !important;
-              max-width: 100% !important;
-              padding: 0 !important;
-              margin: 0 !important;
-              box-shadow: none !important;
-              background: #ffffff !important;
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-            @page {
-              size: letter portrait;
-              margin: 0;
-            }
-          }
-        `;
+        style.innerHTML = cssContent;
         document.head.appendChild(style);
+      } else {
+        existingStyle.innerHTML = cssContent;
       }
       window.print();
     } else {
-      showAlert('Imprimir PDF', 'Usa la opción "Guardar como PDF" en el diálogo de impresión.');
+      showAlert('Descargar PDF', 'Para descargar en PDF, selecciona la opción "Guardar como PDF" en el diálogo de impresión.');
     }
   };
 
@@ -164,24 +187,9 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             <TouchableOpacity
               style={[styles.btnPrint, { backgroundColor: '#dc2626' }]}
               onPress={handleDownloadPdf}
-              disabled={downloadingPdf}
             >
-              {downloadingPdf ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <>
-                  <Download size={15} color="#ffffff" style={{ marginRight: 6 }} />
-                  <Text style={styles.btnText}>Descargar como Documento PDF</Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.btnPrint, { backgroundColor: '#4b5563' }]}
-              onPress={handlePrintVectorPdf}
-            >
-              <Printer size={15} color="#ffffff" style={{ marginRight: 6 }} />
-              <Text style={styles.btnText}>Imprimir / Vectorial</Text>
+              <Download size={15} color="#ffffff" style={{ marginRight: 6 }} />
+              <Text style={styles.btnText}>Descargar como Documento PDF</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.btnClose} onPress={onClose}>
@@ -204,11 +212,12 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             <Image
               source={{ uri: '/programa_assets/asv_header.png' }}
               style={styles.asvHeaderImg}
+              nativeID="asv-print-header"
               resizeMode="stretch"
             />
 
             {/* CONTENIDO INTERNO DEL PROGRAMA */}
-            <View style={styles.sheetInnerContent}>
+            <View style={styles.sheetInnerContent} nativeID="asv-print-content">
               {/* TIRA DE LOGOS OFICIALES */}
               <View style={styles.logosStrip}>
                 {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 0 ? (
@@ -380,6 +389,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             <Image
               source={{ uri: '/programa_assets/asv_footer.png' }}
               style={styles.asvFooterImg}
+              nativeID="asv-print-footer"
               resizeMode="stretch"
             />
           </View>
