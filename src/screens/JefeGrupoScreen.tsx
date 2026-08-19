@@ -104,6 +104,15 @@ export default function JefeGrupoScreen({ navigation }: any) {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
           <TouchableOpacity
             style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+            onPress={() => navigation.navigate('ProgramaScout')}
+            activeOpacity={0.8}
+          >
+            <Calendar size={18} color={primaryColor} />
+            <Text style={[styles.quickToolBtnText, { color: theme.text }]}>📅 Programas</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
             onPress={() => navigation.navigate('Documentos')}
             activeOpacity={0.8}
           >

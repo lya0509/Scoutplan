@@ -23,6 +23,8 @@ import CurriculumScoutScreen from '../screens/CurriculumScoutScreen';
 import NudosManualScreen from '../screens/NudosManualScreen';
 import CancioneroScreen from '../screens/CancioneroScreen';
 import DocumentosScreen from '../screens/DocumentosScreen';
+import ProgramaScoutScreen from '../screens/ProgramaScoutScreen';
+import ProgramaScoutEditorScreen from '../screens/ProgramaScoutEditorScreen';
 
 import DrawerNavigator from './DrawerNavigator';
 
@@ -126,6 +128,8 @@ export default function AppNavigator() {
             <Stack.Screen name="NudosManual" component={NudosManualScreen} options={{ headerShown: true, title: 'Manual de Nudos (Offline)' }} />
             <Stack.Screen name="Cancionero" component={CancioneroScreen} options={{ headerShown: true, title: 'Cancionero Scout (Offline)' }} />
             <Stack.Screen name="Documentos" component={DocumentosScreen} options={{ headerShown: true, title: 'Documentos y Guías Scout' }} />
+            <Stack.Screen name="ProgramaScout" component={ProgramaScoutScreen} options={{ headerShown: true, title: 'Programas de Actividades' }} />
+            <Stack.Screen name="ProgramaScoutEditor" component={ProgramaScoutEditorScreen} options={{ headerShown: false }} />
           </Stack.Group>
         )}
       </Stack.Navigator>

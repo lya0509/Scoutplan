@@ -494,6 +494,15 @@ export default function ScouterDashboardScreen({ navigation }: any) {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
           <TouchableOpacity
             style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+            onPress={() => navigation.navigate('ProgramaScout')}
+            activeOpacity={0.8}
+          >
+            <Calendar size={18} color={primaryColor} />
+            <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>📅 Programas</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
             onPress={() => navigation.navigate('Documentos')}
             activeOpacity={0.8}
           >

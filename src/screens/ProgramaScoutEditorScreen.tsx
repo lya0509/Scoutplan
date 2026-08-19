@@ -1,0 +1,1224 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  Modal,
+  Platform,
+  Alert
+} from 'react-native';
+import {
+  Save,
+  ArrowLeft,
+  Plus,
+  Trash2,
+  FileText,
+  Calendar,
+  MapPin,
+  Users,
+  Target,
+  Sparkles,
+  CheckCircle,
+  AlertTriangle,
+  Clock,
+  BookOpen,
+  ChevronDown,
+  ChevronUp,
+  Search,
+  Eye,
+  Download
+} from 'lucide-react-native';
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { ProgramaScout, ActivityScheduleItem } from '../types/programa';
+import { SDG_LIST, SDGItem } from '../data/sdgData';
+import {
+  GROWTH_AREAS,
+  GrowthAreaKey,
+  getIndicatorsForAreaAndUnit,
+  getStagesForUnit
+} from '../data/achievementIndicatorsData';
+import { REGISTRATION_BADGES } from '../data/registrationBadgesData';
+import { programaService } from '../lib/programaService';
+import { dataService } from '../lib/dataService';
+import { ProgramaPdfPreviewModal } from '../components/ProgramaPdfPreviewModal';
+import { showAlert } from '../utils/alert';
+
+export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
+  const { user } = useAuth();
+  const { isDarkMode, theme, primaryColor } = useTheme();
+
+  const existingPrograma: ProgramaScout | undefined = route.params?.programa;
+  const initialUnit = existingPrograma?.unit || user?.unit || 'clan';
+
+  const [saving, setSaving] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showTrimestreModal, setShowTrimestreModal] = useState(false);
+  const [trimestreActivities, setTrimestreActivities] = useState<any[]>([]);
+  const [loadingTrimestre, setLoadingTrimestre] = useState(false);
+
+  // Estados principales del programa
+  const [id, setId] = useState(existingPrograma?.id || `prog_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`);
+  const [title, setTitle] = useState(existingPrograma?.title || '');
+  const [date, setDate] = useState(existingPrograma?.date || new Date().toISOString().split('T')[0]);
+  const [location, setLocation] = useState(existingPrograma?.location || '');
+  const [activityType, setActivityType] = useState(existingPrograma?.activityType || '');
+  const [unit, setUnit] = useState<'manada' | 'tropa' | 'caminantes' | 'clan'>(initialUnit as any);
+  const [participantProjection, setParticipantProjection] = useState(existingPrograma?.participantProjection || '4 Jóvenes');
+  const [generalObjective, setGeneralObjective] = useState(existingPrograma?.generalObjective || '');
+  const [specificObjectives, setSpecificObjectives] = useState<string[]>(existingPrograma?.specificObjectives || ['']);
+  const [specificMetas, setSpecificMetas] = useState<string[]>(existingPrograma?.specificMetas || ['']);
+  const [selectedSDGs, setSelectedSDGs] = useState<number[]>(existingPrograma?.selectedSDGs || []);
+  const [importantNotes, setImportantNotes] = useState(existingPrograma?.importantNotes || '');
+  const [registrationBadgeId, setRegistrationBadgeId] = useState(existingPrograma?.registrationBadgeId || 'reg_2026');
+
+  // Indicadores de logro por las 6 áreas
+  const [indicators, setIndicators] = useState<Record<GrowthAreaKey, string[]>>(
+    existingPrograma?.indicators || {
+      corporalidad: [],
+      creatividad: [],
+      caracter: [],
+      afectividad: [],
+      sociabilidad: [],
+      espiritualidad: []
+    }
+  );
+
+  // Cronograma de actividades
+  const [schedule, setSchedule] = useState<ActivityScheduleItem[]>(
+    existingPrograma?.schedule || [
+      {
+        id: `sch_${Date.now()}_1`,
+        timeRange: '10:00 am - 10:20 am',
+        title: 'Ceremonia de Apertura',
+        description: 'Izada de bandera nacional y scout, oración de unidad y pase de lista.',
+        responsible: 'Adultos de Programa',
+        materials: 'Banderas, Asta'
+      }
+    ]
+  );
+
+  // Modal para seleccionar indicador oficial
+  const [indicatorPickerArea, setIndicatorPickerArea] = useState<GrowthAreaKey | null>(null);
+  const [indicatorSearchQuery, setIndicatorSearchQuery] = useState('');
+  const [expandedArea, setExpandedArea] = useState<GrowthAreaKey | null>('corporalidad');
+  const [customIndicatorInput, setCustomIndicatorInput] = useState('');
+
+  // Cargar actividades del Plan Trimestral para importar
+  const loadTrimestreActivities = async () => {
+    setLoadingTrimestre(true);
+    try {
+      const cy = new Date().getFullYear();
+      const currentQuarter = 'Q' + Math.ceil((new Date().getMonth() + 1) / 3);
+      const plan = await dataService.getUnitSharedQuarterlyPlan(
+        user?.group_name || 'Grupo Scout Orión #84',
+        unit,
+        currentQuarter,
+        cy
+      );
+      if (plan && plan.monthly_activities && Array.isArray(plan.monthly_activities)) {
+        setTrimestreActivities(plan.monthly_activities);
+      } else {
+        setTrimestreActivities([]);
+      }
+    } catch (e) {
+      console.warn('Error cargando plan trimestral:', e);
+      setTrimestreActivities([]);
+    } finally {
+      setLoadingTrimestre(false);
+    }
+  };
+
+  const handleImportFromTrimestre = (item: any) => {
+    setTitle(item.title || item.name || item.activity || 'Actividad Trimestral');
+    if (item.date) setDate(item.date);
+    if (item.location) setLocation(item.location);
+    if (item.type) setActivityType(item.type);
+    if (item.objective || item.description) setGeneralObjective(item.objective || item.description);
+    setShowTrimestreModal(false);
+    showAlert('Importado', 'Se han cargado los datos de la actividad desde el Plan Trimestral.');
+  };
+
+  // Manejadores de Objetivos Específicos
+  const handleAddObjective = () => setSpecificObjectives([...specificObjectives, '']);
+  const handleUpdateObjective = (text: string, index: number) => {
+    const updated = [...specificObjectives];
+    updated[index] = text;
+    setSpecificObjectives(updated);
+  };
+  const handleRemoveObjective = (index: number) => {
+    setSpecificObjectives(specificObjectives.filter((_, i) => i !== index));
+  };
+
+  // Manejadores de Metas Específicas
+  const handleAddMeta = () => setSpecificMetas([...specificMetas, '']);
+  const handleUpdateMeta = (text: string, index: number) => {
+    const updated = [...specificMetas];
+    updated[index] = text;
+    setSpecificMetas(updated);
+  };
+  const handleRemoveMeta = (index: number) => {
+    setSpecificMetas(specificMetas.filter((_, i) => i !== index));
+  };
+
+  // Manejador de ODS (Toggle selección)
+  const handleToggleSDG = (number: number) => {
+    if (selectedSDGs.includes(number)) {
+      setSelectedSDGs(selectedSDGs.filter(n => n !== number));
+    } else {
+      setSelectedSDGs([...selectedSDGs, number]);
+    }
+  };
+
+  // Manejadores de Indicadores
+  const handleAddIndicator = (area: GrowthAreaKey, text: string) => {
+    if (!text.trim()) return;
+    const currentList = indicators[area] || [];
+    if (!currentList.includes(text.trim())) {
+      setIndicators({
+        ...indicators,
+        [area]: [...currentList, text.trim()]
+      });
+    }
+  };
+
+  const handleRemoveIndicator = (area: GrowthAreaKey, index: number) => {
+    const currentList = indicators[area] || [];
+    setIndicators({
+      ...indicators,
+      [area]: currentList.filter((_, i) => i !== index)
+    });
+  };
+
+  // Manejadores de Cronograma
+  const handleAddScheduleRow = () => {
+    setSchedule([
+      ...schedule,
+      {
+        id: `sch_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        timeRange: '',
+        title: '',
+        description: '',
+        responsible: '',
+        materials: ''
+      }
+    ]);
+  };
+
+  const handleUpdateScheduleRow = (id: string, field: keyof ActivityScheduleItem, value: string) => {
+    setSchedule(
+      schedule.map(item => (item.id === id ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const handleRemoveScheduleRow = (id: string) => {
+    if (schedule.length <= 1) {
+      showAlert('Aviso', 'El cronograma debe tener al menos una actividad.');
+      return;
+    }
+    setSchedule(schedule.filter(item => item.id !== id));
+  };
+
+  // Validaciones
+  const completedAreasCount = Object.keys(GROWTH_AREAS).filter(
+    k => (indicators[k as GrowthAreaKey] || []).length > 0
+  ).length;
+
+  const handleSave = async () => {
+    if (!title.trim()) {
+      showAlert('Campo Requerido', 'Por favor ingresa el título del programa.');
+      return;
+    }
+    if (!date.trim()) {
+      showAlert('Campo Requerido', 'Por favor especifica la fecha de la actividad.');
+      return;
+    }
+    if (!location.trim()) {
+      showAlert('Campo Requerido', 'Por favor especifica el lugar de la actividad.');
+      return;
+    }
+
+    // Validación estricta: Las 6 áreas de crecimiento deben tener mínimo 1 indicador
+    if (completedAreasCount < 6) {
+      const missingAreas = Object.keys(GROWTH_AREAS)
+        .filter(k => (indicators[k as GrowthAreaKey] || []).length === 0)
+        .map(k => GROWTH_AREAS[k as GrowthAreaKey].name)
+        .join(', ');
+
+      showAlert(
+        '⚠️ Indicadores Incompletos',
+        `Para que el programa sea válido oficialmente, debes asignar al menos 1 indicador en cada una de las 6 áreas de crecimiento.\n\nÁreas pendientes: ${missingAreas}`
+      );
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const programaToSave: ProgramaScout = {
+        id,
+        title: title.trim(),
+        date: date.trim(),
+        location: location.trim(),
+        activityType: activityType.trim() || 'Actividad Scout',
+        unit,
+        participantProjection: participantProjection.trim() || '4 Jóvenes',
+        generalObjective: generalObjective.trim(),
+        specificObjectives: specificObjectives.filter(o => o.trim()),
+        specificMetas: specificMetas.filter(m => m.trim()),
+        selectedSDGs,
+        indicators,
+        schedule,
+        importantNotes: importantNotes.trim(),
+        registrationBadgeId,
+        createdBy: user?.id || 'anonymous',
+        creatorName: user?.name || 'Scouter / Rover',
+        groupName: user?.group_name || 'Grupo Scout Orión #84',
+        createdAt: existingPrograma?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      await programaService.savePrograma(programaToSave);
+      setSaving(false);
+      showAlert(
+        '🎉 Programa Guardado',
+        'El programa se ha guardado exitosamente. Ya puedes previsualizarlo, imprimirlo o descargarlo en Word.'
+      );
+      navigation.goBack();
+    } catch (err: any) {
+      setSaving(false);
+      showAlert('Error al Guardar', err?.message || 'No se pudo guardar el programa.');
+    }
+  };
+
+  const currentProgramaData: ProgramaScout = {
+    id,
+    title: title || 'Sin Título',
+    date,
+    location,
+    activityType,
+    unit,
+    participantProjection,
+    generalObjective,
+    specificObjectives: specificObjectives.filter(o => o.trim()),
+    specificMetas: specificMetas.filter(m => m.trim()),
+    selectedSDGs,
+    indicators,
+    schedule,
+    importantNotes,
+    registrationBadgeId,
+    createdBy: user?.id || '',
+    creatorName: user?.name || 'Scout',
+    groupName: user?.group_name || 'Grupo Scout Orión #84',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.bg }]}>
+      {/* HEADER DE LA PANTALLA */}
+      <View style={[styles.header, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', borderBottomColor: theme.border }]}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <ArrowLeft size={22} color={theme.text} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: theme.text }]} numberOfLines={1}>
+          {existingPrograma ? 'Editar Programa Scout' : 'Crear Nuevo Programa Scout'}
+        </Text>
+        <View style={styles.headerRightActions}>
+          <TouchableOpacity
+            style={[styles.previewIconBtn, { backgroundColor: primaryColor + '20' }]}
+            onPress={() => setShowPreviewModal(true)}
+          >
+            <Eye size={18} color={primaryColor} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.saveHeaderBtn, { backgroundColor: primaryColor }]}
+            onPress={handleSave}
+            disabled={saving}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <>
+                <Save size={16} color="#ffffff" style={{ marginRight: 6 }} />
+                <Text style={styles.saveHeaderBtnText}>Guardar</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
+        {/* BOTÓN PARA IMPORTAR DESDE PLAN TRIMESTRAL */}
+        <TouchableOpacity
+          style={[styles.importTrimestreBanner, { backgroundColor: isDarkMode ? '#27272a' : '#f0fdf4', borderColor: '#16a34a' }]}
+          onPress={() => {
+            loadTrimestreActivities();
+            setShowTrimestreModal(true);
+          }}
+          activeOpacity={0.8}
+        >
+          <BookOpen size={20} color="#16a34a" style={{ marginRight: 10 }} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.importBannerTitle, { color: isDarkMode ? '#86efac' : '#15803d' }]}>
+              📥 Importar desde Plan Trimestral
+            </Text>
+            <Text style={{ fontSize: 11, color: isDarkMode ? '#dcfce7' : '#166534' }}>
+              Auto-rellena fecha, lugar y actividad planificada para tu unidad.
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* 1. SECCIÓN: DATOS GENERALES DEL PROGRAMA */}
+        <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+          <Text style={[styles.sectionHeading, { color: primaryColor }]}>📋 1. Datos Generales de la Actividad</Text>
+
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.fieldLabel, { color: theme.text }]}>Título / Nombre de la Actividad *</Text>
+            <TextInput
+              style={[styles.textInput, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', color: theme.text, borderColor: theme.border }]}
+              placeholder="Ej: Hermandad Scout / Presentación de Proyectos"
+              placeholderTextColor={theme.subText}
+              value={title}
+              onChangeText={setTitle}
+            />
+          </View>
+
+          <View style={styles.rowTwo}>
+            <View style={[styles.fieldGroup, { flex: 1, marginRight: 8 }]}>
+              <Text style={[styles.fieldLabel, { color: theme.text }]}>Fecha *</Text>
+              <TextInput
+                style={[styles.textInput, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', color: theme.text, borderColor: theme.border }]}
+                placeholder="AAAA-MM-DD"
+                placeholderTextColor={theme.subText}
+                value={date}
+                onChangeText={setDate}
+              />
+            </View>
+            <View style={[styles.fieldGroup, { flex: 1, marginLeft: 8 }]}>
+              <Text style={[styles.fieldLabel, { color: theme.text }]}>Lugar *</Text>
+              <TextInput
+                style={[styles.textInput, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', color: theme.text, borderColor: theme.border }]}
+                placeholder="Ej: Caracas / Terreno 25"
+                placeholderTextColor={theme.subText}
+                value={location}
+                onChangeText={setLocation}
+              />
+            </View>
+          </View>
+
+          <View style={styles.rowTwo}>
+            <View style={[styles.fieldGroup, { flex: 1, marginRight: 8 }]}>
+              <Text style={[styles.fieldLabel, { color: theme.text }]}>Tipo de Actividad</Text>
+              <TextInput
+                style={[styles.textInput, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', color: theme.text, borderColor: theme.border }]}
+                placeholder="Ej: Recorrido Museos"
+                placeholderTextColor={theme.subText}
+                value={activityType}
+                onChangeText={setActivityType}
+              />
+            </View>
+            <View style={[styles.fieldGroup, { flex: 1, marginLeft: 8 }]}>
+              <Text style={[styles.fieldLabel, { color: theme.text }]}>Proyección Participantes</Text>
+              <TextInput
+                style={[styles.textInput, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', color: theme.text, borderColor: theme.border }]}
+                placeholder="Ej: 4 Jóvenes"
+                placeholderTextColor={theme.subText}
+                value={participantProjection}
+                onChangeText={setParticipantProjection}
+              />
+            </View>
+          </View>
+
+          {/* Selector de Rama */}
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.fieldLabel, { color: theme.text }]}>Rama Scout</Text>
+            <View style={styles.unitSelectorRow}>
+              {(['manada', 'tropa', 'caminantes', 'clan'] as const).map(u => (
+                <TouchableOpacity
+                  key={u}
+                  style={[
+                    styles.unitChip,
+                    unit === u && { backgroundColor: primaryColor, borderColor: primaryColor },
+                    { borderColor: theme.border }
+                  ]}
+                  onPress={() => setUnit(u)}
+                >
+                  <Text
+                    style={[
+                      styles.unitChipText,
+                      unit === u ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }
+                    ]}
+                  >
+                    {u.toUpperCase()}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Selector de Insignia de Registro Anual */}
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.fieldLabel, { color: theme.text }]}>Insignia Anual de Registro</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
+              {REGISTRATION_BADGES.map(badge => (
+                <TouchableOpacity
+                  key={badge.id}
+                  style={[
+                    styles.badgeOptionChip,
+                    registrationBadgeId === badge.id && { borderColor: primaryColor, backgroundColor: primaryColor + '15' },
+                    { borderColor: theme.border }
+                  ]}
+                  onPress={() => setRegistrationBadgeId(badge.id)}
+                >
+                  <Text
+                    style={[
+                      styles.badgeOptionText,
+                      registrationBadgeId === badge.id ? { color: primaryColor, fontWeight: 'bold' } : { color: theme.text }
+                    ]}
+                  >
+                    🎖️ {badge.title}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+
+        {/* 2. SECCIÓN: OBJETIVOS Y METAS */}
+        <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+          <Text style={[styles.sectionHeading, { color: primaryColor }]}>🎯 2. Objetivos y Metas</Text>
+
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.fieldLabel, { color: theme.text }]}>Objetivo General</Text>
+            <TextInput
+              style={[styles.textArea, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', color: theme.text, borderColor: theme.border }]}
+              placeholder="Describe el propósito formativo central de la actividad..."
+              placeholderTextColor={theme.subText}
+              multiline
+              numberOfLines={3}
+              value={generalObjective}
+              onChangeText={setGeneralObjective}
+            />
+          </View>
+
+          {/* Objetivos Específicos */}
+          <View style={styles.fieldGroup}>
+            <View style={styles.labelWithAction}>
+              <Text style={[styles.fieldLabel, { color: theme.text }]}>Objetivos Específicos</Text>
+              <TouchableOpacity style={styles.addSmallBtn} onPress={handleAddObjective}>
+                <Plus size={14} color={primaryColor} />
+                <Text style={[styles.addSmallBtnText, { color: primaryColor }]}>Agregar</Text>
+              </TouchableOpacity>
+            </View>
+            {specificObjectives.map((obj, index) => (
+              <View key={index} style={styles.dynamicListRow}>
+                <Text style={{ color: theme.subText, marginRight: 6 }}>*</Text>
+                <TextInput
+                  style={[styles.dynamicInput, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', color: theme.text, borderColor: theme.border }]}
+                  placeholder={`Objetivo específico ${index + 1}...`}
+                  placeholderTextColor={theme.subText}
+                  value={obj}
+                  onChangeText={txt => handleUpdateObjective(txt, index)}
+                />
+                {specificObjectives.length > 1 && (
+                  <TouchableOpacity onPress={() => handleRemoveObjective(index)} style={{ padding: 6 }}>
+                    <Trash2 size={16} color="#ef4444" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            ))}
+          </View>
+
+          {/* Metas Específicas */}
+          <View style={styles.fieldGroup}>
+            <View style={styles.labelWithAction}>
+              <Text style={[styles.fieldLabel, { color: theme.text }]}>Metas Específicas</Text>
+              <TouchableOpacity style={styles.addSmallBtn} onPress={handleAddMeta}>
+                <Plus size={14} color={primaryColor} />
+                <Text style={[styles.addSmallBtnText, { color: primaryColor }]}>Agregar</Text>
+              </TouchableOpacity>
+            </View>
+            {specificMetas.map((meta, index) => (
+              <View key={index} style={styles.dynamicListRow}>
+                <Text style={{ color: theme.subText, marginRight: 6 }}>*</Text>
+                <TextInput
+                  style={[styles.dynamicInput, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', color: theme.text, borderColor: theme.border }]}
+                  placeholder={`Meta específica ${index + 1} (ej: Lograr que el 75% participe)...`}
+                  placeholderTextColor={theme.subText}
+                  value={meta}
+                  onChangeText={txt => handleUpdateMeta(txt, index)}
+                />
+                {specificMetas.length > 1 && (
+                  <TouchableOpacity onPress={() => handleRemoveMeta(index)} style={{ padding: 6 }}>
+                    <Trash2 size={16} color="#ef4444" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* 3. SECCIÓN: SELECTOR DE ODS (OBJETIVOS DE DESARROLLO SOSTENIBLE) */}
+        <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+          <View style={styles.labelWithAction}>
+            <Text style={[styles.sectionHeading, { color: primaryColor }]}>🌍 3. Objetivos de Desarrollo Sostenible (ODS)</Text>
+            <View style={[styles.countBadge, { backgroundColor: primaryColor + '20' }]}>
+              <Text style={{ color: primaryColor, fontWeight: 'bold', fontSize: 11 }}>
+                {selectedSDGs.length} seleccionados
+              </Text>
+            </View>
+          </View>
+          <Text style={[styles.subTextHint, { color: theme.subText }]}>
+            Toca los ODS de la ONU que se desarrollarán en esta actividad scout:
+          </Text>
+
+          <View style={styles.sdgGrid}>
+            {SDG_LIST.map(sdg => {
+              const isSelected = selectedSDGs.includes(sdg.number);
+              return (
+                <TouchableOpacity
+                  key={sdg.number}
+                  style={[
+                    styles.sdgChip,
+                    isSelected ? { backgroundColor: sdg.color, borderColor: sdg.color } : { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: theme.border }
+                  ]}
+                  onPress={() => handleToggleSDG(sdg.number)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.sdgChipText, isSelected ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }]}>
+                    {sdg.icon} #{sdg.number} {sdg.shortName}
+                  </Text>
+                  {isSelected && <CheckCircle size={12} color="#ffffff" style={{ marginLeft: 4 }} />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* 4. SECCIÓN: INDICADORES DE LOGRO (6 ÁREAS DE CRECIMIENTO) */}
+        <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+          <View style={styles.labelWithAction}>
+            <Text style={[styles.sectionHeading, { color: primaryColor }]}>📊 4. Indicadores de Logro Oficiales</Text>
+            <View style={[styles.countBadge, { backgroundColor: completedAreasCount === 6 ? '#dcfce7' : '#fee2e2' }]}>
+              <Text style={{ color: completedAreasCount === 6 ? '#15803d' : '#b91c1c', fontWeight: 'bold', fontSize: 11 }}>
+                {completedAreasCount}/6 Áreas Listas
+              </Text>
+            </View>
+          </View>
+
+          <Text style={[styles.subTextHint, { color: theme.subText }]}>
+            Selecciona al menos 1 indicador en cada una de las 6 áreas para la rama{' '}
+            <Text style={{ fontWeight: 'bold', color: primaryColor }}>{unit.toUpperCase()}</Text> (Etapas {getStagesForUnit(unit).join(' y ')}):
+          </Text>
+
+          {/* Acordeones para las 6 áreas */}
+          {Object.keys(GROWTH_AREAS).map(areaKey => {
+            const area = GROWTH_AREAS[areaKey as GrowthAreaKey];
+            const areaIndicators = indicators[area.key] || [];
+            const isExpanded = expandedArea === area.key;
+            const hasIndicators = areaIndicators.length > 0;
+
+            return (
+              <View key={area.key} style={[styles.areaAccordion, { borderColor: theme.border }]}>
+                <TouchableOpacity
+                  style={[styles.areaAccordionHeader, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc' }]}
+                  onPress={() => setExpandedArea(isExpanded ? null : area.key)}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                    <Text style={{ fontSize: 16, marginRight: 8 }}>{area.icon}</Text>
+                    <Text style={[styles.areaTitle, { color: theme.text }]}>{area.name}</Text>
+                    {hasIndicators ? (
+                      <View style={[styles.areaBadge, { backgroundColor: '#dcfce7' }]}>
+                        <Text style={{ color: '#15803d', fontSize: 10, fontWeight: 'bold' }}>
+                          ✓ {areaIndicators.length}
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={[styles.areaBadge, { backgroundColor: '#fee2e2' }]}>
+                        <Text style={{ color: '#b91c1c', fontSize: 10, fontWeight: 'bold' }}>
+                          Pendiente
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  {isExpanded ? <ChevronUp size={18} color={theme.subText} /> : <ChevronDown size={18} color={theme.subText} />}
+                </TouchableOpacity>
+
+                {isExpanded && (
+                  <View style={styles.areaBody}>
+                    <Text style={{ fontSize: 11, color: theme.subText, marginBottom: 8 }}>
+                      {area.description}
+                    </Text>
+
+                    {/* Lista de indicadores seleccionados */}
+                    {areaIndicators.map((ind, idx) => (
+                      <View key={idx} style={[styles.selectedIndicatorItem, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', borderColor: theme.border }]}>
+                        <Text style={[styles.selectedIndicatorText, { color: theme.text }]}>• {ind}</Text>
+                        <TouchableOpacity onPress={() => handleRemoveIndicator(area.key, idx)} style={{ padding: 4 }}>
+                          <Trash2 size={14} color="#ef4444" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+
+                    {/* Botones para agregar indicadores */}
+                    <View style={styles.indicatorActionsRow}>
+                      <TouchableOpacity
+                        style={[styles.btnPickOfficial, { backgroundColor: primaryColor }]}
+                        onPress={() => {
+                          setIndicatorPickerArea(area.key);
+                          setIndicatorSearchQuery('');
+                        }}
+                      >
+                        <Search size={14} color="#ffffff" style={{ marginRight: 6 }} />
+                        <Text style={styles.btnPickOfficialText}>Buscar en Catálogo Oficial ASV</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+              </View>
+            );
+          })}
+        </View>
+
+        {/* 5. SECCIÓN: CRONOGRAMA / ITINERARIO DE ACTIVIDADES */}
+        <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+          <View style={styles.labelWithAction}>
+            <Text style={[styles.sectionHeading, { color: primaryColor }]}>⏱️ 5. Cronograma de Actividades</Text>
+            <TouchableOpacity style={[styles.addScheduleBtn, { backgroundColor: primaryColor }]} onPress={handleAddScheduleRow}>
+              <Plus size={14} color="#ffffff" style={{ marginRight: 4 }} />
+              <Text style={styles.addScheduleBtnText}>Agregar Actividad</Text>
+            </TouchableOpacity>
+          </View>
+
+          {schedule.map((item, index) => (
+            <View key={item.id} style={[styles.scheduleCardItem, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }]}>
+              <View style={styles.scheduleItemHeader}>
+                <Text style={[styles.scheduleItemIndex, { color: primaryColor }]}>#{index + 1}</Text>
+                <TouchableOpacity onPress={() => handleRemoveScheduleRow(item.id)} style={{ padding: 4 }}>
+                  <Trash2 size={16} color="#ef4444" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.rowTwo}>
+                <View style={[styles.fieldGroup, { flex: 1, marginRight: 6 }]}>
+                  <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Horario (AM/PM)</Text>
+                  <TextInput
+                    style={[styles.textInputSmall, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }]}
+                    placeholder="Ej: 10:20 am - 10:40 am"
+                    placeholderTextColor={theme.subText}
+                    value={item.timeRange}
+                    onChangeText={txt => handleUpdateScheduleRow(item.id, 'timeRange', txt)}
+                  />
+                </View>
+                <View style={[styles.fieldGroup, { flex: 1, marginLeft: 6 }]}>
+                  <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Responsable(s)</Text>
+                  <TextInput
+                    style={[styles.textInputSmall, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }]}
+                    placeholder="Ej: AP Lisbeth / Rover Juan"
+                    placeholderTextColor={theme.subText}
+                    value={item.responsible}
+                    onChangeText={txt => handleUpdateScheduleRow(item.id, 'responsible', txt)}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Nombre de la Dinámica / Actividad</Text>
+                <TextInput
+                  style={[styles.textInputSmall, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }]}
+                  placeholder="Ej: Rompehielo 'Descubre las Palabras'"
+                  placeholderTextColor={theme.subText}
+                  value={item.title}
+                  onChangeText={txt => handleUpdateScheduleRow(item.id, 'title', txt)}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Descripción y Explicación de la Dinámica</Text>
+                <TextInput
+                  style={[styles.textAreaSmall, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }]}
+                  placeholder="Explica las reglas, la dinámica, el juego o el recorrido paso a paso..."
+                  placeholderTextColor={theme.subText}
+                  multiline
+                  numberOfLines={2}
+                  value={item.description}
+                  onChangeText={txt => handleUpdateScheduleRow(item.id, 'description', txt)}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Materiales Necesarios</Text>
+                <TextInput
+                  style={[styles.textInputSmall, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }]}
+                  placeholder="Ej: Lápices, Hojas, Banderas, Mecatillo, Carpas (o N/A)"
+                  placeholderTextColor={theme.subText}
+                  value={item.materials}
+                  onChangeText={txt => handleUpdateScheduleRow(item.id, 'materials', txt)}
+                />
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {/* 6. SECCIÓN: NOTAS IMPORTANTES */}
+        <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+          <Text style={[styles.sectionHeading, { color: primaryColor }]}>📝 6. Notas Importantes / Recomendaciones</Text>
+          <TextInput
+            style={[styles.textArea, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', color: theme.text, borderColor: theme.border }]}
+            placeholder="Ej: Cada Rover debe tener dominio del tema. Traer hidratación y uniforme completo..."
+            placeholderTextColor={theme.subText}
+            multiline
+            numberOfLines={3}
+            value={importantNotes}
+            onChangeText={setImportantNotes}
+          />
+        </View>
+
+        {/* BOTÓN FINAL DE GUARDAR */}
+        <TouchableOpacity
+          style={[styles.mainSaveBtn, { backgroundColor: primaryColor }]}
+          onPress={handleSave}
+          disabled={saving}
+          activeOpacity={0.85}
+        >
+          {saving ? (
+            <ActivityIndicator size="small" color="#ffffff" />
+          ) : (
+            <>
+              <Save size={18} color="#ffffff" style={{ marginRight: 8 }} />
+              <Text style={styles.mainSaveBtnText}>Guardar y Validar Programa Scout</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* MODAL PARA SELECCIONAR INDICADORES OFICIALES ASV */}
+      {indicatorPickerArea && (
+        <Modal visible={!!indicatorPickerArea} animationType="slide" transparent onRequestClose={() => setIndicatorPickerArea(null)}>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.indicatorPickerModal, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff' }]}>
+              <View style={styles.modalHeaderRow}>
+                <Text style={[styles.modalHeaderTitle, { color: theme.text }]}>
+                  {GROWTH_AREAS[indicatorPickerArea].icon} Indicadores de {GROWTH_AREAS[indicatorPickerArea].name}
+                </Text>
+                <TouchableOpacity onPress={() => setIndicatorPickerArea(null)} style={{ padding: 4 }}>
+                  <Trash2 size={20} color={theme.subText} />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={{ fontSize: 11, color: theme.subText, marginBottom: 10 }}>
+                Rama {unit.toUpperCase()} (Etapas {getStagesForUnit(unit).join(' y ')}):
+              </Text>
+
+              {/* Buscador en vivo */}
+              <View style={[styles.searchBox, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
+                <Search size={16} color={theme.subText} style={{ marginRight: 8 }} />
+                <TextInput
+                  style={{ flex: 1, color: theme.text, fontSize: 13 }}
+                  placeholder="Buscar indicador..."
+                  placeholderTextColor={theme.subText}
+                  value={indicatorSearchQuery}
+                  onChangeText={setIndicatorSearchQuery}
+                />
+              </View>
+
+              {/* Lista filtrada */}
+              <ScrollView style={{ maxHeight: 340, marginTop: 10 }}>
+                {getIndicatorsForAreaAndUnit(indicatorPickerArea, unit)
+                  .filter(item => item.text.toLowerCase().includes(indicatorSearchQuery.toLowerCase()))
+                  .map((item, idx) => {
+                    const isAlreadySelected = (indicators[indicatorPickerArea] || []).includes(item.text);
+                    return (
+                      <TouchableOpacity
+                        key={idx}
+                        style={[
+                          styles.indicatorOptionRow,
+                          isAlreadySelected && { backgroundColor: primaryColor + '15', borderColor: primaryColor },
+                          { borderColor: theme.border }
+                        ]}
+                        onPress={() => {
+                          if (isAlreadySelected) {
+                            const current = indicators[indicatorPickerArea] || [];
+                            setIndicators({
+                              ...indicators,
+                              [indicatorPickerArea]: current.filter(t => t !== item.text)
+                            });
+                          } else {
+                            handleAddIndicator(indicatorPickerArea, item.text);
+                          }
+                        }}
+                      >
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 9, color: primaryColor, fontWeight: 'bold' }}>Etapa {item.stage}</Text>
+                          <Text style={[styles.indicatorOptionText, { color: theme.text }]}>{item.text}</Text>
+                        </View>
+                        {isAlreadySelected && <CheckCircle size={16} color={primaryColor} style={{ marginLeft: 8 }} />}
+                      </TouchableOpacity>
+                    );
+                  })}
+              </ScrollView>
+
+              {/* Opción de agregar indicador personalizado manual */}
+              <View style={[styles.customAddBlock, { borderTopColor: theme.border }]}>
+                <TextInput
+                  style={[styles.customInput, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', color: theme.text, borderColor: theme.border }]}
+                  placeholder="O escribe un indicador personalizado..."
+                  placeholderTextColor={theme.subText}
+                  value={customIndicatorInput}
+                  onChangeText={setCustomIndicatorInput}
+                />
+                <TouchableOpacity
+                  style={[styles.customAddBtn, { backgroundColor: primaryColor }]}
+                  onPress={() => {
+                    if (customIndicatorInput.trim()) {
+                      handleAddIndicator(indicatorPickerArea, customIndicatorInput.trim());
+                      setCustomIndicatorInput('');
+                    }
+                  }}
+                >
+                  <Plus size={16} color="#ffffff" />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.closeModalBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}
+                onPress={() => setIndicatorPickerArea(null)}
+              >
+                <Text style={{ color: theme.text, fontWeight: 'bold' }}>Listo</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* MODAL DE IMPORTAR DESDE PLAN TRIMESTRAL */}
+      <Modal visible={showTrimestreModal} animationType="slide" transparent onRequestClose={() => setShowTrimestreModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.indicatorPickerModal, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff' }]}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={[styles.modalHeaderTitle, { color: theme.text }]}>
+                📅 Actividades del Plan Trimestral
+              </Text>
+              <TouchableOpacity onPress={() => setShowTrimestreModal(false)} style={{ padding: 4 }}>
+                <Trash2 size={20} color={theme.subText} />
+              </TouchableOpacity>
+            </View>
+
+            {loadingTrimestre ? (
+              <ActivityIndicator size="large" color={primaryColor} style={{ marginVertical: 30 }} />
+            ) : trimestreActivities.length === 0 ? (
+              <Text style={{ color: theme.subText, textAlign: 'center', marginVertical: 20 }}>
+                No hay actividades registradas en el Plan Trimestral.
+              </Text>
+            ) : (
+              <ScrollView style={{ maxHeight: 360, marginTop: 10 }}>
+                {trimestreActivities.map((act, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={[styles.trimestreActivityRow, { borderColor: theme.border, backgroundColor: isDarkMode ? '#27272a' : '#f8fafc' }]}
+                    onPress={() => handleImportFromTrimestre(act)}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.trimestreActTitle, { color: theme.text }]}>{act.title || act.name}</Text>
+                      <Text style={{ fontSize: 11, color: theme.subText }}>
+                        📅 {act.date || 'Sin fecha'} • 📍 {act.location || 'Sin lugar'}
+                      </Text>
+                    </View>
+                    <Text style={{ color: primaryColor, fontWeight: 'bold', fontSize: 12 }}>Importar →</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+
+            <TouchableOpacity
+              style={[styles.closeModalBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}
+              onPress={() => setShowTrimestreModal(false)}
+            >
+              <Text style={{ color: theme.text, fontWeight: 'bold' }}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL DE VISTA PREVIA E IMPRESIÓN OFICIAL */}
+      <ProgramaPdfPreviewModal
+        visible={showPreviewModal}
+        programa={currentProgramaData}
+        onClose={() => setShowPreviewModal(false)}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  backBtn: { padding: 6, marginRight: 6 },
+  headerTitle: { fontSize: 16, fontWeight: 'bold', flex: 1 },
+  headerRightActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  previewIconBtn: { padding: 8, borderRadius: 8 },
+  saveHeaderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  saveHeaderBtnText: { color: '#ffffff', fontWeight: 'bold', fontSize: 13 },
+  scrollBody: { flex: 1 },
+  scrollContent: { padding: 16, paddingBottom: 40 },
+  importTrimestreBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 14,
+  },
+  importBannerTitle: { fontSize: 13, fontWeight: 'bold', marginBottom: 2 },
+  card: {
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  sectionHeading: { fontSize: 14, fontWeight: 'bold', marginBottom: 12 },
+  fieldGroup: { marginBottom: 12 },
+  fieldLabel: { fontSize: 12, fontWeight: 'bold', marginBottom: 6 },
+  fieldLabelSmall: { fontSize: 11, fontWeight: '600', marginBottom: 4 },
+  textInput: {
+    height: 42,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    fontSize: 13,
+  },
+  textInputSmall: {
+    height: 36,
+    borderRadius: 6,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    fontSize: 12,
+  },
+  textArea: {
+    height: 70,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 13,
+    textAlignVertical: 'top',
+  },
+  textAreaSmall: {
+    height: 55,
+    borderRadius: 6,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    fontSize: 12,
+    textAlignVertical: 'top',
+  },
+  rowTwo: { flexDirection: 'row' },
+  unitSelectorRow: { flexDirection: 'row', gap: 6, marginTop: 4 },
+  unitChip: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  unitChipText: { fontSize: 11 },
+  badgeOptionChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginRight: 8,
+  },
+  badgeOptionText: { fontSize: 11 },
+  labelWithAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  addSmallBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  addSmallBtnText: { fontSize: 12, fontWeight: 'bold' },
+  dynamicListRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  dynamicInput: {
+    flex: 1,
+    height: 38,
+    borderRadius: 6,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    fontSize: 12,
+  },
+  countBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 },
+  subTextHint: { fontSize: 11, marginBottom: 10, lineHeight: 16 },
+  sdgGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  sdgChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  sdgChipText: { fontSize: 10 },
+  areaAccordion: {
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  areaAccordionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+  },
+  areaTitle: { fontSize: 13, fontWeight: 'bold' },
+  areaBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10, marginLeft: 8 },
+  areaBody: { padding: 12, borderTopWidth: 1, borderTopColor: '#e5e7eb' },
+  selectedIndicatorItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    marginBottom: 6,
+  },
+  selectedIndicatorText: { fontSize: 11, flex: 1, marginRight: 6, lineHeight: 15 },
+  indicatorActionsRow: { marginTop: 8 },
+  btnPickOfficial: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 10,
+    borderRadius: 8,
+  },
+  btnPickOfficialText: { color: '#ffffff', fontWeight: 'bold', fontSize: 12 },
+  addScheduleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  addScheduleBtnText: { color: '#ffffff', fontSize: 11, fontWeight: 'bold' },
+  scheduleCardItem: {
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 10,
+  },
+  scheduleItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  scheduleItemIndex: { fontWeight: 'bold', fontSize: 13 },
+  mainSaveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 8,
+    elevation: 3,
+  },
+  mainSaveBtnText: { color: '#ffffff', fontWeight: 'bold', fontSize: 14 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  indicatorPickerModal: {
+    width: '100%',
+    maxWidth: 550,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modalHeaderTitle: { fontSize: 15, fontWeight: 'bold' },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    height: 38,
+  },
+  indicatorOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 6,
+  },
+  indicatorOptionText: { fontSize: 11, marginTop: 2, lineHeight: 15 },
+  customAddBlock: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    paddingTop: 10,
+    marginTop: 10,
+    gap: 8,
+  },
+  customInput: {
+    flex: 1,
+    height: 38,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    fontSize: 12,
+  },
+  customAddBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeModalBtn: {
+    padding: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  trimestreActivityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  trimestreActTitle: { fontSize: 13, fontWeight: 'bold', marginBottom: 2 },
+});
