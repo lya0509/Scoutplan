@@ -99,12 +99,12 @@ export const docxProgramaGenerator = {
           <w:tblPr>
             <w:tblW w:w="11023" w:type="dxa"/>
             <w:tblBorders>
-              <w:top w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:left w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:right w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:insideH w:val="single" w:sz="4" w:space="0" w:color="7030A0"/>
-              <w:insideV w:val="single" w:sz="4" w:space="0" w:color="7030A0"/>
+              <w:top w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:left w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:right w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:insideH w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+              <w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/>
             </w:tblBorders>
           </w:tblPr>
           <w:tr>
@@ -134,19 +134,19 @@ export const docxProgramaGenerator = {
           <w:tblPr>
             <w:tblW w:w="11023" w:type="dxa"/>
             <w:tblBorders>
-              <w:top w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:left w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:right w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:top w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:left w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:right w:val="single" w:sz="6" w:space="0" w:color="000000"/>
             </w:tblBorders>
           </w:tblPr>
           <w:tr>
             <w:tc>
               <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
               <w:p><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t>Objetivo General:</w:t></w:r></w:p>
-              <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${escapeXml(programa.generalObjective || 'Fomentar competencias clave para actividades al aire libre y crecimiento integral.')}</w:t></w:r></w:p>
+              <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${escapeXml(programa.generalObjective || 'No especificado')}</w:t></w:r></w:p>
               <w:p><w:pPr><w:spacing w:before="120"/></w:pPr><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t>Objetivos Específicos:</w:t></w:r></w:p>
-              ${specObjParas || '<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>* Enseñar y aplicar las técnicas scouts correspondientes a la actividad.</w:t></w:r></w:p>'}
+              ${specObjParas || '<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>Sin objetivos específicos registrados.</w:t></w:r></w:p>'}
             </w:tc>
           </w:tr>
         </w:tbl>
@@ -162,17 +162,17 @@ export const docxProgramaGenerator = {
           <w:tblPr>
             <w:tblW w:w="11023" w:type="dxa"/>
             <w:tblBorders>
-              <w:top w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:left w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:right w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:top w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:left w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:right w:val="single" w:sz="6" w:space="0" w:color="000000"/>
             </w:tblBorders>
           </w:tblPr>
           <w:tr>
             <w:tc>
               <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
               <w:p><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t>Metas Específicas:</w:t></w:r></w:p>
-              ${specMetaParas || '<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>* Lograr la participación activa y el aprendizaje de todos los integrantes.</w:t></w:r></w:p>'}
+              ${specMetaParas || '<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>Sin metas específicas registradas.</w:t></w:r></w:p>'}
             </w:tc>
           </w:tr>
         </w:tbl>
@@ -195,25 +195,17 @@ export const docxProgramaGenerator = {
           <w:tblPr>
             <w:tblW w:w="11023" w:type="dxa"/>
             <w:tblBorders>
-              <w:top w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:left w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:right w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:top w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:left w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:right w:val="single" w:sz="6" w:space="0" w:color="000000"/>
             </w:tblBorders>
           </w:tblPr>
           <w:tr>
             <w:tc>
               <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
               <w:p><w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t>Indicadores de Logro:</w:t></w:r></w:p>
-              ${indicatorsListParas || `
-                <w:p><w:pPr><w:spacing w:before="60"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t>-Corporalidad:</w:t></w:r></w:p>
-                <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>. Analiza su uso del tiempo y se impone correctivos.</w:t></w:r></w:p>
-                <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>. Valora y mantiene una imagen adecuada de sí mismo y cuida la higiene personal.</w:t></w:r></w:p>
-                <w:p><w:pPr><w:spacing w:before="60"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t>-Creatividad:</w:t></w:r></w:p>
-                <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>. Actúa con agilidad mental ante situaciones diversas, desarrollando capacidad de pensar e innovar.</w:t></w:r></w:p>
-                <w:p><w:pPr><w:spacing w:before="60"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t>-Carácter:</w:t></w:r></w:p>
-                <w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>. Mantiene autenticidad al demostrar coherencia entre su pensamiento y su acción.</w:t></w:r></w:p>
-              `}
+              ${indicatorsListParas || '<w:p><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>Sin indicadores de logro seleccionados.</w:t></w:r></w:p>'}
             </w:tc>
           </w:tr>
         </w:tbl>
@@ -232,17 +224,17 @@ export const docxProgramaGenerator = {
           <w:tblPr>
             <w:tblW w:w="11023" w:type="dxa"/>
             <w:tblBorders>
-              <w:top w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:left w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:right w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
+              <w:top w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:left w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:right w:val="single" w:sz="6" w:space="0" w:color="000000"/>
             </w:tblBorders>
           </w:tblPr>
           <w:tr>
             <w:tc>
               <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
               <w:p>
-                <w:r><w:rPr><w:b/><w:sz w:val="19"/><w:color w:val="4C1D95"/></w:rPr><w:t>Objetivos de Desarrollo Sostenible (ODS):  </w:t></w:r>
+                <w:r><w:rPr><w:b/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t xml:space="preserve">Objetivos de Desarrollo Sostenible (ODS):  </w:t></w:r>
                 <w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${escapeXml(sdgText)}</w:t></w:r>
               </w:p>
             </w:tc>
@@ -278,12 +270,12 @@ export const docxProgramaGenerator = {
           <w:tblPr>
             <w:tblW w:w="11023" w:type="dxa"/>
             <w:tblBorders>
-              <w:top w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:left w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:right w:val="single" w:sz="6" w:space="0" w:color="7030A0"/>
-              <w:insideH w:val="single" w:sz="4" w:space="0" w:color="7030A0"/>
-              <w:insideV w:val="single" w:sz="4" w:space="0" w:color="7030A0"/>
+              <w:top w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:left w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:bottom w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:right w:val="single" w:sz="6" w:space="0" w:color="000000"/>
+              <w:insideH w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+              <w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/>
             </w:tblBorders>
           </w:tblPr>
           <w:tr>

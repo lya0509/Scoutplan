@@ -28,50 +28,48 @@ interface Props {
 export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
   const { isDarkMode, primaryColor } = useTheme();
   const [downloadingDocx, setDownloadingDocx] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   if (!programa) return null;
 
   const unitLogo = UNIT_PROGRAMA_LOGOS[programa.unit] || SCOUT_WOSM_LOGO;
   const regBadge = REGISTRATION_BADGES.find(r => r.id === programa.registrationBadgeId) || REGISTRATION_BADGES[0];
 
-  const handlePrint = () => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const existingStyle = document.getElementById('scout-print-styles');
-      if (!existingStyle) {
-        const style = document.createElement('style');
-        style.id = 'scout-print-styles';
-        style.innerHTML = `
-          @media print {
-            body * {
-              visibility: hidden !important;
-            }
-            #printable-scout-programa, #printable-scout-programa * {
-              visibility: visible !important;
-            }
-            #printable-scout-programa {
-              position: absolute !important;
-              left: 0 !important;
-              top: 0 !important;
-              width: 100% !important;
-              max-width: 100% !important;
-              padding: 8mm !important;
-              margin: 0 !important;
-              box-shadow: none !important;
-              background: #ffffff !important;
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-            @page {
-              size: letter portrait;
-              margin: 6mm;
-            }
-          }
-        `;
-        document.head.appendChild(style);
+  const handleDownloadPdf = async () => {
+    setDownloadingPdf(true);
+    try {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        const element = document.getElementById('printable-scout-programa');
+        if (element) {
+          const html2pdfModule = await import('html2pdf.js');
+          const html2pdf = (html2pdfModule as any).default || html2pdfModule;
+          const unitStr = programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
+            ? `${programa.selectedUnits.map(u => u.toUpperCase()).join('_')}_SINODAL`
+            : programa.unit.toUpperCase();
+          const cleanTitle = (programa.title || 'Programa').replace(/[^a-zA-Z0-9_-]/g, '_');
+          const opt = {
+            margin: [6, 6, 6, 6],
+            filename: `Programa_${unitStr}_${cleanTitle}_${programa.date || 'Actividad'}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
+            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+          };
+          await html2pdf().set(opt).from(element).save();
+          showAlert('Descarga Exitosa', 'El archivo PDF se ha descargado correctamente.');
+          return;
+        }
       }
+      // Fallback
       window.print();
-    } else {
-      showAlert('Descargar PDF', 'Para descargar en PDF, selecciona la opción "Guardar como PDF" en el diálogo de impresión.');
+    } catch (err: any) {
+      console.error('Error generando PDF:', err);
+      if (typeof window !== 'undefined') {
+        window.print();
+      } else {
+        showAlert('Error', 'No se pudo generar el archivo PDF.');
+      }
+    } finally {
+      setDownloadingPdf(false);
     }
   };
 
@@ -95,7 +93,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
           <View style={styles.titleInfo}>
             <FileText size={20} color={primaryColor} />
             <Text style={[styles.modalTitle, { color: isDarkMode ? '#ffffff' : '#000000' }]} numberOfLines={1}>
-              Visor PDF: {programa.title}
+              Visor PDF: {programa.title || 'Sin Título'}
             </Text>
           </View>
 
@@ -117,10 +115,17 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
 
             <TouchableOpacity
               style={[styles.btnPrint, { backgroundColor: '#dc2626' }]}
-              onPress={handlePrint}
+              onPress={handleDownloadPdf}
+              disabled={downloadingPdf}
             >
-              <Printer size={15} color="#ffffff" style={{ marginRight: 6 }} />
-              <Text style={styles.btnText}>Descargar como Documento PDF</Text>
+              {downloadingPdf ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <>
+                  <Printer size={15} color="#ffffff" style={{ marginRight: 6 }} />
+                  <Text style={styles.btnText}>Descargar como Documento PDF</Text>
+                </>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.btnClose} onPress={onClose}>
@@ -196,7 +201,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             <View style={styles.asvTableBox}>
               <View style={styles.asvBoxContent}>
                 <Text style={styles.asvBoxHeaderTitle}>Objetivo General: </Text>
-                <Text style={styles.asvBoxParagraph}>{programa.generalObjective || 'Fomentar competencias clave para actividades al aire libre y crecimiento integral.'}</Text>
+                <Text style={styles.asvBoxParagraph}>{programa.generalObjective || 'No especificado'}</Text>
 
                 <Text style={[styles.asvBoxHeaderTitle, { marginTop: 8 }]}>Objetivos Específicos:</Text>
                 {programa.specificObjectives && programa.specificObjectives.length > 0 ? (
@@ -204,7 +209,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
                     <Text key={i} style={styles.asvBulletItem}>* {obj}</Text>
                   ))
                 ) : (
-                  <Text style={styles.asvBoxParagraph}>* Enseñar y aplicar las técnicas scouts correspondientes a la actividad.</Text>
+                  <Text style={styles.asvBoxParagraph}>Sin objetivos específicos registrados.</Text>
                 )}
               </View>
             </View>
@@ -218,7 +223,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
                     <Text key={i} style={styles.asvBulletItem}>* {meta}</Text>
                   ))
                 ) : (
-                  <Text style={styles.asvBoxParagraph}>* Lograr la participación activa y el aprendizaje de todos los integrantes.</Text>
+                  <Text style={styles.asvBoxParagraph}>Sin metas específicas registradas.</Text>
                 )}
               </View>
             </View>
@@ -245,15 +250,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
 
                   if (renderedAreas.length === 0) {
                     return (
-                      <View style={{ marginTop: 4 }}>
-                        <Text style={styles.indicatorAreaHeading}>-Corporalidad:</Text>
-                        <Text style={styles.indicatorDotItem}>. Analiza su uso del tiempo y se impone correctivos.</Text>
-                        <Text style={styles.indicatorDotItem}>. Valora y mantiene una imagen adecuada de sí mismo y cuida la higiene personal.</Text>
-                        <Text style={[styles.indicatorAreaHeading, { marginTop: 4 }]}>-Creatividad:</Text>
-                        <Text style={styles.indicatorDotItem}>. Actúa con agilidad mental ante las situaciones más diversas, innovando y proponiendo soluciones.</Text>
-                        <Text style={[styles.indicatorAreaHeading, { marginTop: 4 }]}>-Carácter:</Text>
-                        <Text style={styles.indicatorDotItem}>. Mantiene autenticidad al demostrar coherencia entre su pensamiento y su acción.</Text>
-                      </View>
+                      <Text style={styles.asvBoxParagraph}>Sin indicadores de logro seleccionados.</Text>
                     );
                   }
                   return renderedAreas;
@@ -271,7 +268,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
                         const sdg = SDG_LIST.find(s => s.number === num);
                         return `ODS #${num}: ${sdg?.name || sdg?.shortName || ''}`;
                       }).join('   ')
-                    : 'ODS #4: Educación de calidad.   ODS #15: Vida en ecosistemas terrestres'}
+                    : 'Ningún ODS seleccionado.'}
                 </Text>
               </View>
             </View>
