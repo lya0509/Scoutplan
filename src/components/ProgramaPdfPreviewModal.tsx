@@ -50,36 +50,74 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
           const opt = {
             margin: 0,
             filename: `Programa_${unitStr}_${cleanTitle}_${programa.date || 'Actividad'}.pdf`,
-            image: { type: 'jpeg', quality: 1.0 },
+            image: { type: 'png' },
             html2canvas: {
-              scale: 3,
+              scale: 4,
               useCORS: true,
               logging: false,
               backgroundColor: '#ffffff',
-              scrollY: 0
+              scrollY: 0,
+              imageTimeout: 0,
             },
             jsPDF: {
-              unit: 'px',
-              format: [820, element.offsetHeight || 1160],
+              unit: 'mm',
+              format: 'letter',
               orientation: 'portrait'
             }
           };
           await html2pdf().set(opt).from(element).save();
-          showAlert('Descarga Exitosa', 'El archivo PDF se ha descargado en alta resolución.');
+          showAlert('Descarga Exitosa', 'El archivo PDF se ha descargado en Ultra Alta Definición (HD).');
           return;
         }
       }
       // Fallback
-      window.print();
+      handlePrintVectorPdf();
     } catch (err: any) {
       console.error('Error generando PDF:', err);
-      if (typeof window !== 'undefined') {
-        window.print();
-      } else {
-        showAlert('Error', 'No se pudo generar el archivo PDF.');
-      }
+      handlePrintVectorPdf();
     } finally {
       setDownloadingPdf(false);
+    }
+  };
+
+  const handlePrintVectorPdf = () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const existingStyle = document.getElementById('scout-print-styles');
+      if (!existingStyle) {
+        const style = document.createElement('style');
+        style.id = 'scout-print-styles';
+        style.innerHTML = `
+          @media print {
+            body * {
+              visibility: hidden !important;
+            }
+            #printable-scout-programa, #printable-scout-programa * {
+              visibility: visible !important;
+            }
+            #printable-scout-programa {
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              padding: 0 !important;
+              margin: 0 !important;
+              box-shadow: none !important;
+              background: #ffffff !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            @page {
+              size: letter portrait;
+              margin: 0;
+            }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      window.print();
+    } else {
+      showAlert('Imprimir PDF', 'Usa la opción "Guardar como PDF" en el diálogo de impresión.');
     }
   };
 
@@ -132,10 +170,18 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
                 <>
-                  <Printer size={15} color="#ffffff" style={{ marginRight: 6 }} />
+                  <Download size={15} color="#ffffff" style={{ marginRight: 6 }} />
                   <Text style={styles.btnText}>Descargar como Documento PDF</Text>
                 </>
               )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.btnPrint, { backgroundColor: '#4b5563' }]}
+              onPress={handlePrintVectorPdf}
+            >
+              <Printer size={15} color="#ffffff" style={{ marginRight: 6 }} />
+              <Text style={styles.btnText}>Imprimir / Vectorial</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.btnClose} onPress={onClose}>
@@ -143,6 +189,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             </TouchableOpacity>
           </View>
         </View>
+
         {/* Hoja de visualización tipo papel A4 con diseño oficial */}
         <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
           <View style={styles.paperSheet} id="printable-scout-programa">
