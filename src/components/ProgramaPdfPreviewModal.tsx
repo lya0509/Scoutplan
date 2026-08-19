@@ -36,9 +36,42 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
 
   const handlePrint = () => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const existingStyle = document.getElementById('scout-print-styles');
+      if (!existingStyle) {
+        const style = document.createElement('style');
+        style.id = 'scout-print-styles';
+        style.innerHTML = `
+          @media print {
+            body * {
+              visibility: hidden !important;
+            }
+            #printable-scout-programa, #printable-scout-programa * {
+              visibility: visible !important;
+            }
+            #printable-scout-programa {
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              padding: 8mm !important;
+              margin: 0 !important;
+              box-shadow: none !important;
+              background: #ffffff !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            @page {
+              size: letter portrait;
+              margin: 6mm;
+            }
+          }
+        `;
+        document.head.appendChild(style);
+      }
       window.print();
     } else {
-      showAlert('Imprimir', 'Usa la versión Web o descarga el archivo Word para imprimir en alta resolución.');
+      showAlert('Descargar PDF', 'Para descargar en PDF, selecciona la opción "Guardar como PDF" en el diálogo de impresión.');
     }
   };
 
@@ -57,12 +90,12 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.modalBackdrop}>
-        {/* Barra superior de herramientas */}
+        {/* Barra superior de herramientas del Visor PDF */}
         <View style={[styles.topBar, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff' }]}>
           <View style={styles.titleInfo}>
             <FileText size={20} color={primaryColor} />
             <Text style={[styles.modalTitle, { color: isDarkMode ? '#ffffff' : '#000000' }]} numberOfLines={1}>
-              Programa: {programa.title}
+              Visor PDF: {programa.title}
             </Text>
           </View>
 
@@ -76,18 +109,18 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
                 <>
-                  <Download size={16} color="#ffffff" style={{ marginRight: 6 }} />
-                  <Text style={styles.btnText}>Descargar Word</Text>
+                  <Download size={15} color="#ffffff" style={{ marginRight: 6 }} />
+                  <Text style={styles.btnText}>Descargar como Documento Word</Text>
                 </>
               )}
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.btnPrint, { backgroundColor: primaryColor }]}
+              style={[styles.btnPrint, { backgroundColor: '#dc2626' }]}
               onPress={handlePrint}
             >
-              <Printer size={16} color="#ffffff" style={{ marginRight: 6 }} />
-              <Text style={styles.btnText}>Imprimir / PDF</Text>
+              <Printer size={15} color="#ffffff" style={{ marginRight: 6 }} />
+              <Text style={styles.btnText}>Descargar como Documento PDF</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.btnClose} onPress={onClose}>
