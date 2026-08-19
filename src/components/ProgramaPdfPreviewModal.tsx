@@ -48,14 +48,24 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             : programa.unit.toUpperCase();
           const cleanTitle = (programa.title || 'Programa').replace(/[^a-zA-Z0-9_-]/g, '_');
           const opt = {
-            margin: [6, 6, 6, 6],
+            margin: 0,
             filename: `Programa_${unitStr}_${cleanTitle}_${programa.date || 'Actividad'}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
-            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+            image: { type: 'jpeg', quality: 1.0 },
+            html2canvas: {
+              scale: 3,
+              useCORS: true,
+              logging: false,
+              backgroundColor: '#ffffff',
+              scrollY: 0
+            },
+            jsPDF: {
+              unit: 'px',
+              format: [820, element.offsetHeight || 1160],
+              orientation: 'portrait'
+            }
           };
           await html2pdf().set(opt).from(element).save();
-          showAlert('Descarga Exitosa', 'El archivo PDF se ha descargado correctamente.');
+          showAlert('Descarga Exitosa', 'El archivo PDF se ha descargado en alta resolución.');
           return;
         }
       }
@@ -133,7 +143,6 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             </TouchableOpacity>
           </View>
         </View>
-
         {/* Hoja de visualización tipo papel A4 con diseño oficial */}
         <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
           <View style={styles.paperSheet} id="printable-scout-programa">
@@ -144,186 +153,187 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
               resizeMode="contain"
             />
 
-            {/* ENCABEZADO SUPERIOR INSTITUCIONAL ASV */}
+            {/* ENCABEZADO SUPERIOR INSTITUCIONAL ASV (FULL WIDTH SIN BORDES BLANCOS) */}
             <Image
               source={{ uri: '/programa_assets/asv_header.png' }}
               style={styles.asvHeaderImg}
-              resizeMode="contain"
+              resizeMode="stretch"
             />
 
-            {/* TIRA DE LOGOS OFICIALES */}
-            <View style={styles.logosStrip}>
-              {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 0 ? (
-                programa.selectedUnits.map(u => (
-                  <Image
-                    key={u}
-                    source={{ uri: UNIT_PROGRAMA_LOGOS[u] || SCOUT_WOSM_LOGO }}
-                    style={styles.logoItem}
-                    resizeMode="contain"
-                  />
-                ))
-              ) : (
-                <Image source={{ uri: unitLogo }} style={styles.logoItem} resizeMode="contain" />
-              )}
-              <Image source={{ uri: SCOUT_WOSM_LOGO }} style={styles.logoItem} resizeMode="contain" />
-              <Image source={{ uri: GROUP_ORION_LOGO }} style={styles.logoItem} resizeMode="contain" />
-              <Image source={{ uri: regBadge.imageUri }} style={[styles.logoItem, { width: 110, height: 42 }]} resizeMode="contain" />
-            </View>
-
-            {/* TÍTULO DEL PROGRAMA */}
-            <Text style={styles.programaMainTitle}>
-              Programa de Actividades de la Unidad {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1 ? `(Sinodal ${programa.selectedUnits.map(u => u.toUpperCase()).join(' + ')})` : `del ${programa.unit.toUpperCase()}`}
-            </Text>
-
-            {/* TABLA 1: RESUMEN GENERAL */}
-            <View style={styles.asvTableBox}>
-              <View style={styles.asvTableHeaderRow}>
-                <Text style={[styles.asvHeadCell, { flex: 1.2 }]}>Fecha</Text>
-                <Text style={[styles.asvHeadCell, { flex: 1.5 }]}>Lugar:</Text>
-                <Text style={[styles.asvHeadCell, { flex: 2 }]}>Tipo de Actividad:</Text>
-                <Text style={[styles.asvHeadCell, { flex: 1.2 }]}>Rama:</Text>
-                <Text style={[styles.asvHeadCell, { flex: 1.5 }]}>Número de Participante</Text>
-              </View>
-              <View style={styles.asvTableDataRow}>
-                <Text style={[styles.asvBodyCell, { flex: 1.2 }]}>{programa.date || 'Sin fecha'}</Text>
-                <Text style={[styles.asvBodyCell, { flex: 1.5 }]}>{programa.location || 'Por definir'}</Text>
-                <Text style={[styles.asvBodyCell, { flex: 2 }]}>{programa.activityType || 'Actividad'}</Text>
-                <Text style={[styles.asvBodyCell, { flex: 1.2, fontWeight: 'bold', textTransform: 'capitalize' }]}>
-                  {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
-                    ? `${programa.selectedUnits.map(u => u.toUpperCase()).join(' + ')} (Sinodal)`
-                    : programa.unit}
-                </Text>
-                <Text style={[styles.asvBodyCell, { flex: 1.5 }]}>{programa.participantProjection || 'N/A'}</Text>
-              </View>
-            </View>
-
-            {/* TABLA 2: CAJA DE OBJETIVOS (GENERAL Y ESPECÍFICOS) */}
-            <View style={styles.asvTableBox}>
-              <View style={styles.asvBoxContent}>
-                <Text style={styles.asvBoxHeaderTitle}>Objetivo General: </Text>
-                <Text style={styles.asvBoxParagraph}>{programa.generalObjective || 'No especificado'}</Text>
-
-                <Text style={[styles.asvBoxHeaderTitle, { marginTop: 8 }]}>Objetivos Específicos:</Text>
-                {programa.specificObjectives && programa.specificObjectives.length > 0 ? (
-                  programa.specificObjectives.map((obj, i) => (
-                    <Text key={i} style={styles.asvBulletItem}>* {obj}</Text>
+            {/* CONTENIDO INTERNO DEL PROGRAMA */}
+            <View style={styles.sheetInnerContent}>
+              {/* TIRA DE LOGOS OFICIALES */}
+              <View style={styles.logosStrip}>
+                {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 0 ? (
+                  programa.selectedUnits.map(u => (
+                    <Image
+                      key={u}
+                      source={{ uri: UNIT_PROGRAMA_LOGOS[u] || SCOUT_WOSM_LOGO }}
+                      style={styles.logoItem}
+                      resizeMode="contain"
+                    />
                   ))
                 ) : (
-                  <Text style={styles.asvBoxParagraph}>Sin objetivos específicos registrados.</Text>
+                  <Image source={{ uri: unitLogo }} style={styles.logoItem} resizeMode="contain" />
                 )}
-              </View>
-            </View>
-
-            {/* TABLA 3: CAJA DE METAS ESPECÍFICAS */}
-            <View style={styles.asvTableBox}>
-              <View style={styles.asvBoxContent}>
-                <Text style={styles.asvBoxHeaderTitle}>Metas Específicas:</Text>
-                {programa.specificMetas && programa.specificMetas.length > 0 ? (
-                  programa.specificMetas.map((meta, i) => (
-                    <Text key={i} style={styles.asvBulletItem}>* {meta}</Text>
-                  ))
-                ) : (
-                  <Text style={styles.asvBoxParagraph}>Sin metas específicas registradas.</Text>
-                )}
-              </View>
-            </View>
-
-            {/* TABLA 4: CAJA DE INDICADORES DE LOGRO */}
-            <View style={styles.asvTableBox}>
-              <View style={styles.asvBoxContent}>
-                <Text style={styles.asvBoxHeaderTitle}>Indicadores de Logro:</Text>
-                {(() => {
-                  const areaKeys = Object.keys(GROWTH_AREAS) as GrowthAreaKey[];
-                  const renderedAreas = areaKeys.map(areaKey => {
-                    const areaInfo = GROWTH_AREAS[areaKey];
-                    const list = programa.indicators[areaKey] || [];
-                    if (!list || list.length === 0) return null;
-                    return (
-                      <View key={areaKey} style={{ marginTop: 4, marginBottom: 2 }}>
-                        <Text style={styles.indicatorAreaHeading}>-{areaInfo.name}:</Text>
-                        {list.map((ind, idx) => (
-                          <Text key={idx} style={styles.indicatorDotItem}>. {ind}</Text>
-                        ))}
-                      </View>
-                    );
-                  }).filter(Boolean);
-
-                  if (renderedAreas.length === 0) {
-                    return (
-                      <Text style={styles.asvBoxParagraph}>Sin indicadores de logro seleccionados.</Text>
-                    );
-                  }
-                  return renderedAreas;
-                })()}
-              </View>
-            </View>
-
-            {/* TABLA 5: CAJA DE OBJETIVOS DE DESARROLLO SOSTENIBLE (ODS) */}
-            <View style={styles.asvTableBox}>
-              <View style={styles.asvBoxContent}>
-                <Text style={styles.asvBoxHeaderTitle}>Objetivos de Desarrollo Sostenible (ODS):</Text>
-                <Text style={styles.asvBoxParagraph}>
-                  {programa.selectedSDGs && programa.selectedSDGs.length > 0
-                    ? programa.selectedSDGs.map(num => {
-                        const sdg = SDG_LIST.find(s => s.number === num);
-                        return `ODS #${num}: ${sdg?.name || sdg?.shortName || ''}`;
-                      }).join('   ')
-                    : 'Ningún ODS seleccionado.'}
-                </Text>
-              </View>
-            </View>
-
-            {/* TABLA 6: CRONOGRAMA DE ACTIVIDADES CON NOTAS IMPORTANTES */}
-            <View style={styles.asvTableBox}>
-              <View style={styles.asvTableHeaderRow}>
-                <Text style={[styles.asvHeadCell, { flex: 1.2 }]}>Horario (AM - PM)</Text>
-                <Text style={[styles.asvHeadCell, { flex: 3.5 }]}>Actividad / Descripción</Text>
-                <Text style={[styles.asvHeadCell, { flex: 1.5 }]}>Responsable</Text>
-                <Text style={[styles.asvHeadCell, { flex: 1.5 }]}>Materiales</Text>
+                <Image source={{ uri: SCOUT_WOSM_LOGO }} style={styles.logoItem} resizeMode="contain" />
+                <Image source={{ uri: GROUP_ORION_LOGO }} style={styles.logoItem} resizeMode="contain" />
+                <Image source={{ uri: regBadge.imageUri }} style={[styles.logoItem, { width: 110, height: 42 }]} resizeMode="contain" />
               </View>
 
-              {programa.schedule && programa.schedule.length > 0 ? (
-                programa.schedule.map((item, idx) => (
-                  <View key={item.id || idx} style={styles.asvTableDataRow}>
-                    <Text style={[styles.asvBodyCell, { flex: 1.2, fontWeight: 'bold' }]}>
-                      {item.timeRange}
-                    </Text>
-                    <View style={[styles.asvBodyCell, { flex: 3.5 }]}>
-                      <Text style={{ fontWeight: 'bold', fontSize: 10, marginBottom: 2 }}>{item.title}</Text>
-                      {item.description ? (
-                        <Text style={{ fontSize: 9.5, color: '#374151' }}>{item.description}</Text>
-                      ) : null}
-                    </View>
-                    <Text style={[styles.asvBodyCell, { flex: 1.5 }]}>{item.responsible}</Text>
-                    <Text style={[styles.asvBodyCell, { flex: 1.5 }]}>{item.materials || 'N/A'}</Text>
-                  </View>
-                ))
-              ) : (
+              {/* TÍTULO DEL PROGRAMA */}
+              <Text style={styles.programaMainTitle}>
+                Programa de Actividades de la Unidad {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1 ? `(Sinodal ${programa.selectedUnits.map(u => u.toUpperCase()).join(' + ')})` : `del ${programa.unit.toUpperCase()}`}
+              </Text>
+
+              {/* TABLA 1: RESUMEN GENERAL */}
+              <View style={styles.asvTableBox}>
+                <View style={styles.asvTableHeaderRow}>
+                  <Text style={[styles.asvHeadCell, { flex: 1.2 }]}>Fecha</Text>
+                  <Text style={[styles.asvHeadCell, { flex: 1.5 }]}>Lugar:</Text>
+                  <Text style={[styles.asvHeadCell, { flex: 2 }]}>Tipo de Actividad:</Text>
+                  <Text style={[styles.asvHeadCell, { flex: 1.2 }]}>Rama:</Text>
+                  <Text style={[styles.asvHeadCell, { flex: 1.5 }]}>Número de Participante</Text>
+                </View>
                 <View style={styles.asvTableDataRow}>
-                  <Text style={[styles.asvBodyCell, { flex: 1, textAlign: 'center', fontStyle: 'italic' }]}>
-                    Sin actividades registradas en el cronograma.
+                  <Text style={[styles.asvBodyCell, { flex: 1.2 }]}>{programa.date || 'Sin fecha'}</Text>
+                  <Text style={[styles.asvBodyCell, { flex: 1.5 }]}>{programa.location || 'Por definir'}</Text>
+                  <Text style={[styles.asvBodyCell, { flex: 2 }]}>{programa.activityType || 'Actividad'}</Text>
+                  <Text style={[styles.asvBodyCell, { flex: 1.2, fontWeight: 'bold', textTransform: 'capitalize' }]}>
+                    {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
+                      ? `${programa.selectedUnits.map(u => u.toUpperCase()).join(' + ')} (Sinodal)`
+                      : programa.unit}
                   </Text>
+                  <Text style={[styles.asvBodyCell, { flex: 1.5 }]}>{programa.participantProjection || 'N/A'}</Text>
                 </View>
-              )}
+              </View>
 
-              {/* Fila de Notas Importantes en la tabla oficial */}
-              <View style={styles.asvNotesRow}>
-                <View style={styles.asvNotesHeadCell}>
-                  <Text style={styles.asvNotesHeadText}>NOTAS IMPORTANTES</Text>
+              {/* TABLA 2: CAJA DE OBJETIVOS (GENERAL Y ESPECÍFICOS) */}
+              <View style={styles.asvTableBox}>
+                <View style={styles.asvBoxContent}>
+                  <Text style={styles.asvBoxHeaderTitle}>Objetivo General: </Text>
+                  <Text style={styles.asvBoxParagraph}>{programa.generalObjective || 'No especificado'}</Text>
+
+                  <Text style={[styles.asvBoxHeaderTitle, { marginTop: 8 }]}>Objetivos Específicos:</Text>
+                  {programa.specificObjectives && programa.specificObjectives.length > 0 ? (
+                    programa.specificObjectives.map((obj, i) => (
+                      <Text key={i} style={styles.asvBulletItem}>* {obj}</Text>
+                    ))
+                  ) : (
+                    <Text style={styles.asvBoxParagraph}>Sin objetivos específicos registrados.</Text>
+                  )}
                 </View>
-                <View style={styles.asvNotesBodyCell}>
-                  <Text style={styles.asvNotesBodyText}>
-                    {programa.importantNotes || 'Cada integrante debe dominar su ponencia y dar lo mejor de sí en este servicio scout.'}
+              </View>
+
+              {/* TABLA 3: CAJA DE METAS ESPECÍFICAS */}
+              <View style={styles.asvTableBox}>
+                <View style={styles.asvBoxContent}>
+                  <Text style={styles.asvBoxHeaderTitle}>Metas Específicas:</Text>
+                  {programa.specificMetas && programa.specificMetas.length > 0 ? (
+                    programa.specificMetas.map((meta, i) => (
+                      <Text key={i} style={styles.asvBulletItem}>* {meta}</Text>
+                    ))
+                  ) : (
+                    <Text style={styles.asvBoxParagraph}>Sin metas específicas registradas.</Text>
+                  )}
+                </View>
+              </View>
+
+              {/* TABLA 4: CAJA DE INDICADORES DE LOGRO */}
+              <View style={styles.asvTableBox}>
+                <View style={styles.asvBoxContent}>
+                  <Text style={styles.asvBoxHeaderTitle}>Indicadores de Logro:</Text>
+                  {(() => {
+                    const areaKeys = Object.keys(GROWTH_AREAS) as GrowthAreaKey[];
+                    const renderedAreas = areaKeys.map(areaKey => {
+                      const areaInfo = GROWTH_AREAS[areaKey];
+                      const list = programa.indicators[areaKey] || [];
+                      if (!list || list.length === 0) return null;
+                      return (
+                        <View key={areaKey} style={{ marginTop: 4, marginBottom: 2 }}>
+                          <Text style={styles.indicatorAreaHeading}>-{areaInfo.name}:</Text>
+                          {list.map((ind, idx) => (
+                            <Text key={idx} style={styles.indicatorDotItem}>. {ind}</Text>
+                          ))}
+                        </View>
+                      );
+                    }).filter(Boolean);
+
+                    if (renderedAreas.length === 0) {
+                      return (
+                        <Text style={styles.asvBoxParagraph}>Sin indicadores de logro seleccionados.</Text>
+                      );
+                    }
+                    return renderedAreas;
+                  })()}
+                </View>
+              </View>
+
+              {/* TABLA 5: CAJA DE OBJETIVOS DE DESARROLLO SOSTENIBLE (ODS) */}
+              <View style={styles.asvTableBox}>
+                <View style={styles.asvBoxContent}>
+                  <Text style={styles.asvBoxHeaderTitle}>Objetivos de Desarrollo Sostenible (ODS):</Text>
+                  <Text style={styles.asvBoxParagraph}>
+                    {programa.selectedSDGs && programa.selectedSDGs.length > 0
+                      ? programa.selectedSDGs.map(num => {
+                          const sdg = SDG_LIST.find(s => s.number === num);
+                          return `ODS #${num}: ${sdg?.name || sdg?.shortName || ''}`;
+                        }).join('   ')
+                      : 'Ningún ODS seleccionado.'}
                   </Text>
+                </View>
+              </View>
+
+              {/* TABLA 6: CRONOGRAMA DE ACTIVIDADES */}
+              <View style={styles.asvTableBox}>
+                <View style={styles.asvTableHeaderRow}>
+                  <Text style={[styles.asvHeadCell, { flex: 1.5 }]}>Horario (AM - PM)</Text>
+                  <Text style={[styles.asvHeadCell, { flex: 3.5 }]}>Actividad / Descripción</Text>
+                  <Text style={[styles.asvHeadCell, { flex: 1.8 }]}>Responsable</Text>
+                  <Text style={[styles.asvHeadCell, { flex: 1.8 }]}>Materiales</Text>
+                </View>
+
+                {programa.schedule && programa.schedule.length > 0 ? (
+                  programa.schedule.map((item, index) => (
+                    <View key={item.id || index} style={styles.asvTableDataRow}>
+                      <Text style={[styles.asvBodyCell, { flex: 1.5, fontWeight: '600' }]}>{item.timeRange}</Text>
+                      <View style={[styles.asvBodyCell, { flex: 3.5, alignItems: 'flex-start' }]}>
+                        <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000000' }}>{item.title}</Text>
+                        {item.description ? (
+                          <Text style={{ fontSize: 9, color: '#374151', marginTop: 2 }}>{item.description}</Text>
+                        ) : null}
+                      </View>
+                      <Text style={[styles.asvBodyCell, { flex: 1.8 }]}>{item.responsible || '-'}</Text>
+                      <Text style={[styles.asvBodyCell, { flex: 1.8 }]}>{item.materials || '-'}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <View style={styles.asvTableDataRow}>
+                    <Text style={[styles.asvBodyCell, { flex: 1, fontStyle: 'italic' }]}>
+                      Sin actividades en el cronograma.
+                    </Text>
+                  </View>
+                )}
+
+                {/* FILA DE NOTAS IMPORTANTES */}
+                <View style={styles.asvNotesRow}>
+                  <View style={styles.asvNotesHeadCell}>
+                    <Text style={styles.asvNotesHeadText}>NOTAS IMPORTANTES</Text>
+                  </View>
+                  <View style={styles.asvNotesBodyCell}>
+                    <Text style={styles.asvNotesBodyText}>
+                      {programa.importantNotes || 'Cada integrante debe dominar su ponencia y dar lo mejor de sí en este servicio scout.'}
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
 
-            {/* PIE DE PÁGINA OFICIAL DE LA ASV */}
+            {/* PIE DE PÁGINA OFICIAL DE LA ASV (FULL WIDTH SIN BORDES BLANCOS) */}
             <Image
               source={{ uri: '/programa_assets/asv_footer.png' }}
               style={styles.asvFooterImg}
-              resizeMode="contain"
+              resizeMode="stretch"
             />
           </View>
         </ScrollView>
@@ -396,44 +406,48 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 820,
     backgroundColor: '#ffffff',
-    borderRadius: 6,
-    padding: 28,
+    borderRadius: 0,
+    padding: 0,
     shadowColor: '#000',
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
     elevation: 8,
     position: 'relative',
     overflow: 'hidden',
   },
+  sheetInnerContent: {
+    paddingHorizontal: 28,
+    paddingVertical: 8,
+    zIndex: 1,
+  },
   watermarkBg: {
     position: 'absolute',
-    top: '18%',
-    left: '8%',
-    right: '8%',
-    width: '84%',
-    height: '65%',
-    opacity: 0.14,
+    top: '20%',
+    left: '12%',
+    right: '12%',
+    width: '76%',
+    height: '60%',
+    opacity: 0.12,
     zIndex: 0,
     pointerEvents: 'none',
   },
   asvHeaderImg: {
     width: '100%',
-    height: 75,
-    marginBottom: 4,
+    height: 82,
     zIndex: 1,
   },
   asvFooterImg: {
     width: '100%',
-    height: 80,
-    marginTop: 12,
+    height: 86,
     zIndex: 1,
+    marginTop: 10,
   },
   logosStrip: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 16,
-    marginVertical: 10,
+    marginVertical: 8,
     zIndex: 1,
   },
   logoItem: {
