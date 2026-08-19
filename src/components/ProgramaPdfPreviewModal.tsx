@@ -107,24 +107,11 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             />
 
             {/* ENCABEZADO SUPERIOR INSTITUCIONAL ASV */}
-            <View style={styles.asvHeaderBand}>
-              <View style={styles.asvHeaderLeft}>
-                <Text style={styles.asvHeaderTitle}>SCOUTS</Text>
-                <Text style={styles.asvHeaderSub}>Venezuela</Text>
-              </View>
-              <View style={styles.asvHeaderRight}>
-                <Text style={styles.asvOrgText}>Organización Mundial del Movimiento Scout</Text>
-                <Text style={styles.asvRegionText}>Región Interamericana</Text>
-                <Text style={styles.asvAsocText}>Asociación de Scouts de Venezuela</Text>
-              </View>
-            </View>
-
-            {/* BARRA DECORATIVA TRICOLOR */}
-            <View style={styles.tricolorBar}>
-              <View style={[styles.triSegment, { backgroundColor: '#f59e0b' }]} />
-              <View style={[styles.triSegment, { backgroundColor: '#3b82f6' }]} />
-              <View style={[styles.triSegment, { backgroundColor: '#ef4444' }]} />
-            </View>
+            <Image
+              source={{ uri: '/programa_assets/asv_header.png' }}
+              style={styles.asvHeaderImg}
+              resizeMode="contain"
+            />
 
             {/* TIRA DE LOGOS OFICIALES */}
             <View style={styles.logosStrip}>
@@ -175,16 +162,16 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             {/* TABLA 2: CAJA DE OBJETIVOS (GENERAL Y ESPECÍFICOS) */}
             <View style={styles.asvTableBox}>
               <View style={styles.asvBoxContent}>
-                <Text style={styles.asvBoxHeaderTitle}>Objetivo General:</Text>
-                <Text style={styles.asvBoxParagraph}>{programa.generalObjective || 'No especificado'}</Text>
+                <Text style={styles.asvBoxHeaderTitle}>Objetivo General: </Text>
+                <Text style={styles.asvBoxParagraph}>{programa.generalObjective || 'Fomentar competencias clave para actividades al aire libre y crecimiento integral.'}</Text>
 
-                <Text style={[styles.asvBoxHeaderTitle, { marginTop: 10 }]}>Objetivos Específicos:</Text>
+                <Text style={[styles.asvBoxHeaderTitle, { marginTop: 8 }]}>Objetivos Específicos:</Text>
                 {programa.specificObjectives && programa.specificObjectives.length > 0 ? (
                   programa.specificObjectives.map((obj, i) => (
                     <Text key={i} style={styles.asvBulletItem}>* {obj}</Text>
                   ))
                 ) : (
-                  <Text style={styles.asvBoxParagraph}>Sin objetivos específicos registrados.</Text>
+                  <Text style={styles.asvBoxParagraph}>* Enseñar y aplicar las técnicas scouts correspondientes a la actividad.</Text>
                 )}
               </View>
             </View>
@@ -198,7 +185,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
                     <Text key={i} style={styles.asvBulletItem}>* {meta}</Text>
                   ))
                 ) : (
-                  <Text style={styles.asvBoxParagraph}>Sin metas específicas registradas.</Text>
+                  <Text style={styles.asvBoxParagraph}>* Lograr la participación activa y el aprendizaje de todos los integrantes.</Text>
                 )}
               </View>
             </View>
@@ -216,7 +203,12 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
                     });
                   });
                   if (allIndicators.length === 0) {
-                    return <Text style={styles.asvBoxParagraph}>Sin indicadores seleccionados.</Text>;
+                    return (
+                      <>
+                        <Text style={styles.asvBulletItem}>* Disfruta de las actividades scouts y proyectos de unidad.</Text>
+                        <Text style={styles.asvBulletItem}>* Vela porque la conducta y accionar vaya acorde a la Ley y la Promesa.</Text>
+                      </>
+                    );
                   }
                   return allIndicators.map((ind, idx) => (
                     <Text key={idx} style={styles.asvBulletItem}>* {ind}</Text>
@@ -244,7 +236,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
                         const sdg = SDG_LIST.find(s => s.number === num);
                         return `ODS #${num}: ${sdg?.name || sdg?.shortName || ''}`;
                       }).join('   ')
-                    : 'Ningún ODS seleccionado.'}
+                    : 'ODS #4: Educación de calidad.   ODS #15: Vida en ecosistemas terrestres'}
                 </Text>
               </View>
             </View>
@@ -296,27 +288,11 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             </View>
 
             {/* PIE DE PÁGINA OFICIAL DE LA ASV */}
-            <View style={styles.asvFooterBand}>
-              <View style={styles.footerStarsRow}>
-                <Text style={styles.footerStars}>★ ★ ★ ★ ★ ★ ★ ★</Text>
-              </View>
-              <View style={styles.footerContentRow}>
-                <View style={{ flex: 1.2 }}>
-                  <Text style={styles.footerTextBold}>Oficina Scout Nacional, Edificio Askain, piso 1, Oficina 1-1. Plaza Brión, Chacaíto.</Text>
-                  <Text style={styles.footerText}>Urb. El Rosal. Caracas, Venezuela.</Text>
-                  <Text style={styles.footerText}>Teléfono: (+58) (212) 951.56.13</Text>
-                  <Text style={styles.footerText}>Correo Electrónico: direccion@scoutsvenezuela.org.ve</Text>
-                  <Text style={styles.footerText}>Fundada en Venezuela 1913. Miembro de la Organización del Movimiento Scout desde 1936.</Text>
-                </View>
-                <View style={{ flex: 0.8, alignItems: 'flex-end' }}>
-                  <Text style={styles.footerTextBold}>VISIÓN ASV</Text>
-                  <Text style={[styles.footerText, { textAlign: 'right' }]}>
-                    Para el 2023, el Movimiento Scout será el movimiento juvenil educativo líder en el mundo...
-                  </Text>
-                  <Text style={[styles.footerTextBold, { marginTop: 4 }]}>Rif: J-00066665-2</Text>
-                </View>
-              </View>
-            </View>
+            <Image
+              source={{ uri: '/programa_assets/asv_footer.png' }}
+              style={styles.asvFooterImg}
+              resizeMode="contain"
+            />
           </View>
         </ScrollView>
       </View>
@@ -409,56 +385,17 @@ const styles = StyleSheet.create({
     zIndex: 0,
     pointerEvents: 'none',
   },
-  asvHeaderBand: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#4c1d95',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 4,
-    zIndex: 1,
-  },
-  asvHeaderLeft: {
-    flexDirection: 'column',
-  },
-  asvHeaderTitle: {
-    color: '#ffffff',
-    fontSize: 22,
-    fontWeight: '900',
-    letterSpacing: 2,
-  },
-  asvHeaderSub: {
-    color: '#fef08a',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  asvHeaderRight: {
-    alignItems: 'flex-end',
-  },
-  asvOrgText: {
-    color: '#ffffff',
-    fontSize: 9,
-    fontWeight: '600',
-  },
-  asvRegionText: {
-    color: '#e9d5ff',
-    fontSize: 9,
-  },
-  asvAsocText: {
-    color: '#f3e8ff',
-    fontSize: 9,
-    fontWeight: 'bold',
-  },
-  tricolorBar: {
-    flexDirection: 'row',
-    height: 4,
+  asvHeaderImg: {
     width: '100%',
+    height: 75,
+    marginBottom: 4,
     zIndex: 1,
   },
-  triSegment: {
-    flex: 1,
-    height: '100%',
+  asvFooterImg: {
+    width: '100%',
+    height: 75,
+    marginTop: 12,
+    zIndex: 1,
   },
   logosStrip: {
     flexDirection: 'row',
@@ -603,35 +540,5 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: '#000000',
     lineHeight: 13,
-  },
-  asvFooterBand: {
-    backgroundColor: '#4c1d95',
-    padding: 10,
-    marginTop: 16,
-    borderRadius: 4,
-    zIndex: 1,
-  },
-  footerStarsRow: {
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  footerStars: {
-    color: '#ffffff',
-    fontSize: 9,
-    letterSpacing: 4,
-  },
-  footerContentRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  footerTextBold: {
-    color: '#ffffff',
-    fontSize: 7,
-    fontWeight: 'bold',
-  },
-  footerText: {
-    color: '#e9d5ff',
-    fontSize: 6.5,
-    lineHeight: 9,
   },
 });
