@@ -78,21 +78,15 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
           }
           #asv-print-clone-root {
             display: flex !important;
-            position: fixed !important;
-            left: 0 !important;
-            top: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            max-width: 100vw !important;
-            max-height: 100vh !important;
+            position: relative !important;
+            width: 100% !important;
+            min-height: 100vh !important;
             margin: 0 !important;
             padding: 0 !important;
             box-sizing: border-box !important;
             background: #ffffff !important;
             flex-direction: column !important;
-            justify-content: space-between !important;
+            justify-content: flex-start !important;
             z-index: 2147483647 !important;
             overflow: hidden !important;
             -webkit-print-color-adjust: exact !important;
@@ -123,17 +117,17 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             margin: 0 !important;
             padding: 0 !important;
             flex-shrink: 0 !important;
+            margin-top: auto !important;
           }
           #asv-print-clone-root .asv-print-content {
             padding-left: 28px !important;
             padding-right: 28px !important;
-            padding-top: 4px !important;
-            padding-bottom: 4px !important;
-            flex: 1 1 auto !important;
+            padding-top: 6px !important;
+            padding-bottom: 6px !important;
+            flex: 1 0 auto !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: space-between !important;
-            overflow: hidden !important;
+            justify-content: flex-start !important;
           }
         }
       `;
