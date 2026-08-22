@@ -137,7 +137,7 @@ export default function DrawerNavigator() {
   return (
     <>
       <Drawer.Navigator
-        backBehavior="none"
+        backBehavior="history"
         drawerContent={(props) => (
           <CustomDrawerContent 
             {...props} 

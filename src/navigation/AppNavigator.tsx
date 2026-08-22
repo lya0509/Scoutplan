@@ -30,22 +30,34 @@ import DrawerNavigator from './DrawerNavigator';
 
 const Stack = createNativeStackNavigator();
 
-const linking = {
-  prefixes: ['http://localhost:8081', 'http://localhost:19006', 'https://*.vercel.app'],
+const linking: any = {
+  prefixes: [
+    'scoutplan://',
+    'http://localhost:8081',
+    'http://localhost:19006',
+    'https://scoutplan.vercel.app',
+    'https://*.vercel.app'
+  ],
   config: {
     screens: {
       Login: 'ingresar',
       Register: 'registro',
       Drawer: {
-        path: '',
-        initialRouteName: 'PlanProgresivo',
         screens: {
-          PlanProgresivo: 'plan',
+          Resumen: 'inicio',
           Perfil: 'perfil',
+          PlanProgresivo: 'plan',
+          ProgramasScoutDrawer: 'programas',
+          PlanTrimestralDrawer: 'plan-trimestral',
+          TemporalDriveDrawer: 'drive-fotos',
+          FichaMedicaDrawer: 'ficha-medica',
+          CurriculumScoutDrawer: 'curriculo',
+          NudosManualDrawer: 'nudos',
+          CancioneroDrawer: 'cancionero',
+          DocumentosDrawer: 'documentos',
+          CertificadosDrawer: 'certificados',
           CentroActividades: 'actividades',
           Calendario: 'calendario',
-          ManualNudos: 'nudos',
-          Cancionero: 'cancionero',
         }
       },
       StageDetail: 'etapa/:stageId',
@@ -53,15 +65,17 @@ const linking = {
       ScouterReview: 'scouter-revision',
       JefeDashboard: 'jefe-grupo',
       CatalogSelector: 'catalogo',
-      CertificateUpload: 'certificados',
+      CertificateUpload: 'mis-certificados',
       ScoutFullProfile: 'perfil-completo',
-      QuarterlyPlan: 'plan-trimestral',
-      TemporalDrive: 'drive-fotos',
-      FichaMedica: 'ficha-medica',
-      CurriculumScout: 'curriculo',
+      QuarterlyPlan: 'plan-trimestral-standalone',
+      TemporalDrive: 'drive-fotos-standalone',
+      FichaMedica: 'ficha-medica-standalone',
+      CurriculumScout: 'curriculo-standalone',
       NudosManual: 'manual-nudos',
       Cancionero: 'cancionero-scout',
-      Documentos: 'documentos'
+      Documentos: 'documentos-scout',
+      ProgramaScout: 'programas-actividades',
+      ProgramaScoutEditor: 'programa-editor',
     }
   }
 };
@@ -83,8 +97,8 @@ export default function AppNavigator() {
       <Stack.Navigator 
         screenOptions={{ 
           headerShown: false, 
-          gestureEnabled: Platform.OS === 'ios', 
-          fullScreenGestureEnabled: false, 
+          gestureEnabled: true, 
+          fullScreenGestureEnabled: true, 
           animation: 'slide_from_right' 
         }}
       >

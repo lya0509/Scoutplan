@@ -267,18 +267,20 @@ export default function ProfileScreen() {
   };
 
   const calcCompletion = () => {
-    const fields = [
+    const requiredFields = [
       user?.name,
       user?.email,
       user?.unit,
       user?.group_name,
       cedula || user?.cedula,
       birthDate || user?.birth_date,
+      promiseDate || user?.promise_date,
+      joinDate || user?.join_date,
       phone || user?.phone,
+      scoutAvatarUrl || user?.avatar_url || customAvatarUrl || user?.custom_avatar_url,
     ];
-    const filled = fields.filter(Boolean).length;
-    if (filled === fields.length) return 100;
-    return Math.round((filled / fields.length) * 100);
+    const filled = requiredFields.filter(f => f && String(f).trim().length > 0).length;
+    return Math.round((filled / requiredFields.length) * 100);
   };
 
   const formatDateDisplay = (dateStr: string) => {
