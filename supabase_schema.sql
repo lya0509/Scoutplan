@@ -164,7 +164,11 @@ BEGIN
     new.raw_user_meta_data->>'region',
     new.raw_user_meta_data->>'district',
     new.raw_user_meta_data->>'cedula',
-    new.raw_user_meta_data->>'birth_date'
+    CASE 
+      WHEN new.raw_user_meta_data->>'birth_date' IS NOT NULL AND new.raw_user_meta_data->>'birth_date' != '' 
+      THEN (new.raw_user_meta_data->>'birth_date')::date 
+      ELSE NULL 
+    END
   )
   ON CONFLICT (id) DO UPDATE SET
     name = COALESCE(EXCLUDED.name, public.profiles.name),
@@ -189,7 +193,12 @@ CREATE TRIGGER on_auth_user_created
 UPDATE public.profiles p
 SET 
   cedula = COALESCE(p.cedula, u.raw_user_meta_data->>'cedula'),
-  birth_date = COALESCE(p.birth_date, u.raw_user_meta_data->>'birth_date'),
+  birth_date = CASE 
+    WHEN p.birth_date IS NOT NULL THEN p.birth_date
+    WHEN u.raw_user_meta_data->>'birth_date' IS NOT NULL AND u.raw_user_meta_data->>'birth_date' != '' 
+      THEN (u.raw_user_meta_data->>'birth_date')::date
+    ELSE NULL 
+  END,
   region = COALESCE(p.region, u.raw_user_meta_data->>'region'),
   district = COALESCE(p.district, u.raw_user_meta_data->>'district'),
   email = COALESCE(p.email, u.email, u.raw_user_meta_data->>'email')
