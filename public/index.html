@@ -64,5 +64,25 @@
     </noscript>
     <!-- The root element for your Expo app. -->
     <div id="root"></div>
+
+    <!-- Registro de Service Worker para PWA (Soporte Offline 100%) -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        function registerSW() {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(function(reg) {
+              console.log('✅ Service Worker PWA activo y listo para modo offline:', reg.scope);
+            })
+            .catch(function(err) {
+              console.warn('⚠️ Error en Service Worker:', err);
+            });
+        }
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+          registerSW();
+        } else {
+          window.addEventListener('load', registerSW);
+        }
+      }
+    </script>
   </body>
 </html>
