@@ -45,6 +45,7 @@ export const docxProgramaGenerator = {
         let logoFile = '/programa_assets/logo_clan.jpg';
         if (programa.unit === 'manada') logoFile = '/programa_assets/logo_manada.jpg';
         else if (programa.unit === 'tropa') logoFile = '/programa_assets/logo_tropa.png';
+        else if (programa.unit === 'caminantes' || programa.unit === 'comunidad') logoFile = '/programa_assets/logo_caminantes.png';
         
         const logoRes = await fetch(logoFile);
         if (logoRes.ok) {

@@ -25,7 +25,8 @@ export const REGISTRATION_BADGES: RegistrationBadge[] = [
 export const UNIT_PROGRAMA_LOGOS: Record<string, string> = {
   manada: '/programa_assets/logo_manada.jpg',
   tropa: '/programa_assets/logo_tropa.png',
-  caminantes: '/programa_assets/logo_scout.png', // Fallback limpio hasta que se suba el HD
+  caminantes: '/programa_assets/logo_caminantes.png',
+  comunidad: '/programa_assets/logo_caminantes.png',
   clan: '/programa_assets/logo_clan.jpg',
 };
 
