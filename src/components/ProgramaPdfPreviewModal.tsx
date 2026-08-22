@@ -47,9 +47,9 @@ function getProgramaPages(programa: ProgramaScout): ProgramaPageData[] {
   }
 
   // Página 1: primeras 4 actividades
-  // Páginas 2..N: 13 actividades por página
+  // Páginas 2..N: 18 actividades por página
   const PAGE1_LIMIT = 4;
-  const SUBSEQUENT_LIMIT = 13;
+  const SUBSEQUENT_LIMIT = 18;
 
   const page1Items = schedule.slice(0, PAGE1_LIMIT);
   const remaining = schedule.slice(PAGE1_LIMIT);
@@ -154,6 +154,8 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             overflow: hidden !important;
             display: block !important;
             margin: 0 !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
             padding: 0 !important;
             box-shadow: none !important;
             border: none !important;
@@ -208,9 +210,6 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             justify-content: flex-start !important;
             z-index: 1 !important;
           }
-          .screen-page-indicator {
-            display: none !important;
-          }
         }
       `;
       if (!existingStyle) {
@@ -224,10 +223,12 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
       const clone = container.cloneNode(true) as HTMLElement;
       clone.id = 'asv-print-clone-root';
 
-      // Asignar clases a cada página del clon
+      // Asignar clases a cada página del clon y eliminar cualquier margen
       const pageElements = clone.querySelectorAll('#asv-pdf-page, [id="asv-pdf-page"], [nativeid="asv-pdf-page"], .asv-pdf-page');
       pageElements.forEach(pageEl => {
         pageEl.classList.add('asv-pdf-page');
+        (pageEl as HTMLElement).style.marginTop = '0px';
+        (pageEl as HTMLElement).style.marginBottom = '0px';
         const children = pageEl.children;
         // Structure: [0]=watermark, [1]=header, [2]=content, [3]=footer
         if (children[1]) children[1].classList.add('asv-print-header');
@@ -318,36 +319,28 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             {pages.map((page) => (
               <View
                 key={page.pageIndex}
-                style={{
-                  width: '100%',
-                  maxWidth: 820,
-                  alignItems: 'center',
-                  marginBottom: page.pageIndex < page.totalPages ? 24 : 0,
-                }}
+                style={[
+                  styles.paperSheet,
+                  page.pageIndex > 1 && { marginTop: 24 }
+                ]}
+                nativeID="asv-pdf-page"
               >
-                {page.totalPages > 1 && (
-                  <View style={styles.screenPageBadge}>
-                    <Text style={styles.screenPageBadgeText}>Página {page.pageIndex} de {page.totalPages}</Text>
-                  </View>
-                )}
+                {/* MARCA DE AGUA INSTITUCIONAL ASV EN EL FONDO */}
+                <Image
+                  source={{ uri: '/programa_assets/asv_watermark.png' }}
+                  style={styles.watermarkBg}
+                  resizeMode="contain"
+                />
 
-                <View style={styles.paperSheet} nativeID="asv-pdf-page">
-                  {/* MARCA DE AGUA INSTITUCIONAL ASV EN EL FONDO */}
-                  <Image
-                    source={{ uri: '/programa_assets/asv_watermark.png' }}
-                    style={styles.watermarkBg}
-                    resizeMode="contain"
-                  />
+                {/* ENCABEZADO SUPERIOR INSTITUCIONAL ASV */}
+                <Image
+                  source={{ uri: '/programa_assets/asv_header.png' }}
+                  style={styles.asvHeaderImg}
+                  resizeMode="stretch"
+                />
 
-                  {/* ENCABEZADO SUPERIOR INSTITUCIONAL ASV */}
-                  <Image
-                    source={{ uri: '/programa_assets/asv_header.png' }}
-                    style={styles.asvHeaderImg}
-                    resizeMode="stretch"
-                  />
-
-                  {/* CONTENIDO INTERNO DEL PROGRAMA */}
-                  <View style={styles.sheetInnerContent}>
+                {/* CONTENIDO INTERNO DEL PROGRAMA */}
+                <View style={styles.sheetInnerContent}>
                     {page.isFirstPage ? (
                       <>
                         {/* TIRA DE LOGOS OFICIALES */}
@@ -540,7 +533,6 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
                     resizeMode="stretch"
                   />
                 </View>
-              </View>
             ))}
           </View>
         </ScrollView>
