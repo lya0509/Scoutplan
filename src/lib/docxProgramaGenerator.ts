@@ -234,7 +234,7 @@ export const docxProgramaGenerator = {
             <w:tc>
               <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
               <w:p>
-                <w:r><w:rPr><w:b/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t xml:space="preserve">Objetivos de Desarrollo Sostenible (ODS):  </w:t></w:r>
+                <w:r><w:rPr><w:b/><w:u w:val="single"/><w:sz w:val="19"/><w:color w:val="000000"/></w:rPr><w:t xml:space="preserve">Objetivos de Desarrollo Sostenible (ODS):  </w:t></w:r>
                 <w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t>${escapeXml(sdgText)}</w:t></w:r>
               </w:p>
             </w:tc>

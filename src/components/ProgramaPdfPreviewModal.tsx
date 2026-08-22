@@ -42,10 +42,22 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
       if (container) {
         const children = container.children;
         // Structure: [0]=watermark, [1]=header, [2]=content, [3]=footer
+        if (children[0]) (children[0] as HTMLElement).id = 'asv-print-watermark';
         if (children[1]) (children[1] as HTMLElement).id = 'asv-print-header';
         if (children[2]) (children[2] as HTMLElement).id = 'asv-print-content';
         if (children[3]) (children[3] as HTMLElement).id = 'asv-print-footer';
       }
+
+      // ── Establecer el nombre del archivo PDF automáticamente para el diálogo de Guardar como PDF ──
+      const cleanTitle = (programa.title || 'Actividad').trim().replace(/[^a-zA-Z0-9_\-áéíóúÁÉÍÓÚñÑ ]/g, '_').replace(/\s+/g, '_');
+      const cleanDate = (programa.date || new Date().toISOString().split('T')[0]).replace(/[^a-zA-Z0-9_\-]/g, '_');
+      const fileUnitLabel = programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
+        ? `${programa.selectedUnits.map(u => u.toUpperCase()).join('_')}_SINODAL`
+        : (programa.unit || 'CLAN').toUpperCase();
+      const pdfFileName = `Programa_${fileUnitLabel}_${cleanTitle}_${cleanDate}`;
+
+      const originalTitle = document.title;
+      document.title = pdfFileName;
 
       const existingStyle = document.getElementById('scout-print-styles');
       const cssContent = `
@@ -54,6 +66,10 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
           margin: 0mm !important;
         }
         @media print {
+          @page {
+            size: letter portrait;
+            margin: 0mm !important;
+          }
           html, body {
             margin: 0 !important;
             padding: 0 !important;
@@ -92,6 +108,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             print-color-adjust: exact !important;
             page-break-after: avoid !important;
             page-break-inside: avoid !important;
+            z-index: 999999 !important;
           }
           #asv-print-header,
           #asv-print-header img,
@@ -139,6 +156,11 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
         existingStyle.innerHTML = cssContent;
       }
       window.print();
+
+      // Restaurar el título original de la pestaña
+      setTimeout(() => {
+        document.title = originalTitle;
+      }, 2000);
     } else {
       showAlert('Descargar PDF', 'Para descargar en PDF, selecciona la opción "Guardar como PDF" en el diálogo de impresión.');
     }
