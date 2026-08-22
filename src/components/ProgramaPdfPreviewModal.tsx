@@ -36,7 +36,8 @@ interface ProgramaPageData {
 function getProgramaPages(programa: ProgramaScout): ProgramaPageData[] {
   const schedule = programa.schedule || [];
   
-  if (schedule.length <= 6) {
+  // Si el cronograma tiene 10 o menos actividades, todo cabe holgadamente en 1 sola página
+  if (schedule.length <= 10) {
     return [{
       pageIndex: 1,
       totalPages: 1,
@@ -46,10 +47,11 @@ function getProgramaPages(programa: ProgramaScout): ProgramaPageData[] {
     }];
   }
 
-  // Página 1: primeras 4 actividades
-  // Páginas 2..N: 18 actividades por página
-  const PAGE1_LIMIT = 4;
-  const SUBSEQUENT_LIMIT = 18;
+  // Si tiene más de 10 actividades (campamentos, acantonamientos):
+  // Página 1: primeras 8 actividades (junto con las tablas 1 a 5)
+  // Páginas 2..N: hasta 22 actividades por página de continuación
+  const PAGE1_LIMIT = 8;
+  const SUBSEQUENT_LIMIT = 22;
 
   const page1Items = schedule.slice(0, PAGE1_LIMIT);
   const remaining = schedule.slice(PAGE1_LIMIT);
@@ -107,23 +109,23 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
       const originalTitle = document.title;
       document.title = pdfFileName;
 
-      // Inyectar CSS de impresión multi-página full-bleed
+      // Inyectar CSS de impresión multi-página con dimensiones exactas Carta (8.5in x 11in)
       const printStyleId = 'scout-print-styles';
       let existingStyle = document.getElementById(printStyleId);
       const cssContent = `
         @page {
-          size: letter portrait;
+          size: 8.5in 11in;
           margin: 0 !important;
         }
         @media print {
           @page {
-            size: letter portrait;
+            size: 8.5in 11in;
             margin: 0 !important;
           }
           html, body {
             margin: 0 !important;
             padding: 0 !important;
-            width: 100% !important;
+            width: 8.5in !important;
             height: auto !important;
             background: #ffffff !important;
             -webkit-print-color-adjust: exact !important;
@@ -134,16 +136,17 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
           }
           #asv-print-clone-root {
             display: block !important;
-            width: 100% !important;
+            width: 8.5in !important;
             margin: 0 !important;
             padding: 0 !important;
             background: #ffffff !important;
             z-index: 2147483647 !important;
           }
           .asv-pdf-page {
-            width: 100vw !important;
-            height: 100vh !important;
-            max-height: 100vh !important;
+            width: 8.5in !important;
+            height: 11in !important;
+            min-height: 11in !important;
+            max-height: 11in !important;
             position: relative !important;
             page-break-after: always !important;
             break-after: page !important;
@@ -171,7 +174,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             top: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            width: 100% !important;
+            width: 8.5in !important;
             height: 82px !important;
             min-height: 82px !important;
             max-height: 82px !important;
@@ -188,7 +191,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             bottom: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            width: 100% !important;
+            width: 8.5in !important;
             height: 86px !important;
             min-height: 86px !important;
             max-height: 86px !important;
