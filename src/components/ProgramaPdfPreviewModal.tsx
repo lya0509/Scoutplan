@@ -36,8 +36,8 @@ interface ProgramaPageData {
 function getProgramaPages(programa: ProgramaScout): ProgramaPageData[] {
   const schedule = programa.schedule || [];
   
-  // Si el cronograma tiene 10 o menos actividades, todo cabe holgadamente en 1 sola página
-  if (schedule.length <= 10) {
+  // Si el cronograma tiene 12 o menos actividades, todo cabe holgadamente en 1 sola página
+  if (schedule.length <= 12) {
     return [{
       pageIndex: 1,
       totalPages: 1,
@@ -47,11 +47,11 @@ function getProgramaPages(programa: ProgramaScout): ProgramaPageData[] {
     }];
   }
 
-  // Si tiene más de 10 actividades (campamentos, acantonamientos):
-  // Página 1: primeras 8 actividades (junto con las tablas 1 a 5)
-  // Páginas 2..N: hasta 22 actividades por página de continuación
-  const PAGE1_LIMIT = 8;
-  const SUBSEQUENT_LIMIT = 22;
+  // Si tiene más de 12 actividades (campamentos, acantonamientos):
+  // Página 1: aprovecha todo el espacio disponible con hasta 11 actividades (junto con las tablas 1 a 5)
+  // Páginas 2..N: hasta 25 actividades por página de continuación
+  const PAGE1_LIMIT = 11;
+  const SUBSEQUENT_LIMIT = 25;
 
   const page1Items = schedule.slice(0, PAGE1_LIMIT);
   const remaining = schedule.slice(PAGE1_LIMIT);
