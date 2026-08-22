@@ -37,18 +37,9 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
 
   const handleDownloadPdf = () => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      // 1. Asignar IDs directamente en el DOM para selectores CSS de impresión
       const container = document.getElementById('printable-scout-programa');
-      if (container) {
-        const children = container.children;
-        // Structure: [0]=watermark, [1]=header, [2]=content, [3]=footer
-        if (children[0]) (children[0] as HTMLElement).id = 'asv-print-watermark';
-        if (children[1]) (children[1] as HTMLElement).id = 'asv-print-header';
-        if (children[2]) (children[2] as HTMLElement).id = 'asv-print-content';
-        if (children[3]) (children[3] as HTMLElement).id = 'asv-print-footer';
-      }
+      if (!container) return;
 
-      // 2. Establecer el nombre del archivo PDF automáticamente
       const cleanTitle = (programa.title || 'Actividad').trim().replace(/[^a-zA-Z0-9_\-áéíóúÁÉÍÓÚñÑ ]/g, '_').replace(/\s+/g, '_');
       const cleanDate = (programa.date || new Date().toISOString().split('T')[0]).replace(/[^a-zA-Z0-9_\-]/g, '_');
       const fileUnitLabel = programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
@@ -59,17 +50,18 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
       const originalTitle = document.title;
       document.title = pdfFileName;
 
-      // 3. Inyectar estilos CSS para renderizado vectorial puro full-bleed
-      const existingStyle = document.getElementById('scout-print-styles');
+      // Inyectar CSS de impresión full-bleed a nivel raíz
+      const printStyleId = 'scout-print-styles';
+      let existingStyle = document.getElementById(printStyleId);
       const cssContent = `
         @page {
           size: letter portrait;
-          margin: 0mm !important;
+          margin: 0 !important;
         }
         @media print {
           @page {
             size: letter portrait;
-            margin: 0mm !important;
+            margin: 0 !important;
           }
           html, body {
             margin: 0 !important;
@@ -79,14 +71,13 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             background: #ffffff !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            overflow: hidden !important;
           }
-          body * {
-            visibility: hidden !important;
+          body > *:not(#asv-print-clone-root) {
+            display: none !important;
           }
-          #printable-scout-programa, #printable-scout-programa * {
-            visibility: visible !important;
-          }
-          #printable-scout-programa {
+          #asv-print-clone-root {
+            display: flex !important;
             position: fixed !important;
             left: 0 !important;
             top: 0 !important;
@@ -95,25 +86,21 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             width: 100vw !important;
             height: 100vh !important;
             max-width: 100vw !important;
+            max-height: 100vh !important;
             margin: 0 !important;
             padding: 0 !important;
-            box-shadow: none !important;
-            border: none !important;
-            border-radius: 0 !important;
+            box-sizing: border-box !important;
             background: #ffffff !important;
-            display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
+            z-index: 2147483647 !important;
             overflow: hidden !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
-            page-break-after: avoid !important;
-            page-break-inside: avoid !important;
-            z-index: 999999 !important;
           }
-          #asv-print-header,
-          #asv-print-header img,
-          #asv-print-header > div {
+          #asv-print-clone-root .asv-print-header,
+          #asv-print-clone-root .asv-print-header img,
+          #asv-print-clone-root .asv-print-header > div {
             width: 100% !important;
             height: 82px !important;
             min-height: 82px !important;
@@ -124,9 +111,9 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             padding: 0 !important;
             flex-shrink: 0 !important;
           }
-          #asv-print-footer,
-          #asv-print-footer img,
-          #asv-print-footer > div {
+          #asv-print-clone-root .asv-print-footer,
+          #asv-print-clone-root .asv-print-footer img,
+          #asv-print-clone-root .asv-print-footer > div {
             width: 100% !important;
             height: 86px !important;
             min-height: 86px !important;
@@ -137,7 +124,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             padding: 0 !important;
             flex-shrink: 0 !important;
           }
-          #asv-print-content {
+          #asv-print-clone-root .asv-print-content {
             padding-left: 28px !important;
             padding-right: 28px !important;
             padding-top: 4px !important;
@@ -151,16 +138,31 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
         }
       `;
       if (!existingStyle) {
-        const style = document.createElement('style');
-        style.id = 'scout-print-styles';
-        style.innerHTML = cssContent;
-        document.head.appendChild(style);
-      } else {
-        existingStyle.innerHTML = cssContent;
+        existingStyle = document.createElement('style');
+        existingStyle.id = printStyleId;
+        document.head.appendChild(existingStyle);
       }
+      existingStyle.innerHTML = cssContent;
+
+      // Crear clon directo en body
+      const clone = container.cloneNode(true) as HTMLElement;
+      clone.id = 'asv-print-clone-root';
+      const cloneChildren = clone.children;
+      // [0]=watermark, [1]=header, [2]=content, [3]=footer
+      if (cloneChildren[1]) cloneChildren[1].classList.add('asv-print-header');
+      if (cloneChildren[2]) cloneChildren[2].classList.add('asv-print-content');
+      if (cloneChildren[3]) cloneChildren[3].classList.add('asv-print-footer');
+      document.body.appendChild(clone);
 
       window.print();
-      setTimeout(() => { document.title = originalTitle; }, 2500);
+
+      // Limpiar clon y restaurar título después de imprimir
+      setTimeout(() => {
+        if (clone && clone.parentNode) {
+          clone.parentNode.removeChild(clone);
+        }
+        document.title = originalTitle;
+      }, 2000);
     } else {
       showAlert('Descargar PDF', 'Para descargar en PDF, selecciona la opción "Guardar como PDF".');
     }
