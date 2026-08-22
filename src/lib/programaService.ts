@@ -1,12 +1,140 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './supabaseClient';
 import { ProgramaScout } from '../types/programa';
 
 const STORAGE_KEY = '@scout_programas_list';
 
-export const programaService = {
+function mapDbRowToPrograma(d: any): ProgramaScout {
+  return {
+    id: d.id,
+    title: d.title || 'Sin título',
+    date: d.date || '',
+    location: d.location || '',
+    activityType: d.activity_type || d.activityType || '',
+    unit: (d.unit || 'clan').toLowerCase(),
+    isSinodal: d.is_sinodal ?? d.isSinodal ?? false,
+    selectedUnits: d.selected_units || d.selectedUnits || [d.unit || 'clan'],
+    participantProjection: d.participant_projection || d.participantProjection || '',
+    generalObjective: d.general_objective || d.generalObjective || '',
+    specificObjectives: d.specific_objectives || d.specificObjectives || [],
+    specificMetas: d.specific_metas || d.specificMetas || [],
+    selectedSDGs: d.selected_sdgs || d.selectedSDGs || [],
+    indicators: d.indicators || {
+      corporalidad: [],
+      creatividad: [],
+      caracter: [],
+      afectividad: [],
+      sociabilidad: [],
+      espiritualidad: []
+    },
+    schedule: d.schedule || [],
+    importantNotes: d.important_notes || d.importantNotes || '',
+    registrationBadgeId: d.registration_badge_id || d.registrationBadgeId || 'reg_2026',
+    createdBy: d.created_by || d.createdBy,
+    creatorName: d.creator_name || d.creatorName || '',
+    groupName: d.group_name || d.groupName || 'Grupo Scout Orión #84',
+    createdAt: d.created_at || d.createdAt || new Date().toISOString(),
+    updatedAt: d.updated_at || d.updatedAt || new Date().toISOString(),
+  };
+}
+
+class ProgramaService {
+  private subscribers: Set<(programas: ProgramaScout[]) => void> = new Set();
+  private realtimeChannel: RealtimeChannel | null = null;
+  private memoryCache: ProgramaScout[] | null = null;
+
+  constructor() {
+    this.initRealtime();
+  }
+
   /**
-   * Obtiene todos los programas guardados (Local + Supabase)
+   * Inicializa la conexión en tiempo real con Supabase Realtime (WebSockets)
+   */
+  private initRealtime() {
+    try {
+      if (this.realtimeChannel) {
+        supabase.removeChannel(this.realtimeChannel);
+      }
+
+      this.realtimeChannel = supabase
+        .channel('scout_programas_realtime_sync')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'scout_programas' },
+          async (payload) => {
+            console.log('[Realtime] Evento recibido en scout_programas:', payload.eventType);
+            
+            // Recargar lista completa de forma autoritativa
+            const freshList = await this.fetchFromSupabase();
+            this.memoryCache = freshList;
+            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(freshList));
+            this.notifySubscribers(freshList);
+          }
+        )
+        .subscribe((status) => {
+          console.log('[Realtime] Estado del canal scout_programas:', status);
+        });
+    } catch (e) {
+      console.warn('[Realtime] Error inicializando canal:', e);
+    }
+  }
+
+  private notifySubscribers(list: ProgramaScout[]) {
+    this.subscribers.forEach(callback => {
+      try {
+        callback(list);
+      } catch (err) {
+        console.error('[Realtime] Error en callback de suscriptor:', err);
+      }
+    });
+  }
+
+  /**
+   * Suscribe un componente a cambios en tiempo real (estilo WhatsApp)
+   */
+  subscribeToProgramas(callback: (programas: ProgramaScout[]) => void): () => void {
+    this.subscribers.add(callback);
+    
+    // Si ya tenemos caché en memoria, enviar de inmediato
+    if (this.memoryCache) {
+      callback(this.memoryCache);
+    }
+
+    return () => {
+      this.subscribers.delete(callback);
+    };
+  }
+
+  /**
+   * Consulta directa y autoritativa a Supabase
+   */
+  private async fetchFromSupabase(): Promise<ProgramaScout[]> {
+    try {
+      const { data, error } = await supabase
+        .from('scout_programas')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.warn('Error consultando Supabase scout_programas:', error.message);
+        return [];
+      }
+
+      if (data) {
+        return data.map(mapDbRowToPrograma).sort((a, b) => 
+          new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime()
+        );
+      }
+      return [];
+    } catch (e) {
+      console.warn('Excepción consultando Supabase scout_programas:', e);
+      return [];
+    }
+  }
+
+  /**
+   * Obtiene todos los programas guardados (Sincronización Inteligente)
    */
   async getProgramas(unitFilter?: string | null): Promise<ProgramaScout[]> {
     try {
@@ -14,77 +142,40 @@ export const programaService = {
       let localProgramas: ProgramaScout[] = [];
       const raw = await AsyncStorage.getItem(STORAGE_KEY);
       if (raw) {
-        localProgramas = JSON.parse(raw);
+        try {
+          localProgramas = JSON.parse(raw);
+        } catch {}
       }
 
-      // 2. Intentar sincronizar con Supabase si hay red
+      // 2. Intentar obtener datos frescos de Supabase
       try {
-        let query = supabase.from('scout_programas').select('*').order('created_at', { ascending: false });
-        if (unitFilter) {
-          query = query.eq('unit', unitFilter);
-        }
-        const { data, error } = await query;
-        if (!error && data && data.length > 0) {
-          const remoteProgramas: ProgramaScout[] = data.map((d: any) => ({
-            id: d.id,
-            title: d.title,
-            date: d.date,
-            location: d.location,
-            activityType: d.activity_type || d.activityType,
-            unit: d.unit,
-            isSinodal: d.is_sinodal || d.isSinodal || false,
-            selectedUnits: d.selected_units || d.selectedUnits || [d.unit],
-            participantProjection: d.participant_projection || d.participantProjection || '',
-            generalObjective: d.general_objective || d.generalObjective || '',
-            specificObjectives: d.specific_objectives || d.specificObjectives || [],
-            specificMetas: d.specific_metas || d.specificMetas || [],
-            selectedSDGs: d.selected_sdgs || d.selectedSDGs || [],
-            indicators: d.indicators || {
-              corporalidad: [],
-              creatividad: [],
-              caracter: [],
-              afectividad: [],
-              sociabilidad: [],
-              espiritualidad: []
-            },
-            schedule: d.schedule || [],
-            importantNotes: d.important_notes || d.importantNotes || '',
-            registrationBadgeId: d.registration_badge_id || d.registrationBadgeId || 'reg_2026',
-            createdBy: d.created_by || d.createdBy,
-            creatorName: d.creator_name || d.creatorName || '',
-            groupName: d.group_name || d.groupName || 'Grupo Scout Orión #84',
-            createdAt: d.created_at || d.createdAt,
-            updatedAt: d.updated_at || d.updatedAt,
-          }));
-
-          // Mezclar local y remoto
-          const combinedMap = new Map<string, ProgramaScout>();
-          localProgramas.forEach(p => combinedMap.set(p.id, p));
-          remoteProgramas.forEach(p => combinedMap.set(p.id, p));
-          const merged = Array.from(combinedMap.values()).sort((a, b) => 
-            new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime()
-          );
-
-          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        const remoteProgramas = await this.fetchFromSupabase();
+        
+        // Si Supabase respondió (incluso si está vacío porque se eliminaron todos)
+        // la respuesta de Supabase es la FUENTE DE VERDAD
+        if (remoteProgramas) {
+          this.memoryCache = remoteProgramas;
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(remoteProgramas));
           
-          if (unitFilter) {
-            return merged.filter(p => p.unit === unitFilter);
+          if (unitFilter && unitFilter !== 'todas') {
+            return remoteProgramas.filter(p => p.unit === unitFilter || (p.isSinodal && p.selectedUnits?.includes(unitFilter as any)));
           }
-          return merged;
+          return remoteProgramas;
         }
       } catch (cloudErr) {
         console.warn('Modo offline en getProgramas, usando caché local:', cloudErr);
       }
 
-      if (unitFilter) {
-        return localProgramas.filter(p => p.unit === unitFilter);
+      this.memoryCache = localProgramas;
+      if (unitFilter && unitFilter !== 'todas') {
+        return localProgramas.filter(p => p.unit === unitFilter || (p.isSinodal && p.selectedUnits?.includes(unitFilter as any)));
       }
       return localProgramas;
     } catch (err) {
       console.error('Error en getProgramas:', err);
       return [];
     }
-  },
+  }
 
   /**
    * Obtiene un programa específico por ID
@@ -92,16 +183,13 @@ export const programaService = {
   async getProgramaById(id: string): Promise<ProgramaScout | null> {
     const list = await this.getProgramas();
     return list.find(p => p.id === id) || null;
-  },
+  }
 
   /**
-   * Guarda o actualiza un programa (Local + Supabase)
+   * Guarda o actualiza un programa (Local + Supabase + Realtime Broadcast)
    */
   async savePrograma(programa: ProgramaScout): Promise<ProgramaScout> {
     try {
-      const list = await this.getProgramas();
-      const existingIdx = list.findIndex(p => p.id === programa.id);
-      
       const now = new Date().toISOString();
       const updatedPrograma: ProgramaScout = {
         ...programa,
@@ -109,16 +197,21 @@ export const programaService = {
         createdAt: programa.createdAt || now,
       };
 
+      // 1. Actualizar memoria y local storage de inmediato (Optimistic UI)
+      let currentList = await this.getProgramas();
+      const existingIdx = currentList.findIndex(p => p.id === programa.id);
+      
       if (existingIdx >= 0) {
-        list[existingIdx] = updatedPrograma;
+        currentList[existingIdx] = updatedPrograma;
       } else {
-        list.unshift(updatedPrograma);
+        currentList = [updatedPrograma, ...currentList.filter(p => p.id !== updatedPrograma.id)];
       }
 
-      // Guardar en AsyncStorage para acceso offline inmediato
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      this.memoryCache = currentList;
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(currentList));
+      this.notifySubscribers(currentList);
 
-      // Guardar en Supabase en segundo plano
+      // 2. Guardar en Supabase
       try {
         const isValidUUID = updatedPrograma.createdBy && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(updatedPrograma.createdBy);
         const { error: saveError } = await supabase.from('scout_programas').upsert({
@@ -156,25 +249,35 @@ export const programaService = {
       console.error('Error en savePrograma:', err);
       throw err;
     }
-  },
+  }
 
   /**
-   * Elimina un programa
+   * Elimina un programa (Local + Supabase + Realtime Broadcast)
    */
   async deletePrograma(id: string): Promise<void> {
     try {
-      const list = await this.getProgramas();
-      const filtered = list.filter(p => p.id !== id);
+      // 1. Eliminar de memoria y local storage de inmediato (Optimistic UI)
+      let currentList = await this.getProgramas();
+      const filtered = currentList.filter(p => p.id !== id);
+      
+      this.memoryCache = filtered;
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+      this.notifySubscribers(filtered);
 
+      // 2. Eliminar de Supabase
       try {
-        await supabase.from('scout_programas').delete().eq('id', id);
-      } catch {}
+        const { error } = await supabase.from('scout_programas').delete().eq('id', id);
+        if (error) {
+          console.warn('Aviso eliminando en Supabase scout_programas:', error.message);
+        }
+      } catch (cloudErr) {
+        console.warn('Error eliminando en la nube:', cloudErr);
+      }
     } catch (err) {
       console.error('Error en deletePrograma:', err);
       throw err;
     }
-  },
+  }
 
   /**
    * Clona un programa existente para reutilizarlo como base
@@ -193,4 +296,6 @@ export const programaService = {
 
     return await this.savePrograma(cloned);
   }
-};
+}
+
+export const programaService = new ProgramaService();

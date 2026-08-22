@@ -70,6 +70,35 @@ export default function ProgramaScoutScreen({ navigation }: any) {
     }
   };
 
+  // 1. Suscripción en Tiempo Real (WebSockets estilo WhatsApp)
+  useEffect(() => {
+    loadProgramas();
+
+    const unsubscribe = programaService.subscribeToProgramas((freshList) => {
+      setProgramas(freshList);
+      setLoading(false);
+    });
+
+    // 2. Sincronización al cambiar de pestaña o volver a enfocar la ventana
+    const handleFocus = () => {
+      loadProgramas();
+    };
+
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.addEventListener('focus', handleFocus);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) handleFocus();
+      });
+    }
+
+    return () => {
+      unsubscribe();
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.removeEventListener('focus', handleFocus);
+      }
+    };
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       loadProgramas();
@@ -92,18 +121,24 @@ export default function ProgramaScoutScreen({ navigation }: any) {
   };
 
   const handleDelete = (id: string, title: string) => {
+    const executeDelete = async () => {
+      // Actualización optimista inmediata en pantalla
+      setProgramas(prev => prev.filter(p => p.id !== id));
+      try {
+        await programaService.deletePrograma(id);
+        showAlert('Eliminado', 'Programa eliminado correctamente.');
+      } catch (e: any) {
+        showAlert('Error', e?.message || 'No se pudo eliminar el programa.');
+        loadProgramas();
+      }
+    };
+
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       if (window.confirm(`¿Estás seguro de eliminar el programa "${title}"?`)) {
-        programaService.deletePrograma(id).then(() => {
-          showAlert('Eliminado', 'Programa eliminado correctamente.');
-          loadProgramas();
-        });
+        executeDelete();
       }
     } else {
-      programaService.deletePrograma(id).then(() => {
-        showAlert('Eliminado', 'Programa eliminado correctamente.');
-        loadProgramas();
-      });
+      executeDelete();
     }
   };
 
@@ -147,13 +182,16 @@ export default function ProgramaScoutScreen({ navigation }: any) {
         <View style={[styles.header, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', borderBottomColor: theme.border }]}>
           <View style={{ flex: 1 }}>
             <Text style={[styles.headerTitle, { color: theme.text }]}>📅 Programas de Actividades</Text>
-            <Text style={{ fontSize: 11, color: theme.subText }}>
-              {isJefe 
-                ? 'Jefatura de Grupo • Visión general de todas las ramas'
-                : isScouter
-                ? `Dirigente Scout • Rama ${userUnit.toUpperCase()}`
-                : `Rama ${userUnit.toUpperCase()} • Tus actividades y campamentos`}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e', marginRight: 5 }} />
+              <Text style={{ fontSize: 11, color: theme.subText }}>
+                {isJefe 
+                  ? 'Jefatura de Grupo • En vivo'
+                  : isScouter
+                  ? `Dirigente Scout • Rama ${userUnit.toUpperCase()} • En vivo`
+                  : `Rama ${userUnit.toUpperCase()} • Sincronizado en vivo`}
+              </Text>
+            </View>
           </View>
 
           {canCreate && (
