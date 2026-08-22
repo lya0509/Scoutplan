@@ -120,7 +120,8 @@ export const programaService = {
 
       // Guardar en Supabase en segundo plano
       try {
-        await supabase.from('scout_programas').upsert({
+        const isValidUUID = updatedPrograma.createdBy && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(updatedPrograma.createdBy);
+        const { error: saveError } = await supabase.from('scout_programas').upsert({
           id: updatedPrograma.id,
           title: updatedPrograma.title,
           date: updatedPrograma.date,
@@ -138,11 +139,14 @@ export const programaService = {
           schedule: updatedPrograma.schedule,
           important_notes: updatedPrograma.importantNotes,
           registration_badge_id: updatedPrograma.registrationBadgeId,
-          created_by: updatedPrograma.createdBy,
+          created_by: isValidUUID ? updatedPrograma.createdBy : null,
           creator_name: updatedPrograma.creatorName,
           group_name: updatedPrograma.groupName,
           updated_at: updatedPrograma.updatedAt,
         });
+        if (saveError) {
+          console.warn('Aviso guardando en Supabase scout_programas:', saveError.message);
+        }
       } catch (cloudErr) {
         console.warn('No se pudo sincronizar en la nube (se guardó offline):', cloudErr);
       }

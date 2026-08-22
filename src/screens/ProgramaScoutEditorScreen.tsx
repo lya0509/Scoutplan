@@ -28,6 +28,9 @@ import {
   BookOpen,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  X,
   Search,
   Eye,
   Download,
@@ -83,6 +86,71 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
   const [selectedSDGs, setSelectedSDGs] = useState<number[]>(existingPrograma?.selectedSDGs || []);
   const [importantNotes, setImportantNotes] = useState(existingPrograma?.importantNotes || '');
   const [registrationBadgeId] = useState('reg_2026');
+
+  // Estado para el selector interactivo de Fecha (Calendario)
+  const [showDatePickerModal, setShowDatePickerModal] = useState(false);
+  const initialDateObj = date ? new Date(date + 'T12:00:00') : new Date();
+  const [calendarYear, setCalendarYear] = useState(isNaN(initialDateObj.getFullYear()) ? new Date().getFullYear() : initialDateObj.getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(isNaN(initialDateObj.getMonth()) ? new Date().getMonth() : initialDateObj.getMonth());
+
+  const MONTH_NAMES = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+
+  const handlePrevMonth = () => {
+    if (calendarMonth === 0) {
+      setCalendarMonth(11);
+      setCalendarYear(calendarYear - 1);
+    } else {
+      setCalendarMonth(calendarMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (calendarMonth === 11) {
+      setCalendarMonth(0);
+      setCalendarYear(calendarYear + 1);
+    } else {
+      setCalendarMonth(calendarMonth + 1);
+    }
+  };
+
+  const handleSelectDate = (year: number, month: number, day: number) => {
+    const mm = String(month + 1).padStart(2, '0');
+    const dd = String(day).padStart(2, '0');
+    setDate(`${year}-${mm}-${dd}`);
+    setShowDatePickerModal(false);
+  };
+
+  const handleSelectQuickDate = (type: 'today' | 'next_saturday' | 'next_sunday') => {
+    const now = new Date();
+    if (type === 'today') {
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      setDate(`${yyyy}-${mm}-${dd}`);
+    } else if (type === 'next_saturday') {
+      const d = new Date();
+      const dayOfWeek = d.getDay();
+      const daysUntilSaturday = (6 - dayOfWeek + 7) % 7 || 7;
+      d.setDate(d.getDate() + daysUntilSaturday);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      setDate(`${yyyy}-${mm}-${dd}`);
+    } else if (type === 'next_sunday') {
+      const d = new Date();
+      const dayOfWeek = d.getDay();
+      const daysUntilSunday = (7 - dayOfWeek) % 7 || 7;
+      d.setDate(d.getDate() + daysUntilSunday);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      setDate(`${yyyy}-${mm}-${dd}`);
+    }
+    setShowDatePickerModal(false);
+  };
 
   // Indicadores de logro por las 6 áreas
   const [indicators, setIndicators] = useState<Record<GrowthAreaKey, string[]>>(
@@ -148,17 +216,39 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
     try {
       const cy = new Date().getFullYear();
       const currentQuarter = 'Q' + Math.ceil((new Date().getMonth() + 1) / 3);
-      const plan = await dataService.getUnitSharedQuarterlyPlan(
-        user?.group_name || 'Grupo Scout Orión #84',
-        unit,
-        currentQuarter,
-        cy
-      );
+      const gn = user?.group_name || 'Grupo Scout Orión #84';
+
+      let allActivities: any[] = [];
+
+      // 1. Intentar con plan compartido del trimestre actual
+      let plan = await dataService.getUnitSharedQuarterlyPlan(gn, unit, currentQuarter, cy);
       if (plan && plan.monthly_activities && Array.isArray(plan.monthly_activities)) {
-        setTrimestreActivities(plan.monthly_activities);
-      } else {
-        setTrimestreActivities([]);
+        allActivities.push(...plan.monthly_activities);
       }
+
+      // 2. Si no hay suficientes, revisar otros trimestres del año
+      for (const q of ['Q1', 'Q2', 'Q3', 'Q4']) {
+        if (q !== currentQuarter) {
+          const p = await dataService.getUnitSharedQuarterlyPlan(gn, unit, q, cy);
+          if (p && p.monthly_activities && Array.isArray(p.monthly_activities)) {
+            p.monthly_activities.forEach((act: any) => {
+              if (!allActivities.some(a => (a.title || a.name) === (act.title || act.name))) {
+                allActivities.push(act);
+              }
+            });
+          }
+        }
+      }
+
+      // 3. Si aún está vacío, buscar plan personal
+      if (allActivities.length === 0 && user?.id) {
+        const myPlan = await dataService.getQuarterlyPlan(user.id, currentQuarter, cy);
+        if (myPlan && myPlan.monthly_activities && Array.isArray(myPlan.monthly_activities)) {
+          allActivities.push(...myPlan.monthly_activities);
+        }
+      }
+
+      setTrimestreActivities(allActivities);
     } catch (e) {
       console.warn('Error cargando plan trimestral:', e);
       setTrimestreActivities([]);
@@ -168,13 +258,16 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
   };
 
   const handleImportFromTrimestre = (item: any) => {
-    setTitle(item.title || item.name || item.activity || 'Actividad Trimestral');
+    if (item.title || item.name || item.activity) {
+      setTitle(item.title || item.name || item.activity);
+    }
     if (item.date) setDate(item.date);
     if (item.location) setLocation(item.location);
-    if (item.type) setActivityType(item.type);
+    if (item.type || item.activity_type) setActivityType(item.type || item.activity_type);
     if (item.objective || item.description) setGeneralObjective(item.objective || item.description);
+    if (item.responsible) setParticipantProjection(`Responsable: ${item.responsible}`);
     setShowTrimestreModal(false);
-    showAlert('Importado', 'Se han cargado los datos de la actividad desde el Plan Trimestral.');
+    showAlert('Importado con Éxito', `Se importó "${item.title || item.name || 'la actividad'}" desde el Plan Trimestral.`);
   };
 
   // Manejadores de Objetivos Específicos
@@ -426,13 +519,22 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
           <View style={styles.rowTwo}>
             <View style={[styles.fieldGroup, { flex: 1, marginRight: 8 }]}>
               <Text style={[styles.fieldLabel, { color: theme.text }]}>Fecha *</Text>
-              <TextInput
-                style={[styles.textInput, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', color: theme.text, borderColor: theme.border }]}
-                placeholder="AAAA-MM-DD"
-                placeholderTextColor={theme.subText}
-                value={date}
-                onChangeText={setDate}
-              />
+              <TouchableOpacity
+                style={[
+                  styles.datePickerBtn,
+                  {
+                    backgroundColor: isDarkMode ? '#27272a' : '#f8fafc',
+                    borderColor: theme.border
+                  }
+                ]}
+                onPress={() => setShowDatePickerModal(true)}
+                activeOpacity={0.7}
+              >
+                <Calendar size={16} color={primaryColor} style={{ marginRight: 8 }} />
+                <Text style={{ fontSize: 13, color: date ? theme.text : theme.subText, fontWeight: '600' }}>
+                  {date || 'Seleccionar fecha...'}
+                </Text>
+              </TouchableOpacity>
             </View>
             <View style={[styles.fieldGroup, { flex: 1, marginLeft: 8 }]}>
               <Text style={[styles.fieldLabel, { color: theme.text }]}>Lugar *</Text>
@@ -1009,6 +1111,117 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         </View>
       </Modal>
 
+      {/* MODAL DE SELECTOR DE FECHA (CALENDARIO INTERACTIVO) */}
+      <Modal visible={showDatePickerModal} animationType="fade" transparent onRequestClose={() => setShowDatePickerModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.calendarModal, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff' }]}>
+            <View style={styles.modalHeaderRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Calendar size={20} color={primaryColor} />
+                <Text style={[styles.modalHeaderTitle, { color: theme.text }]}>Seleccionar Fecha</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowDatePickerModal(false)} style={{ padding: 4 }}>
+                <X size={20} color={theme.subText} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Accesos rápidos de fecha */}
+            <View style={styles.quickDateRow}>
+              <TouchableOpacity
+                style={[styles.quickDateChip, { backgroundColor: primaryColor + '18', borderColor: primaryColor }]}
+                onPress={() => handleSelectQuickDate('today')}
+              >
+                <Text style={[styles.quickDateChipText, { color: primaryColor }]}>📅 Hoy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.quickDateChip, { backgroundColor: '#16a34a18', borderColor: '#16a34a' }]}
+                onPress={() => handleSelectQuickDate('next_saturday')}
+              >
+                <Text style={[styles.quickDateChipText, { color: '#16a34a' }]}>⚜️ Próx. Sábado</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.quickDateChip, { backgroundColor: '#2563eb18', borderColor: '#2563eb' }]}
+                onPress={() => handleSelectQuickDate('next_sunday')}
+              >
+                <Text style={[styles.quickDateChipText, { color: '#2563eb' }]}>🏕️ Próx. Domingo</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Navegación de Mes y Año */}
+            <View style={styles.calendarNavRow}>
+              <TouchableOpacity onPress={handlePrevMonth} style={styles.calNavBtn}>
+                <ChevronLeft size={20} color={theme.text} />
+              </TouchableOpacity>
+              <Text style={[styles.calMonthTitle, { color: theme.text }]}>
+                {MONTH_NAMES[calendarMonth]} {calendarYear}
+              </Text>
+              <TouchableOpacity onPress={handleNextMonth} style={styles.calNavBtn}>
+                <ChevronRight size={20} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Encabezado Días de la Semana */}
+            <View style={styles.calWeekHeader}>
+              {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map((d, i) => (
+                <Text key={i} style={[styles.calWeekDayText, { color: theme.subText }]}>{d}</Text>
+              ))}
+            </View>
+
+            {/* Cuadrícula de días del mes */}
+            <View style={styles.calGrid}>
+              {(() => {
+                const firstDayOfMonth = new Date(calendarYear, calendarMonth, 1).getDay();
+                const totalDaysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+                const slots = [];
+
+                for (let i = 0; i < firstDayOfMonth; i++) {
+                  slots.push(<View key={`empty-${i}`} style={styles.calDayCell} />);
+                }
+
+                for (let day = 1; day <= totalDaysInMonth; day++) {
+                  const mm = String(calendarMonth + 1).padStart(2, '0');
+                  const dd = String(day).padStart(2, '0');
+                  const cellDateStr = `${calendarYear}-${mm}-${dd}`;
+                  const isSelected = date === cellDateStr;
+                  const isToday = new Date().toISOString().split('T')[0] === cellDateStr;
+
+                  slots.push(
+                    <TouchableOpacity
+                      key={`day-${day}`}
+                      style={[
+                        styles.calDayCell,
+                        isSelected && { backgroundColor: primaryColor, borderRadius: 20 },
+                        !isSelected && isToday && { borderWidth: 1, borderColor: primaryColor, borderRadius: 20 }
+                      ]}
+                      onPress={() => handleSelectDate(calendarYear, calendarMonth, day)}
+                    >
+                      <Text
+                        style={[
+                          styles.calDayText,
+                          { color: isSelected ? '#ffffff' : theme.text },
+                          isSelected && { fontWeight: 'bold' }
+                        ]}
+                      >
+                        {day}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                }
+
+                return slots;
+              })()}
+            </View>
+
+            <TouchableOpacity
+              style={[styles.closeModalBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', marginTop: 16 }]}
+              onPress={() => setShowDatePickerModal(false)}
+            >
+              <Text style={{ color: theme.text, fontWeight: 'bold' }}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* MODAL DE VISTA PREVIA E IMPRESIÓN OFICIAL */}
       <ProgramaPdfPreviewModal
         visible={showPreviewModal}
@@ -1323,4 +1536,79 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   trimestreActTitle: { fontSize: 13, fontWeight: 'bold', marginBottom: 2 },
+  datePickerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    height: 42,
+  },
+  calendarModal: {
+    width: '90%',
+    maxWidth: 380,
+    borderRadius: 16,
+    padding: 16,
+    maxHeight: '90%',
+  },
+  quickDateRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginVertical: 10,
+    flexWrap: 'wrap',
+  },
+  quickDateChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  quickDateChipText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  calendarNavRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: 8,
+    paddingHorizontal: 6,
+  },
+  calNavBtn: {
+    padding: 6,
+    borderRadius: 6,
+  },
+  calMonthTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  calWeekHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 6,
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(150,150,150,0.15)',
+  },
+  calWeekDayText: {
+    width: 38,
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  calGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+  },
+  calDayCell: {
+    width: '14.28%',
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 2,
+  },
+  calDayText: {
+    fontSize: 13,
+  },
 });

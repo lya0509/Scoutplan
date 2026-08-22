@@ -204,3 +204,43 @@ SET
   email = COALESCE(p.email, u.email, u.raw_user_meta_data->>'email')
 FROM auth.users u
 WHERE p.id = u.id;
+
+-- ==========================================
+-- 3. Tabla de Programas de Actividades Scout (ASV)
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS public.scout_programas (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  date TEXT NOT NULL,
+  location TEXT,
+  activity_type TEXT,
+  unit TEXT NOT NULL,
+  is_sinodal BOOLEAN DEFAULT false,
+  selected_units JSONB DEFAULT '[]'::jsonb,
+  participant_projection TEXT,
+  general_objective TEXT,
+  specific_objectives JSONB DEFAULT '[]'::jsonb,
+  specific_metas JSONB DEFAULT '[]'::jsonb,
+  selected_sdgs JSONB DEFAULT '[]'::jsonb,
+  indicators JSONB DEFAULT '{}'::jsonb,
+  schedule JSONB DEFAULT '[]'::jsonb,
+  important_notes TEXT,
+  registration_badge_id TEXT DEFAULT 'reg_2026',
+  created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  creator_name TEXT,
+  group_name TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.scout_programas ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Programas visibles para usuarios autenticados" ON public.scout_programas;
+CREATE POLICY "Programas visibles para usuarios autenticados"
+ON public.scout_programas FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Usuarios autenticados pueden insertar o modificar programas" ON public.scout_programas;
+CREATE POLICY "Usuarios autenticados pueden insertar o modificar programas"
+ON public.scout_programas FOR ALL USING (auth.role() = 'authenticated');
+

@@ -44,16 +44,19 @@ export default function ProgramaScoutScreen({ navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const [programas, setProgramas] = useState<ProgramaScout[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedUnitFilter, setSelectedUnitFilter] = useState<string>('todas');
+
+  const isJefe = user?.role === 'jefe_grupo';
+  const isScouter = user?.role === 'scouter';
+  const isScout = user?.role === 'scout';
+
+  const isClanOrCaminanteYouth = isScout && (user?.unit === 'clan' || user?.unit === 'caminantes');
+  const canCreate = isJefe || isScouter || isClanOrCaminanteYouth;
+
+  // Filtrado por unidad: Scouts y Scouters inician en su unidad por defecto
+  const userUnit = (user?.unit || 'clan').toLowerCase();
+  const defaultUnit = isJefe ? 'todas' : userUnit;
+  const [selectedUnitFilter, setSelectedUnitFilter] = useState<string>(defaultUnit);
   const [previewPrograma, setPreviewPrograma] = useState<ProgramaScout | null>(null);
-
-  // Permisos: Manada y Tropa sólo Scouter/Jefe. Caminantes y Clan: Scouter, Jefe y Jóvenes.
-  const isLeader = user?.role === 'scouter' || user?.role === 'jefe_grupo';
-  const isClanOrCaminanteYouth =
-    user?.role === 'scout' &&
-    (user?.unit === 'clan' || user?.unit === 'caminantes');
-
-  const canCreate = isLeader || isClanOrCaminanteYouth;
 
   const loadProgramas = async () => {
     try {
@@ -115,213 +118,246 @@ export default function ProgramaScoutScreen({ navigation }: any) {
 
   // Filtrar programas
   const filteredProgramas = programas.filter(p => {
+    const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.activityType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.creatorName.toLowerCase().includes(searchQuery.toLowerCase());
+      !q ||
+      (p.title && p.title.toLowerCase().includes(q)) ||
+      (p.location && p.location.toLowerCase().includes(q)) ||
+      (p.activityType && p.activityType.toLowerCase().includes(q)) ||
+      (p.creatorName && p.creatorName.toLowerCase().includes(q));
 
-    const matchesUnit = selectedUnitFilter === 'todas' || p.unit === selectedUnitFilter;
+    let matchesUnit = false;
+    if (isScout) {
+      // Un joven Scout sólo ve los programas de su unidad o sinodales que incluyan su unidad
+      matchesUnit = p.unit === userUnit || Boolean(p.isSinodal && p.selectedUnits && p.selectedUnits.includes(userUnit as any));
+    } else {
+      matchesUnit =
+        selectedUnitFilter === 'todas' ||
+        p.unit === selectedUnitFilter ||
+        Boolean(p.isSinodal && p.selectedUnits && p.selectedUnits.includes(selectedUnitFilter as any));
+    }
 
     return matchesSearch && matchesUnit;
   });
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
-      {/* HEADER SUPERIOR */}
-      <View style={[styles.header, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', borderBottomColor: theme.border }]}>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>📅 Programas de Actividades</Text>
-          <Text style={{ fontSize: 11, color: theme.subText }}>
-            Formulación y cronograma oficial ASV
-          </Text>
-        </View>
+      <View style={styles.contentWrapper}>
+        {/* HEADER SUPERIOR */}
+        <View style={[styles.header, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', borderBottomColor: theme.border }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.headerTitle, { color: theme.text }]}>📅 Programas de Actividades</Text>
+            <Text style={{ fontSize: 11, color: theme.subText }}>
+              {isJefe 
+                ? 'Jefatura de Grupo • Visión general de todas las ramas'
+                : isScouter
+                ? `Dirigente Scout • Rama ${userUnit.toUpperCase()}`
+                : `Rama ${userUnit.toUpperCase()} • Tus actividades y campamentos`}
+            </Text>
+          </View>
 
-        {canCreate && (
-          <TouchableOpacity
-            style={[styles.createBtn, { backgroundColor: primaryColor }]}
-            onPress={() => navigation.navigate('ProgramaScoutEditor')}
-          >
-            <Plus size={16} color="#ffffff" style={{ marginRight: 4 }} />
-            <Text style={styles.createBtnText}>Nuevo Programa</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* BARRA DE BÚSQUEDA Y FILTROS */}
-      <View style={[styles.filterBar, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', borderBottomColor: theme.border }]}>
-        <View style={[styles.searchWrapper, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
-          <Search size={16} color={theme.subText} style={{ marginRight: 8 }} />
-          <TextInput
-            style={[styles.searchInput, { color: theme.text }]}
-            placeholder="Buscar por título, lugar, actividad o autor..."
-            placeholderTextColor={theme.subText}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-
-        {/* Pestañas de Unidades */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-          {[
-            { id: 'todas', label: 'Todas las Ramas' },
-            { id: 'manada', label: '🟡 Manada' },
-            { id: 'tropa', label: '🟢 Tropa' },
-            { id: 'caminantes', label: '🔵 Caminantes' },
-            { id: 'clan', label: '🔴 Clan' }
-          ].map(tab => (
-            <TouchableOpacity
-              key={tab.id}
-              style={[
-                styles.unitTabChip,
-                selectedUnitFilter === tab.id
-                  ? { backgroundColor: primaryColor, borderColor: primaryColor }
-                  : { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }
-              ]}
-              onPress={() => setSelectedUnitFilter(tab.id)}
-            >
-              <Text
-                style={[
-                  styles.unitTabChipText,
-                  selectedUnitFilter === tab.id ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }
-                ]}
-              >
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* LISTA DE PROGRAMAS */}
-      {loading ? (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={primaryColor} />
-          <Text style={{ marginTop: 10, color: theme.subText }}>Cargando programas oficiales...</Text>
-        </View>
-      ) : filteredProgramas.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <FileText size={48} color={theme.subText} style={{ marginBottom: 12, opacity: 0.6 }} />
-          <Text style={[styles.emptyTitle, { color: theme.text }]}>No hay programas registrados</Text>
-          <Text style={[styles.emptySubtitle, { color: theme.subText }]}>
-            {canCreate
-              ? 'Crea tu primer programa de actividades scout con la plantilla oficial de la ASV.'
-              : 'Los dirigentes de tu unidad publicarán aquí los programas de las próximas actividades.'}
-          </Text>
           {canCreate && (
             <TouchableOpacity
-              style={[styles.emptyCreateBtn, { backgroundColor: primaryColor }]}
+              style={[styles.createBtn, { backgroundColor: primaryColor }]}
               onPress={() => navigation.navigate('ProgramaScoutEditor')}
             >
-              <Plus size={16} color="#ffffff" style={{ marginRight: 6 }} />
-              <Text style={{ color: '#ffffff', fontWeight: 'bold' }}>Crear Programa Ahora</Text>
+              <Plus size={16} color="#ffffff" style={{ marginRight: 4 }} />
+              <Text style={styles.createBtnText}>Nuevo Programa</Text>
             </TouchableOpacity>
           )}
         </View>
-      ) : (
-        <FlatList
-          data={filteredProgramas}
-          keyExtractor={item => item.id}
-          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[primaryColor]} />}
-          renderItem={({ item }) => {
-            const unitBadgeColor =
-              item.unit === 'manada'
-                ? '#f59e0b'
-                : item.unit === 'tropa'
-                ? '#15803d'
-                : item.unit === 'caminantes'
-                ? '#2563eb'
-                : '#dc2626';
 
-            return (
-              <View style={[styles.programCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-                {/* Cabecera de la tarjeta */}
-                <View style={styles.cardHeader}>
-                  <View style={[styles.unitPill, { backgroundColor: unitBadgeColor + '20', borderColor: unitBadgeColor }]}>
-                    <Text style={[styles.unitPillText, { color: unitBadgeColor }]}>
-                      {item.unit.toUpperCase()}
-                    </Text>
-                  </View>
-                  <Text style={{ fontSize: 11, color: theme.subText }}>📅 {item.date || 'Sin fecha'}</Text>
-                </View>
+        {/* BARRA DE BÚSQUEDA Y FILTROS */}
+        <View style={[styles.filterBar, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', borderBottomColor: theme.border }]}>
+          <View style={[styles.searchWrapper, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
+            <Search size={16} color={theme.subText} style={{ marginRight: 8 }} />
+            <TextInput
+              style={[styles.searchInput, { color: theme.text }]}
+              placeholder="Buscar por título, lugar, actividad o autor..."
+              placeholderTextColor={theme.subText}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
 
-                {/* Título y Lugar */}
-                <Text style={[styles.cardTitle, { color: theme.text }]}>{item.title}</Text>
-                <View style={styles.metaRow}>
-                  <MapPin size={13} color={primaryColor} style={{ marginRight: 4 }} />
-                  <Text style={{ fontSize: 11, color: theme.text, marginRight: 12 }}>{item.location || 'Sin lugar'}</Text>
-                  <BookOpen size={13} color={primaryColor} style={{ marginRight: 4 }} />
-                  <Text style={{ fontSize: 11, color: theme.subText }}>{item.activityType || 'Actividad'}</Text>
-                </View>
-
-                {/* Indicadores de resumen */}
-                <View style={styles.statsRow}>
-                  <View style={[styles.statChip, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
-                    <Text style={{ fontSize: 10, color: theme.text }}>
-                      ⏱️ {item.schedule ? item.schedule.length : 0} Actividades
-                    </Text>
-                  </View>
-                  <View style={[styles.statChip, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
-                    <Text style={{ fontSize: 10, color: theme.text }}>
-                      🌍 {item.selectedSDGs ? item.selectedSDGs.length : 0} ODS
-                    </Text>
-                  </View>
-                  <View style={[styles.statChip, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
-                    <Text style={{ fontSize: 10, color: '#15803d', fontWeight: 'bold' }}>
-                      ✓ 6 Áreas
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Barra de acciones de la tarjeta */}
-                <View style={[styles.cardActions, { borderTopColor: theme.border }]}>
-                  <TouchableOpacity
-                    style={[styles.actionBtn, { backgroundColor: primaryColor + '15' }]}
-                    onPress={() => setPreviewPrograma(item)}
+          {/* Pestañas de Unidades (Visibles para Jefatura y Scouters) */}
+          {!isScout && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+              {[
+                { id: 'todas', label: 'Todas las Ramas' },
+                { id: 'manada', label: '🟡 Manada' },
+                { id: 'tropa', label: '🟢 Tropa' },
+                { id: 'caminantes', label: '🔵 Caminantes' },
+                { id: 'clan', label: '🔴 Clan' }
+              ].map(tab => (
+                <TouchableOpacity
+                  key={tab.id}
+                  style={[
+                    styles.unitTabChip,
+                    selectedUnitFilter === tab.id
+                      ? { backgroundColor: primaryColor, borderColor: primaryColor }
+                      : { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }
+                  ]}
+                  onPress={() => setSelectedUnitFilter(tab.id)}
+                >
+                  <Text
+                    style={[
+                      styles.unitTabChipText,
+                      selectedUnitFilter === tab.id ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }
+                    ]}
                   >
-                    <Eye size={14} color={primaryColor} style={{ marginRight: 4 }} />
-                    <Text style={[styles.actionBtnText, { color: primaryColor }]}>Ver PDF</Text>
-                  </TouchableOpacity>
+                    {tab.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </View>
 
-                  <TouchableOpacity
-                    style={[styles.actionBtn, { backgroundColor: '#2563eb15' }]}
-                    onPress={() => handleDownloadWord(item)}
-                  >
-                    <Download size={14} color="#2563eb" style={{ marginRight: 4 }} />
-                    <Text style={[styles.actionBtnText, { color: '#2563eb' }]}>Word (.docx)</Text>
-                  </TouchableOpacity>
+        {/* LISTA DE PROGRAMAS */}
+        {loading ? (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color={primaryColor} />
+            <Text style={{ marginTop: 10, color: theme.subText }}>Cargando programas oficiales...</Text>
+          </View>
+        ) : filteredProgramas.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <FileText size={48} color={theme.subText} style={{ marginBottom: 12, opacity: 0.6 }} />
+            <Text style={[styles.emptyTitle, { color: theme.text }]}>No hay programas registrados</Text>
+            <Text style={[styles.emptySubtitle, { color: theme.subText }]}>
+              {canCreate
+                ? 'Crea tu primer programa de actividades scout con la plantilla oficial de la ASV.'
+                : 'Los dirigentes de tu unidad publicarán aquí los programas de las próximas actividades.'}
+            </Text>
+            {canCreate && (
+              <TouchableOpacity
+                style={[styles.emptyCreateBtn, { backgroundColor: primaryColor }]}
+                onPress={() => navigation.navigate('ProgramaScoutEditor')}
+              >
+                <Plus size={16} color="#ffffff" style={{ marginRight: 6 }} />
+                <Text style={{ color: '#ffffff', fontWeight: 'bold' }}>Crear Programa Ahora</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          <FlatList
+            data={filteredProgramas}
+            keyExtractor={item => item.id}
+            contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[primaryColor]} />}
+            renderItem={({ item }) => {
+              const unitBadgeColor =
+                item.unit === 'manada'
+                  ? '#f59e0b'
+                  : item.unit === 'tropa'
+                  ? '#15803d'
+                  : item.unit === 'caminantes'
+                  ? '#2563eb'
+                  : '#dc2626';
 
-                  {canCreate && (
-                    <>
-                      <TouchableOpacity
-                        style={[styles.iconActionBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}
-                        onPress={() => navigation.navigate('ProgramaScoutEditor', { programa: item })}
-                      >
-                        <Edit2 size={14} color={theme.text} />
-                      </TouchableOpacity>
+              return (
+                <View style={[styles.programCard, { backgroundColor: theme.cardBg, borderColor: theme.border, borderLeftColor: unitBadgeColor, borderLeftWidth: 4 }]}>
+                  {/* Cabecera de la tarjeta */}
+                  <View style={styles.cardHeader}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <View style={[styles.unitPill, { backgroundColor: unitBadgeColor + '20', borderColor: unitBadgeColor }]}>
+                        <Text style={[styles.unitPillText, { color: unitBadgeColor }]}>
+                          {item.unit.toUpperCase()}
+                        </Text>
+                      </View>
+                      {item.isSinodal && (
+                        <View style={[styles.unitPill, { backgroundColor: '#7c3aed20', borderColor: '#7c3aed' }]}>
+                          <Text style={[styles.unitPillText, { color: '#7c3aed' }]}>SINODAL</Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={[styles.dateBadge, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
+                      <Calendar size={12} color={theme.subText} style={{ marginRight: 4 }} />
+                      <Text style={{ fontSize: 11, color: theme.text, fontWeight: '600' }}>{item.date || 'Sin fecha'}</Text>
+                    </View>
+                  </View>
 
-                      <TouchableOpacity
-                        style={[styles.iconActionBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}
-                        onPress={() => handleDuplicate(item)}
-                      >
-                        <Copy size={14} color={theme.text} />
-                      </TouchableOpacity>
+                  {/* Título y Lugar */}
+                  <Text style={[styles.cardTitle, { color: theme.text }]}>{item.title}</Text>
+                  <View style={styles.metaRow}>
+                    <MapPin size={13} color={primaryColor} style={{ marginRight: 4 }} />
+                    <Text style={{ fontSize: 12, color: theme.text, marginRight: 14 }}>{item.location || 'Lugar por definir'}</Text>
+                    <BookOpen size={13} color={primaryColor} style={{ marginRight: 4 }} />
+                    <Text style={{ fontSize: 12, color: theme.subText }}>{item.activityType || 'Actividad Scout'}</Text>
+                  </View>
 
-                      <TouchableOpacity
-                        style={[styles.iconActionBtn, { backgroundColor: '#fee2e2' }]}
-                        onPress={() => handleDelete(item.id, item.title)}
-                      >
-                        <Trash2 size={14} color="#ef4444" />
-                      </TouchableOpacity>
-                    </>
-                  )}
+                  {/* Indicadores de resumen */}
+                  <View style={styles.statsRow}>
+                    <View style={[styles.statChip, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
+                      <Clock size={11} color={primaryColor} style={{ marginRight: 4 }} />
+                      <Text style={{ fontSize: 11, color: theme.text, fontWeight: '500' }}>
+                        {item.schedule ? item.schedule.length : 0} Actividades
+                      </Text>
+                    </View>
+                    <View style={[styles.statChip, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
+                      <Sparkles size={11} color="#f59e0b" style={{ marginRight: 4 }} />
+                      <Text style={{ fontSize: 11, color: theme.text, fontWeight: '500' }}>
+                        {item.selectedSDGs ? item.selectedSDGs.length : 0} ODS
+                      </Text>
+                    </View>
+                    <View style={[styles.statChip, { backgroundColor: isDarkMode ? '#27272a' : '#f0fdf4' }]}>
+                      <Text style={{ fontSize: 11, color: '#16a34a', fontWeight: 'bold' }}>
+                        ✓ Áreas de Crecimiento
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Barra de acciones de la tarjeta */}
+                  <View style={[styles.cardActions, { borderTopColor: theme.border }]}>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: primaryColor }]}
+                      onPress={() => setPreviewPrograma(item)}
+                    >
+                      <Eye size={14} color="#ffffff" style={{ marginRight: 6 }} />
+                      <Text style={[styles.actionBtnText, { color: '#ffffff' }]}>Ver PDF</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: '#2563eb18', borderWidth: 1, borderColor: '#2563eb40' }]}
+                      onPress={() => handleDownloadWord(item)}
+                    >
+                      <Download size={14} color="#2563eb" style={{ marginRight: 6 }} />
+                      <Text style={[styles.actionBtnText, { color: '#2563eb' }]}>Word (.docx)</Text>
+                    </TouchableOpacity>
+
+                    <View style={{ flex: 1 }} />
+
+                    {canCreate && (
+                      <View style={{ flexDirection: 'row', gap: 6 }}>
+                        <TouchableOpacity
+                          style={[styles.iconActionBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}
+                          onPress={() => navigation.navigate('ProgramaScoutEditor', { programa: item })}
+                        >
+                          <Edit2 size={15} color={theme.text} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={[styles.iconActionBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}
+                          onPress={() => handleDuplicate(item)}
+                        >
+                          <Copy size={15} color={theme.text} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={[styles.iconActionBtn, { backgroundColor: '#fee2e2' }]}
+                          onPress={() => handleDelete(item.id, item.title)}
+                        >
+                          <Trash2 size={15} color="#ef4444" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
                 </View>
-              </View>
-            );
-          }}
-        />
-      )}
+              );
+            }}
+          />
+        )}
+      </View>
 
       {/* MODAL DE VISTA PREVIA E IMPRESIÓN OFICIAL */}
       <ProgramaPdfPreviewModal
@@ -335,44 +371,50 @@ export default function ProgramaScoutScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  contentWrapper: {
+    width: '100%',
+    maxWidth: 960,
+    alignSelf: 'center',
+    flex: 1,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: 1,
   },
-  headerTitle: { fontSize: 16, fontWeight: 'bold' },
+  headerTitle: { fontSize: 18, fontWeight: 'bold' },
   createBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     borderRadius: 8,
   },
-  createBtnText: { color: '#ffffff', fontWeight: 'bold', fontSize: 12 },
+  createBtnText: { color: '#ffffff', fontWeight: 'bold', fontSize: 13 },
   filterBar: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
   },
   searchWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    height: 38,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    height: 40,
   },
-  searchInput: { flex: 1, fontSize: 12 },
+  searchInput: { flex: 1, fontSize: 13 },
   unitTabChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
     borderWidth: 1,
-    marginRight: 6,
+    marginRight: 8,
   },
-  unitTabChipText: { fontSize: 11 },
+  unitTabChipText: { fontSize: 12 },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyContainer: {
     flex: 1,
@@ -380,60 +422,73 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 30,
   },
-  emptyTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 6 },
-  emptySubtitle: { fontSize: 12, textAlign: 'center', lineHeight: 18, marginBottom: 16 },
+  emptyTitle: { fontSize: 17, fontWeight: 'bold', marginBottom: 6 },
+  emptySubtitle: { fontSize: 13, textAlign: 'center', lineHeight: 20, marginBottom: 18 },
   emptyCreateBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 11,
     borderRadius: 10,
   },
   programCard: {
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    padding: 14,
-    marginBottom: 12,
+    padding: 16,
+    marginBottom: 14,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
     elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   unitPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
     borderRadius: 8,
     borderWidth: 1,
   },
-  unitPillText: { fontSize: 9, fontWeight: 'bold' },
-  cardTitle: { fontSize: 15, fontWeight: 'bold', marginBottom: 6 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  statsRow: { flexDirection: 'row', gap: 6, marginBottom: 12 },
-  statChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  unitPillText: { fontSize: 10, fontWeight: 'bold', letterSpacing: 0.5 },
+  dateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  cardTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 6 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap' },
+  statsRow: { flexDirection: 'row', gap: 8, marginBottom: 14, flexWrap: 'wrap' },
+  statChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
   cardActions: {
     flexDirection: 'row',
     alignItems: 'center',
     borderTopWidth: 1,
-    paddingTop: 10,
-    gap: 6,
+    paddingTop: 12,
+    gap: 8,
   },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
   },
-  actionBtnText: { fontSize: 11, fontWeight: 'bold' },
+  actionBtnText: { fontSize: 12, fontWeight: 'bold' },
   iconActionBtn: {
-    padding: 6,
-    borderRadius: 6,
+    padding: 8,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
