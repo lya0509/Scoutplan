@@ -35,134 +35,59 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
   const unitLogo = UNIT_PROGRAMA_LOGOS[programa.unit] || SCOUT_WOSM_LOGO;
   const regBadge = REGISTRATION_BADGES.find(r => r.id === programa.registrationBadgeId) || REGISTRATION_BADGES[0];
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      // ── Asignar IDs directamente en el DOM para selectores CSS de impresión ──
-      const container = document.getElementById('printable-scout-programa');
-      if (container) {
-        const children = container.children;
-        // Structure: [0]=watermark, [1]=header, [2]=content, [3]=footer
-        if (children[0]) (children[0] as HTMLElement).id = 'asv-print-watermark';
-        if (children[1]) (children[1] as HTMLElement).id = 'asv-print-header';
-        if (children[2]) (children[2] as HTMLElement).id = 'asv-print-content';
-        if (children[3]) (children[3] as HTMLElement).id = 'asv-print-footer';
+      setDownloadingPdf(true);
+      try {
+        const container = document.getElementById('printable-scout-programa');
+        if (!container) throw new Error('No se encontró el lienzo del programa para exportar.');
+
+        const cleanTitle = (programa.title || 'Actividad').trim().replace(/[^a-zA-Z0-9_\-áéíóúÁÉÍÓÚñÑ ]/g, '_').replace(/\s+/g, '_');
+        const cleanDate = (programa.date || new Date().toISOString().split('T')[0]).replace(/[^a-zA-Z0-9_\-]/g, '_');
+        const fileUnitLabel = programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
+          ? `${programa.selectedUnits.map(u => u.toUpperCase()).join('_')}_SINODAL`
+          : (programa.unit || 'CLAN').toUpperCase();
+        const pdfFileName = `Programa_${fileUnitLabel}_${cleanTitle}_${cleanDate}.pdf`;
+
+        // Configuración de Ultra Calidad 300 DPI y márgenes 0mm exactos
+        const opt = {
+          margin: 0,
+          filename: pdfFileName,
+          image: { type: 'jpeg' as const, quality: 0.98 },
+          html2canvas: {
+            scale: 2.5,
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+            letterRendering: true,
+            scrollX: 0,
+            scrollY: 0,
+          },
+          jsPDF: {
+            unit: 'mm' as const,
+            format: 'letter' as const,
+            orientation: 'portrait' as const
+          }
+        };
+
+        // @ts-ignore
+        const html2pdfLib = (await import('html2pdf.js')).default;
+        await html2pdfLib().set(opt).from(container).save();
+        showAlert('Descarga Exitosa', `El archivo ${pdfFileName} se ha guardado en tu carpeta de descargas.`);
+      } catch (err: any) {
+        console.warn('Fallback a impresión nativa por:', err);
+        const originalTitle = document.title;
+        const cleanTitle = (programa.title || 'Actividad').trim().replace(/[^a-zA-Z0-9_\-áéíóúÁÉÍÓÚñÑ ]/g, '_').replace(/\s+/g, '_');
+        const cleanDate = (programa.date || new Date().toISOString().split('T')[0]).replace(/[^a-zA-Z0-9_\-]/g, '_');
+        const fileUnitLabel = (programa.unit || 'CLAN').toUpperCase();
+        document.title = `Programa_${fileUnitLabel}_${cleanTitle}_${cleanDate}`;
+        window.print();
+        setTimeout(() => { document.title = originalTitle; }, 2000);
+      } finally {
+        setDownloadingPdf(false);
       }
-
-      // ── Establecer el nombre del archivo PDF automáticamente para el diálogo de Guardar como PDF ──
-      const cleanTitle = (programa.title || 'Actividad').trim().replace(/[^a-zA-Z0-9_\-áéíóúÁÉÍÓÚñÑ ]/g, '_').replace(/\s+/g, '_');
-      const cleanDate = (programa.date || new Date().toISOString().split('T')[0]).replace(/[^a-zA-Z0-9_\-]/g, '_');
-      const fileUnitLabel = programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
-        ? `${programa.selectedUnits.map(u => u.toUpperCase()).join('_')}_SINODAL`
-        : (programa.unit || 'CLAN').toUpperCase();
-      const pdfFileName = `Programa_${fileUnitLabel}_${cleanTitle}_${cleanDate}`;
-
-      const originalTitle = document.title;
-      document.title = pdfFileName;
-
-      const existingStyle = document.getElementById('scout-print-styles');
-      const cssContent = `
-        @page {
-          size: letter portrait;
-          margin: 0mm !important;
-        }
-        @media print {
-          @page {
-            size: letter portrait;
-            margin: 0mm !important;
-          }
-          html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: #ffffff !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          body * {
-            visibility: hidden !important;
-          }
-          #printable-scout-programa, #printable-scout-programa * {
-            visibility: visible !important;
-          }
-          #printable-scout-programa {
-            position: fixed !important;
-            left: 0 !important;
-            top: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            max-width: 100vw !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            box-shadow: none !important;
-            border: none !important;
-            border-radius: 0 !important;
-            background: #ffffff !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: flex-start !important;
-            overflow: hidden !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            page-break-after: avoid !important;
-            page-break-inside: avoid !important;
-            z-index: 999999 !important;
-          }
-          #asv-print-header,
-          #asv-print-header img,
-          #asv-print-header > div {
-            width: 100% !important;
-            height: 82px !important;
-            min-height: 82px !important;
-            max-height: 82px !important;
-            display: block !important;
-            object-fit: fill !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            flex-shrink: 0 !important;
-          }
-          #asv-print-footer,
-          #asv-print-footer img,
-          #asv-print-footer > div {
-            width: 100% !important;
-            height: 86px !important;
-            min-height: 86px !important;
-            max-height: 86px !important;
-            display: block !important;
-            object-fit: fill !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            flex-shrink: 0 !important;
-            margin-top: auto !important;
-          }
-          #asv-print-content {
-            padding-left: 28px !important;
-            padding-right: 28px !important;
-            padding-top: 4px !important;
-            padding-bottom: 4px !important;
-            flex: 1 1 auto !important;
-            overflow: hidden !important;
-          }
-        }
-      `;
-      if (!existingStyle) {
-        const style = document.createElement('style');
-        style.id = 'scout-print-styles';
-        style.innerHTML = cssContent;
-        document.head.appendChild(style);
-      } else {
-        existingStyle.innerHTML = cssContent;
-      }
-      window.print();
-
-      // Restaurar el título original de la pestaña
-      setTimeout(() => {
-        document.title = originalTitle;
-      }, 2000);
     } else {
-      showAlert('Descargar PDF', 'Para descargar en PDF, selecciona la opción "Guardar como PDF" en el diálogo de impresión.');
+      showAlert('Descargar PDF', 'Para descargar en PDF, selecciona la opción "Guardar como PDF".');
     }
   };
 
@@ -209,9 +134,16 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             <TouchableOpacity
               style={[styles.btnPrint, { backgroundColor: '#dc2626' }]}
               onPress={handleDownloadPdf}
+              disabled={downloadingPdf}
             >
-              <Download size={15} color="#ffffff" style={{ marginRight: 6 }} />
-              <Text style={styles.btnText}>Descargar como Documento PDF</Text>
+              {downloadingPdf ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <>
+                  <Download size={15} color="#ffffff" style={{ marginRight: 6 }} />
+                  <Text style={styles.btnText}>Descargar como Documento PDF</Text>
+                </>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.btnClose} onPress={onClose}>
