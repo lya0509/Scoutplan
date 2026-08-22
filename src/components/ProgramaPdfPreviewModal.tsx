@@ -77,16 +77,20 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             display: none !important;
           }
           #asv-print-clone-root {
-            display: flex !important;
-            position: relative !important;
+            display: block !important;
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
             width: 100% !important;
-            min-height: 100vh !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
             box-sizing: border-box !important;
             background: #ffffff !important;
-            flex-direction: column !important;
-            justify-content: flex-start !important;
             z-index: 2147483647 !important;
             overflow: hidden !important;
             -webkit-print-color-adjust: exact !important;
@@ -95,6 +99,10 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
           #asv-print-clone-root .asv-print-header,
           #asv-print-clone-root .asv-print-header img,
           #asv-print-clone-root .asv-print-header > div {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
             width: 100% !important;
             height: 82px !important;
             min-height: 82px !important;
@@ -103,11 +111,15 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             object-fit: fill !important;
             margin: 0 !important;
             padding: 0 !important;
-            flex-shrink: 0 !important;
+            z-index: 2 !important;
           }
           #asv-print-clone-root .asv-print-footer,
           #asv-print-clone-root .asv-print-footer img,
           #asv-print-clone-root .asv-print-footer > div {
+            position: absolute !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
             width: 100% !important;
             height: 86px !important;
             min-height: 86px !important;
@@ -116,18 +128,19 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             object-fit: fill !important;
             margin: 0 !important;
             padding: 0 !important;
-            flex-shrink: 0 !important;
-            margin-top: auto !important;
+            z-index: 2 !important;
           }
           #asv-print-clone-root .asv-print-content {
+            margin-top: 84px !important;
+            margin-bottom: 88px !important;
             padding-left: 28px !important;
             padding-right: 28px !important;
-            padding-top: 6px !important;
-            padding-bottom: 6px !important;
-            flex: 1 0 auto !important;
+            padding-top: 2px !important;
+            padding-bottom: 2px !important;
             display: flex !important;
             flex-direction: column !important;
             justify-content: flex-start !important;
+            z-index: 1 !important;
           }
         }
       `;
