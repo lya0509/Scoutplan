@@ -25,6 +25,62 @@ interface Props {
   onClose: () => void;
 }
 
+interface ProgramaPageData {
+  pageIndex: number;
+  totalPages: number;
+  isFirstPage: boolean;
+  isLastPage: boolean;
+  scheduleItems: any[];
+}
+
+function getProgramaPages(programa: ProgramaScout): ProgramaPageData[] {
+  const schedule = programa.schedule || [];
+  
+  if (schedule.length <= 6) {
+    return [{
+      pageIndex: 1,
+      totalPages: 1,
+      isFirstPage: true,
+      isLastPage: true,
+      scheduleItems: schedule
+    }];
+  }
+
+  // Página 1: primeras 4 actividades
+  // Páginas 2..N: 13 actividades por página
+  const PAGE1_LIMIT = 4;
+  const SUBSEQUENT_LIMIT = 13;
+
+  const page1Items = schedule.slice(0, PAGE1_LIMIT);
+  const remaining = schedule.slice(PAGE1_LIMIT);
+  const totalSubsequentPages = Math.ceil(remaining.length / SUBSEQUENT_LIMIT);
+  const totalPages = 1 + totalSubsequentPages;
+
+  const pages: ProgramaPageData[] = [
+    {
+      pageIndex: 1,
+      totalPages,
+      isFirstPage: true,
+      isLastPage: false,
+      scheduleItems: page1Items
+    }
+  ];
+
+  for (let i = 0; i < remaining.length; i += SUBSEQUENT_LIMIT) {
+    const chunk = remaining.slice(i, i + SUBSEQUENT_LIMIT);
+    const currentPageIndex = pages.length + 1;
+    pages.push({
+      pageIndex: currentPageIndex,
+      totalPages,
+      isFirstPage: false,
+      isLastPage: currentPageIndex === totalPages,
+      scheduleItems: chunk
+    });
+  }
+
+  return pages;
+}
+
 export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
   const { isDarkMode, primaryColor } = useTheme();
   const [downloadingDocx, setDownloadingDocx] = useState(false);
@@ -34,6 +90,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
 
   const unitLogo = UNIT_PROGRAMA_LOGOS[programa.unit] || SCOUT_WOSM_LOGO;
   const regBadge = REGISTRATION_BADGES.find(r => r.id === programa.registrationBadgeId) || REGISTRATION_BADGES[0];
+  const pages = getProgramaPages(programa);
 
   const handleDownloadPdf = () => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -50,7 +107,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
       const originalTitle = document.title;
       document.title = pdfFileName;
 
-      // Inyectar CSS de impresión full-bleed a nivel raíz
+      // Inyectar CSS de impresión multi-página full-bleed
       const printStyleId = 'scout-print-styles';
       let existingStyle = document.getElementById(printStyleId);
       const cssContent = `
@@ -67,38 +124,47 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
-            height: 100% !important;
+            height: auto !important;
             background: #ffffff !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
-            overflow: hidden !important;
           }
           body > *:not(#asv-print-clone-root) {
             display: none !important;
           }
           #asv-print-clone-root {
             display: block !important;
-            position: fixed !important;
-            left: 0 !important;
-            top: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
             width: 100% !important;
-            height: 100% !important;
-            max-width: 100% !important;
-            max-height: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
-            box-sizing: border-box !important;
             background: #ffffff !important;
             z-index: 2147483647 !important;
-            overflow: hidden !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
           }
-          #asv-print-clone-root .asv-print-header,
-          #asv-print-clone-root .asv-print-header img,
-          #asv-print-clone-root .asv-print-header > div {
+          .asv-pdf-page {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+            position: relative !important;
+            page-break-after: always !important;
+            break-after: page !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            box-sizing: border-box !important;
+            background: #ffffff !important;
+            overflow: hidden !important;
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+          }
+          .asv-pdf-page:last-child {
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+          }
+          .asv-pdf-page .asv-print-header,
+          .asv-pdf-page .asv-print-header img,
+          .asv-pdf-page .asv-print-header > div {
             position: absolute !important;
             top: 0 !important;
             left: 0 !important;
@@ -113,9 +179,9 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             padding: 0 !important;
             z-index: 2 !important;
           }
-          #asv-print-clone-root .asv-print-footer,
-          #asv-print-clone-root .asv-print-footer img,
-          #asv-print-clone-root .asv-print-footer > div {
+          .asv-pdf-page .asv-print-footer,
+          .asv-pdf-page .asv-print-footer img,
+          .asv-pdf-page .asv-print-footer > div {
             position: absolute !important;
             bottom: 0 !important;
             left: 0 !important;
@@ -130,7 +196,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             padding: 0 !important;
             z-index: 2 !important;
           }
-          #asv-print-clone-root .asv-print-content {
+          .asv-pdf-page .asv-print-content {
             margin-top: 84px !important;
             margin-bottom: 88px !important;
             padding-left: 28px !important;
@@ -141,6 +207,9 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
             flex-direction: column !important;
             justify-content: flex-start !important;
             z-index: 1 !important;
+          }
+          .screen-page-indicator {
+            display: none !important;
           }
         }
       `;
@@ -154,11 +223,18 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
       // Crear clon directo en body
       const clone = container.cloneNode(true) as HTMLElement;
       clone.id = 'asv-print-clone-root';
-      const cloneChildren = clone.children;
-      // [0]=watermark, [1]=header, [2]=content, [3]=footer
-      if (cloneChildren[1]) cloneChildren[1].classList.add('asv-print-header');
-      if (cloneChildren[2]) cloneChildren[2].classList.add('asv-print-content');
-      if (cloneChildren[3]) cloneChildren[3].classList.add('asv-print-footer');
+
+      // Asignar clases a cada página del clon
+      const pageElements = clone.querySelectorAll('#asv-pdf-page, [id="asv-pdf-page"], [nativeid="asv-pdf-page"], .asv-pdf-page');
+      pageElements.forEach(pageEl => {
+        pageEl.classList.add('asv-pdf-page');
+        const children = pageEl.children;
+        // Structure: [0]=watermark, [1]=header, [2]=content, [3]=footer
+        if (children[1]) children[1].classList.add('asv-print-header');
+        if (children[2]) children[2].classList.add('asv-print-content');
+        if (children[3]) children[3].classList.add('asv-print-footer');
+      });
+
       document.body.appendChild(clone);
 
       window.print();
@@ -195,7 +271,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
           <View style={styles.titleInfo}>
             <FileText size={20} color={primaryColor} />
             <Text style={[styles.modalTitle, { color: isDarkMode ? '#ffffff' : '#000000' }]} numberOfLines={1}>
-              Visor PDF: {programa.title || 'Sin Título'}
+              Visor PDF: {programa.title || 'Sin Título'} {pages.length > 1 ? `(${pages.length} Páginas)` : ''}
             </Text>
           </View>
 
@@ -236,200 +312,236 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
           </View>
         </View>
 
-        {/* Hoja de visualización tipo papel A4 con diseño oficial */}
+        {/* Hojas de visualización tipo papel A4 con diseño oficial */}
         <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
-          <View style={styles.paperSheet} id="printable-scout-programa">
-            {/* MARCA DE AGUA INSTITUCIONAL ASV EN EL FONDO */}
-            <Image
-              source={{ uri: '/programa_assets/asv_watermark.png' }}
-              style={styles.watermarkBg}
-              resizeMode="contain"
-            />
-
-            {/* ENCABEZADO SUPERIOR INSTITUCIONAL ASV (FULL WIDTH SIN BORDES BLANCOS) */}
-            <Image
-              source={{ uri: '/programa_assets/asv_header.png' }}
-              style={styles.asvHeaderImg}
-              nativeID="asv-print-header"
-              resizeMode="stretch"
-            />
-
-            {/* CONTENIDO INTERNO DEL PROGRAMA */}
-            <View style={styles.sheetInnerContent} nativeID="asv-print-content">
-              {/* TIRA DE LOGOS OFICIALES */}
-              <View style={styles.logosStrip}>
-                {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 0 ? (
-                  programa.selectedUnits.map(u => (
-                    <Image
-                      key={u}
-                      source={{ uri: UNIT_PROGRAMA_LOGOS[u] || SCOUT_WOSM_LOGO }}
-                      style={styles.logoItem}
-                      resizeMode="contain"
-                    />
-                  ))
-                ) : (
-                  <Image source={{ uri: unitLogo }} style={styles.logoItem} resizeMode="contain" />
+          <View id="printable-scout-programa" style={{ width: '100%', alignItems: 'center' }}>
+            {pages.map((page) => (
+              <View
+                key={page.pageIndex}
+                style={{
+                  width: '100%',
+                  maxWidth: 820,
+                  alignItems: 'center',
+                  marginBottom: page.pageIndex < page.totalPages ? 24 : 0,
+                }}
+              >
+                {page.totalPages > 1 && (
+                  <View style={styles.screenPageBadge}>
+                    <Text style={styles.screenPageBadgeText}>Página {page.pageIndex} de {page.totalPages}</Text>
+                  </View>
                 )}
-                <Image source={{ uri: SCOUT_WOSM_LOGO }} style={styles.logoItem} resizeMode="contain" />
-                <Image source={{ uri: GROUP_ORION_LOGO }} style={styles.logoItem} resizeMode="contain" />
-                <Image source={{ uri: regBadge.imageUri }} style={[styles.logoItem, { width: 110, height: 42 }]} resizeMode="contain" />
-              </View>
 
-              {/* TÍTULO DEL PROGRAMA */}
-              <Text style={styles.programaMainTitle}>
-                Programa de Actividades de la Unidad {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1 ? `(Sinodal ${programa.selectedUnits.map(u => u.toUpperCase()).join(' + ')})` : `del ${programa.unit.toUpperCase()}`}
-              </Text>
+                <View style={styles.paperSheet} nativeID="asv-pdf-page">
+                  {/* MARCA DE AGUA INSTITUCIONAL ASV EN EL FONDO */}
+                  <Image
+                    source={{ uri: '/programa_assets/asv_watermark.png' }}
+                    style={styles.watermarkBg}
+                    resizeMode="contain"
+                  />
 
-              {/* TABLA 1: RESUMEN GENERAL */}
-              <View style={styles.asvTableBox}>
-                <View style={styles.asvTableHeaderRow}>
-                  <Text style={[styles.asvHeadCell, { flex: 1.2 }]}>Fecha</Text>
-                  <Text style={[styles.asvHeadCell, { flex: 1.5 }]}>Lugar:</Text>
-                  <Text style={[styles.asvHeadCell, { flex: 2 }]}>Tipo de Actividad:</Text>
-                  <Text style={[styles.asvHeadCell, { flex: 1.2 }]}>Rama:</Text>
-                  <Text style={[styles.asvHeadCell, { flex: 1.5 }]}>Número de Participante</Text>
-                </View>
-                <View style={styles.asvTableDataRow}>
-                  <Text style={[styles.asvBodyCell, { flex: 1.2 }]}>{programa.date || 'Sin fecha'}</Text>
-                  <Text style={[styles.asvBodyCell, { flex: 1.5 }]}>{programa.location || 'Por definir'}</Text>
-                  <Text style={[styles.asvBodyCell, { flex: 2 }]}>{programa.activityType || 'Actividad'}</Text>
-                  <Text style={[styles.asvBodyCell, { flex: 1.2, fontWeight: 'bold', textTransform: 'capitalize' }]}>
-                    {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
-                      ? `${programa.selectedUnits.map(u => u.toUpperCase()).join(' + ')} (Sinodal)`
-                      : programa.unit}
-                  </Text>
-                  <Text style={[styles.asvBodyCell, { flex: 1.5 }]}>{programa.participantProjection || 'N/A'}</Text>
-                </View>
-              </View>
+                  {/* ENCABEZADO SUPERIOR INSTITUCIONAL ASV */}
+                  <Image
+                    source={{ uri: '/programa_assets/asv_header.png' }}
+                    style={styles.asvHeaderImg}
+                    resizeMode="stretch"
+                  />
 
-              {/* TABLA 2: CAJA DE OBJETIVOS (GENERAL Y ESPECÍFICOS) */}
-              <View style={styles.asvTableBox}>
-                <View style={styles.asvBoxContent}>
-                  <Text style={styles.asvBoxHeaderTitle}>Objetivo General: </Text>
-                  <Text style={styles.asvBoxParagraph}>{programa.generalObjective || 'No especificado'}</Text>
-
-                  <Text style={[styles.asvBoxHeaderTitle, { marginTop: 8 }]}>Objetivos Específicos:</Text>
-                  {programa.specificObjectives && programa.specificObjectives.length > 0 ? (
-                    programa.specificObjectives.map((obj, i) => (
-                      <Text key={i} style={styles.asvBulletItem}>* {obj}</Text>
-                    ))
-                  ) : (
-                    <Text style={styles.asvBoxParagraph}>Sin objetivos específicos registrados.</Text>
-                  )}
-                </View>
-              </View>
-
-              {/* TABLA 3: CAJA DE METAS ESPECÍFICAS */}
-              <View style={styles.asvTableBox}>
-                <View style={styles.asvBoxContent}>
-                  <Text style={styles.asvBoxHeaderTitle}>Metas Específicas:</Text>
-                  {programa.specificMetas && programa.specificMetas.length > 0 ? (
-                    programa.specificMetas.map((meta, i) => (
-                      <Text key={i} style={styles.asvBulletItem}>* {meta}</Text>
-                    ))
-                  ) : (
-                    <Text style={styles.asvBoxParagraph}>Sin metas específicas registradas.</Text>
-                  )}
-                </View>
-              </View>
-
-              {/* TABLA 4: CAJA DE INDICADORES DE LOGRO */}
-              <View style={styles.asvTableBox}>
-                <View style={styles.asvBoxContent}>
-                  <Text style={styles.asvBoxHeaderTitle}>Indicadores de Logro:</Text>
-                  {(() => {
-                    const areaKeys = Object.keys(GROWTH_AREAS) as GrowthAreaKey[];
-                    const renderedAreas = areaKeys.map(areaKey => {
-                      const areaInfo = GROWTH_AREAS[areaKey];
-                      const list = programa.indicators[areaKey] || [];
-                      if (!list || list.length === 0) return null;
-                      return (
-                        <View key={areaKey} style={{ marginTop: 4, marginBottom: 2 }}>
-                          <Text style={styles.indicatorAreaHeading}>-{areaInfo.name}:</Text>
-                          {list.map((ind, idx) => (
-                            <Text key={idx} style={styles.indicatorDotItem}>. {ind}</Text>
-                          ))}
+                  {/* CONTENIDO INTERNO DEL PROGRAMA */}
+                  <View style={styles.sheetInnerContent}>
+                    {page.isFirstPage ? (
+                      <>
+                        {/* TIRA DE LOGOS OFICIALES */}
+                        <View style={styles.logosStrip}>
+                          {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 0 ? (
+                            programa.selectedUnits.map(u => (
+                              <Image
+                                key={u}
+                                source={{ uri: UNIT_PROGRAMA_LOGOS[u] || SCOUT_WOSM_LOGO }}
+                                style={styles.logoItem}
+                                resizeMode="contain"
+                              />
+                            ))
+                          ) : (
+                            <Image source={{ uri: unitLogo }} style={styles.logoItem} resizeMode="contain" />
+                          )}
+                          <Image source={{ uri: SCOUT_WOSM_LOGO }} style={styles.logoItem} resizeMode="contain" />
+                          <Image source={{ uri: GROUP_ORION_LOGO }} style={styles.logoItem} resizeMode="contain" />
+                          <Image source={{ uri: regBadge.imageUri }} style={[styles.logoItem, { width: 110, height: 42 }]} resizeMode="contain" />
                         </View>
-                      );
-                    }).filter(Boolean);
 
-                    if (renderedAreas.length === 0) {
-                      return (
-                        <Text style={styles.asvBoxParagraph}>Sin indicadores de logro seleccionados.</Text>
-                      );
-                    }
-                    return renderedAreas;
-                  })()}
-                </View>
-              </View>
+                        {/* TÍTULO DEL PROGRAMA */}
+                        <Text style={styles.programaMainTitle}>
+                          Programa de Actividades de la Unidad {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1 ? `(Sinodal ${programa.selectedUnits.map(u => u.toUpperCase()).join(' + ')})` : `del ${programa.unit.toUpperCase()}`}
+                        </Text>
 
-              {/* TABLA 5: CAJA DE OBJETIVOS DE DESARROLLO SOSTENIBLE (ODS) */}
-              <View style={styles.asvTableBox}>
-                <View style={styles.asvBoxContent}>
-                  <Text style={styles.asvBoxHeaderTitle}>Objetivos de Desarrollo Sostenible (ODS):</Text>
-                  <Text style={styles.asvBoxParagraph}>
-                    {programa.selectedSDGs && programa.selectedSDGs.length > 0
-                      ? programa.selectedSDGs.map(num => {
-                          const sdg = SDG_LIST.find(s => s.number === num);
-                          return `ODS #${num}: ${sdg?.name || sdg?.shortName || ''}`;
-                        }).join('   ')
-                      : 'Ningún ODS seleccionado.'}
-                  </Text>
-                </View>
-              </View>
+                        {/* TABLA 1: RESUMEN GENERAL */}
+                        <View style={styles.asvTableBox}>
+                          <View style={styles.asvTableHeaderRow}>
+                            <Text style={[styles.asvHeadCell, { flex: 1.2 }]}>Fecha</Text>
+                            <Text style={[styles.asvHeadCell, { flex: 1.5 }]}>Lugar:</Text>
+                            <Text style={[styles.asvHeadCell, { flex: 2 }]}>Tipo de Actividad:</Text>
+                            <Text style={[styles.asvHeadCell, { flex: 1.2 }]}>Rama:</Text>
+                            <Text style={[styles.asvHeadCell, { flex: 1.5 }]}>Número de Participante</Text>
+                          </View>
+                          <View style={styles.asvTableDataRow}>
+                            <Text style={[styles.asvBodyCell, { flex: 1.2 }]}>{programa.date || 'Sin fecha'}</Text>
+                            <Text style={[styles.asvBodyCell, { flex: 1.5 }]}>{programa.location || 'Por definir'}</Text>
+                            <Text style={[styles.asvBodyCell, { flex: 2 }]}>{programa.activityType || 'Actividad'}</Text>
+                            <Text style={[styles.asvBodyCell, { flex: 1.2, fontWeight: 'bold', textTransform: 'capitalize' }]}>
+                              {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
+                                ? `${programa.selectedUnits.map(u => u.toUpperCase()).join(' + ')} (Sinodal)`
+                                : programa.unit}
+                            </Text>
+                            <Text style={[styles.asvBodyCell, { flex: 1.5 }]}>{programa.participantProjection || 'N/A'}</Text>
+                          </View>
+                        </View>
 
-              {/* TABLA 6: CRONOGRAMA DE ACTIVIDADES */}
-              <View style={styles.asvTableBox}>
-                <View style={styles.asvTableHeaderRow}>
-                  <Text style={[styles.asvHeadCell, { flex: 1.5 }]}>Horario (AM - PM)</Text>
-                  <Text style={[styles.asvHeadCell, { flex: 3.5 }]}>Actividad / Descripción</Text>
-                  <Text style={[styles.asvHeadCell, { flex: 1.8 }]}>Responsable</Text>
-                  <Text style={[styles.asvHeadCell, { flex: 1.8 }]}>Materiales</Text>
-                </View>
+                        {/* TABLA 2: CAJA DE OBJETIVOS (GENERAL Y ESPECÍFICOS) */}
+                        <View style={styles.asvTableBox}>
+                          <View style={styles.asvBoxContent}>
+                            <Text style={styles.asvBoxHeaderTitle}>Objetivo General: </Text>
+                            <Text style={styles.asvBoxParagraph}>{programa.generalObjective || 'No especificado'}</Text>
 
-                {programa.schedule && programa.schedule.length > 0 ? (
-                  programa.schedule.map((item, index) => (
-                    <View key={item.id || index} style={styles.asvTableDataRow}>
-                      <Text style={[styles.asvBodyCell, { flex: 1.5, fontWeight: '600' }]}>{item.timeRange}</Text>
-                      <View style={[styles.asvBodyCell, { flex: 3.5, alignItems: 'flex-start' }]}>
-                        <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000000' }}>{item.title}</Text>
-                        {item.description ? (
-                          <Text style={{ fontSize: 9, color: '#374151', marginTop: 2 }}>{item.description}</Text>
-                        ) : null}
+                            <Text style={[styles.asvBoxHeaderTitle, { marginTop: 8 }]}>Objetivos Específicos:</Text>
+                            {programa.specificObjectives && programa.specificObjectives.length > 0 ? (
+                              programa.specificObjectives.map((obj, i) => (
+                                <Text key={i} style={styles.asvBulletItem}>* {obj}</Text>
+                              ))
+                            ) : (
+                              <Text style={styles.asvBoxParagraph}>Sin objetivos específicos registrados.</Text>
+                            )}
+                          </View>
+                        </View>
+
+                        {/* TABLA 3: CAJA DE METAS ESPECÍFICAS */}
+                        <View style={styles.asvTableBox}>
+                          <View style={styles.asvBoxContent}>
+                            <Text style={styles.asvBoxHeaderTitle}>Metas Específicas:</Text>
+                            {programa.specificMetas && programa.specificMetas.length > 0 ? (
+                              programa.specificMetas.map((meta, i) => (
+                                <Text key={i} style={styles.asvBulletItem}>* {meta}</Text>
+                              ))
+                            ) : (
+                              <Text style={styles.asvBoxParagraph}>Sin metas específicas registradas.</Text>
+                            )}
+                          </View>
+                        </View>
+
+                        {/* TABLA 4: CAJA DE INDICADORES DE LOGRO */}
+                        <View style={styles.asvTableBox}>
+                          <View style={styles.asvBoxContent}>
+                            <Text style={styles.asvBoxHeaderTitle}>Indicadores de Logro:</Text>
+                            {(() => {
+                              const areaKeys = Object.keys(GROWTH_AREAS) as GrowthAreaKey[];
+                              const renderedAreas = areaKeys.map(areaKey => {
+                                const areaInfo = GROWTH_AREAS[areaKey];
+                                const list = programa.indicators[areaKey] || [];
+                                if (!list || list.length === 0) return null;
+                                return (
+                                  <View key={areaKey} style={{ marginTop: 4, marginBottom: 2 }}>
+                                    <Text style={styles.indicatorAreaHeading}>-{areaInfo.name}:</Text>
+                                    {list.map((ind, idx) => (
+                                      <Text key={idx} style={styles.indicatorDotItem}>. {ind}</Text>
+                                    ))}
+                                  </View>
+                                );
+                              }).filter(Boolean);
+
+                              if (renderedAreas.length === 0) {
+                                return (
+                                  <Text style={styles.asvBoxParagraph}>Sin indicadores de logro seleccionados.</Text>
+                                );
+                              }
+                              return renderedAreas;
+                            })()}
+                          </View>
+                        </View>
+
+                        {/* TABLA 5: CAJA DE OBJETIVOS DE DESARROLLO SOSTENIBLE (ODS) */}
+                        <View style={styles.asvTableBox}>
+                          <View style={styles.asvBoxContent}>
+                            <Text style={styles.asvBoxHeaderTitle}>Objetivos de Desarrollo Sostenible (ODS):</Text>
+                            <Text style={styles.asvBoxParagraph}>
+                              {programa.selectedSDGs && programa.selectedSDGs.length > 0
+                                ? programa.selectedSDGs.map(num => {
+                                    const sdg = SDG_LIST.find(s => s.number === num);
+                                    return `ODS #${num}: ${sdg?.name || sdg?.shortName || ''}`;
+                                  }).join('   ')
+                                : 'Ningún ODS seleccionado.'}
+                            </Text>
+                          </View>
+                        </View>
+                      </>
+                    ) : (
+                      <>
+                        {/* ENCABEZADO DE CONTINUACIÓN EN PÁGINAS POSTERIORES */}
+                        <View style={{ marginVertical: 8, alignItems: 'center' }}>
+                          <Text style={styles.programaMainTitle}>
+                            Programa de Actividades {programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1 ? `(Sinodal ${programa.selectedUnits.map(u => u.toUpperCase()).join(' + ')})` : `del ${programa.unit.toUpperCase()}`}
+                          </Text>
+                          <Text style={{ fontSize: 11, fontWeight: 'bold', color: primaryColor, marginTop: -4 }}>
+                            Cronograma de Actividades (Continuación - Página {page.pageIndex} de {page.totalPages})
+                          </Text>
+                        </View>
+                      </>
+                    )}
+
+                    {/* TABLA 6: CRONOGRAMA DE ACTIVIDADES (PARA ESTA PÁGINA) */}
+                    <View style={styles.asvTableBox}>
+                      <View style={styles.asvTableHeaderRow}>
+                        <Text style={[styles.asvHeadCell, { flex: 1.5 }]}>Horario (AM - PM)</Text>
+                        <Text style={[styles.asvHeadCell, { flex: 3.5 }]}>Actividad / Descripción</Text>
+                        <Text style={[styles.asvHeadCell, { flex: 1.8 }]}>Responsable</Text>
+                        <Text style={[styles.asvHeadCell, { flex: 1.8 }]}>Materiales</Text>
                       </View>
-                      <Text style={[styles.asvBodyCell, { flex: 1.8 }]}>{item.responsible || '-'}</Text>
-                      <Text style={[styles.asvBodyCell, { flex: 1.8 }]}>{item.materials || '-'}</Text>
-                    </View>
-                  ))
-                ) : (
-                  <View style={styles.asvTableDataRow}>
-                    <Text style={[styles.asvBodyCell, { flex: 1, fontStyle: 'italic' }]}>
-                      Sin actividades en el cronograma.
-                    </Text>
-                  </View>
-                )}
 
-                {/* FILA DE NOTAS IMPORTANTES */}
-                <View style={styles.asvNotesRow}>
-                  <View style={styles.asvNotesHeadCell}>
-                    <Text style={styles.asvNotesHeadText}>NOTAS IMPORTANTES</Text>
+                      {page.scheduleItems && page.scheduleItems.length > 0 ? (
+                        page.scheduleItems.map((item, index) => (
+                          <View key={item.id || index} style={styles.asvTableDataRow}>
+                            <Text style={[styles.asvBodyCell, { flex: 1.5, fontWeight: '600' }]}>{item.timeRange}</Text>
+                            <View style={[styles.asvBodyCell, { flex: 3.5, alignItems: 'flex-start' }]}>
+                              <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000000' }}>{item.title}</Text>
+                              {item.description ? (
+                                <Text style={{ fontSize: 9, color: '#374151', marginTop: 2 }}>{item.description}</Text>
+                              ) : null}
+                            </View>
+                            <Text style={[styles.asvBodyCell, { flex: 1.8 }]}>{item.responsible || '-'}</Text>
+                            <Text style={[styles.asvBodyCell, { flex: 1.8 }]}>{item.materials || '-'}</Text>
+                          </View>
+                        ))
+                      ) : (
+                        <View style={styles.asvTableDataRow}>
+                          <Text style={[styles.asvBodyCell, { flex: 1, fontStyle: 'italic' }]}>
+                            Sin actividades en el cronograma.
+                          </Text>
+                        </View>
+                      )}
+
+                      {/* FILA DE NOTAS IMPORTANTES (SOLO EN LA ÚLTIMA PÁGINA) */}
+                      {page.isLastPage ? (
+                        <View style={styles.asvNotesRow}>
+                          <View style={styles.asvNotesHeadCell}>
+                            <Text style={styles.asvNotesHeadText}>NOTAS IMPORTANTES</Text>
+                          </View>
+                          <View style={styles.asvNotesBodyCell}>
+                            <Text style={styles.asvNotesBodyText}>
+                              {programa.importantNotes || 'Cada integrante debe dominar su ponencia y dar lo mejor de sí en este servicio scout.'}
+                            </Text>
+                          </View>
+                        </View>
+                      ) : null}
+                    </View>
                   </View>
-                  <View style={styles.asvNotesBodyCell}>
-                    <Text style={styles.asvNotesBodyText}>
-                      {programa.importantNotes || 'Cada integrante debe dominar su ponencia y dar lo mejor de sí en este servicio scout.'}
-                    </Text>
-                  </View>
+
+                  {/* PIE DE PÁGINA OFICIAL DE LA ASV */}
+                  <Image
+                    source={{ uri: '/programa_assets/asv_footer.png' }}
+                    style={styles.asvFooterImg}
+                    resizeMode="stretch"
+                  />
                 </View>
               </View>
-            </View>
-
-            {/* PIE DE PÁGINA OFICIAL DE LA ASV (FULL WIDTH SIN BORDES BLANCOS) */}
-            <Image
-              source={{ uri: '/programa_assets/asv_footer.png' }}
-              style={styles.asvFooterImg}
-              nativeID="asv-print-footer"
-              resizeMode="stretch"
-            />
+            ))}
           </View>
         </ScrollView>
       </View>
@@ -441,6 +553,19 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.85)',
+  },
+  screenPageBadge: {
+    backgroundColor: '#6b21a8',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 8,
+    alignSelf: 'center',
+  },
+  screenPageBadgeText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: 'bold',
   },
   topBar: {
     flexDirection: 'row',
