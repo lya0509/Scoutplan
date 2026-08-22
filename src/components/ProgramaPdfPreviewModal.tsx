@@ -70,19 +70,122 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
           }
         };
 
-        // @ts-ignore
-        const html2pdfLib = (await import('html2pdf.js')).default;
-        await html2pdfLib().set(opt).from(container).save();
-        showAlert('Descarga Exitosa', `El archivo ${pdfFileName} se ha guardado en tu carpeta de descargas.`);
+        // Cargar biblioteca html2pdf de forma compatible con ES Module y CommonJS
+        const mod: any = await import('html2pdf.js');
+        const html2pdfFn = typeof mod === 'function' ? mod : (mod.default || mod);
+        if (typeof html2pdfFn === 'function') {
+          await html2pdfFn().set(opt).from(container).save();
+          showAlert('Descarga Exitosa', `El archivo ${pdfFileName} se ha guardado en tu carpeta de descargas.`);
+          return;
+        }
+        throw new Error('Biblioteca html2pdf no disponible');
       } catch (err: any) {
-        console.warn('Fallback a impresión nativa por:', err);
+        console.warn('Ejecutando exportación vectorial nativa por:', err);
         const originalTitle = document.title;
         const cleanTitle = (programa.title || 'Actividad').trim().replace(/[^a-zA-Z0-9_\-áéíóúÁÉÍÓÚñÑ ]/g, '_').replace(/\s+/g, '_');
         const cleanDate = (programa.date || new Date().toISOString().split('T')[0]).replace(/[^a-zA-Z0-9_\-]/g, '_');
         const fileUnitLabel = (programa.unit || 'CLAN').toUpperCase();
         document.title = `Programa_${fileUnitLabel}_${cleanTitle}_${cleanDate}`;
+
+        const existingStyle = document.getElementById('scout-print-styles');
+        const cssContent = `
+          @page {
+            size: letter portrait;
+            margin: 0mm !important;
+          }
+          @media print {
+            @page {
+              size: letter portrait;
+              margin: 0mm !important;
+            }
+            html, body {
+              margin: 0 !important;
+              padding: 0 !important;
+              width: 100% !important;
+              height: 100% !important;
+              background: #ffffff !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            body * {
+              visibility: hidden !important;
+            }
+            #printable-scout-programa, #printable-scout-programa * {
+              visibility: visible !important;
+            }
+            #printable-scout-programa {
+              position: fixed !important;
+              left: 0 !important;
+              top: 0 !important;
+              right: 0 !important;
+              bottom: 0 !important;
+              width: 100vw !important;
+              height: 100vh !important;
+              max-width: 100vw !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              box-shadow: none !important;
+              border: none !important;
+              border-radius: 0 !important;
+              background: #ffffff !important;
+              display: flex !important;
+              flex-direction: column !important;
+              justify-content: flex-start !important;
+              overflow: hidden !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              page-break-after: avoid !important;
+              page-break-inside: avoid !important;
+              z-index: 999999 !important;
+            }
+            #asv-print-header,
+            #asv-print-header img,
+            #asv-print-header > div {
+              width: 100% !important;
+              height: 82px !important;
+              min-height: 82px !important;
+              max-height: 82px !important;
+              display: block !important;
+              object-fit: fill !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              flex-shrink: 0 !important;
+            }
+            #asv-print-footer,
+            #asv-print-footer img,
+            #asv-print-footer > div {
+              width: 100% !important;
+              height: 86px !important;
+              min-height: 86px !important;
+              max-height: 86px !important;
+              display: block !important;
+              object-fit: fill !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              flex-shrink: 0 !important;
+              margin-top: auto !important;
+            }
+            #asv-print-content {
+              padding-left: 28px !important;
+              padding-right: 28px !important;
+              padding-top: 4px !important;
+              padding-bottom: 4px !important;
+              flex: 1 1 auto !important;
+              overflow: hidden !important;
+            }
+          }
+        `;
+        if (!existingStyle) {
+          const style = document.createElement('style');
+          style.id = 'scout-print-styles';
+          style.innerHTML = cssContent;
+          document.head.appendChild(style);
+        } else {
+          existingStyle.innerHTML = cssContent;
+        }
+
         window.print();
-        setTimeout(() => { document.title = originalTitle; }, 2000);
+        setTimeout(() => { document.title = originalTitle; }, 2500);
       } finally {
         setDownloadingPdf(false);
       }
