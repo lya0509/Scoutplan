@@ -17,6 +17,8 @@ export interface Profile {
   unit: Unit | null;
   group_name: string | null;
   birth_date?: string | null;
+  promise_date?: string | null;
+  join_date?: string | null;
   membership_expires_at?: string | null;
   membership_status?: 'none' | 'pending_approval' | 'approved' | 'rejected' | null;
   membership_rejected_reason?: string | null;

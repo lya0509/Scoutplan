@@ -295,18 +295,24 @@ export default function RegisterScreen({ navigation }: any) {
       });
 
       if (signUpData?.user) {
-        await supabase.from('profiles').upsert({
+        const profilePayload = {
           id: signUpData.user.id,
           name: name.trim(),
           cedula: cedula.trim(),
           email: emailToUse,
-          role: 'scout',
+          role: 'scout' as const,
           unit: selectedUnit,
           group_name: selectedGroup,
           region: selectedRegion,
           district: selectedDistrict,
           birth_date: birthDate,
-        });
+        };
+        try {
+          await supabase.from('profiles').upsert(profilePayload);
+          await supabase.from('profiles').update(profilePayload).eq('id', signUpData.user.id);
+        } catch (e) {
+          console.warn('Aviso guardando perfil inicial:', e);
+        }
       }
 
       if (error) {

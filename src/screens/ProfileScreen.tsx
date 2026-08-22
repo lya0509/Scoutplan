@@ -170,7 +170,7 @@ const progStyles = StyleSheet.create({
 });
 
 export default function ProfileScreen() {
-  const { user } = useAuth();
+  const { user, refreshProfile, updateUserProfile } = useAuth();
   const { isDarkMode, theme } = useTheme();
 
   const [cedula,      setCedula]      = useState('');
@@ -214,26 +214,26 @@ export default function ProfileScreen() {
       .single();
     if (data) {
       setCedula(data.cedula || user.cedula || '');
-      setBirthDate(data.birth_date || '');
-      setPromiseDate(data.promise_date || '');
-      setJoinDate(data.join_date || '');
-      setPhone(data.phone || '');
-      setMembershipExpiresAt(data.membership_expires_at || '');
-      setMembershipStatus(data.membership_status || 'none');
+      setBirthDate(data.birth_date || user.birth_date || '');
+      setPromiseDate(data.promise_date || user.promise_date || '');
+      setJoinDate(data.join_date || user.join_date || '');
+      setPhone(data.phone || user.phone || '');
+      setMembershipExpiresAt(data.membership_expires_at || user.membership_expires_at || '');
+      setMembershipStatus(data.membership_status || user.membership_status || 'none');
       setMembershipRejectedReason(data.membership_rejected_reason || '');
       if (data.avatar_url) setScoutAvatarUrl(data.avatar_url);
       if (data.custom_avatar_url) setCustomAvatarUrl(data.custom_avatar_url);
-      if (data.birth_date) {
-        const [y,m,d] = data.birth_date.split('-');
-        setBYear(+y); setBMonth(+m); setBDay(+d);
+      if (data.birth_date || user.birth_date) {
+        const [y,m,d] = (data.birth_date || user.birth_date || '').split('-');
+        if (y && m && d) { setBYear(+y); setBMonth(+m); setBDay(+d); }
       }
-      if (data.promise_date) {
-        const [y,m,d] = data.promise_date.split('-');
-        setPYear(+y); setPMonth(+m); setPDay(+d);
+      if (data.promise_date || user.promise_date) {
+        const [y,m,d] = (data.promise_date || user.promise_date || '').split('-');
+        if (y && m && d) { setPYear(+y); setPMonth(+m); setPDay(+d); }
       }
-      if (data.join_date) {
-        const [y,m,d] = data.join_date.split('-');
-        setJYear(+y); setJMonth(+m); setJDay(+d);
+      if (data.join_date || user.join_date) {
+        const [y,m,d] = (data.join_date || user.join_date || '').split('-');
+        if (y && m && d) { setJYear(+y); setJMonth(+m); setJDay(+d); }
       }
     }
     setLoading(false);
@@ -241,11 +241,13 @@ export default function ProfileScreen() {
 
   const handlePhotoChange = async (type: 'scout' | 'custom', newUrl: string) => {
     if (!user?.id) return;
+    const fieldToUpdate = type === 'scout' ? 'avatar_url' : 'custom_avatar_url';
     if (type === 'scout') {
       setScoutAvatarUrl(newUrl);
     } else {
       setCustomAvatarUrl(newUrl);
     }
+    updateUserProfile({ [fieldToUpdate]: newUrl });
 
     try {
       const fileName = `${type}_avatar_${user.id}_${Date.now()}.jpg`;
@@ -256,8 +258,9 @@ export default function ProfileScreen() {
         newUrl
       );
 
-      const fieldToUpdate = type === 'scout' ? 'avatar_url' : 'custom_avatar_url';
       await supabase.from('profiles').update({ [fieldToUpdate]: uploadedUrl }).eq('id', user.id);
+      updateUserProfile({ [fieldToUpdate]: uploadedUrl });
+      await refreshProfile();
     } catch (err: any) {
       console.warn('Error subiendo foto de perfil:', err);
     }
@@ -287,6 +290,7 @@ export default function ProfileScreen() {
   const saveField = async (field: string, val: string) => {
     if (!user?.id) return;
     setSaving(true);
+    updateUserProfile({ [field]: val });
     const { error } = await supabase
       .from('profiles')
       .update({ [field]: val })
@@ -295,6 +299,7 @@ export default function ProfileScreen() {
     if (error) {
       showAlert('Error al guardar', error.message);
     } else {
+      await refreshProfile();
       loadProfile();
     }
   };
@@ -430,7 +435,7 @@ export default function ProfileScreen() {
         />
         <EditRow
           label="Grupo Scout"
-          value={user?.group_name ? `Grupo ${user.group_name}` : ''}
+          value={user?.group_name ? (user.group_name.trim().toLowerCase().startsWith('grupo') ? user.group_name.trim() : `Grupo ${user.group_name.trim()}`) : ''}
           readonly
           isDarkMode={isDarkMode}
         />

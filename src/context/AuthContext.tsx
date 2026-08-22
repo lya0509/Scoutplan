@@ -11,6 +11,8 @@ interface AuthContextData {
   session: any | null;
   signOut: () => Promise<void>;
   isLoading: boolean;
+  refreshProfile: () => Promise<void>;
+  updateUserProfile: (updates: Partial<Profile>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -43,11 +45,11 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     loadCachedAuth();
 
     // 2. Obtener sesión de Supabase en segundo plano
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        AsyncStorage.setItem(CACHED_SESSION_KEY, JSON.stringify(session)).catch(() => {});
-        fetchProfile(session.user.id);
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      if (currentSession?.user) {
+        AsyncStorage.setItem(CACHED_SESSION_KEY, JSON.stringify(currentSession)).catch(() => {});
+        fetchProfile(currentSession.user.id, currentSession);
       } else {
         setIsLoading(false);
       }
@@ -56,11 +58,11 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     });
 
     // 3. Escuchar cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user) {
-        AsyncStorage.setItem(CACHED_SESSION_KEY, JSON.stringify(session)).catch(() => {});
-        fetchProfile(session.user.id);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession);
+      if (currentSession?.user) {
+        AsyncStorage.setItem(CACHED_SESSION_KEY, JSON.stringify(currentSession)).catch(() => {});
+        fetchProfile(currentSession.user.id, currentSession);
       } else if (_event === 'SIGNED_OUT') {
         setUser(null);
         AsyncStorage.removeItem(CACHED_PROFILE_KEY).catch(() => {});
@@ -72,8 +74,11 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, activeSession?: any) => {
     try {
+      const sess = activeSession || session;
+      const meta = sess?.user?.user_metadata || {};
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -81,20 +86,70 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         .single();
         
       if (data) {
+        const resolvedEmail = data.email || sess?.user?.email || meta.email || '';
+        const resolvedCedula = data.cedula || meta.cedula || null;
+        const resolvedBirthDate = data.birth_date || meta.birth_date || null;
+        const resolvedRegion = data.region || meta.region || null;
+        const resolvedDistrict = data.district || meta.district || null;
+        const resolvedGroupName = data.group_name || meta.group_name || null;
+        const resolvedUnit = data.unit || meta.unit || null;
+        const resolvedName = data.name || meta.name || 'Scout';
+
         const mergedUser: Profile = {
           ...data,
-          email: data.email || session?.user?.email || ''
+          name: resolvedName,
+          email: resolvedEmail,
+          cedula: resolvedCedula,
+          birth_date: resolvedBirthDate,
+          region: resolvedRegion,
+          district: resolvedDistrict,
+          group_name: resolvedGroupName,
+          unit: resolvedUnit,
         };
+
         setUser(mergedUser);
         await AsyncStorage.setItem(CACHED_PROFILE_KEY, JSON.stringify(mergedUser));
+
+        // Auto-reparación en Supabase si faltaban datos en la tabla profiles
+        const needsDbSync = 
+          (!data.cedula && resolvedCedula) ||
+          (!data.birth_date && resolvedBirthDate) ||
+          (!data.region && resolvedRegion) ||
+          (!data.district && resolvedDistrict) ||
+          (!data.email && resolvedEmail);
+
+        if (needsDbSync) {
+          supabase.from('profiles').update({
+            cedula: resolvedCedula,
+            birth_date: resolvedBirthDate,
+            region: resolvedRegion,
+            district: resolvedDistrict,
+            email: resolvedEmail,
+          }).eq('id', userId).then(() => {});
+        }
       } else if (error && error.code === 'PGRST116') {
-        setTimeout(() => fetchProfile(userId), 1000);
+        setTimeout(() => fetchProfile(userId, activeSession), 1000);
       }
     } catch (e: any) {
       console.log('Modo Offline: Utilizando perfil almacenado localmente');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const refreshProfile = async () => {
+    if (session?.user?.id) {
+      await fetchProfile(session.user.id, session);
+    }
+  };
+
+  const updateUserProfile = async (updates: Partial<Profile>) => {
+    setUser(prev => {
+      if (!prev) return null;
+      const updated = { ...prev, ...updates };
+      AsyncStorage.setItem(CACHED_PROFILE_KEY, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
   };
 
   const signOut = async () => {
@@ -113,7 +168,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, signOut, isLoading }}>
+    <AuthContext.Provider value={{ user, session, signOut, isLoading, refreshProfile, updateUserProfile }}>
       {children}
     </AuthContext.Provider>
   );
