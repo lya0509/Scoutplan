@@ -6,13 +6,19 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import HelpFloatingFAB from '../components/HelpFloatingFAB';
 import { supabase } from '../lib/supabaseClient';
+import { dataService } from '../lib/dataService';
 import { colors, UNIT_COLORS } from '../theme/colors';
 import {
   Users, Award, Calendar, Calendar as CalendarIcon, Moon, Sun, FileText,
-  ChevronRight, ChevronDown, ChevronUp, Camera, BookOpen, Palette, Plus, X, Shield, ShieldCheck, Flag, Sparkles
+  ChevronRight, ChevronDown, ChevronUp, Camera, BookOpen, Palette, Plus, X,
+  Shield, ShieldCheck, Flag, Sparkles, Download, Printer, Search, CheckCircle2,
+  AlertTriangle, Clock, RefreshCw, Eye, CheckCircle, Check, Phone
 } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
+import {
+  exportCensoExcel, exportPadronMedicoExcel, exportMembresiasExcel, printDocumentHTML, MemberRecord
+} from '../utils/exportHelpers';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
   if (!dateStr) return 'Seleccionar fecha en el calendario';
@@ -61,7 +67,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
     setExpanded(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  // Modal para agregar actividad grupal o asamblea de scouters
+  // 1. Modal para agregar actividad grupal o asamblea de scouters
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [eventTitle, setEventTitle] = useState('');
   const [eventDesc, setEventDesc] = useState('');
@@ -69,6 +75,25 @@ export default function JefeGrupoScreen({ navigation }: any) {
   const [eventUnit, setEventUnit] = useState<'grupo' | 'scouters' | 'manada' | 'tropa' | 'comunidad' | 'clan'>('grupo');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [savingEvent, setSavingEvent] = useState(false);
+
+  // 2. Modal Censo y Nómina Oficial
+  const [showCensoModal, setShowCensoModal] = useState(false);
+  const [censoSearch, setCensoSearch] = useState('');
+  const [censoUnitFilter, setCensoUnitFilter] = useState('all');
+
+  // 3. Modal Padrón de Emergencia Médica
+  const [showPadronMedicoModal, setShowPadronMedicoModal] = useState(false);
+  const [medicoSearch, setMedicoSearch] = useState('');
+  const [medicoUnitFilter, setMedicoUnitFilter] = useState('all');
+
+  // 4. Modal Semáforo de Membresías y Carnets
+  const [showSemaforoModal, setShowSemaforoModal] = useState(false);
+  const [semaforoSearch, setSemaforoSearch] = useState('');
+  const [semaforoStatusFilter, setSemaforoStatusFilter] = useState<'all' | 'pending' | 'expiring' | 'expired' | 'active'>('all');
+  const [selectedMemberForMembership, setSelectedMemberForMembership] = useState<any>(null);
+  const [membershipDateInput, setMembershipDateInput] = useState('');
+  const [showMembershipDatePicker, setShowMembershipDatePicker] = useState(false);
+  const [approvingBatch, setApprovingBatch] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -159,7 +184,106 @@ export default function JefeGrupoScreen({ navigation }: any) {
     }
   };
 
-  // Filtrado de miembros por Rama y Rol
+  // Acciones de Membresías
+  const handleApproveMembership = async (memberId: string) => {
+    await dataService.approveMembershipDate(memberId);
+    showAlert('Membresía Aprobada', 'El carnet del miembro ha sido validado institucionalmente.');
+    loadStatsAndMembers();
+  };
+
+  const handleBatchApprove = async () => {
+    const pending = allMembers.filter(m => m.membership_status === 'pending_approval' || m.membership_status === 'pending');
+    if (pending.length === 0) {
+      showAlert('Sin Pendientes', 'No hay solicitudes de membresía pendientes por aprobar.');
+      return;
+    }
+
+    setApprovingBatch(true);
+    try {
+      for (const p of pending) {
+        await dataService.approveMembershipDate(p.id);
+      }
+      showAlert('¡Aprobación Masiva Exitosa!', `Se han aprobado institucionalmente ${pending.length} membresías.`);
+      loadStatsAndMembers();
+    } catch (e: any) {
+      showAlert('Error', e?.message || 'Error durante la aprobación masiva.');
+    } finally {
+      setApprovingBatch(false);
+    }
+  };
+
+  const handleSaveMembershipDate = async () => {
+    if (!selectedMemberForMembership) return;
+    const finalDate = membershipDateInput || new Date().toISOString().split('T')[0];
+    await dataService.proposeMembershipDate(selectedMemberForMembership.id, finalDate);
+    await dataService.approveMembershipDate(selectedMemberForMembership.id);
+    showAlert('Fecha Asignada', `Membresía validada para ${selectedMemberForMembership.name} hasta ${formatDateWithDayOfWeek(finalDate)}`);
+    setSelectedMemberForMembership(null);
+    loadStatsAndMembers();
+  };
+
+  // Cálculos de Semáforo de Membresías
+  const today = new Date();
+  const semaforoCounts = allMembers.reduce(
+    (acc, m) => {
+      const isPending = m.membership_status === 'pending_approval' || m.membership_status === 'pending';
+      if (isPending) {
+        acc.pending++;
+        return acc;
+      }
+      if (!m.membership_expires_at) {
+        acc.expired++;
+        return acc;
+      }
+      const expDate = new Date(m.membership_expires_at);
+      const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) {
+        acc.expired++;
+      } else if (diffDays <= 30) {
+        acc.expiring++;
+      } else {
+        acc.active++;
+      }
+      return acc;
+    },
+    { active: 0, expiring: 0, expired: 0, pending: 0 }
+  );
+
+  // Filtrado de Censo
+  const filteredCensoMembers = allMembers.filter(m => {
+    const matchQuery = (m.name || '').toLowerCase().includes(censoSearch.toLowerCase()) || (m.cedula || '').includes(censoSearch);
+    const matchUnit = censoUnitFilter === 'all' ? true : (m.unit || '').toLowerCase() === censoUnitFilter.toLowerCase();
+    return matchQuery && matchUnit;
+  });
+
+  // Filtrado de Padrón Médico
+  const filteredMedicoMembers = allMembers.filter(m => {
+    const matchQuery = (m.name || '').toLowerCase().includes(medicoSearch.toLowerCase()) || (m.cedula || '').includes(medicoSearch);
+    const matchUnit = medicoUnitFilter === 'all' ? true : (m.unit || '').toLowerCase() === medicoUnitFilter.toLowerCase();
+    return matchQuery && matchUnit;
+  });
+
+  // Filtrado de Semáforo
+  const filteredSemaforoMembers = allMembers.filter(m => {
+    const matchQuery = (m.name || '').toLowerCase().includes(semaforoSearch.toLowerCase()) || (m.cedula || '').includes(semaforoSearch);
+    if (!matchQuery) return false;
+
+    const isPending = m.membership_status === 'pending_approval' || m.membership_status === 'pending';
+    if (semaforoStatusFilter === 'pending') return isPending;
+
+    if (!m.membership_expires_at) return semaforoStatusFilter === 'all' || semaforoStatusFilter === 'expired';
+
+    const expDate = new Date(m.membership_expires_at);
+    const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (semaforoStatusFilter === 'expired') return diffDays < 0;
+    if (semaforoStatusFilter === 'expiring') return diffDays >= 0 && diffDays <= 30;
+    if (semaforoStatusFilter === 'active') return diffDays > 30 && !isPending;
+
+    return true;
+  });
+
+  // Filtrado de miembros por Rama y Rol para el acordeón principal
   const getBranchData = (branchKey: string) => {
     const isManada = branchKey === 'manada';
     const isTropa = branchKey === 'tropa';
@@ -290,7 +414,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* BARRA DE ACCIONES RÁPIDAS DE JEFATURA */}
+        {/* BARRA DE ACCIONES RÁPIDAS Y HERRAMIENTAS INSTITUCIONALES */}
         <View style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
             {/* BOTÓN DESTACADO PARA AGREGAR ACTIVIDADES GRUPALES / ASAMBLEAS */}
@@ -301,6 +425,38 @@ export default function JefeGrupoScreen({ navigation }: any) {
             >
               <Plus size={18} color="#ffffff" />
               <Text style={styles.primaryActionBtnText}>+ Nueva Actividad / Asamblea</Text>
+            </TouchableOpacity>
+
+            {/* 1. CENSO Y NÓMINA OFICIAL */}
+            <TouchableOpacity
+              style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => setShowCensoModal(true)}
+              activeOpacity={0.8}
+            >
+              <Users size={18} color="#9333ea" />
+              <Text style={[styles.quickToolBtnText, { color: theme.text }]}>📊 Censo y Nómina</Text>
+            </TouchableOpacity>
+
+            {/* 2. PADRÓN DE EMERGENCIA MÉDICA */}
+            <TouchableOpacity
+              style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => setShowPadronMedicoModal(true)}
+              activeOpacity={0.8}
+            >
+              <ShieldCheck size={18} color="#dc2626" />
+              <Text style={[styles.quickToolBtnText, { color: theme.text }]}>🏥 Padrón Médico</Text>
+            </TouchableOpacity>
+
+            {/* 3. SEMÁFORO DE MEMBRESÍAS Y CARNETS */}
+            <TouchableOpacity
+              style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => setShowSemaforoModal(true)}
+              activeOpacity={0.8}
+            >
+              <Clock size={18} color="#d97706" />
+              <Text style={[styles.quickToolBtnText, { color: theme.text }]}>
+                🚦 Semáforo Carnets {semaforoCounts.pending > 0 ? `(${semaforoCounts.pending})` : ''}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -400,7 +556,6 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {expanded.manada && (
                 <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  {/* Scouters de Manada */}
                   <Text style={styles.subCategoryTitle}>👔 Scouters / Dirigentes de Manada ({manadaData.scouters.length})</Text>
                   {manadaData.scouters.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay scouters registrados en Manada.</Text>
@@ -408,7 +563,6 @@ export default function JefeGrupoScreen({ navigation }: any) {
                     manadaData.scouters.map(s => renderMemberCard(s, 'Dirigente de Manada / Akela', true))
                   )}
 
-                  {/* Lobatos (Masculinos) */}
                   <Text style={[styles.subCategoryTitle, { marginTop: 12 }]}>🐺 Lobatos ({manadaData.lobatos?.length || 0})</Text>
                   {manadaData.lobatos?.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay lobatos registrados.</Text>
@@ -416,7 +570,6 @@ export default function JefeGrupoScreen({ navigation }: any) {
                     manadaData.lobatos?.map(s => renderMemberCard(s, 'Lobato • Manada'))
                   )}
 
-                  {/* Lobeznas (Femeninas) */}
                   <Text style={[styles.subCategoryTitle, { marginTop: 12 }]}>🐺 Lobeznas ({manadaData.lobeznas?.length || 0})</Text>
                   {manadaData.lobeznas?.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay lobeznas registradas.</Text>
@@ -445,7 +598,6 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {expanded.tropa && (
                 <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  {/* Scouters de Tropa */}
                   <Text style={styles.subCategoryTitle}>👔 Scouters de Tropa ({tropaData.scouters.length})</Text>
                   {tropaData.scouters.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay scouters registrados en Tropa.</Text>
@@ -453,7 +605,6 @@ export default function JefeGrupoScreen({ navigation }: any) {
                     tropaData.scouters.map(s => renderMemberCard(s, 'Dirigente de Tropa', true))
                   )}
 
-                  {/* Scouts de Tropa */}
                   <Text style={[styles.subCategoryTitle, { marginTop: 12 }]}>⚜️ Scouts ({tropaData.youth?.length || 0})</Text>
                   {tropaData.youth?.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay scouts registrados en Tropa.</Text>
@@ -482,7 +633,6 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {expanded.caminantes && (
                 <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  {/* Scouters de Caminantes */}
                   <Text style={styles.subCategoryTitle}>👔 Scouters de Caminantes ({caminantesData.scouters.length})</Text>
                   {caminantesData.scouters.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay scouters registrados en Caminantes.</Text>
@@ -490,7 +640,6 @@ export default function JefeGrupoScreen({ navigation }: any) {
                     caminantesData.scouters.map(s => renderMemberCard(s, 'Dirigente de Caminantes', true))
                   )}
 
-                  {/* Jóvenes Caminantes */}
                   <Text style={[styles.subCategoryTitle, { marginTop: 12 }]}>🧭 Caminantes ({caminantesData.youth?.length || 0})</Text>
                   {caminantesData.youth?.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay jóvenes registrados en Caminantes.</Text>
@@ -519,7 +668,6 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {expanded.clan && (
                 <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  {/* Scouters de Clan */}
                   <Text style={styles.subCategoryTitle}>👔 Scouters / Asesores de Clan ({clanData.scouters.length})</Text>
                   {clanData.scouters.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay asesores registrados en Clan.</Text>
@@ -527,7 +675,6 @@ export default function JefeGrupoScreen({ navigation }: any) {
                     clanData.scouters.map(s => renderMemberCard(s, 'Asesor Rover / Scouter de Clan', true))
                   )}
 
-                  {/* Rovers */}
                   <Text style={[styles.subCategoryTitle, { marginTop: 12 }]}>🚩 Rovers ({clanData.youth?.length || 0})</Text>
                   {clanData.youth?.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay rovers registrados en el Clan.</Text>
@@ -566,7 +713,523 @@ export default function JefeGrupoScreen({ navigation }: any) {
         )}
       </ScrollView>
 
-      {/* MODAL REGISTRAR ACTIVIDAD GRUPAL / ASAMBLEA */}
+      {/* ========================================================================= */}
+      {/* MODAL 1: CENSO Y NÓMINA OFICIAL DEL GRUPO                                */}
+      {/* ========================================================================= */}
+      <Modal visible={showCensoModal} transparent animationType="slide" onRequestClose={() => setShowCensoModal(false)}>
+        <View style={modalStyles.overlay}>
+          <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', maxWidth: 840, maxHeight: '92%' }]}>
+            <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Users color="#9333ea" size={22} style={{ marginRight: 8 }} />
+                <View>
+                  <Text style={[modalStyles.title, { color: theme.text }]}>Censo y Nómina Oficial del Grupo</Text>
+                  <Text style={{ fontSize: 11, color: theme.subText }}>{user?.group_name || 'Grupo Scout'} • {filteredCensoMembers.length} Miembros filtrados</Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => setShowCensoModal(false)} style={{ padding: 6 }}>
+                <X color={isDarkMode ? '#a1a1aa' : '#64748b'} size={24} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+              {/* BUSCADOR Y FILTRO */}
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 10 }}>
+                <View style={[styles.searchBox, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
+                  <Search size={16} color={theme.subText} />
+                  <TextInput
+                    style={[styles.searchInput, { color: theme.text }]}
+                    placeholder="Buscar por nombre o cédula..."
+                    placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                    value={censoSearch}
+                    onChangeText={setCensoSearch}
+                  />
+                  {censoSearch ? (
+                    <TouchableOpacity onPress={() => setCensoSearch('')}>
+                      <X size={16} color={theme.subText} />
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+
+                {/* BOTONES DE EXPORTACIÓN */}
+                <TouchableOpacity
+                  style={[styles.exportBtn, { backgroundColor: '#15803d' }]}
+                  onPress={() => exportCensoExcel(filteredCensoMembers, user?.group_name || 'Grupo Scout')}
+                >
+                  <Download size={15} color="white" />
+                  <Text style={styles.exportBtnText}>Excel (.XLS)</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.exportBtn, { backgroundColor: primaryColor }]}
+                  onPress={() => {
+                    const headers = ['#', 'Nombre Completo', 'Cédula', 'Rol', 'Rama', 'Género', 'F. Nac.', 'F. Promesa', 'Teléfono', 'Carnet'];
+                    const rows = filteredCensoMembers.map((m, idx) => [
+                      idx + 1,
+                      m.name || 'Sin Nombre',
+                      m.cedula || 'N/A',
+                      m.role === 'jefe_grupo' ? 'Jefe de Grupo' : m.role === 'scouter' ? 'Scouter' : 'Scout',
+                      (m.unit || 'General').toUpperCase(),
+                      m.gender || 'N/A',
+                      m.birth_date || 'N/A',
+                      m.promise_date || 'N/A',
+                      m.phone || 'N/A',
+                      m.membership_status === 'approved' ? `Vigente (${m.membership_expires_at || ''})` : 'Sin Registro'
+                    ]);
+                    printDocumentHTML('CENSO Y NÓMINA OFICIAL DE MIEMBROS', 'REGISTRO INSTITUCIONAL SCOUT', user?.group_name || 'Grupo Scout', headers, rows, primaryColor);
+                  }}
+                >
+                  <Printer size={15} color="white" />
+                  <Text style={styles.exportBtnText}>PDF / Imprimir</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* FILTROS POR RAMA */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                {[
+                  { id: 'all', label: 'Todas las Ramas' },
+                  { id: 'manada', label: '🟡 Manada' },
+                  { id: 'tropa', label: '🟢 Tropa' },
+                  { id: 'caminantes', label: '🔵 Caminantes' },
+                  { id: 'clan', label: '🔴 Clan' }
+                ].map(item => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.filterTag,
+                      { backgroundColor: theme.inputBg, borderColor: theme.border },
+                      censoUnitFilter === item.id && { backgroundColor: primaryColor, borderColor: primaryColor }
+                    ]}
+                    onPress={() => setCensoUnitFilter(item.id)}
+                  >
+                    <Text style={[styles.filterTagText, { color: theme.subText }, censoUnitFilter === item.id && { color: 'white', fontWeight: 'bold' }]}>
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* TABLA DE CENSO */}
+            <ScrollView style={{ paddingHorizontal: 16 }}>
+              {filteredCensoMembers.length === 0 ? (
+                <Text style={{ textAlign: 'center', padding: 30, color: theme.subText, fontStyle: 'italic' }}>
+                  No se encontraron miembros con los filtros seleccionados.
+                </Text>
+              ) : (
+                filteredCensoMembers.map((m, idx) => (
+                  <View key={m.id} style={[styles.tableRow, { backgroundColor: isDarkMode ? '#1f1f23' : '#f8fafc', borderColor: theme.border }]}>
+                    <Text style={[styles.tableIndex, { color: theme.subText }]}>{idx + 1}</Text>
+                    <View style={{ flex: 2 }}>
+                      <Text style={[styles.tableMainText, { color: theme.text }]}>{m.name}</Text>
+                      <Text style={{ fontSize: 11, color: theme.subText }}>C.I: {m.cedula || 'Sin C.I.'}</Text>
+                    </View>
+                    <View style={{ flex: 1.5 }}>
+                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: primaryColor }}>{(m.unit || 'General').toUpperCase()}</Text>
+                      <Text style={{ fontSize: 10, color: theme.subText }}>{m.role === 'scouter' ? 'Dirigente' : m.role === 'jefe_grupo' ? 'Jefe Grupo' : 'Scout'}</Text>
+                    </View>
+                    <View style={{ flex: 1.5 }}>
+                      <Text style={{ fontSize: 11, color: theme.text }}>Prom: {m.promise_date || 'N/A'}</Text>
+                      <Text style={{ fontSize: 10, color: theme.subText }}>Nac: {m.birth_date || 'N/A'}</Text>
+                    </View>
+                    <View style={{ flex: 1.5, alignItems: 'flex-end' }}>
+                      <Text style={{ fontSize: 11, color: theme.text, fontWeight: '500' }}>{m.phone || 'Sin tlf'}</Text>
+                      <Text style={{ fontSize: 10, color: m.membership_status === 'approved' ? '#16a34a' : '#dc2626', fontWeight: 'bold' }}>
+                        {m.membership_status === 'approved' ? '✓ Carnet' : 'Sin Carnet'}
+                      </Text>
+                    </View>
+                  </View>
+                ))
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ========================================================================= */}
+      {/* MODAL 2: PADRÓN DE EMERGENCIA MÉDICA Y SALUD                            */}
+      {/* ========================================================================= */}
+      <Modal visible={showPadronMedicoModal} transparent animationType="slide" onRequestClose={() => setShowPadronMedicoModal(false)}>
+        <View style={modalStyles.overlay}>
+          <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', maxWidth: 880, maxHeight: '92%' }]}>
+            <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <ShieldCheck color="#dc2626" size={22} style={{ marginRight: 8 }} />
+                <View>
+                  <Text style={[modalStyles.title, { color: theme.text }]}>Padrón de Emergencia Médica y Contactos</Text>
+                  <Text style={{ fontSize: 11, color: theme.subText }}>Registro médico prioritario para salidas y campamentos • {filteredMedicoMembers.length} Miembros</Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => setShowPadronMedicoModal(false)} style={{ padding: 6 }}>
+                <X color={isDarkMode ? '#a1a1aa' : '#64748b'} size={24} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+              {/* BUSCADOR Y EXPORTACIÓN */}
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 10 }}>
+                <View style={[styles.searchBox, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
+                  <Search size={16} color={theme.subText} />
+                  <TextInput
+                    style={[styles.searchInput, { color: theme.text }]}
+                    placeholder="Buscar scout, alergia o tipo de sangre..."
+                    placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                    value={medicoSearch}
+                    onChangeText={setMedicoSearch}
+                  />
+                  {medicoSearch ? (
+                    <TouchableOpacity onPress={() => setMedicoSearch('')}>
+                      <X size={16} color={theme.subText} />
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.exportBtn, { backgroundColor: '#15803d' }]}
+                  onPress={() => exportPadronMedicoExcel(filteredMedicoMembers, user?.group_name || 'Grupo Scout')}
+                >
+                  <Download size={15} color="white" />
+                  <Text style={styles.exportBtnText}>Excel (.XLS)</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.exportBtn, { backgroundColor: '#dc2626' }]}
+                  onPress={() => {
+                    const headers = ['#', 'Scout / Dirigente', 'Rama', 'Tipo Sangre', 'Alergias', 'Contacto Emergencia', 'Teléfono', 'Seguro'];
+                    const rows = filteredMedicoMembers.map((m, idx) => {
+                      const med = m.medical_data || {};
+                      let allergies = 'Ninguna';
+                      if (med.allergies) {
+                        const list = [];
+                        if (med.allergies.medicamento) list.push(`Med: ${med.allergies.medicamento}`);
+                        if (med.allergies.alimento) list.push(`Alim: ${med.allergies.alimento}`);
+                        if (med.allergies.picada) list.push(`Picada: ${med.allergies.picada}`);
+                        if (list.length > 0) allergies = list.join(', ');
+                      }
+                      return [
+                        idx + 1,
+                        m.name,
+                        (m.unit || 'General').toUpperCase(),
+                        med.bloodType || 'Sin Registrar',
+                        allergies,
+                        med.emergencyContactName || 'Sin Registrar',
+                        med.emergencyPhonePersonal || med.emergencyPhoneHome || m.phone || 'N/A',
+                        med.hasInsurance ? 'Sí' : 'No'
+                      ];
+                    });
+                    printDocumentHTML('PADRÓN DE EMERGENCIA MÉDICA Y SALUD', 'FICHA OFICIAL DE CONTINGENCIA Y CAMPAMENTOS', user?.group_name || 'Grupo Scout', headers, rows, '#dc2626');
+                  }}
+                >
+                  <Printer size={15} color="white" />
+                  <Text style={styles.exportBtnText}>PDF / Imprimir</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* FILTROS POR RAMA */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                {[
+                  { id: 'all', label: 'Todas las Ramas' },
+                  { id: 'manada', label: '🟡 Manada' },
+                  { id: 'tropa', label: '🟢 Tropa' },
+                  { id: 'caminantes', label: '🔵 Caminantes' },
+                  { id: 'clan', label: '🔴 Clan' }
+                ].map(item => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.filterTag,
+                      { backgroundColor: theme.inputBg, borderColor: theme.border },
+                      medicoUnitFilter === item.id && { backgroundColor: '#dc2626', borderColor: '#dc2626' }
+                    ]}
+                    onPress={() => setMedicoUnitFilter(item.id)}
+                  >
+                    <Text style={[styles.filterTagText, { color: theme.subText }, medicoUnitFilter === item.id && { color: 'white', fontWeight: 'bold' }]}>
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* TABLA DE PADRÓN MÉDICO */}
+            <ScrollView style={{ paddingHorizontal: 16 }}>
+              {filteredMedicoMembers.length === 0 ? (
+                <Text style={{ textAlign: 'center', padding: 30, color: theme.subText, fontStyle: 'italic' }}>
+                  No hay registros médicos que coincidan con la búsqueda.
+                </Text>
+              ) : (
+                filteredMedicoMembers.map((m, idx) => {
+                  const med = m.medical_data || {};
+                  const blood = med.bloodType || 'S/R';
+                  const hasAllergies = med.allergies && (med.allergies.medicamento || med.allergies.alimento || med.allergies.picada);
+                  const contactPhone = med.emergencyPhonePersonal || med.emergencyPhoneHome || m.phone || '';
+
+                  return (
+                    <View key={m.id} style={[styles.tableRow, { backgroundColor: isDarkMode ? '#1f1f23' : '#f8fafc', borderColor: theme.border }]}>
+                      <Text style={[styles.tableIndex, { color: theme.subText }]}>{idx + 1}</Text>
+                      <View style={{ flex: 2 }}>
+                        <Text style={[styles.tableMainText, { color: theme.text }]}>{m.name}</Text>
+                        <Text style={{ fontSize: 11, color: theme.subText }}>{(m.unit || 'General').toUpperCase()}</Text>
+                      </View>
+
+                      {/* BADGE SANGRE */}
+                      <View style={{ width: 60, alignItems: 'center', justifyContent: 'center' }}>
+                        <View style={{ backgroundColor: '#fee2e2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: '#fca5a5' }}>
+                          <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#b91c1c' }}>{blood}</Text>
+                        </View>
+                      </View>
+
+                      {/* ALERGIAS */}
+                      <View style={{ flex: 2, paddingHorizontal: 6 }}>
+                        <Text style={{ fontSize: 11, color: hasAllergies ? '#dc2626' : theme.subText, fontWeight: hasAllergies ? 'bold' : 'normal' }}>
+                          {hasAllergies ? `⚠️ ${med.allergies.medicamento || med.allergies.alimento || 'Alergia'}` : 'Sin Alergias'}
+                        </Text>
+                      </View>
+
+                      {/* CONTACTO DE EMERGENCIA */}
+                      <View style={{ flex: 2.2, alignItems: 'flex-end' }}>
+                        <Text style={{ fontSize: 11, color: theme.text, fontWeight: 'bold' }}>{med.emergencyContactName || 'Representante'}</Text>
+                        <Text style={{ fontSize: 11, color: primaryColor, fontWeight: '500' }}>📞 {contactPhone || 'Sin tlf'}</Text>
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ========================================================================= */}
+      {/* MODAL 3: SEMÁFORO DE MEMBRESÍAS Y CARNETS ASV                           */}
+      {/* ========================================================================= */}
+      <Modal visible={showSemaforoModal} transparent animationType="slide" onRequestClose={() => setShowSemaforoModal(false)}>
+        <View style={modalStyles.overlay}>
+          <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', maxWidth: 840, maxHeight: '92%' }]}>
+            <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Clock color="#d97706" size={22} style={{ marginRight: 8 }} />
+                <View>
+                  <Text style={[modalStyles.title, { color: theme.text }]}>Semáforo Institucional de Membresías y Carnets</Text>
+                  <Text style={{ fontSize: 11, color: theme.subText }}>Control de vigencia y aprobación de carnet ASV</Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => setShowSemaforoModal(false)} style={{ padding: 6 }}>
+                <X color={isDarkMode ? '#a1a1aa' : '#64748b'} size={24} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+              {/* TARJETAS DEL SEMÁFORO */}
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+                <TouchableOpacity
+                  style={[styles.trafficCard, { backgroundColor: '#dcfce7', borderColor: '#16a34a' }, semaforoStatusFilter === 'active' && styles.trafficCardActive]}
+                  onPress={() => setSemaforoStatusFilter(semaforoStatusFilter === 'active' ? 'all' : 'active')}
+                >
+                  <Text style={[styles.trafficNumber, { color: '#15803d' }]}>{semaforoCounts.active}</Text>
+                  <Text style={[styles.trafficLabel, { color: '#166534' }]}>🟢 Vigentes</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.trafficCard, { backgroundColor: '#fef3c7', borderColor: '#d97706' }, semaforoStatusFilter === 'expiring' && styles.trafficCardActive]}
+                  onPress={() => setSemaforoStatusFilter(semaforoStatusFilter === 'expiring' ? 'all' : 'expiring')}
+                >
+                  <Text style={[styles.trafficNumber, { color: '#b45309' }]}>{semaforoCounts.expiring}</Text>
+                  <Text style={[styles.trafficLabel, { color: '#92400e' }]}>🟡 Por Vencer (30d)</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.trafficCard, { backgroundColor: '#fee2e2', borderColor: '#dc2626' }, semaforoStatusFilter === 'expired' && styles.trafficCardActive]}
+                  onPress={() => setSemaforoStatusFilter(semaforoStatusFilter === 'expired' ? 'all' : 'expired')}
+                >
+                  <Text style={[styles.trafficNumber, { color: '#b91c1c' }]}>{semaforoCounts.expired}</Text>
+                  <Text style={[styles.trafficLabel, { color: '#991b1b' }]}>🔴 Vencidas / Sin Fecha</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.trafficCard, { backgroundColor: '#f3e8ff', borderColor: '#9333ea' }, semaforoStatusFilter === 'pending' && styles.trafficCardActive]}
+                  onPress={() => setSemaforoStatusFilter(semaforoStatusFilter === 'pending' ? 'all' : 'pending')}
+                >
+                  <Text style={[styles.trafficNumber, { color: '#7e22ce' }]}>{semaforoCounts.pending}</Text>
+                  <Text style={[styles.trafficLabel, { color: '#6b21a8' }]}>⏳ Por Aprobar</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* BOTÓN APROBACIÓN MASIVA EN LOTE SI HAY PENDIENTES */}
+              {semaforoCounts.pending > 0 && (
+                <TouchableOpacity
+                  style={[styles.batchApproveBtn, { backgroundColor: '#9333ea' }]}
+                  onPress={handleBatchApprove}
+                  disabled={approvingBatch}
+                >
+                  {approvingBatch ? <ActivityIndicator color="white" /> : (
+                    <>
+                      <CheckCircle2 size={16} color="white" style={{ marginRight: 6 }} />
+                      <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>
+                        Aprobar Todas las {semaforoCounts.pending} Membresías Pendientes en Lote
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
+
+              {/* BUSCADOR Y EXPORTACIÓN */}
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 10 }}>
+                <View style={[styles.searchBox, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
+                  <Search size={16} color={theme.subText} />
+                  <TextInput
+                    style={[styles.searchInput, { color: theme.text }]}
+                    placeholder="Buscar por nombre..."
+                    placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                    value={semaforoSearch}
+                    onChangeText={setSemaforoSearch}
+                  />
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.exportBtn, { backgroundColor: '#15803d' }]}
+                  onPress={() => exportMembresiasExcel(filteredSemaforoMembers, user?.group_name || 'Grupo Scout')}
+                >
+                  <Download size={15} color="white" />
+                  <Text style={styles.exportBtnText}>Excel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* TABLA DE SEMÁFORO */}
+            <ScrollView style={{ paddingHorizontal: 16 }}>
+              {filteredSemaforoMembers.length === 0 ? (
+                <Text style={{ textAlign: 'center', padding: 30, color: theme.subText, fontStyle: 'italic' }}>
+                  No hay registros con este estado de semáforo.
+                </Text>
+              ) : (
+                filteredSemaforoMembers.map((m, idx) => {
+                  const isPending = m.membership_status === 'pending_approval' || m.membership_status === 'pending';
+                  const hasDate = !!m.membership_expires_at;
+                  let statusBadge = { bg: '#fee2e2', border: '#fca5a5', text: '#b91c1c', label: '🔴 Vencida / S.F' };
+
+                  if (isPending) {
+                    statusBadge = { bg: '#f3e8ff', border: '#d8b4fe', text: '#7e22ce', label: '⏳ En Espera' };
+                  } else if (hasDate) {
+                    const expDate = new Date(m.membership_expires_at);
+                    const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                    if (diffDays > 30) {
+                      statusBadge = { bg: '#dcfce7', border: '#86efac', text: '#15803d', label: `🟢 Vigente (${diffDays}d)` };
+                    } else if (diffDays >= 0) {
+                      statusBadge = { bg: '#fef3c7', border: '#fde68a', text: '#b45309', label: `🟡 Vence en ${diffDays}d` };
+                    }
+                  }
+
+                  return (
+                    <View key={m.id} style={[styles.tableRow, { backgroundColor: isDarkMode ? '#1f1f23' : '#f8fafc', borderColor: theme.border }]}>
+                      <Text style={[styles.tableIndex, { color: theme.subText }]}>{idx + 1}</Text>
+                      <View style={{ flex: 2 }}>
+                        <Text style={[styles.tableMainText, { color: theme.text }]}>{m.name}</Text>
+                        <Text style={{ fontSize: 11, color: theme.subText }}>{(m.unit || 'General').toUpperCase()}</Text>
+                      </View>
+
+                      {/* BADGE DE SEMÁFORO */}
+                      <View style={{ flex: 1.8, alignItems: 'center' }}>
+                        <View style={{ backgroundColor: statusBadge.bg, borderColor: statusBadge.border, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+                          <Text style={{ fontSize: 11, fontWeight: 'bold', color: statusBadge.text }}>{statusBadge.label}</Text>
+                        </View>
+                        <Text style={{ fontSize: 10, color: theme.subText, marginTop: 2 }}>{m.membership_expires_at || 'Sin fecha'}</Text>
+                      </View>
+
+                      {/* BOTONES DE ACCIÓN */}
+                      <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                        {isPending && (
+                          <TouchableOpacity
+                            style={{ backgroundColor: '#16a34a', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}
+                            onPress={() => handleApproveMembership(m.id)}
+                          >
+                            <Check size={14} color="white" style={{ marginRight: 2 }} />
+                            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>Aprobar</Text>
+                          </TouchableOpacity>
+                        )}
+
+                        <TouchableOpacity
+                          style={{ backgroundColor: isDarkMode ? '#27272a' : '#e2e8f0', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }}
+                          onPress={() => {
+                            setSelectedMemberForMembership(m);
+                            setMembershipDateInput(m.membership_expires_at || new Date().toISOString().split('T')[0]);
+                            setShowMembershipDatePicker(true);
+                          }}
+                        >
+                          <Text style={{ color: theme.text, fontSize: 11, fontWeight: 'bold' }}>📅 Asignar</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL PICKER DE CALENDARIO PARA ASIGNAR MEMBRESÍA */}
+      <Modal visible={showMembershipDatePicker} transparent animationType="fade" onRequestClose={() => setShowMembershipDatePicker(false)}>
+        <View style={modalStyles.overlay}>
+          <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', padding: 18, borderRadius: 20, maxWidth: 380, width: '92%' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Clock size={18} color={primaryColor} style={{ marginRight: 6 }} />
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.text }}>
+                  Vigencia de Membresía
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowMembershipDatePicker(false)} style={{ padding: 4 }}>
+                <X size={20} color={isDarkMode ? '#a1a1aa' : '#64748b'} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={{ fontSize: 12, color: theme.subText, marginBottom: 10 }}>
+              Asignando a: <Text style={{ fontWeight: 'bold', color: theme.text }}>{selectedMemberForMembership?.name}</Text>
+            </Text>
+
+            <RNCalendar
+              current={membershipDateInput || new Date().toISOString().split('T')[0]}
+              markedDates={{
+                [membershipDateInput || '']: { selected: true, selectedColor: primaryColor }
+              }}
+              onDayPress={(day: DateData) => {
+                setMembershipDateInput(day.dateString);
+              }}
+              theme={{
+                calendarBackground: isDarkMode ? '#18181b' : '#ffffff',
+                textSectionTitleColor: isDarkMode ? '#a1a1aa' : '#64748b',
+                selectedDayBackgroundColor: primaryColor,
+                todayTextColor: primaryColor,
+                dayTextColor: isDarkMode ? '#ffffff' : '#1e293b',
+                arrowColor: primaryColor,
+                monthTextColor: isDarkMode ? '#ffffff' : primaryColor,
+                textDayFontWeight: 'bold',
+                textMonthFontWeight: 'bold',
+              }}
+            />
+
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 16 }}>
+              <TouchableOpacity onPress={() => setShowMembershipDatePicker(false)} style={{ padding: 10 }}>
+                <Text style={{ color: theme.subText }}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ backgroundColor: primaryColor, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10 }}
+                onPress={() => {
+                  setShowMembershipDatePicker(false);
+                  handleSaveMembershipDate();
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>Validar Membresía</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ========================================================================= */}
+      {/* MODAL: REGISTRAR ACTIVIDAD GRUPAL / ASAMBLEA                             */}
+      {/* ========================================================================= */}
       <Modal visible={showAddEventModal} transparent animationType="slide" onRequestClose={() => setShowAddEventModal(false)}>
         <View style={modalStyles.overlay}>
           <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
@@ -872,6 +1535,96 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1
+  },
+
+  // Estilos de Herramientas de Censo, Padrón y Semáforo
+  searchBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 8
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 12,
+    padding: 0
+  },
+  exportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    gap: 6
+  },
+  exportBtnText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 11
+  },
+  filterTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginRight: 6
+  },
+  filterTagText: {
+    fontSize: 11
+  },
+  tableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 6
+  },
+  tableIndex: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    width: 24
+  },
+  tableMainText: {
+    fontSize: 13,
+    fontWeight: 'bold'
+  },
+  trafficCard: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  trafficCardActive: {
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3
+  },
+  trafficNumber: {
+    fontSize: 18,
+    fontWeight: 'bold'
+  },
+  trafficLabel: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    marginTop: 2,
+    textAlign: 'center'
+  },
+  batchApproveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 10
   }
 });
 
