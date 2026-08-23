@@ -18,12 +18,30 @@ import { dataService } from '../lib/dataService';
 import { supabase } from '../lib/supabaseClient';
 import { stagesData } from '../data/progressionTemplate';
 import { colors } from '../theme/colors';
+import { Calendar as RNCalendar, DateData } from 'react-native-calendars';
 import {
   Users, ChevronDown, ChevronUp,
-  Calendar, LogOut, Trash2, Plus, Flag, X, Moon, Sun, Compass, Camera, ShieldCheck, Ban, CheckCircle, ImageOff, BookOpen, Palette, FileText, Music, Sparkles
+  Calendar, Calendar as CalendarIcon, LogOut, Trash2, Plus, Flag, X, Moon, Sun, Compass, Camera, ShieldCheck, Ban, CheckCircle, ImageOff, BookOpen, Palette, FileText, Music, Sparkles
 } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
+
+function formatDateWithDayOfWeek(dateStr: string): string {
+  if (!dateStr) return 'Seleccionar fecha en el calendario';
+  try {
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    const [y, m, d] = parts;
+    const dateObj = new Date(+y, +m - 1, +d, 12, 0, 0);
+    const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+    const monthName = dateObj.toLocaleDateString('es-ES', { month: 'long' });
+    const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+    const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+    return `📅 ${capitalizedDay}, ${+d} de ${capitalizedMonth} de ${y}`;
+  } catch (e) {
+    return dateStr;
+  }
+}
 
 const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
   'Aprobada':    { color: '#22c55e', label: 'Aprobada' },
@@ -366,6 +384,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
   const [cipTitle, setCipTitle] = useState('');
   const [cipScope, setCipScope] = useState<'distrital' | 'regional' | 'nacional' | 'internacional'>('distrital');
   const [cipDate, setCipDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showCipDatePicker, setShowCipDatePicker] = useState(false);
   const [cipDesc, setCipDesc] = useState('');
   const [savingCip, setSavingCip] = useState(false);
 
@@ -373,6 +392,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
   const [showMembershipModal, setShowMembershipModal] = useState(false);
   const [selectedScoutForMembership, setSelectedScoutForMembership] = useState<any>(null);
   const [membershipDateInput, setMembershipDateInput] = useState('');
+  const [showMembershipDatePicker, setShowMembershipDatePicker] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [showPhotoRejectModal, setShowPhotoRejectModal] = useState(false);
@@ -709,17 +729,37 @@ export default function ScouterDashboardScreen({ navigation }: any) {
             <Text style={{ fontSize: 12, color: theme.subText, marginBottom: 16 }}>
               Scout: <Text style={{ fontWeight: 'bold', color: theme.text }}>{selectedScoutForMembership?.name}</Text>
             </Text>
-            <Text style={[modalStyles.label, { color: theme.subText }]}>MEMBRESÍA VÁLIDA HASTA (AAAA-MM-DD) *</Text>
-            <TextInput
-              style={[modalStyles.input, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
-              placeholder="Ej: 2027-05-12"
-              placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
-              value={membershipDateInput}
-              onChangeText={setMembershipDateInput}
-            />
-            <View style={{ backgroundColor: '#fffbeb', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: '#fef08a', marginTop: 10 }}>
-              <Text style={{ fontSize: 11, color: '#92400e' }}>
-                ⚠️ Formato obligatorio: AAAA-MM-DD (Año-Mes-Día). Ejemplo: 2027-05-12.
+            <Text style={[modalStyles.label, { color: theme.subText }]}>FECHA DE VENCIMIENTO DE MEMBRESÍA *</Text>
+            <TouchableOpacity
+              style={[
+                modalStyles.input,
+                {
+                  backgroundColor: theme.inputBg,
+                  borderColor: theme.border,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 12,
+                  paddingHorizontal: 14,
+                  marginBottom: 10
+                }
+              ]}
+              onPress={() => setShowMembershipDatePicker(true)}
+              activeOpacity={0.8}
+            >
+              <CalendarIcon size={18} color={primaryColor} style={{ marginRight: 10 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: theme.text, fontSize: 13, fontWeight: 'bold' }}>
+                  {formatDateWithDayOfWeek(membershipDateInput || new Date().toISOString().split('T')[0])}
+                </Text>
+                <Text style={{ color: theme.subText, fontSize: 11 }}>
+                  Toca para seleccionar el día exacto en el calendario
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#fffbeb', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: isDarkMode ? '#3f3f46' : '#fef08a', marginTop: 4 }}>
+              <Text style={{ fontSize: 11, color: isDarkMode ? '#fef08a' : '#92400e' }}>
+                💡 Elige la fecha con el calendario interactivo.
                 {user?.role === 'scouter' ? ' La fecha quedará en "Esperando Aprobación" hasta que Jefatura la valide.' : ' Como Jefe de Grupo, la fecha se aprobará de inmediato.'}
               </Text>
             </View>
@@ -728,19 +768,20 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                 <Text style={{ color: theme.subText }}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={{ backgroundColor: '#7c3aed', padding: 12, borderRadius: 10 }}
+                style={{ backgroundColor: primaryColor, padding: 12, borderRadius: 10 }}
                 onPress={async () => {
-                  if (!membershipDateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                    showAlert('Formato Inválido', 'La fecha debe tener el formato AAAA-MM-DD. Ejemplo: 2027-05-12');
+                  const finalDate = membershipDateInput || new Date().toISOString().split('T')[0];
+                  if (!finalDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    showAlert('Formato Inválido', 'Por favor selecciona una fecha válida en el calendario.');
                     return;
                   }
-                  showAlert('¿Confirmar fecha?', `¿Es correcta la fecha ${membershipDateInput}?`);
                   if (user?.role === 'jefe_grupo') {
-                    await dataService.proposeMembershipDate(selectedScoutForMembership.id, membershipDateInput);
+                    await dataService.proposeMembershipDate(selectedScoutForMembership.id, finalDate);
                     await dataService.approveMembershipDate(selectedScoutForMembership.id);
                   } else {
-                    await dataService.proposeMembershipDate(selectedScoutForMembership.id, membershipDateInput);
+                    await dataService.proposeMembershipDate(selectedScoutForMembership.id, finalDate);
                   }
+                  showAlert('Fecha Asignada', `Membresía registrada para ${selectedScoutForMembership?.name}: ${formatDateWithDayOfWeek(finalDate)}`);
                   setShowMembershipModal(false);
                   loadScouts();
                 }}
@@ -748,6 +789,47 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Confirmar Fecha</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL PICKER DE CALENDARIO PARA MEMBRESÍA */}
+      <Modal visible={showMembershipDatePicker} transparent animationType="fade" onRequestClose={() => setShowMembershipDatePicker(false)}>
+        <View style={modalStyles.overlay}>
+          <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', padding: 18, borderRadius: 20, maxWidth: 380, width: '92%' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <CalendarIcon size={18} color={primaryColor} style={{ marginRight: 6 }} />
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.text }}>
+                  Vencimiento de Membresía
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowMembershipDatePicker(false)} style={{ padding: 4 }}>
+                <X size={20} color={isDarkMode ? '#a1a1aa' : '#64748b'} />
+              </TouchableOpacity>
+            </View>
+
+            <RNCalendar
+              current={membershipDateInput || new Date().toISOString().split('T')[0]}
+              markedDates={{
+                [membershipDateInput || '']: { selected: true, selectedColor: primaryColor }
+              }}
+              onDayPress={(day: DateData) => {
+                setMembershipDateInput(day.dateString);
+                setShowMembershipDatePicker(false);
+              }}
+              theme={{
+                calendarBackground: isDarkMode ? '#18181b' : '#ffffff',
+                textSectionTitleColor: isDarkMode ? '#a1a1aa' : '#64748b',
+                selectedDayBackgroundColor: primaryColor,
+                todayTextColor: primaryColor,
+                dayTextColor: isDarkMode ? '#ffffff' : '#1e293b',
+                arrowColor: primaryColor,
+                monthTextColor: isDarkMode ? '#ffffff' : primaryColor,
+                textDayFontWeight: 'bold',
+                textMonthFontWeight: 'bold',
+              }}
+            />
           </View>
         </View>
       </Modal>
@@ -881,14 +963,33 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                 ))}
               </View>
 
-              <Text style={[modalStyles.label, { color: theme.subText }]}>FECHA (AAAA-MM-DD) *</Text>
-              <TextInput
-                style={[modalStyles.input, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
-                placeholder="2026-08-15"
-                placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
-                value={cipDate}
-                onChangeText={setCipDate}
-              />
+              <Text style={[modalStyles.label, { color: theme.subText }]}>FECHA DEL CICLO / EVENTO *</Text>
+              <TouchableOpacity
+                style={[
+                  modalStyles.input,
+                  {
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.border,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: 12,
+                    paddingHorizontal: 14,
+                    marginBottom: 10
+                  }
+                ]}
+                onPress={() => setShowCipDatePicker(true)}
+                activeOpacity={0.8}
+              >
+                <CalendarIcon size={18} color={primaryColor} style={{ marginRight: 10 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: theme.text, fontSize: 13, fontWeight: 'bold' }}>
+                    {formatDateWithDayOfWeek(cipDate || new Date().toISOString().split('T')[0])}
+                  </Text>
+                  <Text style={{ color: theme.subText, fontSize: 11 }}>
+                    Toca para abrir el calendario y ver días exactos (Sábados/Domingos)
+                  </Text>
+                </View>
+              </TouchableOpacity>
 
               <Text style={[modalStyles.label, { color: theme.subText }]}>DESCRIPCIÓN Y DETALLES (OPCIONAL)</Text>
               <TextInput
@@ -915,6 +1016,47 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                 <Text style={{ color: theme.subText, fontWeight: 'bold', fontSize: 14 }}>Cancelar y Volver</Text>
               </TouchableOpacity>
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL PICKER DE CALENDARIO PARA EVENTOS CIP */}
+      <Modal visible={showCipDatePicker} transparent animationType="fade" onRequestClose={() => setShowCipDatePicker(false)}>
+        <View style={modalStyles.overlay}>
+          <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', padding: 18, borderRadius: 20, maxWidth: 380, width: '92%' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Flag size={18} color={primaryColor} style={{ marginRight: 6 }} />
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.text }}>
+                  Seleccionar Fecha del Evento CIP
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowCipDatePicker(false)} style={{ padding: 4 }}>
+                <X size={20} color={isDarkMode ? '#a1a1aa' : '#64748b'} />
+              </TouchableOpacity>
+            </View>
+
+            <RNCalendar
+              current={cipDate || new Date().toISOString().split('T')[0]}
+              markedDates={{
+                [cipDate || '']: { selected: true, selectedColor: primaryColor }
+              }}
+              onDayPress={(day: DateData) => {
+                setCipDate(day.dateString);
+                setShowCipDatePicker(false);
+              }}
+              theme={{
+                calendarBackground: isDarkMode ? '#18181b' : '#ffffff',
+                textSectionTitleColor: isDarkMode ? '#a1a1aa' : '#64748b',
+                selectedDayBackgroundColor: primaryColor,
+                todayTextColor: primaryColor,
+                dayTextColor: isDarkMode ? '#ffffff' : '#1e293b',
+                arrowColor: primaryColor,
+                monthTextColor: isDarkMode ? '#ffffff' : primaryColor,
+                textDayFontWeight: 'bold',
+                textMonthFontWeight: 'bold',
+              }}
+            />
           </View>
         </View>
       </Modal>
