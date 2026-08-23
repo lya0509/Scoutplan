@@ -12,7 +12,7 @@ import {
   Users, Award, Calendar, Calendar as CalendarIcon, Moon, Sun, FileText,
   ChevronRight, ChevronDown, ChevronUp, Camera, BookOpen, Palette, Plus, X,
   Shield, ShieldCheck, Flag, Sparkles, Download, Printer, Search, CheckCircle2,
-  AlertTriangle, Clock, RefreshCw, Eye, CheckCircle, Check, Phone
+  AlertTriangle, Clock, RefreshCw, Eye, CheckCircle, Check, Phone, LogOut
 } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
@@ -38,7 +38,7 @@ function formatDateWithDayOfWeek(dateStr: string): string {
 }
 
 export default function JefeGrupoScreen({ navigation }: any) {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { isDarkMode, theme, primaryColor, toggleDarkMode } = useTheme();
 
   const [showCustomizer, setShowCustomizer] = useState(false);
@@ -411,6 +411,14 @@ export default function JefeGrupoScreen({ navigation }: any) {
             >
               {isDarkMode ? <Sun color="#f59e0b" size={20} /> : <Moon color="white" size={20} />}
             </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.iconBtn, { backgroundColor: 'rgba(239, 68, 68, 0.25)' }]} 
+              onPress={signOut}
+              activeOpacity={0.8}
+            >
+              <LogOut color="#ef4444" size={20} />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -708,6 +716,16 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 </View>
               )}
             </View>
+
+            {/* BOTÓN CERRAR SESIÓN DE JEFATURA */}
+            <TouchableOpacity 
+              style={[styles.logoutBtn, { borderColor: isDarkMode ? '#3f3f46' : '#fee2e2', backgroundColor: isDarkMode ? '#27272a' : '#fef2f2' }]} 
+              onPress={signOut}
+              activeOpacity={0.8}
+            >
+              <LogOut size={18} color="#ef4444" />
+              <Text style={styles.logoutBtnText}>Cerrar Sesión de Jefe de Grupo</Text>
+            </TouchableOpacity>
 
           </View>
         )}
@@ -1625,6 +1643,22 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     marginBottom: 10
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+    marginBottom: 12,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 8
+  },
+  logoutBtnText: {
+    color: '#ef4444',
+    fontWeight: 'bold',
+    fontSize: 13
   }
 });
 
