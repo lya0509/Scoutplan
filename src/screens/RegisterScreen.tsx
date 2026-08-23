@@ -574,7 +574,17 @@ export default function RegisterScreen({ navigation }: any) {
           }
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => {
+            if (navigation?.canGoBack && navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('Login');
+            }
+          }}
+          activeOpacity={0.7}
+        >
           <Text style={[styles.backButtonText, isDarkMode && { color: '#a1a1aa' }]}>Cancelar y volver al Login</Text>
         </TouchableOpacity>
       </ScrollView>
