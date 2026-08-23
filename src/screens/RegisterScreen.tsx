@@ -65,15 +65,6 @@ const DEFAULT_GROUPS = [
   { id: 'Otro Grupo Scout', label: 'Otro Grupo Scout' },
 ];
 
-const ROLES_LIST = [
-  { id: 'scout', label: '⚜️ Joven Scout', color: '#1e88e5' },
-  { id: 'scouter', label: '👔 Dirigente / Scouter', color: '#4f46e5' },
-  { id: 'jefe_grupo', label: '👑 Jefe de Grupo', color: '#9333ea' },
-  { id: 'comisionado_distrital', label: '🧭 Comisionado Distrital', color: '#d97706' },
-  { id: 'comisionado_regional', label: '📍 Comisionado Regional', color: '#059669' },
-  { id: 'nacional', label: '🇻🇪 Dirección Nacional', color: '#dc2626' },
-];
-
 const UNITS = [
   { id: 'manada',    label: 'Manada',     color: '#ffb300' },
   { id: 'tropa',     label: 'Tropa',      color: '#43a047' },
@@ -238,7 +229,6 @@ export default function RegisterScreen({ navigation }: any) {
   const [pickerYear,  setPickerYear]  = useState<number>(today.getFullYear() - 10);
   const [birthDate,   setBirthDate]   = useState('');
   const [showPicker,  setShowPicker]  = useState(false);
-  const [selectedRole, setSelectedRole] = useState<'scout' | 'scouter' | 'jefe_grupo' | 'comisionado_distrital' | 'comisionado_regional' | 'nacional'>('scout');
   const [selectedRegion, setSelectedRegion] = useState('miranda');
   const [selectedDistrict, setSelectedDistrict] = useState('guarenas_guatire');
   const [selectedGroup,  setSelectedGroup]  = useState('');
@@ -248,12 +238,6 @@ export default function RegisterScreen({ navigation }: any) {
   const [formError, setFormError] = useState<string | null>(null);
 
   const [suggestedEmail, setSuggestedEmail] = useState<string | null>(null);
-
-  const handleRoleChange = (roleId: string) => {
-    if (!roleId) return;
-    setSelectedRole(roleId as any);
-    setFormError(null);
-  };
 
   const handleRegionChange = (regionId: string) => {
     setSelectedRegion(regionId);
@@ -290,9 +274,9 @@ export default function RegisterScreen({ navigation }: any) {
     setFormError(null);
 
     try {
-      const assignedUnit = selectedRole === 'jefe_grupo' ? 'grupo' : (selectedUnit || 'general');
-      const assignedGroup = (selectedRole === 'comisionado_regional' || selectedRole === 'nacional') ? 'Jurisdicción Territorial' : selectedGroup;
-      const assignedDistrict = selectedRole === 'nacional' ? 'Nacional' : (selectedRole === 'comisionado_regional' ? 'Regional' : selectedDistrict);
+      const assignedUnit = selectedUnit || 'clan';
+      const assignedGroup = selectedGroup || 'Grupo Scout Orión #84';
+      const assignedDistrict = selectedDistrict || 'Distrito Guarenas-Guatire';
 
       // 1. Registro en Supabase
       const { data: signUpData, error } = await supabase.auth.signUp({
@@ -303,7 +287,7 @@ export default function RegisterScreen({ navigation }: any) {
             name: name.trim(),
             cedula: cedula.trim(),
             email: emailToUse,
-            role: selectedRole,
+            role: 'scout',
             unit: assignedUnit,
             group_name: assignedGroup,
             region: selectedRegion,
@@ -319,7 +303,7 @@ export default function RegisterScreen({ navigation }: any) {
           name: name.trim(),
           cedula: cedula.trim(),
           email: emailToUse,
-          role: selectedRole,
+          role: 'scout',
           unit: assignedUnit,
           group_name: assignedGroup,
           region: selectedRegion,
@@ -379,22 +363,10 @@ export default function RegisterScreen({ navigation }: any) {
     if (!email.trim()) missingFields.push('Correo Electrónico');
     if (!password) missingFields.push('Contraseña');
     if (!birthDate) missingFields.push('Fecha de Nacimiento');
-
-    if (selectedRole === 'scout' || selectedRole === 'scouter') {
-      if (!selectedRegion) missingFields.push('Región');
-      if (!selectedDistrict) missingFields.push('Distrito Scout');
-      if (!selectedGroup) missingFields.push('Grupo Scout');
-      if (!selectedUnit) missingFields.push('Unidad');
-    } else if (selectedRole === 'jefe_grupo') {
-      if (!selectedRegion) missingFields.push('Región');
-      if (!selectedDistrict) missingFields.push('Distrito Scout');
-      if (!selectedGroup) missingFields.push('Grupo Scout');
-    } else if (selectedRole === 'comisionado_distrital') {
-      if (!selectedRegion) missingFields.push('Región');
-      if (!selectedDistrict) missingFields.push('Distrito Scout');
-    } else if (selectedRole === 'comisionado_regional') {
-      if (!selectedRegion) missingFields.push('Región');
-    }
+    if (!selectedRegion) missingFields.push('Región Scout');
+    if (!selectedDistrict) missingFields.push('Distrito Scout');
+    if (!selectedGroup) missingFields.push('Grupo Scout');
+    if (!selectedUnit) missingFields.push('Unidad / Rama');
 
     if (missingFields.length > 0) {
       setFormError(`Faltan campos obligatorios: ${missingFields.join(', ')}.`);
@@ -540,26 +512,18 @@ export default function RegisterScreen({ navigation }: any) {
 
         <View style={styles.divider}>
           <View style={[styles.dividerLine, dynamicStyles.dividerLine]} />
-          <Text style={[styles.dividerText, dynamicStyles.dividerText]}>ESTRUCTURA Y ROL INSTITUCIONAL</Text>
+          <Text style={[styles.dividerText, dynamicStyles.dividerText]}>ESTRUCTURA Y GRUPO SCOUT</Text>
           <View style={[styles.dividerLine, dynamicStyles.dividerLine]} />
         </View>
 
-        {/* SELECCIÓN DE ROL */}
+        {/* SELECCIÓN DE REGIÓN */}
         <View style={styles.formGroup}>
-          <Text style={[styles.label, dynamicStyles.label]}>Rol / Cargo en la Asociación <Text style={styles.required}>*</Text></Text>
-          <SelectorGrid options={ROLES_LIST} selected={selectedRole} onSelect={handleRoleChange} isDarkMode={isDarkMode} />
+          <Text style={[styles.label, dynamicStyles.label]}>Región Scout <Text style={styles.required}>*</Text></Text>
+          <SelectorGrid options={REGIONS_LIST} selected={selectedRegion} onSelect={handleRegionChange} isDarkMode={isDarkMode} />
         </View>
 
-        {/* SELECCIÓN DE REGIÓN (Para todos excepto nacional) */}
-        {selectedRole !== 'nacional' && (
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, dynamicStyles.label]}>Región Scout <Text style={styles.required}>*</Text></Text>
-            <SelectorGrid options={REGIONS_LIST} selected={selectedRegion} onSelect={handleRegionChange} isDarkMode={isDarkMode} />
-          </View>
-        )}
-
         {/* SELECCIÓN DE DISTRITO */}
-        {(selectedRole === 'scout' || selectedRole === 'scouter' || selectedRole === 'jefe_grupo' || selectedRole === 'comisionado_distrital') && selectedRegion !== '' && (
+        {selectedRegion !== '' && (
           <View style={styles.formGroup}>
             <Text style={[styles.label, dynamicStyles.label]}>Distrito Scout <Text style={styles.required}>*</Text></Text>
             <SelectorGrid 
@@ -572,7 +536,7 @@ export default function RegisterScreen({ navigation }: any) {
         )}
 
         {/* SELECCIÓN DE GRUPO SCOUT */}
-        {(selectedRole === 'scout' || selectedRole === 'scouter' || selectedRole === 'jefe_grupo') && selectedDistrict !== '' && (
+        {selectedDistrict !== '' && (
           <View style={styles.formGroup}>
             <Text style={[styles.label, dynamicStyles.label]}>Grupo Scout <Text style={styles.required}>*</Text></Text>
             <SelectorGrid 
@@ -585,25 +549,23 @@ export default function RegisterScreen({ navigation }: any) {
         )}
 
         {/* SELECCIÓN DE UNIDAD */}
-        {(selectedRole === 'scout' || selectedRole === 'scouter') && (
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, dynamicStyles.label]}>Unidad / Rama <Text style={styles.required}>*</Text></Text>
-            <SelectorGrid 
-              options={UNITS} 
-              selected={selectedUnit} 
-              onSelect={(id) => { setSelectedUnit(id); setFormError(null); }} 
-              isDarkMode={isDarkMode}
-            />
-            {selectedUnit === 'manada' && (
-              <View style={{ backgroundColor: 'rgba(99, 102, 241, 0.12)', borderLeftWidth: 4, borderLeftColor: colors.primary, padding: 12, borderRadius: 8, marginTop: 10 }}>
-                <Text style={{ fontWeight: 'bold', fontSize: 12, color: colors.primary }}>🐾 Registro de Unidad Manada (Perfil del Representante):</Text>
-                <Text style={{ fontSize: 11, color: isDarkMode ? '#e4e4e7' : '#4b5563', marginTop: 4, lineHeight: 16 }}>
-                  Esta cuenta será administrada por el padre o representante. Si tu hijo(a) avanza en el futuro a Tropa, Caminantes o Clan, podrán actualizar el correo electrónico registrado en cualquier momento para mantener la misma cuenta e historial scout.
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
+        <View style={styles.formGroup}>
+          <Text style={[styles.label, dynamicStyles.label]}>Unidad / Rama <Text style={styles.required}>*</Text></Text>
+          <SelectorGrid 
+            options={UNITS} 
+            selected={selectedUnit} 
+            onSelect={(id) => { setSelectedUnit(id); setFormError(null); }} 
+            isDarkMode={isDarkMode}
+          />
+          {selectedUnit === 'manada' && (
+            <View style={{ backgroundColor: 'rgba(99, 102, 241, 0.12)', borderLeftWidth: 4, borderLeftColor: colors.primary, padding: 12, borderRadius: 8, marginTop: 10 }}>
+              <Text style={{ fontWeight: 'bold', fontSize: 12, color: colors.primary }}>🐾 Registro de Unidad Manada (Perfil del Representante):</Text>
+              <Text style={{ fontSize: 11, color: isDarkMode ? '#e4e4e7' : '#4b5563', marginTop: 4, lineHeight: 16 }}>
+                Esta cuenta será administrada por el padre o representante. Si tu hijo(a) avanza en el futuro a Tropa, Caminantes o Clan, podrán actualizar el correo electrónico registrado en cualquier momento para mantener la misma cuenta e historial scout.
+              </Text>
+            </View>
+          )}
+        </View>
 
         <TouchableOpacity style={styles.submitButton} onPress={handleRegister} disabled={loading}>
           {loading
