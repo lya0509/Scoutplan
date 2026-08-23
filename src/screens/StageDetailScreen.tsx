@@ -153,7 +153,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
       unit: user.unit || undefined,
       receiverRole: 'scouter',
       title: '⚜️ Ficha Enviada a Revisión',
-      message: `${user.name} ha completado y enviado su etapa "${stageTemplate.title}" a revisión.`,
+      message: `${user.name} ha completado y enviado su etapa "${stageTemplate?.title || 'Etapa'}" a revisión.`,
       type: 'badge'
     }).catch(() => {});
 

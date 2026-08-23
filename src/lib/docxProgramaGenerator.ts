@@ -43,9 +43,10 @@ export const docxProgramaGenerator = {
       // Inyectar el logo de la unidad a la derecha (image4.png)
       try {
         let logoFile = '/programa_assets/logo_clan.jpg';
-        if (programa.unit === 'manada') logoFile = '/programa_assets/logo_manada.jpg';
-        else if (programa.unit === 'tropa') logoFile = '/programa_assets/logo_tropa.png';
-        else if (programa.unit === 'caminantes' || programa.unit === 'comunidad') logoFile = '/programa_assets/logo_caminantes.png';
+        const u = (programa.unit as string || '').toLowerCase();
+        if (u === 'manada') logoFile = '/programa_assets/logo_manada.jpg';
+        else if (u === 'tropa') logoFile = '/programa_assets/logo_tropa.png';
+        else if (u === 'caminantes' || u === 'comunidad') logoFile = '/programa_assets/logo_caminantes.png';
         
         const logoRes = await fetch(logoFile);
         if (logoRes.ok) {

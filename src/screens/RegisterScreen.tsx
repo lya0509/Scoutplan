@@ -232,11 +232,12 @@ export default function RegisterScreen({ navigation }: any) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-const today = new Date();
+  const today = new Date();
   const [pickerDay,   setPickerDay]   = useState<number>(today.getDate());
   const [pickerMonth, setPickerMonth] = useState<number>(today.getMonth() + 1);
   const [pickerYear,  setPickerYear]  = useState<number>(today.getFullYear() - 10);
   const [birthDate,   setBirthDate]   = useState('');
+  const [showPicker,  setShowPicker]  = useState(false);
   const [selectedRole, setSelectedRole] = useState<'scout' | 'scouter' | 'jefe_grupo' | 'comisionado_distrital' | 'comisionado_regional' | 'nacional'>('scout');
   const [selectedRegion, setSelectedRegion] = useState('miranda');
   const [selectedDistrict, setSelectedDistrict] = useState('guarenas_guatire');
@@ -257,6 +258,12 @@ const today = new Date();
   const handleRegionChange = (regionId: string) => {
     setSelectedRegion(regionId);
     setSelectedDistrict('');
+    setSelectedGroup('');
+    setFormError(null);
+  };
+
+  const handleDistrictChange = (districtId: string) => {
+    setSelectedDistrict(districtId);
     setSelectedGroup('');
     setFormError(null);
   };

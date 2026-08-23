@@ -69,7 +69,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
       notificationService.sendNotification({
         receiverId: scoutId,
         title: '📋 Ficha de Etapa Devuelta',
-        message: `Tu dirigente ha revisado tu etapa "${stageTemplate.title}" y tiene requisitos pendientes por completar.`,
+        message: `Tu dirigente ha revisado tu etapa "${stageTemplate?.title || 'Revisión'}" y tiene requisitos pendientes por completar.`,
         type: 'alert'
       }).catch(() => {});
       showAlert('Ficha Devuelta', 'Se ha devuelto la ficha al scout para que complete los requisitos faltantes.');
@@ -79,7 +79,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
       notificationService.sendNotification({
         receiverId: scoutId,
         title: '🎉 ¡Etapa e Insignia Aprobadas!',
-        message: `¡Felicidades! Tu dirigente ha aprobado oficialmente tu etapa "${stageTemplate.title}".`,
+        message: `¡Felicidades! Tu dirigente ha aprobado oficialmente tu etapa "${stageTemplate?.title || 'Revisión'}".`,
         type: 'badge'
       }).catch(() => {});
       showAlert('¡Etapa Aprobada!', 'La etapa ha sido aprobada exitosamente y el scout ha sido notificado.');
