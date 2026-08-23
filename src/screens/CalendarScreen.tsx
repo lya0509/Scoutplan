@@ -53,6 +53,12 @@ export default function CalendarScreen() {
   const { user } = useAuth();
   const { isDarkMode, theme, toggleDarkMode } = useTheme();
 
+  const isJefe = user?.role === 'jefe_grupo';
+  const isScouter = user?.role === 'scouter';
+  const isScout = user?.role === 'scout';
+  const canSeeAllUnits = isJefe || isScouter;
+  const userUnit = (user?.unit || 'clan').toLowerCase();
+
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +85,7 @@ export default function CalendarScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchEvents();
-    }, [])
+    }, [user?.role, user?.unit])
   );
 
   const fetchEvents = async () => {
@@ -89,8 +95,8 @@ export default function CalendarScreen() {
     // 1. Cargar eventos manuales y eventos CIP de calendar_events
     try {
       let query = supabase.from('calendar_events').select('*').order('date', { ascending: true });
-      if (user?.role !== 'jefe_grupo') {
-        query = query.in('unit', [user?.unit?.toLowerCase() || '', 'grupo']);
+      if (isScout) {
+        query = query.in('unit', [userUnit, 'grupo']);
       }
       const { data, error } = await query;
       if (!error && data) {
@@ -124,9 +130,10 @@ export default function CalendarScreen() {
             const dayNum = parseInt(act.day || '15', 10);
             const dStr = String(isNaN(dayNum) ? 15 : dayNum).padStart(2, '0');
             const dateStr = `${year}-${mNum}-${dStr}`;
-            const unit = (qp.unit || user?.unit || 'clan').toLowerCase();
+            const unit = (qp.unit || userUnit).toLowerCase();
 
-            if (user?.role === 'jefe_grupo' || unit === user?.unit?.toLowerCase()) {
+            // Jefatura y Scouter ven todas las unidades; Scout ve solo la suya
+            if (canSeeAllUnits || unit === userUnit) {
               combinedEvents.push({
                 id: `qp_${qp.id}_${act.id || Math.random()}`,
                 title: `[Plan Trimestral ${qp.quarter}] ${act.activity}`,
@@ -149,7 +156,10 @@ export default function CalendarScreen() {
         progData.forEach((p: any) => {
           if (!p.date || !p.title) return;
           const unit = (p.unit || 'clan').toLowerCase();
-          if (user?.role === 'jefe_grupo' || unit === user?.unit?.toLowerCase() || (p.is_sinodal && p.selected_units?.includes(user?.unit?.toLowerCase()))) {
+          const isSinodalMatch = p.is_sinodal && p.selected_units?.includes(userUnit);
+
+          // Jefatura y Scouter ven todas las unidades; Scout ve solo la suya o sinodales
+          if (canSeeAllUnits || unit === userUnit || isSinodalMatch) {
             combinedEvents.push({
               id: `prog_${p.id}`,
               title: `[Programa Scout] ${p.title}`,
@@ -207,7 +217,7 @@ export default function CalendarScreen() {
     // Agrupar eventos por fecha
     const eventsByDate: Record<string, CalendarEvent[]> = {};
     events.forEach(evt => {
-      if (unitFilter !== 'all' && evt.unit !== unitFilter && user?.role === 'jefe_grupo') {
+      if (canSeeAllUnits && unitFilter !== 'all' && evt.unit !== unitFilter) {
         return;
       }
       if (!eventsByDate[evt.date]) eventsByDate[evt.date] = [];
@@ -261,13 +271,13 @@ export default function CalendarScreen() {
 
   const filteredEvents = events.filter(evt => {
     const isDateMatch = evt.date === selectedDate;
-    if (user?.role === 'jefe_grupo' && unitFilter !== 'all') {
+    if (canSeeAllUnits && unitFilter !== 'all') {
       return isDateMatch && evt.unit?.toLowerCase() === unitFilter.toLowerCase();
     }
     return isDateMatch;
   });
 
-  const canAddEvent = user?.role === 'scouter' || user?.role === 'jefe_grupo';
+  const canAddEvent = isJefe || isScouter;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
@@ -278,9 +288,11 @@ export default function CalendarScreen() {
             <View style={{ flex: 1 }}>
               <Text style={[styles.title, { color: theme.text }]}>Calendario de Actividades</Text>
               <Text style={[styles.subtitle, { color: theme.subText }]}>
-                {user?.role === 'jefe_grupo'
-                  ? 'Vista global de todas las unidades del grupo'
-                  : `Eventos de tu unidad (${(user?.unit || 'Manada').toUpperCase()})`
+                {isJefe
+                  ? 'Jefatura de Grupo • Vista global de todas las unidades'
+                  : isScouter
+                  ? `Dirigente Scout (${userUnit.toUpperCase()}) • Calendario general de unidades`
+                  : `Rama ${userUnit.toUpperCase()} • Actividades de tu unidad`
                 }
               </Text>
             </View>
@@ -293,13 +305,14 @@ export default function CalendarScreen() {
             </TouchableOpacity>
           </View>
 
-          {user?.role === 'jefe_grupo' && (
+          {/* Filtro por unidad visible para Jefatura y Scouters */}
+          {canSeeAllUnits && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }}>
               <TouchableOpacity
                 style={[styles.filterChip, unitFilter === 'all' && styles.filterChipActive]}
                 onPress={() => setUnitFilter('all')}
               >
-                <Text style={[styles.filterChipText, unitFilter === 'all' && styles.filterChipTextActive]}>Todas</Text>
+                <Text style={[styles.filterChipText, unitFilter === 'all' && styles.filterChipTextActive]}>Todas las Ramas</Text>
               </TouchableOpacity>
               {Object.keys(UNIT_COLORS).map(u => (
                 <TouchableOpacity
