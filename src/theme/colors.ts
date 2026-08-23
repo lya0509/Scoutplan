@@ -21,6 +21,7 @@ export const UNIT_COLORS: Record<string, string> = {
   tropa: '#43a047',      // Verde (Scouts)
   comunidad: '#1e88e5',  // Azul (Caminantes / Pioneros)
   clan: '#e53935',       // Rojo (Rovers)
-  grupo: '#8e24aa'       // Morado Global
+  grupo: '#8e24aa',      // Morado Global
+  scouters: '#4f46e5'    // Indigo / Púrpura para Solo Scouters y Asambleas
 };
 

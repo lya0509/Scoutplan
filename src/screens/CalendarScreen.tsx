@@ -536,24 +536,31 @@ export default function CalendarScreen() {
                 onChangeText={setNewEventDesc}
               />
 
-              <Text style={[styles.label, { color: theme.subText }]}>UNIDAD DESTINO *</Text>
+              <Text style={[styles.label, { color: theme.subText }]}>DESTINO / RAMA DEL EVENTO *</Text>
               <View style={styles.unitSelectorRow}>
-                {Object.keys(UNIT_COLORS).map(u => (
+                {[
+                  { id: 'grupo', label: '⚜️ Todo el Grupo' },
+                  { id: 'scouters', label: '👥 Solo Scouters (Asamblea)' },
+                  { id: 'manada', label: '🟡 Manada' },
+                  { id: 'tropa', label: '🟢 Tropa' },
+                  { id: 'comunidad', label: '🔵 Caminantes' },
+                  { id: 'clan', label: '🔴 Clan' }
+                ].map(item => (
                   <TouchableOpacity
-                    key={u}
+                    key={item.id}
                     style={[
                       styles.unitChip,
                       { backgroundColor: theme.inputBg, borderColor: theme.border },
-                      newEventUnit === u && { backgroundColor: UNIT_COLORS[u], borderColor: UNIT_COLORS[u] }
+                      newEventUnit === item.id && { backgroundColor: UNIT_COLORS[item.id] || colors.primary, borderColor: UNIT_COLORS[item.id] || colors.primary }
                     ]}
-                    onPress={() => setNewEventUnit(u)}
+                    onPress={() => setNewEventUnit(item.id)}
                   >
                     <Text style={[
                       styles.unitChipText,
                       { color: theme.subText },
-                      newEventUnit === u && { color: 'white', fontWeight: 'bold' }
+                      newEventUnit === item.id && { color: 'white', fontWeight: 'bold' }
                     ]}>
-                      {u.toUpperCase()}
+                      {item.label}
                     </Text>
                   </TouchableOpacity>
                 ))}
