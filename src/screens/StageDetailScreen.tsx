@@ -15,6 +15,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useModalBackHandler } from '../hooks/useBackHandler';
 import { dataService } from '../lib/dataService';
+import { notificationService } from '../services/notificationService';
 import { stagesData } from '../data/progressionTemplate';
 import { StageBadgeIcon } from '../components/StageBadgeIcon';
 import { colors } from '../theme/colors';
@@ -144,6 +145,18 @@ export default function StageDetailScreen({ route, navigation }: any) {
     setConfirming(false);
     await dataService.submitStageForReview(user.id, stageId);
     setStatus('En Revision');
+
+    // Notificar en vivo a los Scouters de la unidad y grupo
+    notificationService.sendNotification({
+      senderId: user.id,
+      groupName: user.group_name || undefined,
+      unit: user.unit || undefined,
+      receiverRole: 'scouter',
+      title: '⚜️ Ficha Enviada a Revisión',
+      message: `${user.name} ha completado y enviado su etapa "${stageTemplate.title}" a revisión.`,
+      type: 'badge'
+    }).catch(() => {});
+
     showAlert('Enviado a Revisión', 'Tu etapa ha sido enviada al dirigente para su aprobación.');
   };
 

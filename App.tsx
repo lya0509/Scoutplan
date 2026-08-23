@@ -3,6 +3,8 @@ import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider } from './src/context/ThemeContext';
+import { NotificationProvider } from './src/context/NotificationContext';
+import LiveNotificationToast from './src/components/LiveNotificationToast';
 import AppNavigator from './src/navigation/AppNavigator';
 import { StatusBar } from 'expo-status-bar';
 import { dataService } from './src/lib/dataService';
@@ -43,8 +45,11 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <StatusBar style="auto" />
-        <AppNavigator />
+        <NotificationProvider>
+          <StatusBar style="auto" />
+          <LiveNotificationToast />
+          <AppNavigator />
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );

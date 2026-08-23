@@ -7,6 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import HelpFloatingFAB from '../components/HelpFloatingFAB';
 import { supabase } from '../lib/supabaseClient';
 import { dataService } from '../lib/dataService';
+import { notificationService } from '../services/notificationService';
 import { colors, UNIT_COLORS } from '../theme/colors';
 import {
   Users, Award, Calendar, Calendar as CalendarIcon, Moon, Sun, FileText,
@@ -173,6 +174,18 @@ export default function JefeGrupoScreen({ navigation }: any) {
       } else {
         const destLabel = eventUnit === 'grupo' ? 'Todo el Grupo Scout' : eventUnit === 'scouters' ? 'Solo Scouters (Asamblea)' : eventUnit.toUpperCase();
         showAlert('¡Actividad Creada!', `La actividad "${eventTitle}" ha sido registrada en el calendario para ${destLabel}.`);
+
+        // Enviar notificación en vivo instantánea
+        notificationService.sendNotification({
+          senderId: user?.id,
+          groupName: user?.group_name || undefined,
+          unit: eventUnit === 'grupo' ? undefined : eventUnit,
+          receiverRole: eventUnit === 'scouters' ? 'scouter' : undefined,
+          title: `📅 ${eventTitle}`,
+          message: `Nueva actividad programada para el ${formatDateWithDayOfWeek(eventDate)} (${destLabel}).`,
+          type: 'calendar'
+        }).catch(() => {});
+
         setShowAddEventModal(false);
         setEventTitle('');
         setEventDesc('');
@@ -188,6 +201,16 @@ export default function JefeGrupoScreen({ navigation }: any) {
   const handleApproveMembership = async (memberId: string) => {
     await dataService.approveMembershipDate(memberId);
     showAlert('Membresía Aprobada', 'El carnet del miembro ha sido validado institucionalmente.');
+
+    // Notificación en vivo al Scout
+    notificationService.sendNotification({
+      senderId: user?.id,
+      receiverId: memberId,
+      title: '🪪 ¡Membresía y Carnet Aprobados!',
+      message: 'Jefatura de Grupo ha validado tu membresía institucional. Ya puedes descargar tu Carnet Scout Oficial.',
+      type: 'membership'
+    }).catch(() => {});
+
     loadStatsAndMembers();
   };
 
@@ -202,6 +225,13 @@ export default function JefeGrupoScreen({ navigation }: any) {
     try {
       for (const p of pending) {
         await dataService.approveMembershipDate(p.id);
+        notificationService.sendNotification({
+          senderId: user?.id,
+          receiverId: p.id,
+          title: '🪪 ¡Membresía Aprobada!',
+          message: 'Tu carnet scout oficial ha sido activado por Jefatura de Grupo.',
+          type: 'membership'
+        }).catch(() => {});
       }
       showAlert('¡Aprobación Masiva Exitosa!', `Se han aprobado institucionalmente ${pending.length} membresías.`);
       loadStatsAndMembers();
@@ -217,6 +247,15 @@ export default function JefeGrupoScreen({ navigation }: any) {
     const finalDate = membershipDateInput || new Date().toISOString().split('T')[0];
     await dataService.proposeMembershipDate(selectedMemberForMembership.id, finalDate);
     await dataService.approveMembershipDate(selectedMemberForMembership.id);
+
+    notificationService.sendNotification({
+      senderId: user?.id,
+      receiverId: selectedMemberForMembership.id,
+      title: '🪪 Membresía Asignada y Aprobada',
+      message: `Tu membresía scout está vigente hasta ${formatDateWithDayOfWeek(finalDate)}.`,
+      type: 'membership'
+    }).catch(() => {});
+
     showAlert('Fecha Asignada', `Membresía validada para ${selectedMemberForMembership.name} hasta ${formatDateWithDayOfWeek(finalDate)}`);
     setSelectedMemberForMembership(null);
     loadStatsAndMembers();

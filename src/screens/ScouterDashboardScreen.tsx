@@ -16,6 +16,7 @@ import { useModalBackHandler } from '../hooks/useBackHandler';
 import HelpFloatingFAB from '../components/HelpFloatingFAB';
 import { dataService } from '../lib/dataService';
 import { supabase } from '../lib/supabaseClient';
+import { notificationService } from '../services/notificationService';
 import { stagesData } from '../data/progressionTemplate';
 import { colors } from '../theme/colors';
 import { Calendar as RNCalendar, DateData } from 'react-native-calendars';
@@ -778,8 +779,23 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                   if (user?.role === 'jefe_grupo') {
                     await dataService.proposeMembershipDate(selectedScoutForMembership.id, finalDate);
                     await dataService.approveMembershipDate(selectedScoutForMembership.id);
+                    notificationService.sendNotification({
+                      senderId: user?.id,
+                      receiverId: selectedScoutForMembership.id,
+                      title: '🪪 Membresía Aprobada',
+                      message: `Tu carnet scout oficial está activo con vigencia hasta ${formatDateWithDayOfWeek(finalDate)}.`,
+                      type: 'membership'
+                    }).catch(() => {});
                   } else {
                     await dataService.proposeMembershipDate(selectedScoutForMembership.id, finalDate);
+                    notificationService.sendNotification({
+                      senderId: user?.id,
+                      groupName: user?.group_name || undefined,
+                      receiverRole: 'jefe_grupo',
+                      title: '⏳ Propuesta de Membresía',
+                      message: `El Scouter ${user?.name} propuso vigencia de membresía para ${selectedScoutForMembership?.name} hasta ${formatDateWithDayOfWeek(finalDate)}.`,
+                      type: 'membership'
+                    }).catch(() => {});
                   }
                   showAlert('Fecha Asignada', `Membresía registrada para ${selectedScoutForMembership?.name}: ${formatDateWithDayOfWeek(finalDate)}`);
                   setShowMembershipModal(false);

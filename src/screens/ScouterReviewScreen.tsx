@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen, Flag } from 'lucide-react-native';
 import { dataService } from '../lib/dataService';
+import { notificationService } from '../services/notificationService';
 import { useTheme } from '../context/ThemeContext';
 import { stagesData } from '../data/progressionTemplate';
 import { activitiesCatalog } from '../data/activitiesCatalog';
@@ -65,10 +66,22 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
 
     if (confirmStep === 'reject') {
       await dataService.rejectStage(scoutId, stageId);
+      notificationService.sendNotification({
+        receiverId: scoutId,
+        title: '📋 Ficha de Etapa Devuelta',
+        message: `Tu dirigente ha revisado tu etapa "${stageTemplate.title}" y tiene requisitos pendientes por completar.`,
+        type: 'alert'
+      }).catch(() => {});
       showAlert('Ficha Devuelta', 'Se ha devuelto la ficha al scout para que complete los requisitos faltantes.');
       navigation.goBack();
     } else if (confirmStep === 'approve') {
       await dataService.approveStage(scoutId, stageId);
+      notificationService.sendNotification({
+        receiverId: scoutId,
+        title: '🎉 ¡Etapa e Insignia Aprobadas!',
+        message: `¡Felicidades! Tu dirigente ha aprobado oficialmente tu etapa "${stageTemplate.title}".`,
+        type: 'badge'
+      }).catch(() => {});
       showAlert('¡Etapa Aprobada!', 'La etapa ha sido aprobada exitosamente y el scout ha sido notificado.');
       navigation.goBack();
     }
