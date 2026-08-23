@@ -207,36 +207,68 @@ export default function ProfileScreen() {
   const loadProfile = async () => {
     setLoading(true);
     if (!user?.id) { setLoading(false); return; }
-    const { data } = await supabase
-      .from('profiles')
-      .select('promise_date, birth_date, join_date, phone, cedula, membership_expires_at, membership_status, membership_rejected_reason, avatar_url, custom_avatar_url')
-      .eq('id', user.id)
-      .single();
-    if (data) {
-      setCedula(data.cedula || user.cedula || '');
-      setBirthDate(data.birth_date || user.birth_date || '');
-      setPromiseDate(data.promise_date || user.promise_date || '');
-      setJoinDate(data.join_date || user.join_date || '');
-      setPhone(data.phone || user.phone || '');
-      setMembershipExpiresAt(data.membership_expires_at || user.membership_expires_at || '');
-      setMembershipStatus(data.membership_status || user.membership_status || 'none');
-      setMembershipRejectedReason(data.membership_rejected_reason || '');
-      if (data.avatar_url) setScoutAvatarUrl(data.avatar_url);
-      if (data.custom_avatar_url) setCustomAvatarUrl(data.custom_avatar_url);
-      if (data.birth_date || user.birth_date) {
-        const [y,m,d] = (data.birth_date || user.birth_date || '').split('-');
-        if (y && m && d) { setBYear(+y); setBMonth(+m); setBDay(+d); }
-      }
-      if (data.promise_date || user.promise_date) {
-        const [y,m,d] = (data.promise_date || user.promise_date || '').split('-');
-        if (y && m && d) { setPYear(+y); setPMonth(+m); setPDay(+d); }
-      }
-      if (data.join_date || user.join_date) {
-        const [y,m,d] = (data.join_date || user.join_date || '').split('-');
-        if (y && m && d) { setJYear(+y); setJMonth(+m); setJDay(+d); }
-      }
+
+    // 1. Inicializar de inmediato con los datos del usuario en memoria/AsyncStorage
+    if (user.cedula) setCedula(user.cedula);
+    if (user.birth_date) setBirthDate(user.birth_date);
+    if (user.promise_date) setPromiseDate(user.promise_date);
+    if (user.join_date) setJoinDate(user.join_date);
+    if (user.phone) setPhone(user.phone);
+    if (user.avatar_url) setScoutAvatarUrl(user.avatar_url);
+    if (user.custom_avatar_url) setCustomAvatarUrl(user.custom_avatar_url);
+    if (user.membership_status) setMembershipStatus(user.membership_status);
+    if (user.membership_expires_at) setMembershipExpiresAt(user.membership_expires_at);
+
+    if (user.birth_date) {
+      const [y,m,d] = user.birth_date.split('-');
+      if (y && m && d) { setBYear(+y); setBMonth(+m); setBDay(+d); }
     }
-    setLoading(false);
+    if (user.promise_date) {
+      const [y,m,d] = user.promise_date.split('-');
+      if (y && m && d) { setPYear(+y); setPMonth(+m); setPDay(+d); }
+    }
+    if (user.join_date) {
+      const [y,m,d] = user.join_date.split('-');
+      if (y && m && d) { setJYear(+y); setJMonth(+m); setJDay(+d); }
+    }
+
+    // 2. Consultar Supabase DB
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('promise_date, birth_date, join_date, phone, cedula, membership_expires_at, membership_status, membership_rejected_reason, avatar_url, custom_avatar_url')
+        .eq('id', user.id)
+        .single();
+      if (data) {
+        if (data.cedula) setCedula(data.cedula);
+        if (data.birth_date) setBirthDate(data.birth_date);
+        if (data.promise_date) setPromiseDate(data.promise_date);
+        if (data.join_date) setJoinDate(data.join_date);
+        if (data.phone) setPhone(data.phone);
+        if (data.membership_expires_at) setMembershipExpiresAt(data.membership_expires_at);
+        if (data.membership_status) setMembershipStatus(data.membership_status);
+        if (data.membership_rejected_reason) setMembershipRejectedReason(data.membership_rejected_reason);
+        if (data.avatar_url) setScoutAvatarUrl(data.avatar_url);
+        if (data.custom_avatar_url) setCustomAvatarUrl(data.custom_avatar_url);
+
+        if (data.birth_date) {
+          const [y,m,d] = data.birth_date.split('-');
+          if (y && m && d) { setBYear(+y); setBMonth(+m); setBDay(+d); }
+        }
+        if (data.promise_date) {
+          const [y,m,d] = data.promise_date.split('-');
+          if (y && m && d) { setPYear(+y); setPMonth(+m); setPDay(+d); }
+        }
+        if (data.join_date) {
+          const [y,m,d] = data.join_date.split('-');
+          if (y && m && d) { setJYear(+y); setJMonth(+m); setJDay(+d); }
+        }
+      }
+    } catch (e) {
+      console.warn('Modo offline en loadProfile:', e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePhotoChange = async (type: 'scout' | 'custom', newUrl: string) => {
@@ -247,7 +279,7 @@ export default function ProfileScreen() {
     } else {
       setCustomAvatarUrl(newUrl);
     }
-    updateUserProfile({ [fieldToUpdate]: newUrl });
+    await updateUserProfile({ [fieldToUpdate]: newUrl });
 
     try {
       const fileName = `${type}_avatar_${user.id}_${Date.now()}.jpg`;
@@ -259,7 +291,7 @@ export default function ProfileScreen() {
       );
 
       await supabase.from('profiles').update({ [fieldToUpdate]: uploadedUrl }).eq('id', user.id);
-      updateUserProfile({ [fieldToUpdate]: uploadedUrl });
+      await updateUserProfile({ [fieldToUpdate]: uploadedUrl });
       await refreshProfile();
     } catch (err: any) {
       console.warn('Error subiendo foto de perfil:', err);
@@ -292,18 +324,32 @@ export default function ProfileScreen() {
   const saveField = async (field: string, val: string) => {
     if (!user?.id) return;
     setSaving(true);
-    updateUserProfile({ [field]: val });
-    const { error } = await supabase
-      .from('profiles')
-      .update({ [field]: val })
-      .eq('id', user.id);
-    setSaving(false);
-    if (error) {
-      showAlert('Error al guardar', error.message);
-    } else {
-      await refreshProfile();
-      loadProfile();
+    
+    // 1. Guardar de inmediato en estado de la app y caché local
+    await updateUserProfile({ [field]: val });
+
+    // 2. Guardar en Supabase Auth metadata
+    try {
+      await supabase.auth.updateUser({ data: { [field]: val } });
+    } catch (e) {
+      console.warn('Aviso guardando user_metadata:', e);
     }
+
+    // 3. Guardar en Supabase DB tabla profiles
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ [field]: val })
+        .eq('id', user.id);
+      if (error) {
+        console.warn('Aviso guardando en tabla profiles:', error.message);
+      }
+    } catch (e) {
+      console.warn('Excepción guardando en profiles:', e);
+    }
+
+    setSaving(false);
+    await refreshProfile();
   };
 
   const confirmBirth = () => {
