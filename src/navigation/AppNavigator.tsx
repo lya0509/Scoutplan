@@ -10,6 +10,7 @@ import RegisterScreen from '../screens/RegisterScreen';
 import ScoutDashboardScreen from '../screens/ScoutDashboardScreen';
 import ScouterDashboardScreen from '../screens/ScouterDashboardScreen';
 import JefeGrupoScreen from '../screens/JefeGrupoScreen';
+import ComisionadoDashboardScreen from '../screens/ComisionadoDashboardScreen';
 import StageDetailScreen from '../screens/StageDetailScreen';
 import ScouterReviewScreen from '../screens/ScouterReviewScreen';
 import CalendarScreen from '../screens/CalendarScreen';
@@ -128,6 +129,13 @@ export default function AppNavigator() {
               <>
                 <Stack.Screen name="JefeDashboard" component={JefeGrupoScreen} />
                 <Stack.Screen name="CalendarStandalone" component={CalendarScreen} options={{ headerShown: true, title: 'Calendario de Grupo' }} />
+              </>
+            )}
+
+            {(user.role === 'comisionado_distrital' || user.role === 'comisionado_regional' || user.role === 'nacional' || user.role === 'admin') && (
+              <>
+                <Stack.Screen name="ComisionadoDashboard" component={ComisionadoDashboardScreen} />
+                <Stack.Screen name="CalendarStandalone" component={CalendarScreen} options={{ headerShown: true, title: 'Calendario Territorial' }} />
               </>
             )}
 

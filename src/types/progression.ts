@@ -1,5 +1,5 @@
-export type Role = 'scout' | 'scouter' | 'jefe_grupo';
-export type Unit = 'clan' | 'tropa' | 'caminantes' | 'manada';
+export type Role = 'scout' | 'scouter' | 'jefe_grupo' | 'comisionado_distrital' | 'comisionado_regional' | 'nacional' | 'admin';
+export type Unit = 'clan' | 'tropa' | 'caminantes' | 'manada' | 'comunidad' | 'grupo';
 export type StageStatus = 'En Progreso' | 'En Revision' | 'Aprobada';
 
 export interface Profile {

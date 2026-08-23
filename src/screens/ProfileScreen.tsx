@@ -427,7 +427,17 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.roleBadge}>
             <Text style={styles.roleBadgeText}>
-              {(user?.role || 'scout').toUpperCase()}
+              {user?.role === 'nacional' || user?.role === 'admin'
+                ? 'DIRECCIÓN NACIONAL'
+                : user?.role === 'comisionado_regional'
+                ? 'COMISIONADO REGIONAL'
+                : user?.role === 'comisionado_distrital'
+                ? 'COMISIONADO DISTRITAL'
+                : user?.role === 'jefe_grupo'
+                ? 'JEFE DE GRUPO'
+                : user?.role === 'scouter'
+                ? 'DIRIGENTE SCOUTER'
+                : 'SCOUT'}
             </Text>
           </View>
           {membershipStatus === 'approved' && (
