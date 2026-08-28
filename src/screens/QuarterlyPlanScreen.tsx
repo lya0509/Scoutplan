@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Compass, Edit3, MessageSquare, Plus, CheckCircle, AlertCircle, X, Shield, Calendar as CalendarIcon, Trash2, Check, Eye, Download, ChevronLeft, ChevronRight, Copy, FileSpreadsheet, History } from 'lucide-react-native';
 import { Calendar as RNCalendar, DateData } from 'react-native-calendars';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { dataService } from '../lib/dataService';
@@ -156,9 +157,16 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     ];
   };
 
+  const getDraftKey = () => {
+    const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user?.unit || 'clan');
+    return `@draft_quarterly_${user?.group_name || 'default'}_${targetUnit}_${selectedQuarter}_${selectedYear}`;
+  };
+
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
+    const key = getDraftKey();
+
     try {
       const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user.unit || 'clan');
       const plan = await dataService.getUnitSharedQuarterlyPlan(
@@ -168,8 +176,8 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
         selectedYear
       ) || await dataService.getQuarterlyPlan(user.id, selectedQuarter, selectedYear);
 
-      setScoutPlan(plan);
       if (plan) {
+        setScoutPlan(plan);
         setElaboratedBy(plan.elaborated_by || user.name || '');
         setGeneralObjective(plan.general_objectives || plan.goals || '');
         setTrimestreGoalsList(parseStringToList(plan.trimestre_goals));
@@ -180,15 +188,59 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
         } else {
           setActivities([]);
         }
+
+        // Cachear en almacenamiento local
+        try {
+          await AsyncStorage.setItem(key, JSON.stringify({
+            elaboratedBy: plan.elaborated_by || user.name || '',
+            generalObjective: plan.general_objectives || plan.goals || '',
+            trimestreGoalsList: parseStringToList(plan.trimestre_goals),
+            specificObjectivesList: parseStringToList(plan.specific_objectives),
+            educationalAreas: plan.educational_areas,
+            activities: plan.monthly_activities || [],
+            savedAt: new Date().toISOString()
+          }));
+        } catch (e) {}
       } else {
-        setElaboratedBy(user.name || '');
-        setGeneralObjective('');
-        setTrimestreGoalsList(['']);
-        setSpecificObjectivesList(['']);
-        setActivities([]);
+        // Si no hay plan en la nube aún, recuperar borrador local persistido
+        let recovered = false;
+        try {
+          const localDraftStr = await AsyncStorage.getItem(key);
+          if (localDraftStr) {
+            const draft = JSON.parse(localDraftStr);
+            setElaboratedBy(draft.elaboratedBy || user.name || '');
+            setGeneralObjective(draft.generalObjective || '');
+            setTrimestreGoalsList(draft.trimestreGoalsList && draft.trimestreGoalsList.length > 0 ? draft.trimestreGoalsList : ['']);
+            setSpecificObjectivesList(draft.specificObjectivesList && draft.specificObjectivesList.length > 0 ? draft.specificObjectivesList : ['']);
+            if (draft.educationalAreas) setEducationalAreas(draft.educationalAreas);
+            if (draft.activities && Array.isArray(draft.activities)) setActivities(draft.activities);
+            recovered = true;
+          }
+        } catch (e) {}
+
+        if (!recovered) {
+          setElaboratedBy(user.name || '');
+          setGeneralObjective('');
+          setTrimestreGoalsList(['']);
+          setSpecificObjectivesList(['']);
+          setActivities([]);
+        }
       }
     } catch (err) {
       console.error('Error cargando plan trimestral compartido:', err);
+      // En caso de suspensión o desconexión temporal, recuperar de la memoria local
+      try {
+        const localDraftStr = await AsyncStorage.getItem(key);
+        if (localDraftStr) {
+          const draft = JSON.parse(localDraftStr);
+          setElaboratedBy(draft.elaboratedBy || user.name || '');
+          setGeneralObjective(draft.generalObjective || '');
+          setTrimestreGoalsList(draft.trimestreGoalsList || ['']);
+          setSpecificObjectivesList(draft.specificObjectivesList || ['']);
+          if (draft.educationalAreas) setEducationalAreas(draft.educationalAreas);
+          if (draft.activities) setActivities(draft.activities);
+        }
+      } catch (e) {}
     } finally {
       setLoading(false);
     }
@@ -509,6 +561,20 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
         educational_areas: educationalAreas,
         monthly_activities: activities
       });
+
+      // Actualizar caché local
+      try {
+        const key = getDraftKey();
+        await AsyncStorage.setItem(key, JSON.stringify({
+          elaboratedBy: elaboratedBy.trim() || user.name,
+          generalObjective: generalObjective.trim(),
+          trimestreGoalsList: trimestreGoalsList,
+          specificObjectivesList: specificObjectivesList,
+          educationalAreas: educationalAreas,
+          activities: activities,
+          savedAt: new Date().toISOString()
+        }));
+      } catch (e) {}
 
       // Enviar notificación instantánea en vivo a todos los miembros de la unidad
       notificationService.sendNotification({
