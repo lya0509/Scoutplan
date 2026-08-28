@@ -381,13 +381,6 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     text += `👤 *Elaborado por:* ${elaboratedBy || user?.name}\n`;
     text += `📅 *Meses:* ${activeQuarterObj?.months}\n\n`;
 
-    const metas = trimestreGoalsList.filter(s => s.trim());
-    if (metas.length > 0) {
-      text += `📌 *METAS DEL TRIMESTRE:*\n`;
-      metas.forEach((g, i) => { text += `${i + 1}. ${g}\n`; });
-      text += `\n`;
-    }
-
     text += `🎯 *OBJETIVO GENERAL DEL TRIMESTRE:*\n`;
     text += `${generalObjective || 'Sin especificar'}\n\n`;
 
@@ -395,6 +388,13 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     if (especs.length > 0) {
       text += `💡 *OBJETIVOS ESPECÍFICOS:*\n`;
       especs.forEach((s, i) => { text += `${i + 1}. ${s}\n`; });
+      text += `\n`;
+    }
+
+    const metas = trimestreGoalsList.filter(s => s.trim());
+    if (metas.length > 0) {
+      text += `📌 *METAS DEL TRIMESTRE:*\n`;
+      metas.forEach((g, i) => { text += `${i + 1}. ${g}\n`; });
       text += `\n`;
     }
 
@@ -900,38 +900,11 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
                 </View>
               )}
 
-              {/* SECCIÓN 1: METAS Y OBJETIVOS DEL TRIMESTRE */}
-              <Text style={[styles.sectionTitle, { color: colors.primary }]}>1. Metas y Objetivos del Trimestre</Text>
+              {/* SECCIÓN 1: OBJETIVOS Y METAS DEL TRIMESTRE */}
+              <Text style={[styles.sectionTitle, { color: colors.primary }]}>1. Objetivos y Metas del Trimestre</Text>
               
-              {/* 1. LISTA DINÁMICA DE METAS DEL TRIMESTRE */}
-              <Text style={[styles.label, { color: theme.subText }]}>METAS DEL TRIMESTRE *</Text>
-              {trimestreGoalsList.map((goalItem, idx) => (
-                <View key={idx} style={styles.dynamicRow}>
-                  <Text style={[styles.itemBulletIndex, { color: colors.primary }]}>{idx + 1}.</Text>
-                  <TextInput
-                    style={[styles.input, { flex: 1, backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
-                    placeholder={`Meta del Trimestre #${idx + 1}...`}
-                    placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
-                    value={goalItem}
-                    onChangeText={val => handleUpdateListItem(setTrimestreGoalsList, idx, val)}
-                    editable={scouterEditUnlocked}
-                  />
-                  {trimestreGoalsList.length > 1 && scouterEditUnlocked && (
-                    <TouchableOpacity onPress={() => handleRemoveListItem(setTrimestreGoalsList, idx)} style={styles.deleteListItemBtn}>
-                      <Trash2 size={16} color="#ef4444" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ))}
-              {scouterEditUnlocked && (
-                <TouchableOpacity style={styles.addDynamicBtn} onPress={() => handleAddListItem(setTrimestreGoalsList)}>
-                  <Plus size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                  <Text style={[styles.addDynamicBtnText, { color: colors.primary }]}>+ Agregar otra Meta del Trimestre</Text>
-                </TouchableOpacity>
-              )}
-
-              {/* 2. CAMPO: OBJETIVO GENERAL DEL TRIMESTRE */}
-              <Text style={[styles.label, { color: theme.subText, marginTop: 14 }]}>OBJETIVO GENERAL DEL TRIMESTRE</Text>
+              {/* 1. CAMPO: OBJETIVO GENERAL DEL TRIMESTRE */}
+              <Text style={[styles.label, { color: theme.subText }]}>OBJETIVO GENERAL DEL TRIMESTRE *</Text>
               <TextInput
                 style={[styles.input, styles.textArea, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
                 placeholder="Ej: Lograr iniciar este trimestre de la mejor manera, cumpliendo los objetivos de los programas mundiales, conectarnos con otros grupos scout..."
@@ -943,7 +916,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
                 editable={scouterEditUnlocked}
               />
 
-              {/* 3. LISTA DINÁMICA DE OBJETIVOS ESPECÍFICOS */}
+              {/* 2. LISTA DINÁMICA DE OBJETIVOS ESPECÍFICOS */}
               <Text style={[styles.label, { color: theme.subText, marginTop: 14 }]}>OBJETIVOS ESPECÍFICOS</Text>
               {specificObjectivesList.map((specItem, idx) => (
                 <View key={idx} style={styles.dynamicRow}>
@@ -967,6 +940,33 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
                 <TouchableOpacity style={styles.addDynamicBtn} onPress={() => handleAddListItem(setSpecificObjectivesList)}>
                   <Plus size={14} color={colors.primary} style={{ marginRight: 4 }} />
                   <Text style={[styles.addDynamicBtnText, { color: colors.primary }]}>+ Agregar otro Objetivo Específico</Text>
+                </TouchableOpacity>
+              )}
+
+              {/* 3. LISTA DINÁMICA DE METAS DEL TRIMESTRE */}
+              <Text style={[styles.label, { color: theme.subText, marginTop: 14 }]}>METAS DEL TRIMESTRE</Text>
+              {trimestreGoalsList.map((goalItem, idx) => (
+                <View key={idx} style={styles.dynamicRow}>
+                  <Text style={[styles.itemBulletIndex, { color: colors.primary }]}>{idx + 1}.</Text>
+                  <TextInput
+                    style={[styles.input, { flex: 1, backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
+                    placeholder={`Meta del Trimestre #${idx + 1}...`}
+                    placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                    value={goalItem}
+                    onChangeText={val => handleUpdateListItem(setTrimestreGoalsList, idx, val)}
+                    editable={scouterEditUnlocked}
+                  />
+                  {trimestreGoalsList.length > 1 && scouterEditUnlocked && (
+                    <TouchableOpacity onPress={() => handleRemoveListItem(setTrimestreGoalsList, idx)} style={styles.deleteListItemBtn}>
+                      <Trash2 size={16} color="#ef4444" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))}
+              {scouterEditUnlocked && (
+                <TouchableOpacity style={styles.addDynamicBtn} onPress={() => handleAddListItem(setTrimestreGoalsList)}>
+                  <Plus size={14} color={colors.primary} style={{ marginRight: 4 }} />
+                  <Text style={[styles.addDynamicBtnText, { color: colors.primary }]}>+ Agregar otra Meta del Trimestre</Text>
                 </TouchableOpacity>
               )}
 
