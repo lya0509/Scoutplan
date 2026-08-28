@@ -19,6 +19,7 @@ import { useTheme } from '../context/ThemeContext';
 import { dataService } from '../lib/dataService';
 import { supabase } from '../lib/supabaseClient';
 import { notificationService } from '../services/notificationService';
+import { autoSaveService } from '../services/autoSaveService';
 import { QUARTERS } from '../data/trimestresData';
 import { colors, UNIT_COLORS } from '../theme/colors';
 import { showAlert } from '../utils/alert';
@@ -125,6 +126,25 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
       supabase.removeChannel(channel);
     };
   }, [user, selectedQuarter, selectedYear, unitFilter]);
+
+  useEffect(() => {
+    if (!user || loading) return;
+    const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user.unit || 'clan');
+    const key = `quarterly_${user.group_name || 'default'}_${targetUnit}_${selectedQuarter}_${selectedYear}`;
+    autoSaveService.saveDraft(
+      key,
+      {
+        elaboratedBy,
+        generalObjective,
+        trimestreGoalsList,
+        specificObjectivesList,
+        educationalAreas,
+        activities
+      },
+      user.id,
+      'QuarterlyPlan'
+    );
+  }, [elaboratedBy, generalObjective, trimestreGoalsList, specificObjectivesList, educationalAreas, activities, user, selectedQuarter, selectedYear, unitFilter]);
 
   const parseStringToList = (val: any): string[] => {
     if (!val) return [''];
@@ -893,9 +913,14 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
               
               {/* BANNER PLAN COMPARTIDO DE UNIDAD */}
               <View style={{ backgroundColor: isDarkMode ? '#1e1b4b' : 'rgba(99, 102, 241, 0.12)', borderLeftWidth: 4, borderLeftColor: colors.primary, padding: 14, borderRadius: 10, marginBottom: 16 }}>
-                <Text style={{ fontWeight: 'bold', fontSize: 13, color: colors.primary }}>
-                  📌 Plan Trimestral Único de la Unidad ({(user?.unit || 'CLAN').toUpperCase()}) — {selectedQuarter}
-                </Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={{ fontWeight: 'bold', fontSize: 13, color: colors.primary }}>
+                    📌 Plan Trimestral Único de la Unidad ({(user?.unit || 'CLAN').toUpperCase()}) — {selectedQuarter}
+                  </Text>
+                  <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#10b981' }}>
+                    <Text style={{ fontSize: 10, color: '#10b981', fontWeight: 'bold' }}>💾 Auto-guardado activo</Text>
+                  </View>
+                </View>
                 <Text style={{ fontSize: 12, color: theme.subText, marginTop: 4 }}>
                   ✍️ Creado / Modificado por: <Text style={{ fontWeight: 'bold', color: theme.text }}>{elaboratedBy || user?.name || 'Unidad Scout'}</Text>
                 </Text>

@@ -16,6 +16,7 @@ import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
 import { storageService } from '../lib/storageService';
 import { colors } from '../theme/colors';
+import { autoSaveService } from '../services/autoSaveService';
 import { showAlert } from '../utils/alert';
 import { exportDocxInBrowser } from '../utils/docxExporter';
 
@@ -134,9 +135,16 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
   };
 
   useEffect(() => {
-    if (!loading && savedStateRef.current) {
+    if (!loading) {
       const current = getCurrentFormJSON();
-      setHasChanges(current !== savedStateRef.current);
+      if (savedStateRef.current) {
+        setHasChanges(current !== savedStateRef.current);
+      }
+      if (!isViewOnlyForScouter && targetUserId) {
+        try {
+          autoSaveService.saveDraft(`medical_record_${targetUserId}`, JSON.parse(current), targetUserId, 'FichaMedica');
+        } catch (e) {}
+      }
     }
   }, [
     fullName, ci, nationality, age, gender, heightCm, weightKg,
@@ -211,6 +219,23 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
 
           if (m.signatureUrl) setSignatureUrl(m.signatureUrl);
           if (m.signatureDate) setSignatureDate(m.signatureDate);
+        } else {
+          const draft: any = await autoSaveService.loadDraft(`medical_record_${targetUserId}`);
+          if (draft) {
+            if (draft.ci) setCi(draft.ci);
+            if (draft.nationality) setNationality(draft.nationality);
+            if (draft.age) setAge(String(draft.age));
+            if (draft.heightCm) setHeightCm(String(draft.heightCm));
+            if (draft.weightKg) setWeightKg(String(draft.weightKg));
+            if (draft.emergencyContactName) setEmergencyContactName(draft.emergencyContactName);
+            if (draft.emergencyPhonePersonal) setEmergencyPhonePersonal(draft.emergencyPhonePersonal);
+            if (draft.emergencyPhoneHome) setEmergencyPhoneHome(draft.emergencyPhoneHome);
+            if (draft.emergencyPhoneOther) setEmergencyPhoneOther(draft.emergencyPhoneOther);
+            if (draft.bloodType) setBloodType(draft.bloodType);
+            if (draft.allergies) setAllergies(draft.allergies);
+            if (draft.vaccines) setVaccines(draft.vaccines);
+            if (draft.signatureUrl) setSignatureUrl(draft.signatureUrl);
+          }
         }
       }
     } catch (err) {

@@ -50,6 +50,7 @@ import {
 import { REGISTRATION_BADGES } from '../data/registrationBadgesData';
 import { programaService } from '../lib/programaService';
 import { dataService } from '../lib/dataService';
+import { autoSaveService } from '../services/autoSaveService';
 import { ProgramaPdfPreviewModal } from '../components/ProgramaPdfPreviewModal';
 import { showAlert } from '../utils/alert';
 
@@ -200,6 +201,58 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
       setSelectedUnits([...selectedUnits, u]);
     }
   };
+
+  // Auto-recuperación de borrador local al abrir
+  useEffect(() => {
+    if (!existingPrograma && user) {
+      autoSaveService.loadDraft<any>('active_programa_draft').then(draft => {
+        if (draft) {
+          if (draft.title) setTitle(draft.title);
+          if (draft.date) setDate(draft.date);
+          if (draft.location) setLocation(draft.location);
+          if (draft.activityType) setActivityType(draft.activityType);
+          if (draft.isSinodal !== undefined) setIsSinodal(draft.isSinodal);
+          if (draft.selectedUnits) setSelectedUnits(draft.selectedUnits);
+          if (draft.participantProjection) setParticipantProjection(draft.participantProjection);
+          if (draft.generalObjective) setGeneralObjective(draft.generalObjective);
+          if (draft.specificObjectives) setSpecificObjectives(draft.specificObjectives);
+          if (draft.specificMetas) setSpecificMetas(draft.specificMetas);
+          if (draft.selectedSDGs) setSelectedSDGs(draft.selectedSDGs);
+          if (draft.importantNotes) setImportantNotes(draft.importantNotes);
+          if (draft.schedule && Array.isArray(draft.schedule)) setSchedule(draft.schedule);
+          if (draft.indicators) setIndicators(draft.indicators);
+        }
+      });
+    }
+  }, [existingPrograma, user]);
+
+  // Auto-guardado local en segundo plano al modificar cualquier campo
+  useEffect(() => {
+    if (!user) return;
+    autoSaveService.saveDraft(
+      'active_programa_draft',
+      {
+        id,
+        title,
+        date,
+        location,
+        activityType,
+        unit,
+        isSinodal,
+        selectedUnits,
+        participantProjection,
+        generalObjective,
+        specificObjectives,
+        specificMetas,
+        selectedSDGs,
+        importantNotes,
+        schedule,
+        indicators
+      },
+      user.id,
+      'ProgramaScoutEditor'
+    );
+  }, [id, title, date, location, activityType, unit, isSinodal, selectedUnits, participantProjection, generalObjective, specificObjectives, specificMetas, selectedSDGs, importantNotes, schedule, indicators, user]);
 
   const handleToggleSinodalMode = () => {
     if (isSinodal) {
@@ -399,6 +452,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
       };
 
       await programaService.savePrograma(programaToSave);
+      await autoSaveService.removeDraft('active_programa_draft');
       setSaving(false);
       
       const statusMsg = completedAreasCount >= 6
