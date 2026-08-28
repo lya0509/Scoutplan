@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabaseClient';
 import { dataService } from '../lib/dataService';
 import { colors } from '../theme/colors';
 import { useFocusEffect } from '@react-navigation/native';
+import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, Target, FileText, CheckCircle } from 'lucide-react-native';
 
 const UNIT_COLORS: Record<string, string> = {
@@ -206,12 +207,17 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
         return (
           <View style={[styles.welcomeCard, isDarkMode && { backgroundColor: '#000000', borderWidth: 1, borderColor: '#27272a' }]}>
-            <Text style={styles.welcomeTag}>{motto}</Text>
-            <Text style={styles.welcomeName}>¡Hola, {user?.name || 'Scout'}!</Text>
-            <Text style={styles.welcomeGroup}>
-              {user?.group_name ? `${user.group_name} • ` : ''}
-              {user?.unit ? user.unit.toUpperCase() : 'SCOUT'}
-            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.welcomeTag}>{motto}</Text>
+                <Text style={styles.welcomeName}>¡Hola, {user?.name || 'Scout'}!</Text>
+                <Text style={styles.welcomeGroup}>
+                  {user?.group_name ? `${user.group_name} • ` : ''}
+                  {user?.unit ? user.unit.toUpperCase() : 'SCOUT'}
+                </Text>
+              </View>
+              <NotificationHeaderBell color="#ffffff" />
+            </View>
           </View>
         );
       })()}

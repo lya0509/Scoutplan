@@ -12,6 +12,7 @@ import { Edit2, ShieldCheck, AlertTriangle, Plus, Camera, CheckCircle } from 'lu
 import { UserScoutAvatar } from '../components/UserScoutAvatar';
 import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import { CarnetScoutModal } from '../components/CarnetScoutModal';
+import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { storageService } from '../lib/storageService';
 import { showAlert } from '../utils/alert';
 
@@ -406,6 +407,9 @@ export default function ProfileScreen() {
     <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ paddingBottom: 40 }}>
       {/* TARJETA DE CABECERA CON AVATAR DUAL SWIPEABLE */}
       <View style={[styles.headerCard, isDarkMode && { backgroundColor: '#121214', borderBottomColor: '#27272a' }]}>
+        <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'flex-end', marginBottom: -10 }}>
+          <NotificationHeaderBell />
+        </View>
         <View style={{ marginBottom: 12 }}>
           <DualProfileAvatar
             scoutAvatarUrl={scoutAvatarUrl || user?.avatar_url}

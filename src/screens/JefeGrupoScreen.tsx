@@ -17,6 +17,7 @@ import {
 } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
+import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import {
   exportCensoExcel, exportPadronMedicoExcel, exportMembresiasExcel, printDocumentHTML, MemberRecord
 } from '../utils/exportHelpers';
@@ -435,6 +436,8 @@ export default function JefeGrupoScreen({ navigation }: any) {
           </View>
 
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <NotificationHeaderBell color="#ffffff" style={styles.iconBtn} />
+
             <TouchableOpacity 
               style={styles.iconBtn} 
               onPress={() => setShowCustomizer(true)}

@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { CheckCircle, Eye, EyeOff, AlertCircle } from 'lucide-react-native';
 import { supabase } from '../lib/supabaseClient';
+import { notificationService } from '../services/notificationService';
 import { colors } from '../theme/colors';
 import { validateEmail } from '../utils/emailValidator';
 import { useTheme } from '../context/ThemeContext';
@@ -313,6 +314,16 @@ export default function RegisterScreen({ navigation }: any) {
         try {
           await supabase.from('profiles').upsert(profilePayload);
           await supabase.from('profiles').update(profilePayload).eq('id', signUpData.user.id);
+
+          // Enviar notificación instantánea a Jefatura y Scouters
+          notificationService.sendNotification({
+            senderId: signUpData.user.id,
+            groupName: assignedGroup,
+            unit: assignedUnit,
+            title: '🎉 ¡Nuevo Miembro Registrado!',
+            message: `${name.trim()} se ha registrado en el ${assignedGroup} (Rama: ${assignedUnit.toUpperCase()}).`,
+            type: 'membership'
+          }).catch(() => {});
         } catch (e) {
           console.warn('Aviso guardando perfil inicial:', e);
         }

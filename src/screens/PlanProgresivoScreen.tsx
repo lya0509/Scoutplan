@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabaseClient';
 import { colors } from '../theme/colors';
 import { ChevronRight } from 'lucide-react-native';
 import { StageBadgeIcon } from '../components/StageBadgeIcon';
+import NotificationHeaderBell from '../components/NotificationHeaderBell';
 
 const STAGE_COLORS: Record<string, string> = {
   'precursor':      '#ffb300',
@@ -104,8 +105,13 @@ export default function PlanProgresivoScreen({ navigation }: any) {
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.bg }]}>
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderBottomColor: theme.border }]}>
-        <Text style={[styles.title, { color: theme.text }]}>Mi Plan Progresivo</Text>
-        <Text style={[styles.subtitle, { color: theme.subText }]}>Sigue tu camino hacia la Insignia de Madera o Ciudadano Rover.</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flex: 1, paddingRight: 8 }}>
+            <Text style={[styles.title, { color: theme.text }]}>Mi Plan Progresivo</Text>
+            <Text style={[styles.subtitle, { color: theme.subText }]}>Sigue tu camino hacia la Insignia de Madera o Ciudadano Rover.</Text>
+          </View>
+          <NotificationHeaderBell />
+        </View>
       </View>
 
       <View style={styles.listContainer}>

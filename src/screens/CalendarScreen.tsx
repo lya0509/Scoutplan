@@ -5,6 +5,8 @@ import { Plus, X, Sun, Moon } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
+import { notificationService } from '../services/notificationService';
+import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { colors, UNIT_COLORS } from '../theme/colors';
 import { useFocusEffect } from '@react-navigation/native';
 import { showAlert } from '../utils/alert';
@@ -204,6 +206,16 @@ export default function CalendarScreen() {
     if (error) {
       showAlert('Error al crear evento', error.message);
     } else {
+      // Enviar notificación en vivo por WebSockets
+      notificationService.sendNotification({
+        senderId: user?.id,
+        groupName: user?.group_name || undefined,
+        unit: newEventUnit === 'grupo' ? undefined : newEventUnit,
+        title: '📅 Nueva Actividad de Calendario',
+        message: `${newEventTitle.trim()} programada para el ${newEventDate.trim()} (${newEventUnit.toUpperCase()}).`,
+        type: 'calendar'
+      }).catch(() => {});
+
       setModalVisible(false);
       setNewEventTitle('');
       setNewEventDesc('');
@@ -234,9 +246,10 @@ export default function CalendarScreen() {
       const unitColor = UNIT_COLORS[unitKey] || colors.primary;
 
       // Puntos múltiples por unidad abajo de la pelotita
-      const dots = dayEvts.map(e => {
+      const dots = dayEvts.slice(0, 4).map(e => {
+        const uKey = e.unit?.toLowerCase() || 'tropa';
+        const uCol = UNIT_COLORS[uKey] || colors.primary;
         const isEcip = e.title?.includes('[CIP') || e.title?.includes('[6P');
-        const uCol = UNIT_COLORS[e.unit?.toLowerCase()] || colors.primary;
         return {
           key: `${e.id}`,
           color: isEcip ? (blinkOpacity < 0.5 ? 'transparent' : uCol) : uCol
@@ -297,12 +310,15 @@ export default function CalendarScreen() {
               </Text>
             </View>
 
-            <TouchableOpacity
-              style={[styles.themeBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}
-              onPress={toggleDarkMode}
-            >
-              {isDarkMode ? <Sun color="#f59e0b" size={20} /> : <Moon color="#64748b" size={20} />}
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <NotificationHeaderBell />
+              <TouchableOpacity
+                style={[styles.themeBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}
+                onPress={toggleDarkMode}
+              >
+                {isDarkMode ? <Sun color="#f59e0b" size={20} /> : <Moon color="#64748b" size={20} />}
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Filtro por unidad visible para Jefatura y Scouters */}

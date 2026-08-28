@@ -26,6 +26,7 @@ import {
 } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
+import NotificationHeaderBell from '../components/NotificationHeaderBell';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
   if (!dateStr) return 'Seleccionar fecha en el calendario';
@@ -492,6 +493,8 @@ export default function ScouterDashboardScreen({ navigation }: any) {
         </View>
 
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+          <NotificationHeaderBell color="#ffffff" style={[styles.calendarIconBtn, { backgroundColor: isDarkMode ? '#27272a' : 'rgba(255,255,255,0.2)' }]} />
+
           <TouchableOpacity 
             style={[styles.calendarIconBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
             onPress={() => setShowCustomizer(true)}
