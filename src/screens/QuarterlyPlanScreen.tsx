@@ -16,6 +16,8 @@ import { Calendar as RNCalendar, DateData } from 'react-native-calendars';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { dataService } from '../lib/dataService';
+import { supabase } from '../lib/supabaseClient';
+import { notificationService } from '../services/notificationService';
 import { QUARTERS } from '../data/trimestresData';
 import { colors, UNIT_COLORS } from '../theme/colors';
 import { showAlert } from '../utils/alert';
@@ -105,6 +107,22 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
 
   useEffect(() => {
     loadData();
+
+    // Sincronización en tiempo real vía WebSockets (estilo WhatsApp)
+    const channel = supabase
+      .channel(`realtime_quarterly_plans_${selectedQuarter}_${selectedYear}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'quarterly_plans' },
+        () => {
+          loadData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, selectedQuarter, selectedYear, unitFilter]);
 
   const parseStringToList = (val: any): string[] => {
@@ -144,8 +162,8 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     try {
       const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user.unit || 'clan');
       const plan = await dataService.getUnitSharedQuarterlyPlan(
-        targetUnit,
         user.group_name || '',
+        targetUnit,
         selectedQuarter,
         selectedYear
       ) || await dataService.getQuarterlyPlan(user.id, selectedQuarter, selectedYear);
@@ -249,8 +267,8 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     <td colspan="11">${elaboratedBy || user?.name || ''}</td>
   </tr>
   <tr style="height: 60px;">
-    <td colspan="6" style="vertical-align: top; padding: 8px;"><b>Objetivos del Trimestre:</b> ${cleanGenObj}</td>
-    <td colspan="7" style="vertical-align: top; padding: 8px;"><b>Metas del trimestre:</b> ${cleanGoals}</td>
+    <td colspan="6" style="vertical-align: top; padding: 8px;"><b>Metas del trimestre:</b> ${cleanGoals}</td>
+    <td colspan="7" style="vertical-align: top; padding: 8px;"><b>Objetivos del Trimestre:</b> ${cleanGenObj}</td>
   </tr>
   <tr style="height: 45px;">
     <td colspan="13" style="vertical-align: top; padding: 8px;"><b>objetivos especificos:</b> ${cleanSpecifics}</td>
@@ -348,7 +366,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
       URL.revokeObjectURL(url);
       showAlert('¡Excel con Diseño Exportado!', `Se ha generado el archivo Excel con colores, bordes y celdas combinadas: ${fileName}`);
     } else {
-      showAlert('Ficha Excel Generada', `Archivo Excel con diseño profesional creado para ${fileName}`);
+      showAlert('Función Web', 'La exportación con diseño avanzado Excel está disponible en la versión web.');
     }
   };
 
@@ -363,15 +381,15 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     text += `👤 *Elaborado por:* ${elaboratedBy || user?.name}\n`;
     text += `📅 *Meses:* ${activeQuarterObj?.months}\n\n`;
 
-    text += `🎯 *OBJETIVO GENERAL DEL TRIMESTRE:*\n`;
-    text += `${generalObjective || 'Sin especificar'}\n\n`;
-
     const metas = trimestreGoalsList.filter(s => s.trim());
     if (metas.length > 0) {
       text += `📌 *METAS DEL TRIMESTRE:*\n`;
       metas.forEach((g, i) => { text += `${i + 1}. ${g}\n`; });
       text += `\n`;
     }
+
+    text += `🎯 *OBJETIVO GENERAL DEL TRIMESTRE:*\n`;
+    text += `${generalObjective || 'Sin especificar'}\n\n`;
 
     const especs = specificObjectivesList.filter(s => s.trim());
     if (especs.length > 0) {
@@ -470,14 +488,18 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     const specificStr = specificObjectivesList.filter(s => s.trim().length > 0).join('\n');
 
     if (!generalObjective.trim() && !goalsStr) {
-      showAlert('Campo Requerido', 'Por favor ingresa el objetivo general o las metas principales de este trimestre.');
+      showAlert('Campo Requerido', 'Por favor ingresa las metas o el objetivo general de este trimestre.');
       return;
     }
+
+    const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user.unit || 'clan');
 
     setSavingScout(true);
     try {
       await dataService.saveQuarterlyPlan({
         scout_id: user.id,
+        group_name: user.group_name || 'Grupo Scout Orión #84',
+        unit: targetUnit,
         quarter: selectedQuarter,
         year: selectedYear,
         elaborated_by: elaboratedBy.trim() || user.name,
@@ -487,6 +509,16 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
         educational_areas: educationalAreas,
         monthly_activities: activities
       });
+
+      // Enviar notificación instantánea en vivo a todos los miembros de la unidad
+      notificationService.sendNotification({
+        senderId: user.id,
+        groupName: user.group_name || undefined,
+        unit: targetUnit,
+        title: `📑 Plan Trimestral (${selectedQuarter}) Actualizado`,
+        message: `${elaboratedBy.trim() || user.name} ha actualizado las metas y actividades del Plan Trimestral de ${targetUnit.toUpperCase()}.`,
+        type: 'plan'
+      }).catch(() => {});
 
       setScouterEditUnlocked(false);
       showAlert('¡Plan Trimestral Guardado!', `Se han actualizado las actividades de la unidad para el ${selectedQuarter}. Creado/Modificado por: ${elaboratedBy || user.name}.`);
@@ -868,23 +900,11 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
                 </View>
               )}
 
-              {/* SECCIÓN 1: OBJETIVOS Y METAS */}
-              <Text style={[styles.sectionTitle, { color: colors.primary }]}>1. Objetivos y Metas del Trimestre</Text>
+              {/* SECCIÓN 1: METAS Y OBJETIVOS DEL TRIMESTRE */}
+              <Text style={[styles.sectionTitle, { color: colors.primary }]}>1. Metas y Objetivos del Trimestre</Text>
               
-              {/* CAMPO ÚNICO: OBJETIVO GENERAL DEL TRIMESTRE */}
-              <Text style={[styles.label, { color: theme.subText }]}>OBJETIVO GENERAL DEL TRIMESTRE *</Text>
-              <TextInput
-                style={[styles.input, styles.textArea, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
-                placeholder="Ej: Lograr iniciar este trimestre de la mejor manera, cumpliendo los objetivos de los programas mundiales, conectarnos con otros grupos scout..."
-                placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
-                multiline
-                numberOfLines={3}
-                value={generalObjective}
-                onChangeText={setGeneralObjective}
-              />
-
-              {/* LISTA DINÁMICA DE METAS DEL TRIMESTRE */}
-              <Text style={[styles.label, { color: theme.subText, marginTop: 14 }]}>METAS DEL TRIMESTRE</Text>
+              {/* 1. LISTA DINÁMICA DE METAS DEL TRIMESTRE */}
+              <Text style={[styles.label, { color: theme.subText }]}>METAS DEL TRIMESTRE *</Text>
               {trimestreGoalsList.map((goalItem, idx) => (
                 <View key={idx} style={styles.dynamicRow}>
                   <Text style={[styles.itemBulletIndex, { color: colors.primary }]}>{idx + 1}.</Text>
@@ -894,20 +914,36 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
                     placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
                     value={goalItem}
                     onChangeText={val => handleUpdateListItem(setTrimestreGoalsList, idx, val)}
+                    editable={scouterEditUnlocked}
                   />
-                  {trimestreGoalsList.length > 1 && (
+                  {trimestreGoalsList.length > 1 && scouterEditUnlocked && (
                     <TouchableOpacity onPress={() => handleRemoveListItem(setTrimestreGoalsList, idx)} style={styles.deleteListItemBtn}>
                       <Trash2 size={16} color="#ef4444" />
                     </TouchableOpacity>
                   )}
                 </View>
               ))}
-              <TouchableOpacity style={styles.addDynamicBtn} onPress={() => handleAddListItem(setTrimestreGoalsList)}>
-                <Plus size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                <Text style={[styles.addDynamicBtnText, { color: colors.primary }]}>+ Agregar otra Meta del Trimestre</Text>
-              </TouchableOpacity>
+              {scouterEditUnlocked && (
+                <TouchableOpacity style={styles.addDynamicBtn} onPress={() => handleAddListItem(setTrimestreGoalsList)}>
+                  <Plus size={14} color={colors.primary} style={{ marginRight: 4 }} />
+                  <Text style={[styles.addDynamicBtnText, { color: colors.primary }]}>+ Agregar otra Meta del Trimestre</Text>
+                </TouchableOpacity>
+              )}
 
-              {/* LISTA DINÁMICA DE OBJETIVOS ESPECÍFICOS */}
+              {/* 2. CAMPO: OBJETIVO GENERAL DEL TRIMESTRE */}
+              <Text style={[styles.label, { color: theme.subText, marginTop: 14 }]}>OBJETIVO GENERAL DEL TRIMESTRE</Text>
+              <TextInput
+                style={[styles.input, styles.textArea, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
+                placeholder="Ej: Lograr iniciar este trimestre de la mejor manera, cumpliendo los objetivos de los programas mundiales, conectarnos con otros grupos scout..."
+                placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                multiline
+                numberOfLines={3}
+                value={generalObjective}
+                onChangeText={setGeneralObjective}
+                editable={scouterEditUnlocked}
+              />
+
+              {/* 3. LISTA DINÁMICA DE OBJETIVOS ESPECÍFICOS */}
               <Text style={[styles.label, { color: theme.subText, marginTop: 14 }]}>OBJETIVOS ESPECÍFICOS</Text>
               {specificObjectivesList.map((specItem, idx) => (
                 <View key={idx} style={styles.dynamicRow}>
@@ -918,18 +954,21 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
                     placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
                     value={specItem}
                     onChangeText={val => handleUpdateListItem(setSpecificObjectivesList, idx, val)}
+                    editable={scouterEditUnlocked}
                   />
-                  {specificObjectivesList.length > 1 && (
+                  {specificObjectivesList.length > 1 && scouterEditUnlocked && (
                     <TouchableOpacity onPress={() => handleRemoveListItem(setSpecificObjectivesList, idx)} style={styles.deleteListItemBtn}>
                       <Trash2 size={16} color="#ef4444" />
                     </TouchableOpacity>
                   )}
                 </View>
               ))}
-              <TouchableOpacity style={styles.addDynamicBtn} onPress={() => handleAddListItem(setSpecificObjectivesList)}>
-                <Plus size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                <Text style={[styles.addDynamicBtnText, { color: colors.primary }]}>+ Agregar otro Objetivo Específico</Text>
-              </TouchableOpacity>
+              {scouterEditUnlocked && (
+                <TouchableOpacity style={styles.addDynamicBtn} onPress={() => handleAddListItem(setSpecificObjectivesList)}>
+                  <Plus size={14} color={colors.primary} style={{ marginRight: 4 }} />
+                  <Text style={[styles.addDynamicBtnText, { color: colors.primary }]}>+ Agregar otro Objetivo Específico</Text>
+                </TouchableOpacity>
+              )}
 
               {/* SECCIÓN 2: OBJETIVOS EDUCATIVOS (6 ÁREAS SCOUT) */}
               <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 20 }]}>

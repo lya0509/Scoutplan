@@ -498,10 +498,19 @@ export const dataService = {
     educational_areas?: Record<string, boolean>;
     monthly_activities?: any[];
     goals?: string;
+    group_name?: string;
+    unit?: string;
   }) {
-    const existing = await this.getQuarterlyPlan(plan.scout_id, plan.quarter, plan.year);
+    let cleanUnit = (plan.unit || 'clan').toLowerCase().trim();
+    if (cleanUnit === 'comunidad') cleanUnit = 'caminantes';
+
+    const existing = await this.getUnitSharedQuarterlyPlan(plan.group_name || '', cleanUnit, plan.quarter, plan.year)
+      || await this.getQuarterlyPlan(plan.scout_id, plan.quarter, plan.year);
 
     const fullPayload = {
+      scout_id: plan.scout_id,
+      unit: cleanUnit,
+      group_name: plan.group_name || 'Grupo Scout Orión #84',
       goals: plan.general_objectives || plan.goals || '',
       general_objectives: plan.general_objectives || plan.goals || '',
       trimestre_goals: plan.trimestre_goals || '',
@@ -512,7 +521,8 @@ export const dataService = {
         espiritualidad: true, caracter: true, sociabilidad: true
       },
       monthly_activities: plan.monthly_activities || [],
-      status: 'Enviado'
+      status: 'Enviado',
+      updated_at: new Date().toISOString()
     };
 
     try {
@@ -550,7 +560,8 @@ export const dataService = {
           .from('quarterly_plans')
           .update({
             goals: fallbackGoalsStr,
-            status: 'Enviado'
+            status: 'Enviado',
+            updated_at: new Date().toISOString()
           })
           .eq('id', existing.id)
           .select()
@@ -566,7 +577,8 @@ export const dataService = {
             quarter: plan.quarter,
             year: plan.year,
             goals: fallbackGoalsStr,
-            status: 'Enviado'
+            status: 'Enviado',
+            updated_at: new Date().toISOString()
           })
           .select()
           .single();
@@ -611,27 +623,48 @@ export const dataService = {
   // OBTENER Y GUARDAR PLAN TRIMESTRAL ÚNICO Y COMPARTIDO POR UNIDAD
   async getUnitSharedQuarterlyPlan(groupName: string, unit: string, quarter: string, year: number) {
     try {
-      const { data: scouts } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('group_name', groupName)
-        .eq('unit', unit);
+      let cleanUnit = (unit || 'clan').toLowerCase().trim();
+      if (cleanUnit === 'comunidad') cleanUnit = 'caminantes';
 
-      if (!scouts || scouts.length === 0) return null;
-      const scoutIds = scouts.map(s => s.id);
+      // 1. Buscar directamente por group_name y unit en quarterly_plans
+      if (groupName) {
+        const { data: directData } = await supabase
+          .from('quarterly_plans')
+          .select('*')
+          .eq('group_name', groupName)
+          .eq('unit', cleanUnit)
+          .eq('quarter', quarter)
+          .eq('year', year)
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      const { data, error } = await supabase
-        .from('quarterly_plans')
-        .select('*')
-        .in('scout_id', scoutIds)
-        .eq('quarter', quarter)
-        .eq('year', year)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .single();
+        if (directData) return directData;
+      }
 
-      if (error && error.code !== 'PGRST116') console.warn('Aviso plan compartido:', error);
-      return data || null;
+      // 2. Buscar a través de los perfiles de la unidad en este grupo
+      let query = supabase.from('profiles').select('id');
+      if (groupName) query = query.eq('group_name', groupName);
+      query = query.in('unit', [cleanUnit, unit ? unit.toLowerCase() : cleanUnit]);
+
+      const { data: scouts } = await query;
+
+      if (scouts && scouts.length > 0) {
+        const scoutIds = scouts.map(s => s.id);
+        const { data } = await supabase
+          .from('quarterly_plans')
+          .select('*')
+          .in('scout_id', scoutIds)
+          .eq('quarter', quarter)
+          .eq('year', year)
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (data) return data;
+      }
+
+      return null;
     } catch (e) {
       return null;
     }
