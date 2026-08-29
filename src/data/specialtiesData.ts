@@ -95,7 +95,7 @@ export const DROPBOX_SPECIALTIES_CATALOG_URL = 'https://www.dropbox.com/scl/fo/l
 
 export const certificateCategories = [
   { id: 'especialidades', name: 'Especialidades' },
-  { id: 'programas_mundiales', name: 'Programas Mundiales (WOSM)' },
+  { id: 'programas_mundiales', name: 'Programas Mundiales' },
   { id: 'iniciativas_programa', name: 'Iniciativas de Programa' },
   { id: 'proyecto', name: 'Proyecto de Servicio' },
   { id: 'reconocimientos', name: 'Reconocimientos / Méritos' },
@@ -104,23 +104,19 @@ export const certificateCategories = [
 
 export const wosmProgramsList = [
   'Mensajeros de la Paz',
-  'Tribu de la Tierra (Earth Tribe)',
-  'Campeones de la Naturaleza (Champions for Nature)',
-  'Scout Solar (Solar Scout)',
-  'Marea de Plástico (Plastic Tide Turners)',
-  'Scouts del Mundo (Scouts of the World Award)',
-  'Scouts por los Objetivos de Desarrollo Sostenible (ODS / SDGs)',
-  'A Salvo del Peligro (Safe from Harm)'
+  'Scouts del Mundo',
+  'Tribu de la Tierra',
+  'Aliados de la Salud',
+  'Líderes de Vida'
 ];
 
 export const initiativesList = [
-  'Jamboree (JOTA-JOTI / Campamento Mundial)',
-  'Enseña (Iniciativa de Programa Nacional)',
   'Mundo Seguro',
-  'Guardianes Alimentarios (Food Heroes)',
-  'Diálogo Interreligioso (Interreligious Dialogue)',
-  'Campaña contra los Robots Letales',
-  'Red de Jóvenes (Youth Network)'
+  'En-Señas',
+  'Guardianes Alimentarios',
+  'Diálogo Interreligioso',
+  'He for She',
+  'Campaña Contra los Robots Letales'
 ];
 
 export const coursesAndWorkshopsList = [

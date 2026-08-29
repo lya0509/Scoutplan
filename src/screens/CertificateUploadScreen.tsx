@@ -326,7 +326,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
         </TouchableOpacity>
 
         <Text style={[styles.subtitle, { color: theme.subText, marginBottom: 10 }]}>
-          Especialidades (Bronce/Plata/Oro), Programas Mundiales WOSM, Iniciativas Nacionales y Cursos.
+          Especialidades (Bronce/Plata/Oro), Programas Mundiales, Iniciativas de Programa y Cursos.
         </Text>
 
         <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
@@ -824,7 +824,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
 
               {category === 'programas_mundiales' && (
                 <>
-                  <Text style={[modalStyles.label, { color: theme.subText }]}>SELECCIONA EL PROGRAMA MUNDIAL (WOSM) *</Text>
+                  <Text style={[modalStyles.label, { color: theme.subText }]}>SELECCIONA EL PROGRAMA MUNDIAL *</Text>
                   <View style={modalStyles.chipGrid}>
                     {wosmProgramsList.map(prog => (
                       <TouchableOpacity
