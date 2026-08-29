@@ -383,7 +383,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [stats, setStats]   = useState({ total: 0, inReview: 0, approved: 0 });
 
-  // Modal para agregar Evento CIP 6P
+  // Modal para agregar Evento CIP (Ciclos Institucionales de Programa)
   const [showCipModal, setShowCipModal] = useState(false);
   const [cipTitle, setCipTitle] = useState('');
   const [cipScope, setCipScope] = useState<'distrital' | 'regional' | 'nacional' | 'internacional'>('distrital');

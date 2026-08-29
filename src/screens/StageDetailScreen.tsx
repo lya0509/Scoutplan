@@ -37,7 +37,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const [status, setStatus]   = useState<string>('En Progreso');
   const [confirming, setConfirming] = useState(false);
 
-  // Modal para seleccionar Eventos 6P CIP
+  // Modal para seleccionar Eventos CIP (Ciclos Institucionales de Programa)
   const [showCipModal, setShowCipModal] = useState(false);
   const [cipEvents, setCipEvents] = useState<any[]>([]);
   const [selectedReqForCip, setSelectedReqForCip] = useState<any>(null);
@@ -675,7 +675,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
         </View>
       </Modal>
 
-      {/* MODAL SELECCIÓN EVENTOS CIP 6P */}
+      {/* MODAL SELECCIÓN EVENTOS CIP (CICLOS INSTITUCIONALES DE PROGRAMA) */}
       <Modal visible={showCipModal} transparent animationType="slide" onRequestClose={() => setShowCipModal(false)}>
         <View style={modalStyles.overlay}>
           <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
