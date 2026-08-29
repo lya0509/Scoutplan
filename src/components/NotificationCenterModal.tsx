@@ -36,7 +36,15 @@ interface NotificationCenterModalProps {
 }
 
 export default function NotificationCenterModal({ visible, onClose }: NotificationCenterModalProps) {
-  const { notifications, unreadCount, markAsRead, markAllAsRead, refreshNotifications } = useNotifications();
+  const {
+    notifications,
+    unreadCount,
+    pushStatus,
+    requestPushPermission,
+    markAsRead,
+    markAllAsRead,
+    refreshNotifications
+  } = useNotifications();
   const { user } = useAuth();
   const { isDarkMode, theme } = useTheme();
 
@@ -106,6 +114,9 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
     setTestSuccessMessage(null);
 
     try {
+      // Disparar push y sonido localmente
+      notificationService.triggerSystemPushNotification(title, message);
+
       await notificationService.sendNotification({
         senderId: user.id,
         receiverId: user.id, // Directo para prueba instantánea
@@ -116,7 +127,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
         type
       });
 
-      setTestSuccessMessage(`¡Notificación enviada en vivo! Observa el banner flotante arriba.`);
+      setTestSuccessMessage(`¡Notificación y Push enviados con éxito! Sonido reproducido y banner activo.`);
       refreshNotifications();
     } catch (e: any) {
       setTestSuccessMessage(`Error en prueba: ${e?.message || 'Fallo de conexión'}`);
@@ -146,7 +157,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
                   <Radio size={12} color="#10b981" />
                   <Text style={{ fontSize: 10, color: '#10b981', fontWeight: 'bold' }}>
-                    WebSockets Realtime Activo
+                    WebSockets + Smart Polling Activo
                   </Text>
                 </View>
               </View>
@@ -173,13 +184,67 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
               onPress={() => setActiveTab('test')}
             >
               <Text style={[styles.tabBtnText, { color: activeTab === 'test' ? colors.primary : theme.subText }]}>
-                🧪 Probar en Vivo (Simulador)
+                🧪 Probar en Vivo (Push y Sonido)
               </Text>
             </TouchableOpacity>
           </View>
 
           {/* CONTENIDO */}
           <ScrollView style={styles.body} contentContainerStyle={{ paddingBottom: 24 }}>
+            {/* TARJETA DE ESTADO DE PERMISOS PUSH DEL SISTEMA */}
+            {pushStatus !== 'granted' ? (
+              <View style={{
+                backgroundColor: isDarkMode ? '#27272a' : '#fef3c7',
+                borderColor: '#f59e0b',
+                borderWidth: 1,
+                padding: 12,
+                borderRadius: 12,
+                marginBottom: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10
+              }}>
+                <Bell size={22} color="#f59e0b" />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: isDarkMode ? '#fbbf24' : '#92400e' }}>
+                    Activar Push del Sistema
+                  </Text>
+                  <Text style={{ fontSize: 10, color: isDarkMode ? '#d4d4d8' : '#78350f', marginTop: 2 }}>
+                    Para recibir avisos en la barra de tu teléfono o PC cuando la app esté minimizada.
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: '#f59e0b',
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    borderRadius: 8
+                  }}
+                  onPress={requestPushPermission}
+                >
+                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>
+                    Activar
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={{
+                backgroundColor: isDarkMode ? '#14532d' : '#dcfce7',
+                borderColor: '#22c55e',
+                borderWidth: 1,
+                padding: 10,
+                borderRadius: 12,
+                marginBottom: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8
+              }}>
+                <CheckCircle2 size={16} color="#16a34a" />
+                <Text style={{ fontSize: 11, fontWeight: 'bold', color: isDarkMode ? '#86efac' : '#15803d', flex: 1 }}>
+                  Push del Sistema y Sonido Activados ✅
+                </Text>
+              </View>
+            )}
             {activeTab === 'inbox' ? (
               <View>
                 {/* BARRA DE ACCIONES RÁPIDAS */}
