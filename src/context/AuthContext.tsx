@@ -83,50 +83,67 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
-        
-      if (data) {
-        const resolvedEmail = data.email || sess?.user?.email || meta.email || '';
-        const resolvedCedula = data.cedula || meta.cedula || null;
-        const resolvedBirthDate = data.birth_date || meta.birth_date || null;
-        const resolvedPromiseDate = data.promise_date || meta.promise_date || null;
-        const resolvedJoinDate = data.join_date || meta.join_date || null;
-        const resolvedPhone = data.phone || meta.phone || null;
-        const resolvedRegion = data.region || meta.region || null;
-        const resolvedDistrict = data.district || meta.district || null;
-        const resolvedGroupName = data.group_name || meta.group_name || null;
-        const resolvedUnit = data.unit || meta.unit || null;
-        const resolvedName = data.name || meta.name || 'Scout';
-        const resolvedAvatarUrl = data.avatar_url || meta.avatar_url || null;
-        const resolvedCustomAvatarUrl = data.custom_avatar_url || meta.custom_avatar_url || null;
-        const resolvedMembershipStatus = data.membership_status || meta.membership_status || 'none';
-        const resolvedMembershipExpiresAt = data.membership_expires_at || meta.membership_expires_at || null;
-        const resolvedMembershipRejectedReason = data.membership_rejected_reason || meta.membership_rejected_reason || null;
+        .maybeSingle();
 
-        const mergedUser: Profile = {
-          ...data,
+      const resolvedEmail = data?.email || sess?.user?.email || meta.email || '';
+      const resolvedRole = data?.role || meta.role || 'scout';
+      const resolvedUnit = data?.unit || meta.unit || 'tropa';
+      const resolvedGroupName = data?.group_name || meta.group_name || 'Grupo Orión';
+      const resolvedName = data?.name || meta.name || sess?.user?.email?.split('@')[0] || 'Scout';
+      const resolvedCedula = data?.cedula || meta.cedula || null;
+      const resolvedBirthDate = data?.birth_date || meta.birth_date || null;
+      const resolvedPromiseDate = data?.promise_date || meta.promise_date || null;
+      const resolvedJoinDate = data?.join_date || meta.join_date || null;
+      const resolvedPhone = data?.phone || meta.phone || null;
+      const resolvedRegion = data?.region || meta.region || null;
+      const resolvedDistrict = data?.district || meta.district || null;
+      const resolvedAvatarUrl = data?.avatar_url || meta.avatar_url || null;
+      const resolvedCustomAvatarUrl = data?.custom_avatar_url || meta.custom_avatar_url || null;
+      const resolvedMembershipStatus = data?.membership_status || meta.membership_status || 'none';
+      const resolvedMembershipExpiresAt = data?.membership_expires_at || meta.membership_expires_at || null;
+      const resolvedMembershipRejectedReason = data?.membership_rejected_reason || meta.membership_rejected_reason || null;
+
+      const mergedUser: Profile = {
+        id: userId,
+        role: resolvedRole,
+        unit: resolvedUnit,
+        group_name: resolvedGroupName,
+        name: resolvedName,
+        email: resolvedEmail,
+        cedula: resolvedCedula,
+        birth_date: resolvedBirthDate,
+        promise_date: resolvedPromiseDate,
+        join_date: resolvedJoinDate,
+        phone: resolvedPhone,
+        region: resolvedRegion,
+        district: resolvedDistrict,
+        avatar_url: resolvedAvatarUrl,
+        custom_avatar_url: resolvedCustomAvatarUrl,
+        membership_status: resolvedMembershipStatus,
+        membership_expires_at: resolvedMembershipExpiresAt,
+        membership_rejected_reason: resolvedMembershipRejectedReason,
+        created_at: data?.created_at || new Date().toISOString(),
+        updated_at: data?.updated_at || new Date().toISOString(),
+      };
+
+      setUser(mergedUser);
+      await AsyncStorage.setItem(CACHED_PROFILE_KEY, JSON.stringify(mergedUser));
+
+      // Si no existía el registro en profiles o faltaban campos, sincronizarlo en segundo plano
+      if (!data) {
+        supabase.from('profiles').upsert({
+          id: userId,
+          role: resolvedRole,
+          unit: resolvedUnit,
+          group_name: resolvedGroupName,
           name: resolvedName,
           email: resolvedEmail,
           cedula: resolvedCedula,
-          birth_date: resolvedBirthDate,
-          promise_date: resolvedPromiseDate,
-          join_date: resolvedJoinDate,
           phone: resolvedPhone,
           region: resolvedRegion,
-          district: resolvedDistrict,
-          group_name: resolvedGroupName,
-          unit: resolvedUnit,
-          avatar_url: resolvedAvatarUrl,
-          custom_avatar_url: resolvedCustomAvatarUrl,
-          membership_status: resolvedMembershipStatus,
-          membership_expires_at: resolvedMembershipExpiresAt,
-          membership_rejected_reason: resolvedMembershipRejectedReason,
-        };
-
-        setUser(mergedUser);
-        await AsyncStorage.setItem(CACHED_PROFILE_KEY, JSON.stringify(mergedUser));
-
-        // Auto-reparación en Supabase si faltaban datos en la tabla profiles
+          district: resolvedDistrict
+        }).then(() => {});
+      } else {
         const needsDbSync = 
           (!data.cedula && resolvedCedula) ||
           (!data.birth_date && resolvedBirthDate) ||
@@ -150,11 +167,9 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
             name: resolvedName,
           }).eq('id', userId).then(() => {});
         }
-      } else if (error && error.code === 'PGRST116') {
-        setTimeout(() => fetchProfile(userId, activeSession), 1000);
       }
     } catch (e: any) {
-      console.log('Modo Offline: Utilizando perfil almacenado localmente');
+      console.warn('Aviso resolviendo perfil:', e);
     } finally {
       setIsLoading(false);
     }
@@ -174,11 +189,14 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       return updated;
     });
 
-    // Guardar en Supabase Auth metadata para sincronización permanente
+    // Guardar en Supabase Auth metadata y en tabla profiles
     try {
+      if (session?.user?.id) {
+        await supabase.from('profiles').update(updates).eq('id', session.user.id);
+      }
       await supabase.auth.updateUser({ data: updates });
     } catch (e) {
-      console.warn('Aviso sincronizando user_metadata:', e);
+      console.warn('Aviso sincronizando perfil:', e);
     }
   };
 

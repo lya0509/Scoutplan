@@ -110,7 +110,7 @@ export default function AppNavigator() {
           </Stack.Group>
         ) : (
           <Stack.Group>
-            {user.role === 'scout' && (
+            {(!user.role || user.role === 'scout') && (
               <>
                 <Stack.Screen name="Drawer" component={DrawerNavigator} />
                 <Stack.Screen name="StageDetail" component={StageDetailScreen} options={{ headerShown: true, title: 'Detalle de Etapa' }} />

@@ -717,7 +717,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.accordionTitle, { color: theme.text }]}>🔴 CLAN ROVER</Text>
                   <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
-                    {clanData.scouters.length} Asesores/Scouters • {clanData.totalYouth} Rovers
+                    {clanData.scouters.length} Scouters • {clanData.totalYouth} Rovers
                   </Text>
                 </View>
                 {expanded.clan ? <ChevronUp size={20} color={theme.subText} /> : <ChevronDown size={20} color={theme.subText} />}
@@ -725,11 +725,11 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {expanded.clan && (
                 <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={styles.subCategoryTitle}>👔 Scouters / Asesores de Clan ({clanData.scouters.length})</Text>
+                  <Text style={styles.subCategoryTitle}>👔 Scouters de Clan ({clanData.scouters.length})</Text>
                   {clanData.scouters.length === 0 ? (
-                    <Text style={styles.emptySubText}>No hay asesores registrados en Clan.</Text>
+                    <Text style={styles.emptySubText}>No hay scouters registrados en Clan.</Text>
                   ) : (
-                    clanData.scouters.map(s => renderMemberCard(s, 'Asesor Rover / Scouter de Clan', true))
+                    clanData.scouters.map(s => renderMemberCard(s, 'Scouter de Clan / Rover', true))
                   )}
 
                   <Text style={[styles.subCategoryTitle, { marginTop: 12 }]}>🚩 Rovers ({clanData.youth?.length || 0})</Text>
@@ -800,27 +800,27 @@ export default function JefeGrupoScreen({ navigation }: any) {
             </View>
 
             <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
-              {/* BUSCADOR Y FILTRO */}
-              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 10 }}>
-                <View style={[styles.searchBox, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
-                  <Search size={16} color={theme.subText} />
-                  <TextInput
-                    style={[styles.searchInput, { color: theme.text }]}
-                    placeholder="Buscar por nombre o cédula..."
-                    placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
-                    value={censoSearch}
-                    onChangeText={setCensoSearch}
-                  />
-                  {censoSearch ? (
-                    <TouchableOpacity onPress={() => setCensoSearch('')}>
-                      <X size={16} color={theme.subText} />
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
+              {/* BUSCADOR */}
+              <View style={[styles.searchBox, { backgroundColor: theme.inputBg, borderColor: theme.border, marginBottom: 8 }]}>
+                <Search size={16} color={theme.subText} />
+                <TextInput
+                  style={[styles.searchInput, { color: theme.text }]}
+                  placeholder="Buscar por nombre o cédula..."
+                  placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                  value={censoSearch}
+                  onChangeText={setCensoSearch}
+                />
+                {censoSearch ? (
+                  <TouchableOpacity onPress={() => setCensoSearch('')}>
+                    <X size={16} color={theme.subText} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
 
-                {/* BOTONES DE EXPORTACIÓN */}
+              {/* BOTONES DE EXPORTACIÓN */}
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
                 <TouchableOpacity
-                  style={[styles.exportBtn, { backgroundColor: '#15803d' }]}
+                  style={[styles.exportBtn, { flex: 1, backgroundColor: '#15803d' }]}
                   onPress={() => exportCensoExcel(filteredCensoMembers, user?.group_name || 'Grupo Scout')}
                 >
                   <Download size={15} color="white" />
@@ -828,7 +828,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.exportBtn, { backgroundColor: primaryColor }]}
+                  style={[styles.exportBtn, { flex: 1, backgroundColor: primaryColor }]}
                   onPress={() => {
                     const headers = ['#', 'Nombre Completo', 'Cédula', 'Rol', 'Rama', 'Género', 'F. Nac.', 'F. Promesa', 'Teléfono', 'Carnet'];
                     const rows = filteredCensoMembers.map((m, idx) => [
@@ -933,26 +933,27 @@ export default function JefeGrupoScreen({ navigation }: any) {
             </View>
 
             <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
-              {/* BUSCADOR Y EXPORTACIÓN */}
-              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 10 }}>
-                <View style={[styles.searchBox, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
-                  <Search size={16} color={theme.subText} />
-                  <TextInput
-                    style={[styles.searchInput, { color: theme.text }]}
-                    placeholder="Buscar scout, alergia o tipo de sangre..."
-                    placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
-                    value={medicoSearch}
-                    onChangeText={setMedicoSearch}
-                  />
-                  {medicoSearch ? (
-                    <TouchableOpacity onPress={() => setMedicoSearch('')}>
-                      <X size={16} color={theme.subText} />
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
+              {/* BUSCADOR */}
+              <View style={[styles.searchBox, { backgroundColor: theme.inputBg, borderColor: theme.border, marginBottom: 8 }]}>
+                <Search size={16} color={theme.subText} />
+                <TextInput
+                  style={[styles.searchInput, { color: theme.text }]}
+                  placeholder="Buscar scout, alergia o tipo de sangre..."
+                  placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                  value={medicoSearch}
+                  onChangeText={setMedicoSearch}
+                />
+                {medicoSearch ? (
+                  <TouchableOpacity onPress={() => setMedicoSearch('')}>
+                    <X size={16} color={theme.subText} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
 
+              {/* BOTONES DE EXPORTACIÓN */}
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
                 <TouchableOpacity
-                  style={[styles.exportBtn, { backgroundColor: '#15803d' }]}
+                  style={[styles.exportBtn, { flex: 1, backgroundColor: '#15803d' }]}
                   onPress={() => exportPadronMedicoExcel(filteredMedicoMembers, user?.group_name || 'Grupo Scout')}
                 >
                   <Download size={15} color="white" />
@@ -960,7 +961,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.exportBtn, { backgroundColor: '#dc2626' }]}
+                  style={[styles.exportBtn, { flex: 1, backgroundColor: '#dc2626' }]}
                   onPress={() => {
                     const headers = ['#', 'Scout / Dirigente', 'Rama', 'Tipo Sangre', 'Alergias', 'Contacto Emergencia', 'Teléfono', 'Seguro'];
                     const rows = filteredMedicoMembers.map((m, idx) => {
@@ -1140,25 +1141,31 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 </TouchableOpacity>
               )}
 
-              {/* BUSCADOR Y EXPORTACIÓN */}
-              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 10 }}>
-                <View style={[styles.searchBox, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
-                  <Search size={16} color={theme.subText} />
-                  <TextInput
-                    style={[styles.searchInput, { color: theme.text }]}
-                    placeholder="Buscar por nombre..."
-                    placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
-                    value={semaforoSearch}
-                    onChangeText={setSemaforoSearch}
-                  />
-                </View>
+              {/* BUSCADOR */}
+              <View style={[styles.searchBox, { backgroundColor: theme.inputBg, borderColor: theme.border, marginBottom: 8 }]}>
+                <Search size={16} color={theme.subText} />
+                <TextInput
+                  style={[styles.searchInput, { color: theme.text }]}
+                  placeholder="Buscar por nombre..."
+                  placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                  value={semaforoSearch}
+                  onChangeText={setSemaforoSearch}
+                />
+                {semaforoSearch ? (
+                  <TouchableOpacity onPress={() => setSemaforoSearch('')}>
+                    <X size={16} color={theme.subText} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
 
+              {/* BOTÓN DE EXPORTACIÓN */}
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
                 <TouchableOpacity
-                  style={[styles.exportBtn, { backgroundColor: '#15803d' }]}
+                  style={[styles.exportBtn, { flex: 1, backgroundColor: '#15803d' }]}
                   onPress={() => exportMembresiasExcel(filteredSemaforoMembers, user?.group_name || 'Grupo Scout')}
                 >
                   <Download size={15} color="white" />
-                  <Text style={styles.exportBtnText}>Excel</Text>
+                  <Text style={styles.exportBtnText}>Exportar Semáforo a Excel (.XLS)</Text>
                 </TouchableOpacity>
               </View>
             </View>

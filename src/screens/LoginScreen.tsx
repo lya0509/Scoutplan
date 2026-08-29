@@ -15,6 +15,8 @@ import { Mail, Lock, Eye, EyeOff, Moon, Sun, KeyRound, CheckCircle2 } from 'luci
 import { supabase } from '../lib/supabaseClient';
 import { colors } from '../theme/colors';
 import { useTheme } from '../context/ThemeContext';
+import { useModalBackHandler } from '../hooks/useBackHandler';
+import { showAlert } from '../utils/alert';
 
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
@@ -30,32 +32,42 @@ export default function LoginScreen({ navigation }: any) {
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
 
+  // Soporte universal para gestos de retroceso
+  useModalBackHandler(showForgotModal, () => setShowForgotModal(false));
+
   const { width } = useWindowDimensions();
   const isWebLarge = width > 768;
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      if (typeof window !== 'undefined' && window.alert) {
-        window.alert('Por favor ingresa tu correo y contraseña.');
-      } else {
-        Alert.alert('Error', 'Por favor ingresa tu correo y contraseña.');
-      }
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPassword = (password || '').trim();
+
+    if (!cleanEmail || !cleanPassword) {
+      showAlert('Campos Requeridos', 'Por favor ingresa tu correo electrónico y tu contraseña.');
       return;
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    setLoading(false);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password: cleanPassword,
+      });
 
-    if (error) {
-      if (typeof window !== 'undefined' && window.alert) {
-        window.alert(`Error de Inicio de Sesión: ${error.message}`);
-      } else {
-        Alert.alert('Error de Inicio de Sesión', error.message);
+      if (error) {
+        setLoading(false);
+        if (error.message.includes('Invalid login credentials')) {
+          showAlert('Credenciales Incorrectas', 'El correo o la contraseña ingresados no son válidos. Verifica tus datos o usa "¿Olvidaste tu contraseña?".');
+        } else {
+          showAlert('Error de Inicio de Sesión', error.message);
+        }
+        return;
       }
+
+      // Si inició sesión con éxito, AuthContext procesará el perfil
+    } catch (err: any) {
+      setLoading(false);
+      showAlert('Error de Conexión', err?.message || 'No se pudo conectar con el servidor de autenticación. Verifica tu conexión a internet.');
     }
   };
 

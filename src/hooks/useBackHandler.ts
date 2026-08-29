@@ -4,8 +4,12 @@ import { Platform, BackHandler } from 'react-native';
 /**
  * Hook universal para interceptar gestos de retroceso (Android swipe / Botón atrás / Web popstate)
  * y cerrar modales suavemente sin salirse de la pantalla.
+ *
+ * Utiliza useRef para onClose para evitar re-ejecuciones del efecto al escribir en campos de texto.
  */
 export function useModalBackHandler(isOpen: boolean, onClose: () => void) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   const isClosedByPopRef = useRef(false);
 
   useEffect(() => {
@@ -14,7 +18,9 @@ export function useModalBackHandler(isOpen: boolean, onClose: () => void) {
 
     // 1. Gesto de atrás y botón físico en Android
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      onClose();
+      if (onCloseRef.current) {
+        onCloseRef.current();
+      }
       return true; // Consume el evento para que no cierre la aplicación
     });
 
@@ -26,7 +32,9 @@ export function useModalBackHandler(isOpen: boolean, onClose: () => void) {
 
       const handlePopState = () => {
         isClosedByPopRef.current = true;
-        onClose();
+        if (onCloseRef.current) {
+          onCloseRef.current();
+        }
       };
 
       window.addEventListener('popstate', handlePopState);
@@ -34,7 +42,7 @@ export function useModalBackHandler(isOpen: boolean, onClose: () => void) {
       return () => {
         subscription.remove();
         window.removeEventListener('popstate', handlePopState);
-        
+
         // Si el usuario cerró el modal manualmente (tocando la X o el fondo),
         // revertimos el pushState para mantener el historial limpio y que el siguiente gesto funcione
         if (!isClosedByPopRef.current && window.history.state?.modalOpen) {
@@ -48,5 +56,5 @@ export function useModalBackHandler(isOpen: boolean, onClose: () => void) {
     return () => {
       subscription.remove();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 }
