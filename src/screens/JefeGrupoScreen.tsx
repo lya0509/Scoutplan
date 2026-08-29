@@ -92,7 +92,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
   // 4. Modal Semáforo de Membresías y Carnets
   const [showSemaforoModal, setShowSemaforoModal] = useState(false);
   const [semaforoSearch, setSemaforoSearch] = useState('');
-  const [semaforoStatusFilter, setSemaforoStatusFilter] = useState<'all' | 'pending' | 'expiring' | 'expired' | 'active'>('all');
+  const [semaforoStatusFilter, setSemaforoStatusFilter] = useState<'all' | 'pending' | 'expiring_1m' | 'expiring_3m' | 'expired' | 'active'>('all');
   const [selectedMemberForMembership, setSelectedMemberForMembership] = useState<any>(null);
   const [membershipDateInput, setMembershipDateInput] = useState('');
   const [showMembershipDatePicker, setShowMembershipDatePicker] = useState(false);
@@ -287,13 +287,15 @@ export default function JefeGrupoScreen({ navigation }: any) {
       if (diffDays < 0) {
         acc.expired++;
       } else if (diffDays <= 30) {
-        acc.expiring++;
+        acc.expiring_1m++;
+      } else if (diffDays <= 90) {
+        acc.expiring_3m++;
       } else {
         acc.active++;
       }
       return acc;
     },
-    { active: 0, expiring: 0, expired: 0, pending: 0 }
+    { active: 0, expiring_3m: 0, expiring_1m: 0, expired: 0, pending: 0 }
   );
 
   // Filtrado de Censo
@@ -356,8 +358,9 @@ export default function JefeGrupoScreen({ navigation }: any) {
     const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
     if (semaforoStatusFilter === 'expired') return diffDays < 0;
-    if (semaforoStatusFilter === 'expiring') return diffDays >= 0 && diffDays <= 30;
-    if (semaforoStatusFilter === 'active') return diffDays > 30 && !isPending;
+    if (semaforoStatusFilter === 'expiring_1m') return diffDays >= 0 && diffDays <= 30;
+    if (semaforoStatusFilter === 'expiring_3m') return diffDays > 30 && diffDays <= 90;
+    if (semaforoStatusFilter === 'active') return diffDays > 90 && !isPending;
 
     return true;
   });
@@ -1159,39 +1162,52 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
             <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
               {/* TARJETAS DEL SEMÁFORO */}
-              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }} style={{ marginBottom: 12 }}>
+                {/* 1. VIGENTES (> 3 MESES / > 90 DÍAS) */}
                 <TouchableOpacity
-                  style={[styles.trafficCard, { backgroundColor: '#dcfce7', borderColor: '#16a34a' }, semaforoStatusFilter === 'active' && styles.trafficCardActive]}
+                  style={[styles.trafficCard, { backgroundColor: '#dcfce7', borderColor: '#16a34a', minWidth: 110 }, semaforoStatusFilter === 'active' && styles.trafficCardActive]}
                   onPress={() => setSemaforoStatusFilter(semaforoStatusFilter === 'active' ? 'all' : 'active')}
                 >
                   <Text style={[styles.trafficNumber, { color: '#15803d' }]}>{semaforoCounts.active}</Text>
-                  <Text style={[styles.trafficLabel, { color: '#166534' }]}>🟢 Vigentes</Text>
+                  <Text style={[styles.trafficLabel, { color: '#166534' }]}>🟢 Vigentes (&gt;3m)</Text>
                 </TouchableOpacity>
 
+                {/* 2. POR VENCER (3 MESES / 31-90 DÍAS) */}
                 <TouchableOpacity
-                  style={[styles.trafficCard, { backgroundColor: '#fef3c7', borderColor: '#d97706' }, semaforoStatusFilter === 'expiring' && styles.trafficCardActive]}
-                  onPress={() => setSemaforoStatusFilter(semaforoStatusFilter === 'expiring' ? 'all' : 'expiring')}
+                  style={[styles.trafficCard, { backgroundColor: '#fef9c3', borderColor: '#ca8a04', minWidth: 115 }, semaforoStatusFilter === 'expiring_3m' && styles.trafficCardActive]}
+                  onPress={() => setSemaforoStatusFilter(semaforoStatusFilter === 'expiring_3m' ? 'all' : 'expiring_3m')}
                 >
-                  <Text style={[styles.trafficNumber, { color: '#b45309' }]}>{semaforoCounts.expiring}</Text>
-                  <Text style={[styles.trafficLabel, { color: '#92400e' }]}>🟡 Por Vencer (30d)</Text>
+                  <Text style={[styles.trafficNumber, { color: '#854d0e' }]}>{semaforoCounts.expiring_3m}</Text>
+                  <Text style={[styles.trafficLabel, { color: '#713f12' }]}>🟡 Por Vencer (3m)</Text>
                 </TouchableOpacity>
 
+                {/* 3. A PUNTO DE VENCER (1 MES / 0-30 DÍAS) */}
                 <TouchableOpacity
-                  style={[styles.trafficCard, { backgroundColor: '#fee2e2', borderColor: '#dc2626' }, semaforoStatusFilter === 'expired' && styles.trafficCardActive]}
+                  style={[styles.trafficCard, { backgroundColor: '#ffedd5', borderColor: '#ea580c', minWidth: 115 }, semaforoStatusFilter === 'expiring_1m' && styles.trafficCardActive]}
+                  onPress={() => setSemaforoStatusFilter(semaforoStatusFilter === 'expiring_1m' ? 'all' : 'expiring_1m')}
+                >
+                  <Text style={[styles.trafficNumber, { color: '#c2410c' }]}>{semaforoCounts.expiring_1m}</Text>
+                  <Text style={[styles.trafficLabel, { color: '#9a3412' }]}>🟠 Por Vencer (30d)</Text>
+                </TouchableOpacity>
+
+                {/* 4. VENCIDAS O SIN FECHA */}
+                <TouchableOpacity
+                  style={[styles.trafficCard, { backgroundColor: '#fee2e2', borderColor: '#dc2626', minWidth: 120 }, semaforoStatusFilter === 'expired' && styles.trafficCardActive]}
                   onPress={() => setSemaforoStatusFilter(semaforoStatusFilter === 'expired' ? 'all' : 'expired')}
                 >
                   <Text style={[styles.trafficNumber, { color: '#b91c1c' }]}>{semaforoCounts.expired}</Text>
-                  <Text style={[styles.trafficLabel, { color: '#991b1b' }]}>🔴 Vencidas / Sin Fecha</Text>
+                  <Text style={[styles.trafficLabel, { color: '#991b1b' }]}>🔴 Vencidas / S.F</Text>
                 </TouchableOpacity>
 
+                {/* 5. POR APROBAR */}
                 <TouchableOpacity
-                  style={[styles.trafficCard, { backgroundColor: '#f3e8ff', borderColor: '#9333ea' }, semaforoStatusFilter === 'pending' && styles.trafficCardActive]}
+                  style={[styles.trafficCard, { backgroundColor: '#f3e8ff', borderColor: '#9333ea', minWidth: 105 }, semaforoStatusFilter === 'pending' && styles.trafficCardActive]}
                   onPress={() => setSemaforoStatusFilter(semaforoStatusFilter === 'pending' ? 'all' : 'pending')}
                 >
                   <Text style={[styles.trafficNumber, { color: '#7e22ce' }]}>{semaforoCounts.pending}</Text>
                   <Text style={[styles.trafficLabel, { color: '#6b21a8' }]}>⏳ Por Aprobar</Text>
                 </TouchableOpacity>
-              </View>
+              </ScrollView>
 
               {/* BOTÓN APROBACIÓN MASIVA EN LOTE SI HAY PENDIENTES */}
               {semaforoCounts.pending > 0 && (
@@ -1253,14 +1269,18 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   let statusBadge = { bg: '#fee2e2', border: '#fca5a5', text: '#b91c1c', label: '🔴 Vencida / S.F' };
 
                   if (isPending) {
-                    statusBadge = { bg: '#f3e8ff', border: '#d8b4fe', text: '#7e22ce', label: '⏳ En Espera' };
+                    statusBadge = { bg: '#f3e8ff', border: '#d8b4fe', text: '#7e22ce', label: '⏳ Por Aprobar' };
                   } else if (hasDate) {
                     const expDate = new Date(m.membership_expires_at);
                     const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                    if (diffDays > 30) {
+                    if (diffDays < 0) {
+                      statusBadge = { bg: '#fee2e2', border: '#fca5a5', text: '#b91c1c', label: `🔴 Vencida (${Math.abs(diffDays)}d)` };
+                    } else if (diffDays <= 30) {
+                      statusBadge = { bg: '#ffedd5', border: '#fdba74', text: '#c2410c', label: `🟠 Vence en ${diffDays}d` };
+                    } else if (diffDays <= 90) {
+                      statusBadge = { bg: '#fef9c3', border: '#fde047', text: '#a16207', label: `🟡 Vence en ${diffDays}d (3m)` };
+                    } else {
                       statusBadge = { bg: '#dcfce7', border: '#86efac', text: '#15803d', label: `🟢 Vigente (${diffDays}d)` };
-                    } else if (diffDays >= 0) {
-                      statusBadge = { bg: '#fef3c7', border: '#fde68a', text: '#b45309', label: `🟡 Vence en ${diffDays}d` };
                     }
                   }
 

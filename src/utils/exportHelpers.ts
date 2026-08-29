@@ -179,20 +179,23 @@ export function exportMembresiasExcel(members: MemberRecord[], groupName: string
     let statusText = '🔴 Sin Registro / Vencida';
     let statusColor = '#dc2626';
 
-    if (m.membership_status === 'pending') {
-      statusText = `⏳ Propuesta: ${m.proposed_membership_date || 'Por Aprobar'}`;
-      statusColor = '#d97706';
+    if (m.membership_status === 'pending_approval' || m.membership_status === 'pending') {
+      statusText = `⏳ Por Aprobar: ${m.proposed_membership_date || 'En Espera'}`;
+      statusColor = '#9333ea';
     } else if (m.membership_expires_at) {
       const expDate = new Date(m.membership_expires_at);
       const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       if (diffDays < 0) {
-        statusText = `🔴 Vencida el ${m.membership_expires_at}`;
+        statusText = `🔴 Vencida (${Math.abs(diffDays)}d • ${m.membership_expires_at})`;
         statusColor = '#dc2626';
       } else if (diffDays <= 30) {
-        statusText = `🟡 Por Vencer (${diffDays} días restantes • ${m.membership_expires_at})`;
-        statusColor = '#d97706';
+        statusText = `🟠 A Punto de Vencer (${diffDays}d restantes • ${m.membership_expires_at})`;
+        statusColor = '#ea580c';
+      } else if (diffDays <= 90) {
+        statusText = `🟡 Por Vencer en 3m (${diffDays}d restantes • ${m.membership_expires_at})`;
+        statusColor = '#ca8a04';
       } else {
-        statusText = `🟢 Vigente hasta ${m.membership_expires_at}`;
+        statusText = `🟢 Vigente hasta ${m.membership_expires_at} (${diffDays}d)`;
         statusColor = '#16a34a';
       }
     }
