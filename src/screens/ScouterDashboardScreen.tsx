@@ -375,6 +375,8 @@ function OnlineRosterPanel({ unit, groupName, isDarkMode, theme }: { unit: strin
 export default function ScouterDashboardScreen({ navigation }: any) {
   const { user, signOut } = useAuth();
   const { isDarkMode, theme, primaryColor, toggleDarkMode } = useTheme();
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
 
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [scouts, setScouts] = useState<any[]>([]);

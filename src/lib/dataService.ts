@@ -541,7 +541,6 @@ export const dataService = {
         const { data, error } = await supabase
           .from('quarterly_plans')
           .insert({
-            scout_id: plan.scout_id,
             quarter: plan.quarter,
             year: plan.year,
             ...fullPayload

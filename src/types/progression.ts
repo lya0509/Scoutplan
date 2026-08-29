@@ -23,6 +23,8 @@ export interface Profile {
   membership_status?: 'none' | 'pending_approval' | 'approved' | 'rejected' | null;
   membership_rejected_reason?: string | null;
   photo_rejected_reason?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface Requirement {

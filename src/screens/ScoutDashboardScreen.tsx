@@ -105,8 +105,6 @@ export default function ScoutDashboardScreen({ navigation }: any) {
     }, [user])
   );
 
-  const [roversList, setRoversList] = useState<any[]>([]);
-
   const loadDashboardData = async () => {
     setLoading(true);
     if (!user) return;

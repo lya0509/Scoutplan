@@ -1897,6 +1897,8 @@ const styles = StyleSheet.create({
 
   sectionTitle: { fontSize: 15, fontWeight: 'bold', marginBottom: 6 },
   label: { fontSize: 11, fontWeight: '800', marginBottom: 4, marginTop: 10 },
+  inputLabel: { fontSize: 11, fontWeight: '800', marginBottom: 4, marginTop: 10 },
+  trafficCard: { borderRadius: 10, borderWidth: 1 },
   input: { borderRadius: 10, borderWidth: 1, padding: 10, fontSize: 13 },
   textArea: { height: 75, textAlignVertical: 'top' },
 
