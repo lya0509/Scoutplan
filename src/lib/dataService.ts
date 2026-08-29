@@ -369,6 +369,37 @@ export const dataService = {
     return data ? data[0] : null;
   },
 
+  async updateCertificate(certificateId: string, scoutId: string, updates: {
+    title?: string;
+    category?: string;
+    area?: string | null;
+    level?: string | null;
+    date?: string;
+    file_url?: string;
+  }) {
+    const { data, error } = await supabase
+      .from('certificates')
+      .update(updates)
+      .eq('id', certificateId)
+      .select();
+
+    if (error) {
+      console.error('Error actualizando certificado en Supabase:', error);
+      throw new Error(error.message || 'No se pudo actualizar el certificado');
+    }
+
+    if (updates.title && updates.category) {
+      await this.syncCertificateToCurriculum(scoutId, {
+        title: updates.title,
+        category: updates.category,
+        level: updates.level,
+        date: updates.date || new Date().toISOString().split('T')[0]
+      });
+    }
+
+    return data ? data[0] : null;
+  },
+
   async syncCertificateToCurriculum(scoutId: string, cert: {
     title: string;
     category: string;

@@ -12,8 +12,8 @@ import {
   Platform,
   Linking
 } from 'react-native';
-import { UploadCloud, Award, Trash2, X, AlertTriangle, Image as ImageIcon, Sparkles, Download, Maximize2, ArrowLeft, Calendar as CalendarIcon, Check, CheckCircle, LayoutGrid, List, ExternalLink, FolderOpen } from 'lucide-react-native';
-import { Calendar as RNCalendar, DateData } from 'react-native-calendars';
+import { UploadCloud, Award, Trash2, X, AlertTriangle, Image as ImageIcon, Sparkles, Download, Maximize2, ArrowLeft, Calendar as CalendarIcon, Check, CheckCircle, LayoutGrid, List, ExternalLink, FolderOpen, Edit2, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Calendar as RNCalendar, DateData, LocaleConfig } from 'react-native-calendars';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -21,6 +21,24 @@ import { dataService } from '../lib/dataService';
 import { certificateCategories, specialtyAreas, specialtyLevels, wosmProgramsList, initiativesList, coursesAndWorkshopsList, DROPBOX_SPECIALTIES_CATALOG_URL } from '../data/specialtiesData';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
+
+// Configuración del calendario en Español
+LocaleConfig.locales['es'] = {
+  monthNames: [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ],
+  monthNamesShort: [
+    'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+  ],
+  dayNames: [
+    'Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'
+  ],
+  dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+  today: 'Hoy'
+};
+LocaleConfig.defaultLocale = 'es';
 
 const LEVEL_COLORS: Record<string, string> = {
   bronce: '#cd7f32',
@@ -40,6 +58,9 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
   // Modo de visualización: Cuadrícula (Grid) o Lista (List)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
+  // Estado de edición (si es null se crea nuevo, si tiene ID se edita)
+  const [editingCertId, setEditingCertId] = useState<string | null>(null);
+
   const [showFormModal, setShowFormModal] = useState(false);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState(returnToStage?.level ? 'especialidades' : 'especialidades');
@@ -50,6 +71,8 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
   // Fecha de expedición / realización del certificado
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
   const [showDatePickerModal, setShowDatePickerModal] = useState(false);
+  const [calYear, setCalYear] = useState(new Date().getFullYear());
+  const [calMonth, setCalMonth] = useState(new Date().getMonth() + 1);
   const [syncWithCurriculum, setSyncWithCurriculum] = useState(true);
 
   const [activeFilter, setActiveFilter] = useState('TODAS');
@@ -149,6 +172,38 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
     }
   };
 
+  const handleOpenCreateModal = () => {
+    setEditingCertId(null);
+    setTitle('');
+    setCategory(returnToStage?.level ? 'especialidades' : 'especialidades');
+    setArea(specialtyAreas[0].id);
+    setLevel(returnToStage?.level || 'bronce');
+    setFileUrl('');
+    const todayStr = new Date().toISOString().split('T')[0];
+    setIssueDate(todayStr);
+    setCalYear(new Date().getFullYear());
+    setCalMonth(new Date().getMonth() + 1);
+    setShowFormModal(true);
+  };
+
+  const handleOpenEditModal = (cert: any) => {
+    setEditingCertId(cert.id);
+    setTitle(cert.title || '');
+    setCategory(cert.category || 'especialidades');
+    setArea(cert.area || specialtyAreas[0].id);
+    setLevel(cert.level || 'bronce');
+    setFileUrl(cert.file_url || '');
+    const certDate = cert.date || cert.created_at?.split('T')[0] || new Date().toISOString().split('T')[0];
+    setIssueDate(certDate);
+    if (certDate.includes('-')) {
+      const parts = certDate.split('-');
+      if (parts[0]) setCalYear(parseInt(parts[0], 10));
+      if (parts[1]) setCalMonth(parseInt(parts[1], 10));
+    }
+    setViewModalCert(null);
+    setShowFormModal(true);
+  };
+
   const handleUpload = async () => {
     if (!user) {
       showAlert('Sesión Requerida', 'Debes estar autenticado para guardar una acreditación.');
@@ -165,33 +220,50 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
       const isSpec = category === 'especialidades';
       const simUrl = fileUrl || 'https://images.unsplash.com/photo-1589330694653-ded6df03f754?w=500&q=80';
 
-      const createdCert = await dataService.uploadCertificate(
-        user.id,
-        title.trim(),
-        category,
-        isSpec ? level : null,
-        simUrl,
-        issueDate
-      );
+      if (editingCertId) {
+        // ACTUALIZACIÓN DE CERTIFICADO EXISTENTE
+        await dataService.updateCertificate(editingCertId, user.id, {
+          title: title.trim(),
+          category,
+          area: isSpec ? area : null,
+          level: isSpec ? level : null,
+          date: issueDate,
+          file_url: simUrl
+        });
 
-      if (returnToStage && user?.id) {
-        await dataService.toggleRequirement(user.id, returnToStage.stageId, returnToStage.reqId, true);
-        await AsyncStorage.setItem(
-          `@scout_req_linked_${user.id}_${returnToStage.stageId}_${returnToStage.reqId}`,
-          JSON.stringify({ certTitle: title.trim(), level: isSpec ? level : null, date: issueDate })
+        showAlert('¡Acreditación Actualizada!', `Se han guardado los cambios para "${title.trim()}".`);
+      } else {
+        // CREACIÓN DE NUEVO CERTIFICADO
+        const createdCert = await dataService.uploadCertificate(
+          user.id,
+          title.trim(),
+          category,
+          isSpec ? level : null,
+          simUrl,
+          issueDate
         );
-        showAlert('¡Requisito Vinculado!', `Se ha registrado "${title.trim()}" y marcado tu requisito en la etapa.`);
-        setShowFormModal(false);
-        navigation.navigate('StageDetail', { stageId: returnToStage.stageId });
-        return;
+
+        if (returnToStage && user?.id) {
+          await dataService.toggleRequirement(user.id, returnToStage.stageId, returnToStage.reqId, true);
+          await AsyncStorage.setItem(
+            `@scout_req_linked_${user.id}_${returnToStage.stageId}_${returnToStage.reqId}`,
+            JSON.stringify({ certTitle: title.trim(), level: isSpec ? level : null, date: issueDate })
+          );
+          showAlert('¡Requisito Vinculado!', `Se ha registrado "${title.trim()}" y marcado tu requisito en la etapa.`);
+          setShowFormModal(false);
+          navigation.navigate('StageDetail', { stageId: returnToStage.stageId });
+          return;
+        }
+
+        const msg = syncWithCurriculum
+          ? 'Tu acreditación ha sido guardada y sincronizada automáticamente con tu Currículum Scout (Hoja de Vida).'
+          : 'Tu acreditación ha sido registrada correctamente.';
+
+        showAlert('¡Acreditación Guardada!', msg);
       }
 
-      const msg = syncWithCurriculum
-        ? 'Tu acreditación ha sido guardada y sincronizada automáticamente con tu Currículum Scout (Hoja de Vida).'
-        : 'Tu acreditación ha sido registrada correctamente.';
-
-      showAlert('¡Acreditación Guardada!', msg);
       setShowFormModal(false);
+      setEditingCertId(null);
       setTitle('');
       setFileUrl('');
       loadCertificates();
@@ -332,7 +404,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
         <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
           <TouchableOpacity 
             style={[styles.uploadBtn, { flex: 1 }]}
-            onPress={() => setShowFormModal(true)}
+            onPress={handleOpenCreateModal}
           >
             <UploadCloud color="white" size={18} style={{ marginRight: 8 }} />
             <Text style={styles.uploadBtnText}>
@@ -480,17 +552,31 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                         <Download size={15} color={colors.primary} />
                       </TouchableOpacity>
 
-                      {(isScouter || cert.scout_id === user?.id) && (
-                        <TouchableOpacity
-                          style={{ padding: 4 }}
-                          onPress={(e) => {
-                            e.stopPropagation();
-                            setDeleteModalCert(cert);
-                          }}
-                        >
-                          <Trash2 size={15} color="#ef4444" />
-                        </TouchableOpacity>
-                      )}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        {(isScouter || cert.scout_id === user?.id) && (
+                          <TouchableOpacity
+                            style={{ padding: 4 }}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              handleOpenEditModal(cert);
+                            }}
+                          >
+                            <Edit2 size={15} color={colors.primary} />
+                          </TouchableOpacity>
+                        )}
+
+                        {(isScouter || cert.scout_id === user?.id) && (
+                          <TouchableOpacity
+                            style={{ padding: 4 }}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              setDeleteModalCert(cert);
+                            }}
+                          >
+                            <Trash2 size={15} color="#ef4444" />
+                          </TouchableOpacity>
+                        )}
+                      </View>
                     </View>
 
                     {returnToStage && (
@@ -560,6 +646,18 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                     >
                       <Download size={18} color={colors.primary} />
                     </TouchableOpacity>
+
+                    {(isScouter || cert.scout_id === user?.id) && (
+                      <TouchableOpacity 
+                        style={styles.actionIconBtn} 
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleOpenEditModal(cert);
+                        }}
+                      >
+                        <Edit2 size={18} color={colors.primary} />
+                      </TouchableOpacity>
+                    )}
 
                     {(isScouter || cert.scout_id === user?.id) && (
                       <TouchableOpacity 
@@ -659,6 +757,15 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
 
                 {(isScouter || viewModalCert?.scout_id === user?.id) && (
                   <TouchableOpacity
+                    style={[viewerStyles.deleteActionBtn, { backgroundColor: isDarkMode ? '#27272a' : '#e0e7ff' }]}
+                    onPress={() => handleOpenEditModal(viewModalCert)}
+                  >
+                    <Edit2 size={18} color={colors.primary} />
+                  </TouchableOpacity>
+                )}
+
+                {(isScouter || viewModalCert?.scout_id === user?.id) && (
+                  <TouchableOpacity
                     style={viewerStyles.deleteActionBtn}
                     onPress={() => {
                       setDeleteModalCert(viewModalCert);
@@ -673,12 +780,14 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
         </View>
       </Modal>
 
-      {/* MODAL FORMULARIO AGREGAR ACREDITACIÓN */}
+      {/* MODAL FORMULARIO AGREGAR / EDITAR ACREDITACIÓN */}
       <Modal visible={showFormModal} transparent animationType="slide">
         <View style={modalStyles.overlay}>
           <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
             <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
-              <Text style={[modalStyles.title, { color: theme.text }]}>Nueva Acreditación / Iniciativa</Text>
+              <Text style={[modalStyles.title, { color: theme.text }]}>
+                {editingCertId ? '✏️ Editar Acreditación' : 'Nueva Acreditación / Iniciativa'}
+              </Text>
               <TouchableOpacity onPress={() => setShowFormModal(false)}>
                 <X color={isDarkMode ? '#a1a1aa' : '#64748b'} size={22} />
               </TouchableOpacity>
@@ -937,29 +1046,109 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
 
               {/* MODAL PICKER DE CALENDARIO PARA SELECCIONAR FECHA DE EXPEDICIÓN */}
               <Modal visible={showDatePickerModal} transparent animationType="fade" onRequestClose={() => setShowDatePickerModal(false)}>
-                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-                  <View style={{ width: '100%', maxWidth: 360, backgroundColor: isDarkMode ? '#18181b' : 'white', borderRadius: 20, borderWidth: 1, borderColor: theme.border, padding: 16 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 16 }}>
+                  <View style={{ width: '100%', maxWidth: 380, backgroundColor: isDarkMode ? '#18181b' : 'white', borderRadius: 20, borderWidth: 1, borderColor: theme.border, padding: 16 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                       <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.text }}>
-                        Fecha del Certificado
+                        Fecha de Obtención / Aprobación
                       </Text>
                       <TouchableOpacity onPress={() => setShowDatePickerModal(false)}>
                         <X size={20} color={isDarkMode ? '#a1a1aa' : '#64748b'} />
                       </TouchableOpacity>
                     </View>
 
+                    {/* SELECTOR RÁPIDO DE AÑO */}
+                    <View style={{ marginBottom: 8 }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.subText }}>AÑO:</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <TouchableOpacity 
+                            onPress={() => setCalYear(prev => prev - 1)}
+                            style={{ padding: 4, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderRadius: 6 }}
+                          >
+                            <ChevronLeft size={14} color={theme.text} />
+                          </TouchableOpacity>
+                          <Text style={{ fontSize: 13, fontWeight: 'bold', color: colors.primary }}>{calYear}</Text>
+                          <TouchableOpacity 
+                            onPress={() => setCalYear(prev => prev + 1)}
+                            style={{ padding: 4, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderRadius: 6 }}
+                          >
+                            <ChevronRight size={14} color={theme.text} />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+                        {[2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026].map(yr => (
+                          <TouchableOpacity
+                            key={yr}
+                            style={{
+                              paddingHorizontal: 10,
+                              paddingVertical: 5,
+                              borderRadius: 8,
+                              backgroundColor: calYear === yr ? colors.primary : (isDarkMode ? '#27272a' : '#f1f5f9'),
+                              borderWidth: 1,
+                              borderColor: calYear === yr ? colors.primary : theme.border
+                            }}
+                            onPress={() => setCalYear(yr)}
+                          >
+                            <Text style={{ fontSize: 11, fontWeight: 'bold', color: calYear === yr ? 'white' : theme.text }}>
+                              {yr}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+
+                    {/* SELECTOR RÁPIDO DE MES */}
+                    <View style={{ marginBottom: 10 }}>
+                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.subText, marginBottom: 4 }}>MES:</Text>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 5 }}>
+                        {['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'].map((mName, idx) => {
+                          const mNum = idx + 1;
+                          const isSel = calMonth === mNum;
+                          return (
+                            <TouchableOpacity
+                              key={mName}
+                              style={{
+                                paddingHorizontal: 9,
+                                paddingVertical: 5,
+                                borderRadius: 8,
+                                backgroundColor: isSel ? colors.primary : (isDarkMode ? '#27272a' : '#f1f5f9'),
+                                borderWidth: 1,
+                                borderColor: isSel ? colors.primary : theme.border
+                              }}
+                              onPress={() => setCalMonth(mNum)}
+                            >
+                              <Text style={{ fontSize: 11, fontWeight: 'bold', color: isSel ? 'white' : theme.text }}>
+                                {mName}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
+                    </View>
+
+                    {/* CALENDARIO DE DÍAS (EN ESPAÑOL) */}
                     <RNCalendar
-                      current={issueDate || new Date().toISOString().split('T')[0]}
+                      key={`${calYear}-${String(calMonth).padStart(2, '0')}`}
+                      current={`${calYear}-${String(calMonth).padStart(2, '0')}-01`}
                       onDayPress={(dayData: DateData) => {
                         setIssueDate(dayData.dateString);
+                        setCalYear(dayData.year);
+                        setCalMonth(dayData.month);
                         setShowDatePickerModal(false);
+                      }}
+                      onMonthChange={(monthData: DateData) => {
+                        setCalYear(monthData.year);
+                        setCalMonth(monthData.month);
                       }}
                       theme={{
                         calendarBackground: isDarkMode ? '#18181b' : '#ffffff',
-                        textSectionTitleColor: isDarkMode ? '#a1a1aa' : '#b6c1cd',
+                        textSectionTitleColor: isDarkMode ? '#a1a1aa' : '#64748b',
                         selectedDayBackgroundColor: colors.primary,
                         todayTextColor: colors.primary,
-                        dayTextColor: isDarkMode ? '#ffffff' : '#2d4150',
+                        dayTextColor: isDarkMode ? '#ffffff' : '#1e293b',
                         arrowColor: colors.primary,
                         monthTextColor: isDarkMode ? '#ffffff' : colors.primary,
                         textDayFontWeight: 'bold',
@@ -1029,7 +1218,9 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                 {uploading ? (
                   <ActivityIndicator color="white" />
                 ) : (
-                  <Text style={modalStyles.saveSubmitText}>Guardar Acreditación</Text>
+                  <Text style={modalStyles.saveSubmitText}>
+                    {editingCertId ? 'Guardar Cambios' : 'Guardar Acreditación'}
+                  </Text>
                 )}
               </TouchableOpacity>
             </ScrollView>
