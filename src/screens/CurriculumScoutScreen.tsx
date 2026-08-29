@@ -887,8 +887,8 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
               })}
             </View>
 
-            {/* SECCIÓN 3: CURSOS REALIZADOS */}
-            <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 20 }]}>3. Cursos de Liderazgo Realizados</Text>
+            {/* SECCIÓN 3: CURSOS */}
+            <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 20 }]}>3. Cursos</Text>
 
             {[
               { label: 'Punta de Flecha en Bronce', state: pfBronce, setter: setPfBronce },
@@ -902,31 +902,40 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                 <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary, marginBottom: 6 }}>{c.label}</Text>
                 <View style={{ gap: 6 }}>
                   <View style={{ flexDirection: 'row', gap: 6 }}>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={{ fontSize: 10, fontWeight: 'bold', color: theme.subText, marginBottom: 2 }}>F. Realización</Text>
+                      <TextInput
+                        style={[styles.input, { backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
+                        placeholder="DD/MM/AAAA"
+                        placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                        value={c.state.date}
+                        onChangeText={v => c.setter(prev => ({ ...prev, date: v }))}
+                        editable={!isViewOnlyForScouter}
+                      />
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={{ fontSize: 10, fontWeight: 'bold', color: theme.subText, marginBottom: 2 }}>F. Certificación</Text>
+                      <TextInput
+                        style={[styles.input, { backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
+                        placeholder="DD/MM/AAAA"
+                        placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                        value={c.state.certDate}
+                        onChangeText={v => c.setter(prev => ({ ...prev, certDate: v }))}
+                        editable={!isViewOnlyForScouter}
+                      />
+                    </View>
+                  </View>
+                  <View style={{ minWidth: 0 }}>
+                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: theme.subText, marginBottom: 2 }}>Director del Curso</Text>
                     <TextInput
-                      style={[styles.input, { flex: 1, backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
-                      placeholder="Fecha Realización"
+                      style={[styles.input, { backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
+                      placeholder="Nombre del Director"
                       placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
-                      value={c.state.date}
-                      onChangeText={v => c.setter(prev => ({ ...prev, date: v }))}
-                      editable={!isViewOnlyForScouter}
-                    />
-                    <TextInput
-                      style={[styles.input, { flex: 1, backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
-                      placeholder="Fecha Certificación"
-                      placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
-                      value={c.state.certDate}
-                      onChangeText={v => c.setter(prev => ({ ...prev, certDate: v }))}
+                      value={c.state.director}
+                      onChangeText={v => c.setter(prev => ({ ...prev, director: v }))}
                       editable={!isViewOnlyForScouter}
                     />
                   </View>
-                  <TextInput
-                    style={[styles.input, { backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
-                    placeholder="Director del Curso"
-                    placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
-                    value={c.state.director}
-                    onChangeText={v => c.setter(prev => ({ ...prev, director: v }))}
-                    editable={!isViewOnlyForScouter}
-                  />
                 </View>
               </View>
             ))}
