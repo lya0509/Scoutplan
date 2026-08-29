@@ -12,7 +12,7 @@ import {
   Linking
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { CheckSquare, Square, Lock, Send, Flag, X, CheckCircle, Award, Sparkles, Plus, ExternalLink, Trash2, FolderOpen } from 'lucide-react-native';
+import { CheckSquare, Square, Lock, Send, Flag, X, CheckCircle, Award, Sparkles, Plus, Trash2 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -20,7 +20,6 @@ import { useModalBackHandler } from '../hooks/useBackHandler';
 import { dataService } from '../lib/dataService';
 import { notificationService } from '../services/notificationService';
 import { stagesData } from '../data/progressionTemplate';
-import { DROPBOX_SPECIALTIES_CATALOG_URL } from '../data/specialtiesData';
 import { StageBadgeIcon } from '../components/StageBadgeIcon';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
@@ -49,7 +48,8 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const [userCerts, setUserCerts] = useState<any[]>([]);
   const [selectedReqForCert, setSelectedReqForCert] = useState<any>(null);
   const [loadingCerts, setLoadingCerts] = useState(false);
-  const [linkedCertMap, setLinkedCertMap] = useState<Record<string, string>>({});
+  const [linkedCertMap, setLinkedCertMap] = useState<Record<string, { certId?: string; certTitle: string; level?: string }>>({});
+  const [certFilterLevel, setCertFilterLevel] = useState<string>('ALL');
 
   // Formulario rápido para convalidar CIP previo
   const [showFastCipForm, setShowFastCipForm] = useState(false);
@@ -73,7 +73,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
       setStatus(stageStatus);
 
       const reqChecks: Record<string, boolean> = {};
-      const links: Record<string, string> = {};
+      const links: Record<string, { certId?: string; certTitle: string; level?: string }> = {};
 
       for (const req of stageTemplate.requirements) {
         const val = await dataService.getRequirement(user.id, stageId, req.id);
@@ -83,7 +83,11 @@ export default function StageDetailScreen({ route, navigation }: any) {
           const linkedStr = await AsyncStorage.getItem(`@scout_req_linked_${user.id}_${stageId}_${req.id}`);
           if (linkedStr) {
             const parsed = JSON.parse(linkedStr);
-            links[req.id] = parsed.certTitle || parsed.title || '';
+            links[req.id] = {
+              certId: parsed.certId,
+              certTitle: parsed.certTitle || parsed.title || '',
+              level: parsed.level
+            };
           }
         } catch {}
       }
@@ -118,6 +122,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
 
   const openCertModal = async (req: any) => {
     setSelectedReqForCert(req);
+    setCertFilterLevel(req.level ? req.level.toLowerCase() : 'ALL');
     setShowCertModal(true);
     setLoadingCerts(true);
     if (user?.id) {
@@ -131,7 +136,14 @@ export default function StageDetailScreen({ route, navigation }: any) {
     if (!user || !selectedReqForCert) return;
 
     setChecks(prev => ({ ...prev, [selectedReqForCert.id]: true }));
-    setLinkedCertMap(prev => ({ ...prev, [selectedReqForCert.id]: cert.title }));
+    setLinkedCertMap(prev => ({
+      ...prev,
+      [selectedReqForCert.id]: {
+        certId: cert.id,
+        certTitle: cert.title,
+        level: cert.level
+      }
+    }));
 
     await dataService.toggleRequirement(user.id, stageId, selectedReqForCert.id, true);
     await AsyncStorage.setItem(
@@ -318,11 +330,11 @@ export default function StageDetailScreen({ route, navigation }: any) {
 
                 {(req.type === 'cursos' || req.type === 'especialidad') && (
                   <View style={{ marginTop: 4 }}>
-                    {linkedCertMap[req.id] ? (
+                    {linkedCertMap[req.id]?.certTitle ? (
                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <Sparkles size={12} color="#10b981" style={{ marginRight: 4 }} />
                         <Text style={{ fontSize: 11, color: '#10b981', fontWeight: 'bold' }}>
-                          Acreditado: {linkedCertMap[req.id]}
+                          Acreditado: {linkedCertMap[req.id].certTitle} {linkedCertMap[req.id]?.level ? `(${linkedCertMap[req.id].level?.toUpperCase()})` : ''}
                         </Text>
                       </View>
                     ) : (
@@ -461,54 +473,92 @@ export default function StageDetailScreen({ route, navigation }: any) {
                 )}
               </View>
 
-              {/* ENLACE AL CATÁLOGO DE DROPBOX */}
-              <TouchableOpacity
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: isDarkMode ? '#1e293b' : '#eff6ff',
-                  borderWidth: 1,
-                  borderColor: isDarkMode ? '#38bdf8' : '#3b82f6',
-                  paddingVertical: 9,
-                  paddingHorizontal: 12,
-                  borderRadius: 10,
-                  marginBottom: 14,
-                  gap: 6
-                }}
-                onPress={() => {
-                  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                    window.open(DROPBOX_SPECIALTIES_CATALOG_URL, '_blank');
-                  } else {
-                    Linking.openURL(DROPBOX_SPECIALTIES_CATALOG_URL);
-                  }
-                }}
-              >
-                <FolderOpen size={16} color={isDarkMode ? '#38bdf8' : '#2563eb'} />
-                <Text style={{ fontSize: 11, fontWeight: 'bold', color: isDarkMode ? '#38bdf8' : '#1d4ed8', flex: 1 }}>
-                  📁 Ver Fichas de Especialidades en Dropbox
-                </Text>
-                <ExternalLink size={13} color={isDarkMode ? '#38bdf8' : '#2563eb'} />
-              </TouchableOpacity>
+              {/* FILTROS DE NIVEL SI ES REQUISITO DE ESPECIALIDAD */}
+              {selectedReqForCert?.type === 'especialidad' && (
+                <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
+                  {[
+                    { id: 'ALL', name: 'Todos' },
+                    { id: 'bronce', name: 'Bronce' },
+                    { id: 'plata', name: 'Plata' },
+                    { id: 'oro', name: 'Oro' }
+                  ].map(lvl => (
+                    <TouchableOpacity
+                      key={lvl.id}
+                      style={{
+                        paddingHorizontal: 10,
+                        paddingVertical: 5,
+                        borderRadius: 8,
+                        backgroundColor: certFilterLevel === lvl.id ? colors.primary : (isDarkMode ? '#27272a' : '#f1f5f9'),
+                        borderWidth: 1,
+                        borderColor: certFilterLevel === lvl.id ? colors.primary : theme.border
+                      }}
+                      onPress={() => setCertFilterLevel(lvl.id)}
+                    >
+                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: certFilterLevel === lvl.id ? 'white' : theme.text }}>
+                        {lvl.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
 
               <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text, marginBottom: 10 }}>
-                O selecciona uno de tus certificados ya guardados:
+                Selecciona tu acreditación correspondiente:
               </Text>
 
-              {loadingCerts ? (
-                <ActivityIndicator color={colors.primary} style={{ marginVertical: 30 }} />
-              ) : userCerts.length === 0 ? (
-                <View style={[modalStyles.emptyCard, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
-                  <Award size={36} color={theme.subText} style={{ marginBottom: 8 }} />
-                  <Text style={[modalStyles.emptyText, { color: theme.text, fontWeight: 'bold' }]}>
-                    No tienes certificados o especialidades subidas aún.
-                  </Text>
-                  <Text style={{ fontSize: 11, color: theme.subText, textAlign: 'center', marginTop: 4 }}>
-                    Puedes usar el botón superior "Subir Nueva" para adjuntar tu diploma o "Marcar Directo" si ya la completaste.
-                  </Text>
-                </View>
-              ) : (
-                userCerts.map((cert) => {
-                  const isSelected = linkedCertMap[selectedReqForCert?.id] === cert.title;
+              {(() => {
+                const filteredModalCerts = userCerts.filter(cert => {
+                  if (!selectedReqForCert) return true;
+
+                  if (selectedReqForCert.type === 'especialidad') {
+                    if (cert.category && cert.category !== 'especialidades') return false;
+                    if (certFilterLevel !== 'ALL' && cert.level && cert.level.toLowerCase() !== certFilterLevel.toLowerCase()) {
+                      return false;
+                    }
+                    return true;
+                  }
+
+                  if (selectedReqForCert.type === 'cursos') {
+                    if (cert.category && cert.category === 'cursos') return true;
+                    const norm = (cert.title || '').toLowerCase();
+                    return norm.includes('horqueta') || norm.includes('remo') || norm.includes('canoa') || norm.includes('taller') || norm.includes('curso');
+                  }
+
+                  if (selectedReqForCert.type === 'programas_mundiales') {
+                    return cert.category === 'programas_mundiales';
+                  }
+
+                  if (selectedReqForCert.type === 'iniciativas_programa') {
+                    return cert.category === 'iniciativas_programa';
+                  }
+
+                  return true;
+                });
+
+                if (loadingCerts) {
+                  return <ActivityIndicator color={colors.primary} style={{ marginVertical: 30 }} />;
+                }
+
+                if (filteredModalCerts.length === 0) {
+                  return (
+                    <View style={[modalStyles.emptyCard, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
+                      <Award size={36} color={theme.subText} style={{ marginBottom: 8 }} />
+                      <Text style={[modalStyles.emptyText, { color: theme.text, fontWeight: 'bold' }]}>
+                        No se encontraron certificados para este requisito.
+                      </Text>
+                      <Text style={{ fontSize: 11, color: theme.subText, textAlign: 'center', marginTop: 4 }}>
+                        Usa el botón superior "Subir Nueva" para adjuntar tu diploma o "Marcar Directo" si ya lo completaste.
+                      </Text>
+                    </View>
+                  );
+                }
+
+                return filteredModalCerts.map((cert) => {
+                  const linkedInfo = linkedCertMap[selectedReqForCert?.id];
+                  const isSelected = linkedInfo?.certId
+                    ? (linkedInfo.certId === cert.id)
+                    : (linkedInfo?.certTitle === cert.title && (!linkedInfo?.level || linkedInfo?.level === cert.level));
+
                   return (
                     <TouchableOpacity
                       key={cert.id}
@@ -550,8 +600,8 @@ export default function StageDetailScreen({ route, navigation }: any) {
                       </View>
                     </TouchableOpacity>
                   );
-                })
-              )}
+                });
+              })()}
             </ScrollView>
           </View>
         </View>
