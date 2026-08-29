@@ -18,7 +18,7 @@ ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check
 
 ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_unit_check;
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_unit_check 
-  CHECK (unit IN ('clan', 'tropa', 'caminantes', 'manada', 'comunidad', 'grupo'));
+  CHECK (unit IN ('clan', 'tropa', 'caminantes', 'manada', 'comunidad', 'grupo', 'jefatura') OR unit IS NULL);
 
 -- Asegurar columnas territoriales en profiles
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS region TEXT;
