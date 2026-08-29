@@ -214,8 +214,11 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
     }
   };
 
-  const handleDeleteByScouter = async () => {
-    if (!deleteModalCert || !deleteReason.trim()) {
+  const handleDeleteCertificate = async () => {
+    if (!deleteModalCert) return;
+
+    const isDeletingOwn = deleteModalCert.scout_id === user?.id;
+    if (!isDeletingOwn && isScouter && !deleteReason.trim()) {
       showAlert('Motivo Requerido', 'Debes escribir una explicación de por qué estás eliminando este documento.');
       return;
     }
@@ -225,10 +228,15 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
         deleteModalCert.id,
         deleteModalCert.scout_id,
         deleteModalCert.title,
-        deleteReason
+        isDeletingOwn ? '' : deleteReason.trim()
       );
 
-      showAlert('Eliminado', 'Se ha eliminado la acreditación y notificado al joven.');
+      showAlert(
+        'Certificado Eliminado',
+        isDeletingOwn
+          ? `Has eliminado "${deleteModalCert.title}" correctamente.`
+          : 'Se ha eliminado la acreditación y notificado al joven.'
+      );
       setDeleteModalCert(null);
       setViewModalCert(null);
       setDeleteReason('');
@@ -371,7 +379,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                       <Download size={18} color={colors.primary} />
                     </TouchableOpacity>
 
-                    {isScouter && (
+                    {(isScouter || cert.scout_id === user?.id) && (
                       <TouchableOpacity 
                         style={styles.actionIconBtn} 
                         onPress={(e) => {
@@ -467,7 +475,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                   <Text style={viewerStyles.downloadBtnText}>Descargar Certificado</Text>
                 </TouchableOpacity>
 
-                {isScouter && (
+                {(isScouter || viewModalCert?.scout_id === user?.id) && (
                   <TouchableOpacity
                     style={viewerStyles.deleteActionBtn}
                     onPress={() => {
@@ -764,29 +772,37 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
         </View>
       </Modal>
 
-      {/* MODAL ELIMINACIÓN POR SCOUTER CON MOTIVO OBLIGATORIO */}
-      <Modal visible={deleteModalCert !== null} transparent animationType="fade">
+      {/* MODAL ELIMINACIÓN DE CERTIFICADO */}
+      <Modal visible={deleteModalCert !== null} transparent animationType="fade" onRequestClose={() => setDeleteModalCert(null)}>
         <View style={modalStyles.overlay}>
           <View style={[modalStyles.sheet, { padding: 24, borderRadius: 20, backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
             <View style={{ alignItems: 'center', marginBottom: 16 }}>
               <AlertTriangle size={40} color="#ef4444" />
-              <Text style={[modalStyles.title, { color: theme.text, marginTop: 8 }]}>Eliminar Acreditación</Text>
+              <Text style={[modalStyles.title, { color: theme.text, marginTop: 8 }]}>
+                {deleteModalCert?.scout_id === user?.id ? '¿Eliminar tu Acreditación?' : 'Eliminar Acreditación'}
+              </Text>
               <Text style={{ fontSize: 13, color: theme.subText, textAlign: 'center', marginTop: 4 }}>
-                Se notificará al joven con el motivo que indiques a continuación.
+                {deleteModalCert?.scout_id === user?.id
+                  ? `¿Estás seguro de que deseas eliminar "${deleteModalCert?.title}"? Se borrará de tus registros.`
+                  : 'Se notificará al joven con el motivo que indiques a continuación.'}
               </Text>
             </View>
 
-            <Text style={[modalStyles.label, { color: theme.subText }]}>MOTIVO DE LA ELIMINACIÓN (OBLIGATORIO) *</Text>
-            <TextInput
-              style={[modalStyles.input, { height: 80, backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
-              placeholder="Ej: El archivo adjunto no es legible / falta completar el nivel Plata"
-              placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
-              multiline
-              value={deleteReason}
-              onChangeText={setDeleteReason}
-            />
+            {deleteModalCert?.scout_id !== user?.id && isScouter && (
+              <>
+                <Text style={[modalStyles.label, { color: theme.subText }]}>MOTIVO DE LA ELIMINACIÓN (OBLIGATORIO) *</Text>
+                <TextInput
+                  style={[modalStyles.input, { height: 80, backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
+                  placeholder="Ej: El archivo adjunto no es legible / falta completar el nivel Plata"
+                  placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                  multiline
+                  value={deleteReason}
+                  onChangeText={setDeleteReason}
+                />
+              </>
+            )}
 
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
               <TouchableOpacity
                 style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', alignItems: 'center' }}
                 onPress={() => setDeleteModalCert(null)}
@@ -796,9 +812,11 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
 
               <TouchableOpacity
                 style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: '#ef4444', alignItems: 'center' }}
-                onPress={handleDeleteByScouter}
+                onPress={handleDeleteCertificate}
               >
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>Confirmar Eliminación</Text>
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>
+                  {deleteModalCert?.scout_id === user?.id ? 'Sí, Eliminar' : 'Confirmar Eliminación'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

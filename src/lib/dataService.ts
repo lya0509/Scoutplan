@@ -557,7 +557,7 @@ export const dataService = {
     }
   },
 
-  async deleteCertificate(certificateId: string, scoutId: string, certTitle: string, reason: string) {
+  async deleteCertificate(certificateId: string, scoutId: string, certTitle?: string, reason?: string) {
     const { error } = await supabase
       .from('certificates')
       .delete()
@@ -565,12 +565,14 @@ export const dataService = {
 
     if (error) throw error;
 
-    await supabase.from('scout_notifications').insert({
-      scout_id: scoutId,
-      title: `Certificado Eliminado: ${certTitle}`,
-      reason: reason || 'El Scouter ha eliminado este certificado.',
-      is_read: false
-    });
+    if (reason && reason.trim()) {
+      await supabase.from('scout_notifications').insert({
+        scout_id: scoutId,
+        title: `Certificado Eliminado: ${certTitle || 'Certificado'}`,
+        reason: reason,
+        is_read: false
+      });
+    }
   },
 
   // ----------------------------------------------------
