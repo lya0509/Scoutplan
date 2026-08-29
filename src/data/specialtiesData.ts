@@ -101,14 +101,22 @@ export const certificateCategories = [
 ];
 
 export const wosmProgramsList = [
-  'Scouts por los Objetivos de Desarrollo Sostenible (SDGs / ODS)',
-  'Mensajeros de la Paz (Messengers of Peace)',
-  'Tribu de la Tierra (Earth Tribe)',
+  'Scout Solar (Solar Scout)',
   'Campeones de la Naturaleza (Champions for Nature)',
-  'Diálogo para la Paz (Dialogue for Peace)',
+  'Tribu de la Tierra (Earth Tribe)',
+  'Scouts del Mundo (Scouts of the World Award)',
+  'Mensajeros de la Paz (Messengers of Peace)',
+  'Scouts por los Objetivos de Desarrollo Sostenible (SDGs / ODS)',
+  'A Salvo del Peligro (Safe from Harm)',
   'Patriotas y Enseñas Nacionales (Iniciativa de Programa)',
-  'Red de Jóvenes (Youth Network)',
-  'Mar Limpio / Desafío Plástico'
+  'Diálogo para la Paz (Dialogue for Peace)',
+  'Mar Limpio / Desafío Plástico',
+  'Horqueta (Curso de Liderazgo)',
+  'Remo (Curso de Liderazgo)',
+  'Canoa (Curso de Liderazgo)',
+  'Punta de Flecha en Bronce',
+  'Punta de Flecha en Plata',
+  'Punta de Flecha en Oro'
 ];
 
 export const specialtyLevels = [

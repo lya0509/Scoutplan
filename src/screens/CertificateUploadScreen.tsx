@@ -11,7 +11,8 @@ import {
   Modal,
   Platform
 } from 'react-native';
-import { UploadCloud, Award, Trash2, X, AlertTriangle, Image as ImageIcon, Sparkles, Download, Maximize2, ArrowLeft } from 'lucide-react-native';
+import { UploadCloud, Award, Trash2, X, AlertTriangle, Image as ImageIcon, Sparkles, Download, Maximize2, ArrowLeft, Calendar as CalendarIcon, Check } from 'lucide-react-native';
+import { Calendar as RNCalendar, DateData } from 'react-native-calendars';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { dataService } from '../lib/dataService';
@@ -39,6 +40,11 @@ export default function CertificateUploadScreen({ navigation }: any) {
   const [area, setArea] = useState(specialtyAreas[0].id);
   const [level, setLevel] = useState('bronce');
   const [fileUrl, setFileUrl] = useState('');
+
+  // Fecha de expedición / realización del certificado
+  const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showDatePickerModal, setShowDatePickerModal] = useState(false);
+  const [syncWithCurriculum, setSyncWithCurriculum] = useState(true);
 
   const [activeFilter, setActiveFilter] = useState('TODAS');
 
@@ -158,10 +164,15 @@ export default function CertificateUploadScreen({ navigation }: any) {
         title.trim(),
         category,
         isSpec ? level : null,
-        simUrl
+        simUrl,
+        issueDate
       );
 
-      showAlert('¡Éxito!', 'Tu acreditación/iniciativa ha sido registrada correctamente.');
+      const msg = syncWithCurriculum
+        ? 'Tu acreditación ha sido guardada y sincronizada automáticamente con tu Currículum Scout (Hoja de Vida).'
+        : 'Tu acreditación ha sido registrada correctamente.';
+
+      showAlert('¡Acreditación Guardada!', msg);
       setShowFormModal(false);
       setTitle('');
       setFileUrl('');
@@ -551,12 +562,89 @@ export default function CertificateUploadScreen({ navigation }: any) {
 
               <Text style={[modalStyles.label, { color: theme.subText }]}>NOMBRE O TÍTULO PERSONALIZADO *</Text>
               <TextInput
-                style={[modalStyles.input, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
+                style={[modalStyles.input, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border, marginBottom: 12 }]}
                 placeholder="Ej: Especialidad de Campismo / Primeros Auxilios"
                 placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
                 value={title}
                 onChangeText={setTitle}
               />
+
+              {/* FECHA DE OBTENCIÓN / EXPEDICIÓN */}
+              <Text style={[modalStyles.label, { color: theme.subText }]}>FECHA DE OBTENCIÓN / APROBACIÓN *</Text>
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? '#27272a' : '#e2e8f0', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: theme.border }}
+                  onPress={() => setShowDatePickerModal(true)}
+                  activeOpacity={0.8}
+                >
+                  <CalendarIcon size={16} color={colors.primary} style={{ marginRight: 6 }} />
+                  <Text style={{ color: theme.text, fontSize: 13, fontWeight: 'bold' }}>
+                    {issueDate || 'Seleccionar fecha'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TextInput
+                  style={[modalStyles.input, { flex: 1, backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
+                  placeholder="AAAA-MM-DD"
+                  placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                  value={issueDate}
+                  onChangeText={setIssueDate}
+                />
+              </View>
+
+              {/* MODAL PICKER DE CALENDARIO PARA SELECCIONAR FECHA DE EXPEDICIÓN */}
+              <Modal visible={showDatePickerModal} transparent animationType="fade" onRequestClose={() => setShowDatePickerModal(false)}>
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+                  <View style={{ width: '100%', maxWidth: 360, backgroundColor: isDarkMode ? '#18181b' : 'white', borderRadius: 20, borderWidth: 1, borderColor: theme.border, padding: 16 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.text }}>
+                        Fecha del Certificado
+                      </Text>
+                      <TouchableOpacity onPress={() => setShowDatePickerModal(false)}>
+                        <X size={20} color={isDarkMode ? '#a1a1aa' : '#64748b'} />
+                      </TouchableOpacity>
+                    </View>
+
+                    <RNCalendar
+                      current={issueDate || new Date().toISOString().split('T')[0]}
+                      onDayPress={(dayData: DateData) => {
+                        setIssueDate(dayData.dateString);
+                        setShowDatePickerModal(false);
+                      }}
+                      theme={{
+                        calendarBackground: isDarkMode ? '#18181b' : '#ffffff',
+                        textSectionTitleColor: isDarkMode ? '#a1a1aa' : '#b6c1cd',
+                        selectedDayBackgroundColor: colors.primary,
+                        todayTextColor: colors.primary,
+                        dayTextColor: isDarkMode ? '#ffffff' : '#2d4150',
+                        arrowColor: colors.primary,
+                        monthTextColor: isDarkMode ? '#ffffff' : colors.primary,
+                        textDayFontWeight: 'bold',
+                        textMonthFontWeight: 'bold',
+                      }}
+                    />
+                  </View>
+                </View>
+              </Modal>
+
+              {/* TOGGLE DE SINCRONIZACIÓN CON EL CURRÍCULUM */}
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: syncWithCurriculum ? (isDarkMode ? '#1e1b4b' : '#f5f3ff') : (isDarkMode ? '#27272a' : '#f8fafc'), padding: 12, borderRadius: 12, borderWidth: 1, borderColor: syncWithCurriculum ? '#8b5cf6' : theme.border, marginBottom: 14 }}
+                onPress={() => setSyncWithCurriculum(prev => !prev)}
+                activeOpacity={0.8}
+              >
+                <View style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: syncWithCurriculum ? '#8b5cf6' : 'transparent', borderWidth: 1.5, borderColor: syncWithCurriculum ? '#8b5cf6' : theme.subText, justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
+                  {syncWithCurriculum && <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>✓</Text>}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>
+                    Sincronizar con mi Currículum Scout
+                  </Text>
+                  <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                    Inserta automáticamente esta acreditación y su fecha en tu Hoja de Vida Scout oficial.
+                  </Text>
+                </View>
+              </TouchableOpacity>
 
               <Text style={[modalStyles.label, { color: theme.subText }]}>FOTO O ADJUNTO DEL CERTIFICADO (OPCIONAL)</Text>
               

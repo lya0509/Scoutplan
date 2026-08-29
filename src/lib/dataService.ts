@@ -333,29 +333,228 @@ export const dataService = {
     return data || [];
   },
 
-  async uploadCertificate(scoutId: string, title: string, category: string, level: string | null, fileUrl: string) {
+  async uploadCertificate(scoutId: string, title: string, category: string, level: string | null, fileUrl: string, date?: string) {
     let safeUrl = fileUrl;
     // Si la imagen es un Data URL de base64 muy pesado, recortar si sobrepasa los límites de payload
     if (safeUrl && safeUrl.startsWith('data:') && safeUrl.length > 500000) {
       safeUrl = safeUrl.substring(0, 500000);
     }
 
+    const payload: any = {
+      scout_id: scoutId,
+      title,
+      category,
+      level,
+      file_url: safeUrl
+    };
+
     const { data, error } = await supabase
       .from('certificates')
-      .insert({
-        scout_id: scoutId,
-        title,
-        category,
-        level,
-        file_url: safeUrl
-      })
+      .insert(payload)
       .select();
 
     if (error) {
       console.error('Error insertando certificado en Supabase:', error);
       throw new Error(error.message || 'No se pudo guardar en la base de datos');
     }
+
+    // Sincronizar automáticamente con el currículum scout
+    await this.syncCertificateToCurriculum(scoutId, {
+      title,
+      category,
+      level,
+      date: date || new Date().toISOString().split('T')[0]
+    });
+
     return data ? data[0] : null;
+  },
+
+  async syncCertificateToCurriculum(scoutId: string, cert: {
+    title: string;
+    category: string;
+    level?: string | null;
+    date: string;
+    director?: string;
+  }) {
+    try {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('curriculum_data')
+        .eq('id', scoutId)
+        .single();
+
+      let curr = prof?.curriculum_data || {};
+      if (typeof curr === 'string') {
+        try { curr = JSON.parse(curr); } catch {}
+      }
+
+      const certDate = cert.date || new Date().toISOString().split('T')[0];
+      const normTitle = (cert.title || '').toLowerCase();
+
+      // 1. Cursos de Liderazgo Scout (Horqueta, Remo, Canoa, Plan de Formación)
+      if (normTitle.includes('horqueta')) {
+        curr.horquetaCert = { date: certDate, director: cert.director || curr.horquetaCert?.director || '', certDate };
+      } else if (normTitle.includes('remo')) {
+        curr.remoCert = { date: certDate, director: cert.director || curr.remoCert?.director || '', certDate };
+      } else if (normTitle.includes('canoa')) {
+        curr.canoaCert = { date: certDate, director: cert.director || curr.canoaCert?.director || '', certDate };
+      } else if (normTitle.includes('bronce') && (normTitle.includes('punta') || normTitle.includes('formacion') || normTitle.includes('liderazgo'))) {
+        curr.pfBronce = { date: certDate, director: cert.director || curr.pfBronce?.director || '', certDate };
+      } else if (normTitle.includes('plata') && (normTitle.includes('punta') || normTitle.includes('formacion') || normTitle.includes('liderazgo'))) {
+        curr.pfPlata = { date: certDate, director: cert.director || curr.pfPlata?.director || '', certDate };
+      } else if (normTitle.includes('oro') && (normTitle.includes('punta') || normTitle.includes('formacion') || normTitle.includes('liderazgo'))) {
+        curr.pfOro = { date: certDate, director: cert.director || curr.pfOro?.director || '', certDate };
+      }
+      // 2. Programas Mundiales e Iniciativas (Tribu de la Tierra, Campeones Naturaleza, Scout Solar, Enseñas, etc.)
+      else if (cert.category === 'programas_mundiales' || cert.category === 'iniciativas_programa' || normTitle.includes('tribu') || normTitle.includes('solar') || normTitle.includes('naturaleza') || normTitle.includes('paz') || normTitle.includes('mundo') || normTitle.includes('enseñas') || normTitle.includes('plastico') || normTitle.includes('planeta') || normTitle.includes('sdg') || normTitle.includes('ods')) {
+        if (!curr.worldProgramsList) curr.worldProgramsList = [];
+        const existingIdx = curr.worldProgramsList.findIndex((item: any) => item.title?.toLowerCase() === cert.title.toLowerCase());
+        if (existingIdx >= 0) {
+          curr.worldProgramsList[existingIdx] = { title: cert.title, role: 'Aprobado / Certificado', date: certDate };
+        } else {
+          curr.worldProgramsList.push({ title: cert.title, role: 'Aprobado / Certificado', date: certDate });
+        }
+      }
+      // 3. Talleres y Cursos
+      else if (cert.category === 'cursos' || normTitle.includes('taller') || normTitle.includes('curso')) {
+        if (!curr.workshopsList) curr.workshopsList = [];
+        const existingIdx = curr.workshopsList.findIndex((item: any) => item.title?.toLowerCase() === cert.title.toLowerCase());
+        if (existingIdx >= 0) {
+          curr.workshopsList[existingIdx] = { title: cert.title, date: certDate, director: cert.director || '' };
+        } else {
+          curr.workshopsList.push({ title: cert.title, date: certDate, director: cert.director || '' });
+        }
+      }
+      // 4. Condecoraciones y Reconocimientos
+      else if (cert.category === 'reconocimientos' || normTitle.includes('condecoracion') || normTitle.includes('merito') || normTitle.includes('reconocimiento')) {
+        if (!curr.distinctionsList) curr.distinctionsList = [];
+        const existingIdx = curr.distinctionsList.findIndex((item: any) => item.title?.toLowerCase() === cert.title.toLowerCase());
+        if (existingIdx >= 0) {
+          curr.distinctionsList[existingIdx] = { title: cert.title, date: certDate };
+        } else {
+          curr.distinctionsList.push({ title: cert.title, date: certDate });
+        }
+      }
+      // 5. Especialidades
+      else {
+        const specName = cert.level ? `${cert.title} (${cert.level.toUpperCase()})` : cert.title;
+        if (!curr.workshopsList) curr.workshopsList = [];
+        const existingIdx = curr.workshopsList.findIndex((item: any) => item.title?.toLowerCase() === specName.toLowerCase());
+        if (existingIdx >= 0) {
+          curr.workshopsList[existingIdx] = { title: specName, date: certDate, director: 'Scouter de Rama' };
+        } else {
+          curr.workshopsList.push({ title: specName, date: certDate, director: 'Scouter de Rama' });
+        }
+      }
+
+      await supabase
+        .from('profiles')
+        .update({ curriculum_data: curr })
+        .eq('id', scoutId);
+
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(`curriculum_data_${scoutId}`, JSON.stringify(curr));
+      }
+      return curr;
+    } catch (err) {
+      console.warn('Error sincronizando certificado con currículum:', err);
+      return null;
+    }
+  },
+
+  async syncAllCertificatesToCurriculum(scoutId: string) {
+    try {
+      const certs = await this.getCertificates(scoutId);
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('curriculum_data')
+        .eq('id', scoutId)
+        .single();
+
+      let curr = prof?.curriculum_data || {};
+      if (typeof curr === 'string') {
+        try { curr = JSON.parse(curr); } catch {}
+      }
+
+      if (!curr.worldProgramsList) curr.worldProgramsList = [];
+      if (!curr.workshopsList) curr.workshopsList = [];
+      if (!curr.distinctionsList) curr.distinctionsList = [];
+
+      let importedCount = 0;
+
+      for (const cert of certs) {
+        const certDate = cert.date || (cert.created_at ? cert.created_at.split('T')[0] : new Date().toISOString().split('T')[0]);
+        const normTitle = (cert.title || '').toLowerCase();
+
+        // 1. Cursos de Liderazgo Scout
+        if (normTitle.includes('horqueta')) {
+          curr.horquetaCert = { date: certDate, director: cert.director || curr.horquetaCert?.director || '', certDate };
+          importedCount++;
+        } else if (normTitle.includes('remo')) {
+          curr.remoCert = { date: certDate, director: cert.director || curr.remoCert?.director || '', certDate };
+          importedCount++;
+        } else if (normTitle.includes('canoa')) {
+          curr.canoaCert = { date: certDate, director: cert.director || curr.canoaCert?.director || '', certDate };
+          importedCount++;
+        } else if (normTitle.includes('bronce') && (normTitle.includes('punta') || normTitle.includes('formacion') || normTitle.includes('liderazgo'))) {
+          curr.pfBronce = { date: certDate, director: cert.director || curr.pfBronce?.director || '', certDate };
+          importedCount++;
+        } else if (normTitle.includes('plata') && (normTitle.includes('punta') || normTitle.includes('formacion') || normTitle.includes('liderazgo'))) {
+          curr.pfPlata = { date: certDate, director: cert.director || curr.pfPlata?.director || '', certDate };
+          importedCount++;
+        } else if (normTitle.includes('oro') && (normTitle.includes('punta') || normTitle.includes('formacion') || normTitle.includes('liderazgo'))) {
+          curr.pfOro = { date: certDate, director: cert.director || curr.pfOro?.director || '', certDate };
+          importedCount++;
+        }
+        // 2. Programas Mundiales e Iniciativas
+        else if (cert.category === 'programas_mundiales' || cert.category === 'iniciativas_programa' || normTitle.includes('tribu') || normTitle.includes('solar') || normTitle.includes('naturaleza') || normTitle.includes('paz') || normTitle.includes('mundo') || normTitle.includes('enseñas') || normTitle.includes('plastico') || normTitle.includes('planeta') || normTitle.includes('sdg') || normTitle.includes('ods')) {
+          const exists = curr.worldProgramsList.some((item: any) => item.title?.toLowerCase() === cert.title.toLowerCase());
+          if (!exists) {
+            curr.worldProgramsList.push({ title: cert.title, role: 'Aprobado / Certificado', date: certDate });
+            importedCount++;
+          }
+        }
+        // 3. Talleres y Cursos
+        else if (cert.category === 'cursos' || normTitle.includes('taller') || normTitle.includes('curso')) {
+          const exists = curr.workshopsList.some((item: any) => item.title?.toLowerCase() === cert.title.toLowerCase());
+          if (!exists) {
+            curr.workshopsList.push({ title: cert.title, date: certDate, director: cert.director || 'Scouter de Formación' });
+            importedCount++;
+          }
+        }
+        // 4. Condecoraciones
+        else if (cert.category === 'reconocimientos' || normTitle.includes('condecoracion') || normTitle.includes('merito') || normTitle.includes('reconocimiento')) {
+          const exists = curr.distinctionsList.some((item: any) => item.title?.toLowerCase() === cert.title.toLowerCase());
+          if (!exists) {
+            curr.distinctionsList.push({ title: cert.title, date: certDate });
+            importedCount++;
+          }
+        }
+        // 5. Especialidades
+        else {
+          const specName = cert.level ? `${cert.title} (${cert.level.toUpperCase()})` : cert.title;
+          const exists = curr.workshopsList.some((item: any) => item.title?.toLowerCase() === specName.toLowerCase());
+          if (!exists) {
+            curr.workshopsList.push({ title: specName, date: certDate, director: 'Scouter de Rama' });
+            importedCount++;
+          }
+        }
+      }
+
+      await supabase
+        .from('profiles')
+        .update({ curriculum_data: curr })
+        .eq('id', scoutId);
+
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(`curriculum_data_${scoutId}`, JSON.stringify(curr));
+      }
+
+      return { curriculum: curr, count: importedCount, total: certs.length };
+    } catch (err) {
+      console.warn('Error en syncAllCertificatesToCurriculum:', err);
+      return { curriculum: null, count: 0, total: 0 };
+    }
   },
 
   async deleteCertificate(certificateId: string, scoutId: string, certTitle: string, reason: string) {

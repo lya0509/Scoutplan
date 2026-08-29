@@ -10,10 +10,11 @@ import {
   Image,
   Platform
 } from 'react-native';
-import { Award, FileText, Download, User, Briefcase, GraduationCap, Compass, CheckCircle, Plus, Trash2, Camera, Shield, Save, AlertCircle } from 'lucide-react-native';
+import { Award, FileText, Download, User, Briefcase, GraduationCap, Compass, CheckCircle, Plus, Trash2, Camera, Shield, Save, AlertCircle, RefreshCw } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
+import { dataService } from '../lib/dataService';
 import { storageService } from '../lib/storageService';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
@@ -29,6 +30,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [syncingCerts, setSyncingCerts] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const savedStateRef = useRef<string>('');
 
@@ -254,6 +256,27 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
       input.click();
     } else {
       showAlert('Cargar Foto', 'Toca para seleccionar tu foto de perfil.');
+    }
+  };
+
+  const handleSyncCertificates = async () => {
+    if (!targetUserId) return;
+    setSyncingCerts(true);
+    try {
+      const res = await dataService.syncAllCertificatesToCurriculum(targetUserId);
+      if (res.curriculum) {
+        showAlert(
+          '¡Certificados Sincronizados!',
+          `Se han importado exitosamente ${res.count} acreditaciones (Cursos de Liderazgo, Programas Mundiales, Especialidades y Talleres) a tu Currículum Scout con sus respectivas fechas.`
+        );
+        loadCurriculumData();
+      } else {
+        showAlert('Información', 'No se encontraron certificados pendientes para importar.');
+      }
+    } catch (e: any) {
+      showAlert('Aviso', 'Error al sincronizar certificados: ' + e?.message);
+    } finally {
+      setSyncingCerts(false);
     }
   };
 
@@ -504,8 +527,35 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
               </View>
             </View>
 
+            {/* BOTÓN INTELIGENTE DE SINCRONIZACIÓN DE CERTIFICADOS */}
+            {!isViewOnlyForScouter && (
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? '#1e1b4b' : '#f5f3ff', padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: '#8b5cf6', marginVertical: 14 }}
+                onPress={handleSyncCertificates}
+                disabled={syncingCerts}
+                activeOpacity={0.8}
+              >
+                <Award size={22} color="#8b5cf6" style={{ marginRight: 10 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: isDarkMode ? '#c4b5fd' : '#6d28d9' }}>
+                    📥 Sincronizar desde mis Certificados Subidos
+                  </Text>
+                  <Text style={{ fontSize: 11, color: isDarkMode ? '#a78bfa' : '#7c3aed', marginTop: 2 }}>
+                    Importa de 1 clic tus Cursos (Horqueta, Remo, Canoa), Programas Mundiales (Tribu de la Tierra, Scout Solar, Enseñas) y Especialidades con sus fechas.
+                  </Text>
+                </View>
+                {syncingCerts ? (
+                  <ActivityIndicator size="small" color="#8b5cf6" style={{ marginLeft: 8 }} />
+                ) : (
+                  <View style={{ backgroundColor: '#8b5cf6', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, marginLeft: 8 }}>
+                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>Sincronizar</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
+
             {/* SECCIÓN 1: DATOS PERSONALES */}
-            <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 14 }]}>1. Datos Personales</Text>
+            <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 4 }]}>1. Datos Personales</Text>
 
             <Text style={[styles.label, { color: theme.subText }]}>APELLIDOS Y NOMBRES COMPLETOS</Text>
             <TextInput
