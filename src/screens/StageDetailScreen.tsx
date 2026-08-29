@@ -50,6 +50,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const [loadingCerts, setLoadingCerts] = useState(false);
   const [linkedCertMap, setLinkedCertMap] = useState<Record<string, { certId?: string; certTitle: string; level?: string }>>({});
   const [certFilterLevel, setCertFilterLevel] = useState<string>('ALL');
+  const [usedElsewhereMap, setUsedElsewhereMap] = useState<Record<string, { stageTitle: string; reqText: string }>>({});
 
   // Formulario rápido para convalidar CIP previo
   const [showFastCipForm, setShowFastCipForm] = useState(false);
@@ -128,12 +129,49 @@ export default function StageDetailScreen({ route, navigation }: any) {
     if (user?.id) {
       const certs = await dataService.getCertificates(user.id);
       setUserCerts(certs || []);
+
+      // Escanear todas las etapas y requisitos para detectar si algún certificado ya fue usado
+      const usedMap: Record<string, { stageTitle: string; reqText: string }> = {};
+      for (const stg of stagesData) {
+        for (const r of stg.requirements) {
+          if (stg.id === stageId && r.id === req.id) continue; // No bloquear el requisito actual
+          try {
+            const linkedStr = await AsyncStorage.getItem(`@scout_req_linked_${user.id}_${stg.id}_${r.id}`);
+            if (linkedStr) {
+              const parsed = JSON.parse(linkedStr);
+              if (parsed.certId) {
+                usedMap[parsed.certId] = {
+                  stageTitle: stg.title,
+                  reqText: r.text
+                };
+              }
+              if (parsed.certTitle) {
+                const key = `${parsed.certTitle}_${parsed.level || ''}`.toLowerCase();
+                usedMap[key] = {
+                  stageTitle: stg.title,
+                  reqText: r.text
+                };
+              }
+            }
+          } catch {}
+        }
+      }
+      setUsedElsewhereMap(usedMap);
     }
     setLoadingCerts(false);
   };
 
   const handleSelectCert = async (cert: any) => {
     if (!user || !selectedReqForCert) return;
+
+    const usedIn = usedElsewhereMap[cert.id] || usedElsewhereMap[`${cert.title}_${cert.level || ''}`.toLowerCase()];
+    if (usedIn) {
+      showAlert(
+        'Certificado Ya Utilizado',
+        `Esta acreditación "${cert.title}" ya fue utilizada para completar el requisito "${usedIn.reqText}" en la etapa "${usedIn.stageTitle}". No se puede reutilizar el mismo certificado para múltiples requisitos.`
+      );
+      return;
+    }
 
     setChecks(prev => ({ ...prev, [selectedReqForCert.id]: true }));
     setLinkedCertMap(prev => ({
@@ -559,15 +597,26 @@ export default function StageDetailScreen({ route, navigation }: any) {
                     ? (linkedInfo.certId === cert.id)
                     : (linkedInfo?.certTitle === cert.title && (!linkedInfo?.level || linkedInfo?.level === cert.level));
 
+                  const usedIn = usedElsewhereMap[cert.id] || usedElsewhereMap[`${cert.title}_${cert.level || ''}`.toLowerCase()];
+
                   return (
                     <TouchableOpacity
                       key={cert.id}
                       style={[
                         modalStyles.eventCard,
                         {
-                          backgroundColor: isSelected ? (isDarkMode ? '#1e1b4b' : '#f5f3ff') : theme.cardBg,
-                          borderColor: isSelected ? '#8b5cf6' : theme.border,
-                          borderWidth: isSelected ? 1.5 : 1
+                          backgroundColor: isSelected
+                            ? (isDarkMode ? '#1e1b4b' : '#f5f3ff')
+                            : usedIn
+                            ? (isDarkMode ? '#1c1917' : '#fef2f2')
+                            : theme.cardBg,
+                          borderColor: isSelected
+                            ? '#8b5cf6'
+                            : usedIn
+                            ? '#fca5a5'
+                            : theme.border,
+                          borderWidth: isSelected ? 1.5 : 1,
+                          opacity: usedIn ? 0.75 : 1
                         }
                       ]}
                       onPress={() => handleSelectCert(cert)}
@@ -591,11 +640,30 @@ export default function StageDetailScreen({ route, navigation }: any) {
                         <Text style={modalStyles.eventDate}>
                           Fecha: {cert.date || cert.created_at?.split('T')[0] || 'Registrado'}
                         </Text>
+                        {usedIn && (
+                          <Text style={{ fontSize: 10, color: '#ef4444', fontWeight: 'bold', marginTop: 3 }}>
+                            🔒 Utilizado en: {usedIn.stageTitle} — {usedIn.reqText}
+                          </Text>
+                        )}
                       </View>
 
-                      <View style={{ backgroundColor: isSelected ? '#10b981' : colors.primary, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, marginLeft: 8 }}>
-                        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>
-                          {isSelected ? '✓ Vinculado' : 'Vincular'}
+                      <View style={{
+                        backgroundColor: isSelected
+                          ? '#10b981'
+                          : usedIn
+                          ? (isDarkMode ? '#44403c' : '#e2e8f0')
+                          : colors.primary,
+                        paddingHorizontal: 10,
+                        paddingVertical: 6,
+                        borderRadius: 8,
+                        marginLeft: 8
+                      }}>
+                        <Text style={{
+                          color: usedIn ? (isDarkMode ? '#a8a29e' : '#64748b') : 'white',
+                          fontWeight: 'bold',
+                          fontSize: 11
+                        }}>
+                          {isSelected ? '✓ Vinculado' : usedIn ? 'Bloqueado' : 'Vincular'}
                         </Text>
                       </View>
                     </TouchableOpacity>
