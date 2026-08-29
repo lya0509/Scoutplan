@@ -94,7 +94,9 @@ export function exportPadronMedicoExcel(members: MemberRecord[], groupName: stri
   let rowsHtml = '';
   members.forEach((m, idx) => {
     const med = m.medical_data || {};
-    const unitLabel = (m.unit || 'General').toUpperCase();
+    const isJefe = m.role === 'jefe_grupo' || m.unit === 'grupo' || m.unit === 'jefatura';
+    const isAdult = m.role === 'scouter' || m.role === 'jefe_grupo' || isJefe;
+    const unitLabel = isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase();
     const blood = med.bloodType || 'Sin Registrar';
     
     // Concatenar alergias
@@ -108,7 +110,7 @@ export function exportPadronMedicoExcel(members: MemberRecord[], groupName: stri
       if (allList.length > 0) allergiesText = allList.join(' | ');
     }
 
-    const contactName = med.emergencyContactName || m.name || 'Sin Registrar';
+    const contactName = med.emergencyContactName || (isAdult ? 'Contacto Directo' : 'Representante');
     const contactPhone = med.emergencyPhonePersonal || med.emergencyPhoneHome || m.phone || 'Sin Registrar';
     const prescription = med.hasPrescription ? `Sí: ${med.medicalPrescriptionExplain || 'Bajo Tratamiento'}` : 'No';
     const insurance = med.hasInsurance ? `Sí: ${med.insuranceExplain || 'Póliza Activa'}` : 'No';

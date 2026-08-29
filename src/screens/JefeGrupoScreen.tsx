@@ -1023,6 +1023,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                     const rows = filteredMedicoMembers.map((m, idx) => {
                       const med = m.medical_data || {};
                       const isJefe = m.role === 'jefe_grupo' || m.unit === 'grupo' || m.unit === 'jefatura';
+                      const isAdult = m.role === 'scouter' || m.role === 'jefe_grupo' || isJefe;
                       let allergies = 'Ninguna';
                       if (med.allergies) {
                         const list = [];
@@ -1037,7 +1038,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                         isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase(),
                         med.bloodType || 'Sin Registrar',
                         allergies,
-                        med.emergencyContactName || 'Sin Registrar',
+                        med.emergencyContactName || (isAdult ? 'Número de Contacto' : 'Representante'),
                         med.emergencyPhonePersonal || med.emergencyPhoneHome || m.phone || 'N/A',
                         med.hasInsurance ? 'Sí' : 'No'
                       ];
@@ -1087,6 +1088,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 filteredMedicoMembers.map((m, idx) => {
                   const med = m.medical_data || {};
                   const isJefe = m.role === 'jefe_grupo' || m.unit === 'grupo' || m.unit === 'jefatura';
+                  const isAdult = m.role === 'scouter' || m.role === 'jefe_grupo' || isJefe;
                   const blood = med.bloodType || 'S/R';
                   const hasAllergies = med.allergies && (med.allergies.medicamento || med.allergies.alimento || med.allergies.picada);
                   const contactPhone = med.emergencyPhonePersonal || med.emergencyPhoneHome || m.phone || '';
@@ -1099,6 +1101,11 @@ export default function JefeGrupoScreen({ navigation }: any) {
                         <Text style={{ fontSize: 11, fontWeight: 'bold', color: isJefe ? '#9333ea' : theme.subText }}>
                           {isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase()}
                         </Text>
+                        {isAdult && (
+                          <Text style={{ fontSize: 10, color: theme.subText, fontWeight: '500' }}>
+                            {m.role === 'jefe_grupo' ? 'Scouter / Jefe Grupo' : 'Scouter'}
+                          </Text>
+                        )}
                       </View>
 
                       {/* BADGE SANGRE */}
@@ -1115,9 +1122,11 @@ export default function JefeGrupoScreen({ navigation }: any) {
                         </Text>
                       </View>
 
-                      {/* CONTACTO DE EMERGENCIA */}
+                      {/* CONTACTO DE EMERGENCIA / NÚMERO DE CONTACTO */}
                       <View style={{ flex: 2.2, alignItems: 'flex-end' }}>
-                        <Text style={{ fontSize: 11, color: theme.text, fontWeight: 'bold' }}>{med.emergencyContactName || 'Representante'}</Text>
+                        <Text style={{ fontSize: 11, color: theme.text, fontWeight: 'bold' }}>
+                          {med.emergencyContactName ? med.emergencyContactName : (isAdult ? 'Número de Contacto' : 'Representante')}
+                        </Text>
                         <Text style={{ fontSize: 11, color: primaryColor, fontWeight: '500' }}>📞 {contactPhone || 'Sin tlf'}</Text>
                       </View>
                     </View>
