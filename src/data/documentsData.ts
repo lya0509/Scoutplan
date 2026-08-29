@@ -85,8 +85,8 @@ export const SCOUT_DOCUMENTS: ScoutDocument[] = [
     categoryLabel: 'Manuales Técnicos',
     description: 'Manual de lengua de señas, comunicación accesible e integración de personas con discapacidad auditiva en el Movimiento Scout.',
     badgeIcon: '🤟',
-    size: '5.0 MB',
-    pdfUrl: '/documentos/En%20se%C3%B1as.pdf',
+    size: '11.4 MB',
+    pdfUrl: '/documentos/En_senas.pdf',
     targetUnit: 'todos'
   },
   {
