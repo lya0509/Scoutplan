@@ -1,5 +1,5 @@
 // Service Worker para Plan Progresivo Scout (PWA 100% Offline & Standalone)
-const CACHE_NAME = 'scoutplan-pwa-v5';
+const CACHE_NAME = 'scoutplan-pwa-v6';
 
 const CORE_STATIC_ASSETS = [
   '/',

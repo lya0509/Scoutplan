@@ -85,10 +85,10 @@ export default function AppNavigator() {
   const { user, isLoading } = useAuth();
   const navigationRef = React.useRef<any>(null);
 
-  if (isLoading) {
+  if (isLoading && !user) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#6a1b9a" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#18181b' }}>
+        <ActivityIndicator size="large" color="#9333ea" />
       </View>
     );
   }

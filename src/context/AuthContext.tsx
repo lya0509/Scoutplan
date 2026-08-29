@@ -23,7 +23,12 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Restaurar perfil local inmediatamente para inicio instantáneo y soporte offline
+    // 0. Timeout de seguridad máximo (800ms): NUNCA permitir que la app se quede en pantalla de carga
+    const safetyTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+
+    // 1. Restaurar perfil local inmediatamente (0-10ms) para inicio instantáneo y soporte offline
     const loadCachedAuth = async () => {
       try {
         const cachedProfileRaw = await AsyncStorage.getItem(CACHED_PROFILE_KEY);
@@ -44,7 +49,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 
     loadCachedAuth();
 
-    // 2. Obtener sesión de Supabase en segundo plano
+    // 2. Obtener sesión de Supabase en segundo plano sin bloquear la UI
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       if (currentSession?.user) {
@@ -71,7 +76,10 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(safetyTimer);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchProfile = async (userId: string, activeSession?: any) => {
