@@ -586,6 +586,14 @@ export default function CalendarScreen() {
                 ))}
               </View>
 
+              {newEventUnit === 'scouters' && (
+                <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#eef2ff', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: '#6366f1', marginTop: 8, marginBottom: 12 }}>
+                  <Text style={{ fontSize: 11, color: '#4f46e5', fontWeight: 'bold' }}>
+                    🔒 Visibilidad Privada: Este evento SOLO lo verán Jefatura y Scouters. Los jóvenes scouts NO lo verán.
+                  </Text>
+                </View>
+              )}
+
               <TouchableOpacity style={styles.saveBtn} onPress={handleAddEvent}>
                 <Text style={styles.saveBtnText}>Guardar Evento</Text>
               </TouchableOpacity>

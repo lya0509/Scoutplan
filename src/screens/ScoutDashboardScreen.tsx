@@ -148,16 +148,99 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
     const today = new Date().toISOString().split('T')[0];
     const userUnit = (user.unit || 'manada').toLowerCase();
+    const combinedEvents: any[] = [];
 
-    const { data: events } = await supabase
-      .from('calendar_events')
-      .select('*')
-      .gte('date', today)
-      .in('unit', [userUnit, 'grupo'])
-      .order('date', { ascending: true })
-      .limit(3);
+    // 1. Eventos manuales del calendario general y de la unidad
+    try {
+      const { data: events } = await supabase
+        .from('calendar_events')
+        .select('*')
+        .gte('date', today)
+        .in('unit', [userUnit, 'grupo'])
+        .order('date', { ascending: true });
+      if (events) combinedEvents.push(...events);
+    } catch (e) {
+      console.warn('Aviso cargando calendar_events:', e);
+    }
 
-    setUpcomingEvents(events || []);
+    // 2. Programas de actividades semanales (scout_programas)
+    try {
+      const { data: progData } = await supabase
+        .from('scout_programas')
+        .select('*')
+        .gte('date', today)
+        .order('date', { ascending: true });
+      if (progData) {
+        progData.forEach((p: any) => {
+          const unit = (p.unit || 'clan').toLowerCase();
+          const isSinodalMatch = p.is_sinodal && (p.selected_units?.includes(userUnit) || p.selectedUnits?.includes(userUnit));
+          if (unit === userUnit || isSinodalMatch) {
+            combinedEvents.push({
+              id: `prog_${p.id}`,
+              title: `[Programa Scout] ${p.title}`,
+              date: p.date,
+              unit: unit,
+              description: `Lugar: ${p.location || 'Sede'} • Tipo: ${p.activity_type || p.activityType || 'Actividad'} • Responsable: ${p.creator_name || 'Scouter'}`,
+            });
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('Aviso cargando scout_programas en dashboard:', e);
+    }
+
+    // 3. Actividades del Plan Trimestral (quarterly_plans)
+    try {
+      const { data: qpData } = await supabase
+        .from('quarterly_plans')
+        .select('*')
+        .eq('unit', userUnit);
+      if (qpData) {
+        const monthMap: Record<string, string> = {
+          enero: '01', febrero: '02', marzo: '03', abril: '04',
+          mayo: '05', junio: '06', julio: '07', agosto: '08',
+          septiembre: '09', octubre: '10', noviembre: '11', diciembre: '12'
+        };
+
+        qpData.forEach((qp: any) => {
+          let acts: any[] = [];
+          if (qp.monthly_activities && Array.isArray(qp.monthly_activities)) {
+            acts = qp.monthly_activities;
+          } else if (qp.goals) {
+            try {
+              const parsed = typeof qp.goals === 'string' ? JSON.parse(qp.goals) : qp.goals;
+              if (parsed.monthly_activities) acts = parsed.monthly_activities;
+            } catch {}
+          }
+
+          const year = qp.year || new Date().getFullYear();
+          acts.forEach((act: any) => {
+            if (!act.activity || !act.month) return;
+            const mNorm = act.month.trim().toLowerCase();
+            const mNum = monthMap[mNorm];
+            if (!mNum) return;
+            const dayNum = parseInt(act.day || '15', 10);
+            const dStr = String(isNaN(dayNum) ? 15 : dayNum).padStart(2, '0');
+            const dateStr = `${year}-${mNum}-${dStr}`;
+            if (dateStr >= today) {
+              combinedEvents.push({
+                id: `qp_${qp.id}_${act.id || Math.random()}`,
+                title: `[Plan Trimestral ${qp.quarter}] ${act.activity}`,
+                date: dateStr,
+                unit: userUnit,
+                description: `Lugar: ${act.place || 'Sede'} • Responsable: ${act.responsible || 'Scouter'}`,
+              });
+            }
+          });
+        });
+      }
+    } catch (e) {
+      console.warn('Aviso cargando quarterly_plans en dashboard:', e);
+    }
+
+    // Ordenar todas las actividades cronológicamente y tomar las próximas 5
+    combinedEvents.sort((a, b) => a.date.localeCompare(b.date));
+    setUpcomingEvents(combinedEvents.slice(0, 5));
     setLoading(false);
   };
 
