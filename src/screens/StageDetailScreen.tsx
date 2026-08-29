@@ -7,10 +7,12 @@ import {
   ScrollView,
   ActivityIndicator,
   Modal,
-  TextInput
+  TextInput,
+  Platform,
+  Linking
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { CheckSquare, Square, Lock, Send, Flag, X, CheckCircle, Award, Sparkles, Plus, ExternalLink, Trash2 } from 'lucide-react-native';
+import { CheckSquare, Square, Lock, Send, Flag, X, CheckCircle, Award, Sparkles, Plus, ExternalLink, Trash2, FolderOpen } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -18,6 +20,7 @@ import { useModalBackHandler } from '../hooks/useBackHandler';
 import { dataService } from '../lib/dataService';
 import { notificationService } from '../services/notificationService';
 import { stagesData } from '../data/progressionTemplate';
+import { DROPBOX_SPECIALTIES_CATALOG_URL } from '../data/specialtiesData';
 import { StageBadgeIcon } from '../components/StageBadgeIcon';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
@@ -457,6 +460,35 @@ export default function StageDetailScreen({ route, navigation }: any) {
                   </TouchableOpacity>
                 )}
               </View>
+
+              {/* ENLACE AL CATÁLOGO DE DROPBOX */}
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: isDarkMode ? '#1e293b' : '#eff6ff',
+                  borderWidth: 1,
+                  borderColor: isDarkMode ? '#38bdf8' : '#3b82f6',
+                  paddingVertical: 9,
+                  paddingHorizontal: 12,
+                  borderRadius: 10,
+                  marginBottom: 14,
+                  gap: 6
+                }}
+                onPress={() => {
+                  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                    window.open(DROPBOX_SPECIALTIES_CATALOG_URL, '_blank');
+                  } else {
+                    Linking.openURL(DROPBOX_SPECIALTIES_CATALOG_URL);
+                  }
+                }}
+              >
+                <FolderOpen size={16} color={isDarkMode ? '#38bdf8' : '#2563eb'} />
+                <Text style={{ fontSize: 11, fontWeight: 'bold', color: isDarkMode ? '#38bdf8' : '#1d4ed8', flex: 1 }}>
+                  📁 Ver Fichas de Especialidades en Dropbox
+                </Text>
+                <ExternalLink size={13} color={isDarkMode ? '#38bdf8' : '#2563eb'} />
+              </TouchableOpacity>
 
               <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text, marginBottom: 10 }}>
                 O selecciona uno de tus certificados ya guardados:

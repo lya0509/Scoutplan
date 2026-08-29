@@ -66,7 +66,7 @@ export const specialtyAreas: SpecialtyArea[] = [
     items: [
       'Carpintería y Ebanistería', 'Electricidad del Hogar', 'Mecánica Automotriz / Motos',
       'Emprendimiento y Plan de Negocio', 'Horticultura y Jardinería',
-      'Cocina y Repostería Profesional', 'Albañilería y Construcción Ligera'
+      'Cocina y Repostería', 'Albañilería y Construcción Ligera'
     ]
   },
   {
@@ -91,32 +91,46 @@ export const specialtyAreas: SpecialtyArea[] = [
   }
 ];
 
+export const DROPBOX_SPECIALTIES_CATALOG_URL = 'https://www.dropbox.com/scl/fo/l1by3uqhfewnc56nm1frj/AFmedyG_Y9UcFc3pY3vO7jk?rlkey=ecypacogyo4wurap8p4on5sse&e=5&st=g3haui2g&dl=0';
+
 export const certificateCategories = [
   { id: 'especialidades', name: 'Especialidades' },
   { id: 'programas_mundiales', name: 'Programas Mundiales (WOSM)' },
-  { id: 'iniciativas_programa', name: 'Iniciativas de Programa (Nacionales, ej: Enseñas)' },
+  { id: 'iniciativas_programa', name: 'Iniciativas de Programa' },
   { id: 'proyecto', name: 'Proyecto de Servicio' },
   { id: 'reconocimientos', name: 'Reconocimientos / Méritos' },
   { id: 'cursos', name: 'Cursos y Talleres' }
 ];
 
 export const wosmProgramsList = [
-  'Scout Solar (Solar Scout)',
-  'Campeones de la Naturaleza (Champions for Nature)',
+  'Mensajeros de la Paz',
   'Tribu de la Tierra (Earth Tribe)',
+  'Campeones de la Naturaleza (Champions for Nature)',
+  'Scout Solar (Solar Scout)',
+  'Marea de Plástico (Plastic Tide Turners)',
   'Scouts del Mundo (Scouts of the World Award)',
-  'Mensajeros de la Paz (Messengers of Peace)',
-  'Scouts por los Objetivos de Desarrollo Sostenible (SDGs / ODS)',
-  'A Salvo del Peligro (Safe from Harm)',
-  'Patriotas y Enseñas Nacionales (Iniciativa de Programa)',
-  'Diálogo para la Paz (Dialogue for Peace)',
-  'Mar Limpio / Desafío Plástico',
-  'Horqueta (Curso de Liderazgo)',
-  'Remo (Curso de Liderazgo)',
-  'Canoa (Curso de Liderazgo)',
-  'Punta de Flecha en Bronce',
-  'Punta de Flecha en Plata',
-  'Punta de Flecha en Oro'
+  'Scouts por los Objetivos de Desarrollo Sostenible (ODS / SDGs)',
+  'A Salvo del Peligro (Safe from Harm)'
+];
+
+export const initiativesList = [
+  'Jamboree (JOTA-JOTI / Campamento Mundial)',
+  'Enseña (Iniciativa de Programa Nacional)',
+  'Mundo Seguro',
+  'Guardianes Alimentarios (Food Heroes)',
+  'Diálogo Interreligioso (Interreligious Dialogue)',
+  'Campaña contra los Robots Letales',
+  'Red de Jóvenes (Youth Network)'
+];
+
+export const coursesAndWorkshopsList = [
+  'Horqueta (Curso de Formación)',
+  'Remo (Curso de Formación)',
+  'Canoa (Curso de Formación)',
+  'Taller de Primeros Auxilios',
+  'Taller de Pionerismo y Cabuyería',
+  'Taller de Campismo Avanzado',
+  'Taller de Liderazgo Juvenil'
 ];
 
 export const specialtyLevels = [

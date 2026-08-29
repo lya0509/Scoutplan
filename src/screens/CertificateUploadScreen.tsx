@@ -9,15 +9,16 @@ import {
   Image,
   ActivityIndicator,
   Modal,
-  Platform
+  Platform,
+  Linking
 } from 'react-native';
-import { UploadCloud, Award, Trash2, X, AlertTriangle, Image as ImageIcon, Sparkles, Download, Maximize2, ArrowLeft, Calendar as CalendarIcon, Check, CheckCircle } from 'lucide-react-native';
+import { UploadCloud, Award, Trash2, X, AlertTriangle, Image as ImageIcon, Sparkles, Download, Maximize2, ArrowLeft, Calendar as CalendarIcon, Check, CheckCircle, LayoutGrid, List, ExternalLink, FolderOpen } from 'lucide-react-native';
 import { Calendar as RNCalendar, DateData } from 'react-native-calendars';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { dataService } from '../lib/dataService';
-import { certificateCategories, specialtyAreas, specialtyLevels, wosmProgramsList } from '../data/specialtiesData';
+import { certificateCategories, specialtyAreas, specialtyLevels, wosmProgramsList, initiativesList, coursesAndWorkshopsList, DROPBOX_SPECIALTIES_CATALOG_URL } from '../data/specialtiesData';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 
@@ -35,6 +36,9 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [certificates, setCertificates] = useState<any[]>([]);
+
+  // Modo de visualización: Cuadrícula (Grid) o Lista (List)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const [showFormModal, setShowFormModal] = useState(false);
   const [title, setTitle] = useState('');
@@ -286,19 +290,95 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
           </View>
         )}
 
-        <Text style={[styles.subtitle, { color: theme.subText }]}>
-          Especialidades (Bronce/Plata/Oro), Iniciativas de Programa Nacionales (ej: Enseñas) y Cursos.
+        {/* BANNER ENLACE CATÁLOGO DROPBOX */}
+        <TouchableOpacity
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: isDarkMode ? '#1e293b' : '#eff6ff',
+            borderWidth: 1.2,
+            borderColor: isDarkMode ? '#38bdf8' : '#3b82f6',
+            paddingVertical: 10,
+            paddingHorizontal: 14,
+            borderRadius: 12,
+            marginBottom: 12,
+            gap: 8
+          }}
+          onPress={() => {
+            if (Platform.OS === 'web' && typeof window !== 'undefined') {
+              window.open(DROPBOX_SPECIALTIES_CATALOG_URL, '_blank');
+            } else {
+              Linking.openURL(DROPBOX_SPECIALTIES_CATALOG_URL);
+            }
+          }}
+          activeOpacity={0.8}
+        >
+          <FolderOpen size={20} color={isDarkMode ? '#38bdf8' : '#2563eb'} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 13, fontWeight: 'bold', color: isDarkMode ? '#38bdf8' : '#1d4ed8' }}>
+              Catálogo Oficial de Especialidades (Dropbox)
+            </Text>
+            <Text style={{ fontSize: 11, color: isDarkMode ? '#94a3b8' : '#64748b', marginTop: 1 }}>
+              Explora las guías oficiales y fichas de requisitos en PDF.
+            </Text>
+          </View>
+          <ExternalLink size={16} color={isDarkMode ? '#38bdf8' : '#2563eb'} />
+        </TouchableOpacity>
+
+        <Text style={[styles.subtitle, { color: theme.subText, marginBottom: 10 }]}>
+          Especialidades (Bronce/Plata/Oro), Programas Mundiales WOSM, Iniciativas Nacionales y Cursos.
         </Text>
 
-        <TouchableOpacity 
-          style={styles.uploadBtn}
-          onPress={() => setShowFormModal(true)}
-        >
-          <UploadCloud color="white" size={20} style={{ marginRight: 8 }} />
-          <Text style={styles.uploadBtnText}>
-            {returnToStage ? `Subir y Vincular para ${returnToStage.reqText}` : 'Agregar Acreditación / Iniciativa'}
-          </Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+          <TouchableOpacity 
+            style={[styles.uploadBtn, { flex: 1 }]}
+            onPress={() => setShowFormModal(true)}
+          >
+            <UploadCloud color="white" size={18} style={{ marginRight: 8 }} />
+            <Text style={styles.uploadBtnText}>
+              {returnToStage ? 'Subir y Vincular' : 'Agregar Acreditación'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* SELECTOR ESTÉTICO CUADRÍCULA / LISTA */}
+          <View style={{ flexDirection: 'row', backgroundColor: isDarkMode ? '#27272a' : '#e2e8f0', borderRadius: 12, padding: 3 }}>
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 8,
+                paddingHorizontal: 12,
+                borderRadius: 9,
+                backgroundColor: viewMode === 'grid' ? colors.primary : 'transparent',
+                gap: 5
+              }}
+              onPress={() => setViewMode('grid')}
+            >
+              <LayoutGrid size={15} color={viewMode === 'grid' ? 'white' : (isDarkMode ? '#a1a1aa' : '#64748b')} />
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: viewMode === 'grid' ? 'white' : (isDarkMode ? '#a1a1aa' : '#64748b') }}>
+                Cuadrícula
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 8,
+                paddingHorizontal: 12,
+                borderRadius: 9,
+                backgroundColor: viewMode === 'list' ? colors.primary : 'transparent',
+                gap: 5
+              }}
+              onPress={() => setViewMode('list')}
+            >
+              <List size={15} color={viewMode === 'list' ? 'white' : (isDarkMode ? '#a1a1aa' : '#64748b')} />
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: viewMode === 'list' ? 'white' : (isDarkMode ? '#a1a1aa' : '#64748b') }}>
+                Lista
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
       {/* Filtros horizontales */}
@@ -339,7 +419,106 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
               Aún no has agregado diplomas o certificados en esta categoría.
             </Text>
           </View>
+        ) : viewMode === 'grid' ? (
+          /* MODO CUADRÍCULA (GRID COMPACTO) */
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 }}>
+            {filteredCerts.map(cert => {
+              const catObj = certificateCategories.find(c => c.id === cert.category);
+              const levelObj = specialtyLevels.find(l => l.id === cert.level);
+              const levelColor = LEVEL_COLORS[cert.level] || colors.primary;
+
+              return (
+                <TouchableOpacity
+                  key={cert.id}
+                  style={[
+                    styles.gridCard,
+                    { backgroundColor: theme.cardBg, borderColor: theme.border }
+                  ]}
+                  onPress={() => setViewModalCert(cert)}
+                  activeOpacity={0.8}
+                >
+                  {cert.file_url ? (
+                    <Image source={{ uri: cert.file_url }} style={styles.gridImage} resizeMode="cover" />
+                  ) : (
+                    <View style={[styles.gridImageFallback, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
+                      <Award size={28} color={colors.primary} />
+                    </View>
+                  )}
+
+                  <View style={{ padding: 10, flex: 1, justifyContent: 'space-between' }}>
+                    <View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginBottom: 4 }}>
+                        <Text style={[styles.catBadgeText, { fontSize: 9 }]}>
+                          {catObj?.name || 'ACREDITACIÓN'}
+                        </Text>
+                        {levelObj && (
+                          <View style={[styles.levelBadge, { backgroundColor: levelColor, paddingHorizontal: 5, paddingVertical: 1 }]}>
+                            <Text style={[styles.levelBadgeText, { fontSize: 8 }]}>{levelObj.name.split(' ')[0]}</Text>
+                          </View>
+                        )}
+                      </View>
+
+                      <Text style={[styles.gridTitle, { color: theme.text }]} numberOfLines={2}>
+                        {cert.title}
+                      </Text>
+
+                      {cert.date ? (
+                        <Text style={{ fontSize: 10, color: theme.subText, marginTop: 3 }}>
+                          📅 {cert.date}
+                        </Text>
+                      ) : null}
+                    </View>
+
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: theme.border }}>
+                      <TouchableOpacity
+                        style={{ padding: 4 }}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleDownloadCertificate(cert);
+                        }}
+                      >
+                        <Download size={15} color={colors.primary} />
+                      </TouchableOpacity>
+
+                      {(isScouter || cert.scout_id === user?.id) && (
+                        <TouchableOpacity
+                          style={{ padding: 4 }}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            setDeleteModalCert(cert);
+                          }}
+                        >
+                          <Trash2 size={15} color="#ef4444" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+
+                    {returnToStage && (
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: '#10b981',
+                          paddingVertical: 5,
+                          borderRadius: 6,
+                          alignItems: 'center',
+                          marginTop: 6
+                        }}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleSelectForRequirement(cert);
+                        }}
+                      >
+                        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 10 }}>
+                          ✓ Vincular
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         ) : (
+          /* MODO LISTA DETALLADA */
           filteredCerts.map(cert => {
             const catObj = certificateCategories.find(c => c.id === cert.category);
             const levelObj = specialtyLevels.find(l => l.id === cert.level);
@@ -365,6 +544,9 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                     <Text style={[styles.certTitle, { color: theme.text }]}>{cert.title}</Text>
                     {cert.area ? (
                       <Text style={[styles.certArea, { color: theme.subText }]}>Área: {cert.area}</Text>
+                    ) : null}
+                    {cert.date ? (
+                      <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>Fecha: {cert.date}</Text>
                     ) : null}
                   </View>
 
@@ -554,6 +736,35 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                     ))}
                   </View>
 
+                  {/* ENLACE DROPBOX DIRECTO DENTRO DEL FORMULARIO DE ESPECIALIDADES */}
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: isDarkMode ? '#1e293b' : '#eff6ff',
+                      borderWidth: 1,
+                      borderColor: isDarkMode ? '#38bdf8' : '#3b82f6',
+                      padding: 10,
+                      borderRadius: 10,
+                      marginTop: 6,
+                      marginBottom: 8,
+                      gap: 6
+                    }}
+                    onPress={() => {
+                      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                        window.open(DROPBOX_SPECIALTIES_CATALOG_URL, '_blank');
+                      } else {
+                        Linking.openURL(DROPBOX_SPECIALTIES_CATALOG_URL);
+                      }
+                    }}
+                  >
+                    <FolderOpen size={16} color={isDarkMode ? '#38bdf8' : '#2563eb'} />
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: isDarkMode ? '#38bdf8' : '#1d4ed8', flex: 1 }}>
+                      📁 Ver Fichas y Requisitos en Dropbox
+                    </Text>
+                    <ExternalLink size={13} color={isDarkMode ? '#38bdf8' : '#2563eb'} />
+                  </TouchableOpacity>
+
                   <Text style={[modalStyles.label, { color: theme.subText }]}>SELECCIONA O ESCRIBE LA ESPECIALIDAD *</Text>
                   <View style={modalStyles.quickSuggestBox}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
@@ -611,9 +822,9 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                 </>
               )}
 
-              {(category === 'programas_mundiales' || category === 'iniciativas_programa') && (
+              {category === 'programas_mundiales' && (
                 <>
-                  <Text style={[modalStyles.label, { color: theme.subText }]}>SELECCIONA EL PROGRAMA MUNDIAL / INICIATIVA *</Text>
+                  <Text style={[modalStyles.label, { color: theme.subText }]}>SELECCIONA EL PROGRAMA MUNDIAL (WOSM) *</Text>
                   <View style={modalStyles.chipGrid}>
                     {wosmProgramsList.map(prog => (
                       <TouchableOpacity
@@ -631,6 +842,60 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                           title === prog && { color: 'white', fontWeight: 'bold' }
                         ]}>
                           {prog}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
+
+              {category === 'iniciativas_programa' && (
+                <>
+                  <Text style={[modalStyles.label, { color: theme.subText }]}>SELECCIONA LA INICIATIVA DE PROGRAMA *</Text>
+                  <View style={modalStyles.chipGrid}>
+                    {initiativesList.map(item => (
+                      <TouchableOpacity
+                        key={item}
+                        style={[
+                          modalStyles.itemPill,
+                          { backgroundColor: theme.inputBg, borderColor: theme.border },
+                          title === item && { backgroundColor: colors.primary, borderColor: colors.primary }
+                        ]}
+                        onPress={() => setTitle(item)}
+                      >
+                        <Text style={[
+                          modalStyles.itemPillText,
+                          { color: theme.subText },
+                          title === item && { color: 'white', fontWeight: 'bold' }
+                        ]}>
+                          {item}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
+
+              {category === 'cursos' && (
+                <>
+                  <Text style={[modalStyles.label, { color: theme.subText }]}>SELECCIONA EL CURSO O TALLER *</Text>
+                  <View style={modalStyles.chipGrid}>
+                    {coursesAndWorkshopsList.map(curso => (
+                      <TouchableOpacity
+                        key={curso}
+                        style={[
+                          modalStyles.itemPill,
+                          { backgroundColor: theme.inputBg, borderColor: theme.border },
+                          title === curso && { backgroundColor: colors.primary, borderColor: colors.primary }
+                        ]}
+                        onPress={() => setTitle(curso)}
+                      >
+                        <Text style={[
+                          modalStyles.itemPillText,
+                          { color: theme.subText },
+                          title === curso && { color: 'white', fontWeight: 'bold' }
+                        ]}>
+                          {curso}
                         </Text>
                       </TouchableOpacity>
                     ))}
@@ -866,7 +1131,31 @@ const styles = StyleSheet.create({
 
   emptyCard: { borderRadius: 16, padding: 36, alignItems: 'center', borderWidth: 1, marginTop: 20 },
   emptyTitle: { fontSize: 17, fontWeight: 'bold', marginBottom: 6 },
-  emptyDesc: { fontSize: 13, textAlign: 'center' }
+  emptyDesc: { fontSize: 13, textAlign: 'center' },
+
+  gridCard: {
+    width: '48.5%',
+    borderRadius: 14,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginBottom: 10,
+    elevation: 2
+  },
+  gridImage: {
+    width: '100%',
+    height: 100
+  },
+  gridImageFallback: {
+    width: '100%',
+    height: 90,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  gridTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    lineHeight: 16
+  }
 });
 
 const viewerStyles = StyleSheet.create({
