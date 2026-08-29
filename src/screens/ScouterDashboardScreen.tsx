@@ -516,6 +516,14 @@ export default function ScouterDashboardScreen({ navigation }: any) {
           >
             {isDarkMode ? <Sun color="#f59e0b" size={20} /> : <Moon color="white" size={20} />}
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.calendarIconBtn, { backgroundColor: 'rgba(239, 68, 68, 0.25)' }]} 
+            onPress={signOut}
+            activeOpacity={0.8}
+          >
+            <LogOut color="#ef4444" size={20} />
+          </TouchableOpacity>
         </View>
       </View>
 

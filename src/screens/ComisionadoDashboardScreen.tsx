@@ -207,6 +207,9 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
             <TouchableOpacity style={styles.iconBtn} onPress={toggleDarkMode}>
               {isDarkMode ? <Sun color="#f59e0b" size={20} /> : <Moon color="white" size={20} />}
             </TouchableOpacity>
+            <TouchableOpacity style={[styles.iconBtn, { backgroundColor: 'rgba(239, 68, 68, 0.25)' }]} onPress={signOut}>
+              <LogOut color="#ef4444" size={20} />
+            </TouchableOpacity>
           </View>
         </View>
 

@@ -209,17 +209,40 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   };
 
   const signOut = async () => {
-    setIsLoading(true);
+    setUser(null);
+    setSession(null);
+    setIsLoading(false);
+
     try {
-      await AsyncStorage.removeItem(CACHED_PROFILE_KEY);
-      await AsyncStorage.removeItem(CACHED_SESSION_KEY);
-      await supabase.auth.signOut();
+      await AsyncStorage.removeItem(CACHED_PROFILE_KEY).catch(() => {});
+      await AsyncStorage.removeItem(CACHED_SESSION_KEY).catch(() => {});
+
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          const keysToRemove: string[] = [];
+          for (let i = 0; i < window.localStorage.length; i++) {
+            const k = window.localStorage.key(i);
+            if (k && (k.startsWith('sb-') || k.includes('supabase') || k.includes('auth') || k.includes('scout'))) {
+              keysToRemove.push(k);
+            }
+          }
+          keysToRemove.forEach(k => window.localStorage.removeItem(k));
+        } catch (e) {}
+      }
+
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
     } catch (e) {
       console.warn('Error en signOut:', e);
     } finally {
       setUser(null);
       setSession(null);
       setIsLoading(false);
+
+      if (typeof window !== 'undefined' && window.location) {
+        if (window.location.pathname !== '/' && window.location.pathname !== '/ingresar') {
+          window.location.href = '/';
+        }
+      }
     }
   };
 
