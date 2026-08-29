@@ -1152,7 +1152,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 <Clock color="#d97706" size={22} style={{ marginRight: 8 }} />
                 <View>
                   <Text style={[modalStyles.title, { color: theme.text }]}>Semáforo Institucional de Membresías y Carnets</Text>
-                  <Text style={{ fontSize: 11, color: theme.subText }}>Control de vigencia y aprobación de carnet ASV</Text>
+                  <Text style={{ fontSize: 11, color: theme.subText }}>Control de vigencia y aprobación de carnet ASV • Total: {allMembers.length} Miembros</Text>
                 </View>
               </View>
               <TouchableOpacity onPress={() => setShowSemaforoModal(false)} style={{ padding: 6 }}>
@@ -1161,8 +1161,21 @@ export default function JefeGrupoScreen({ navigation }: any) {
             </View>
 
             <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
-              {/* TARJETAS DEL SEMÁFORO */}
+              {/* TARJETAS DEL SEMÁFORO (INCLUYENDO TOTALITARIO) */}
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }} style={{ marginBottom: 12 }}>
+                {/* 0. TODOS LOS MIEMBROS (TOTALITARIO) */}
+                <TouchableOpacity
+                  style={[
+                    styles.trafficCard, 
+                    { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: theme.border, minWidth: 95 }, 
+                    semaforoStatusFilter === 'all' && styles.trafficCardActive
+                  ]}
+                  onPress={() => setSemaforoStatusFilter('all')}
+                >
+                  <Text style={[styles.trafficNumber, { color: theme.text }]}>{allMembers.length}</Text>
+                  <Text style={[styles.trafficLabel, { color: theme.text }]}>📋 Todos</Text>
+                </TouchableOpacity>
+
                 {/* 1. VIGENTES (> 3 MESES / > 90 DÍAS) */}
                 <TouchableOpacity
                   style={[styles.trafficCard, { backgroundColor: '#dcfce7', borderColor: '#16a34a', minWidth: 110 }, semaforoStatusFilter === 'active' && styles.trafficCardActive]}
@@ -1244,15 +1257,31 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 ) : null}
               </View>
 
-              {/* BOTÓN DE EXPORTACIÓN */}
+              {/* BOTÓN DE EXPORTACIÓN Y CONTADOR */}
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
                 <TouchableOpacity
                   style={[styles.exportBtn, { flex: 1, backgroundColor: '#15803d' }]}
-                  onPress={() => exportMembresiasExcel(filteredSemaforoMembers, user?.group_name || 'Grupo Scout')}
+                  onPress={() => exportMembresiasExcel(allMembers, user?.group_name || 'Grupo Scout')}
                 >
                   <Download size={15} color="white" />
-                  <Text style={styles.exportBtnText}>Exportar Semáforo a Excel (.XLS)</Text>
+                  <Text style={styles.exportBtnText}>Exportar Todos a Excel ({allMembers.length} Miembros .XLS)</Text>
                 </TouchableOpacity>
+              </View>
+
+              {/* BARRA INDICADORA DE FILTRO Y TOTAL */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, paddingHorizontal: 4 }}>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>
+                  Listado: {filteredSemaforoMembers.length} de {allMembers.length} personas
+                  {semaforoStatusFilter !== 'all' ? ` (${semaforoStatusFilter === 'active' ? '🟢 Vigentes' : semaforoStatusFilter === 'expiring_3m' ? '🟡 Por Vencer 3m' : semaforoStatusFilter === 'expiring_1m' ? '🟠 Por Vencer 30d' : semaforoStatusFilter === 'expired' ? '🔴 Vencidas/S.F' : '⏳ Por Aprobar'})` : ''}
+                </Text>
+                {semaforoStatusFilter !== 'all' && (
+                  <TouchableOpacity 
+                    style={{ backgroundColor: primaryColor, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }} 
+                    onPress={() => setSemaforoStatusFilter('all')}
+                  >
+                    <Text style={{ fontSize: 11, color: 'white', fontWeight: 'bold' }}>✕ Ver Todos ({allMembers.length})</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
 
