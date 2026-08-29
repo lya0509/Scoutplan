@@ -24,6 +24,7 @@ import {
   FileCode
 } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
+import { useModalBackHandler } from '../hooks/useBackHandler';
 import { SCOUT_DOCUMENTS, ScoutDocument } from '../data/documentsData';
 import { showAlert } from '../utils/alert';
 import HelpFloatingFAB from '../components/HelpFloatingFAB';
@@ -43,6 +44,9 @@ export default function DocumentosScreen() {
   const [selectedCategory, setSelectedCategory] = useState('todos');
   const [selectedDoc, setSelectedDoc] = useState<ScoutDocument | null>(null);
   const [viewModalVisible, setViewModalVisible] = useState(false);
+
+  // Soporte universal para gestos de retroceso en Android, iOS y PWA
+  useModalBackHandler(viewModalVisible, () => setViewModalVisible(false));
 
   const filteredDocs = useMemo(() => {
     return SCOUT_DOCUMENTS.filter(doc => {

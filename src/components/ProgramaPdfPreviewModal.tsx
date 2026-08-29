@@ -10,13 +10,14 @@ import {
   Platform,
   ActivityIndicator
 } from 'react-native';
-import { X, Printer, Download, FileText, CheckCircle } from 'lucide-react-native';
+import { X, Printer, Download, FileText, CheckCircle, ArrowLeft } from 'lucide-react-native';
 import { ProgramaScout } from '../types/programa';
 import { SDG_LIST } from '../data/sdgData';
 import { GROWTH_AREAS, GrowthAreaKey } from '../data/achievementIndicatorsData';
 import { UNIT_PROGRAMA_LOGOS, SCOUT_WOSM_LOGO, GROUP_ORION_LOGO, REGISTRATION_BADGES } from '../data/registrationBadgesData';
 import { docxProgramaGenerator } from '../lib/docxProgramaGenerator';
 import { useTheme } from '../context/ThemeContext';
+import { useModalBackHandler } from '../hooks/useBackHandler';
 import { showAlert } from '../utils/alert';
 
 interface Props {
@@ -87,6 +88,9 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
   const { isDarkMode, primaryColor } = useTheme();
   const [downloadingDocx, setDownloadingDocx] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  // Soporte universal para gestos de retroceso en Android, iOS y PWA
+  useModalBackHandler(visible, onClose);
 
   if (!programa) return null;
 
@@ -270,12 +274,15 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.modalBackdrop}>
-        {/* Barra superior de herramientas del Visor PDF */}
+        {/* Barra superior de herramientas del Visor PDF (100% Responsiva en Móviles) */}
         <View style={[styles.topBar, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff' }]}>
+          <TouchableOpacity style={styles.btnBackHeader} onPress={onClose} activeOpacity={0.7}>
+            <ArrowLeft size={20} color={isDarkMode ? '#ffffff' : '#1f2937'} />
+          </TouchableOpacity>
+
           <View style={styles.titleInfo}>
-            <FileText size={20} color={primaryColor} />
             <Text style={[styles.modalTitle, { color: isDarkMode ? '#ffffff' : '#000000' }]} numberOfLines={1}>
-              Visor PDF: {programa.title || 'Sin Título'} {pages.length > 1 ? `(${pages.length} Páginas)` : ''}
+              {programa.title || 'Programa Scout'}
             </Text>
           </View>
 
@@ -284,13 +291,14 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
               style={[styles.btnDocx, { backgroundColor: '#2563eb' }]}
               onPress={handleDownloadWord}
               disabled={downloadingDocx}
+              activeOpacity={0.8}
             >
               {downloadingDocx ? (
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
                 <>
-                  <Download size={15} color="#ffffff" style={{ marginRight: 6 }} />
-                  <Text style={styles.btnText}>Descargar como Documento Word</Text>
+                  <Download size={14} color="#ffffff" style={{ marginRight: 4 }} />
+                  <Text style={styles.btnText}>Word</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -299,19 +307,20 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
               style={[styles.btnPrint, { backgroundColor: '#dc2626' }]}
               onPress={handleDownloadPdf}
               disabled={downloadingPdf}
+              activeOpacity={0.8}
             >
               {downloadingPdf ? (
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
                 <>
-                  <Download size={15} color="#ffffff" style={{ marginRight: 6 }} />
-                  <Text style={styles.btnText}>Descargar como Documento PDF</Text>
+                  <Download size={14} color="#ffffff" style={{ marginRight: 4 }} />
+                  <Text style={styles.btnText}>PDF</Text>
                 </>
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.btnClose} onPress={onClose}>
-              <X size={22} color={isDarkMode ? '#ffffff' : '#4b5563'} />
+            <TouchableOpacity style={styles.btnClose} onPress={onClose} activeOpacity={0.7}>
+              <X size={20} color={isDarkMode ? '#ffffff' : '#4b5563'} />
             </TouchableOpacity>
           </View>
         </View>
@@ -566,39 +575,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#374151',
-  },
-  titleInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 10,
     gap: 8,
   },
+  btnBackHeader: {
+    padding: 6,
+    borderRadius: 8,
+    marginRight: 4,
+  },
+  titleInfo: {
+    flex: 1,
+    marginRight: 6,
+  },
   modalTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   actionButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+    flexShrink: 0,
   },
   btnDocx: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     borderRadius: 8,
   },
   btnPrint: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     borderRadius: 8,
   },
   btnText: {
@@ -608,7 +621,7 @@ const styles = StyleSheet.create({
   },
   btnClose: {
     padding: 6,
-    marginLeft: 4,
+    marginLeft: 2,
   },
   scrollArea: {
     flex: 1,

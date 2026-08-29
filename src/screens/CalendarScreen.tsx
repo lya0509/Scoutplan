@@ -9,6 +9,7 @@ import { notificationService } from '../services/notificationService';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { colors, UNIT_COLORS } from '../theme/colors';
 import { useFocusEffect } from '@react-navigation/native';
+import { useModalBackHandler } from '../hooks/useBackHandler';
 import { showAlert } from '../utils/alert';
 
 interface CalendarEvent {
@@ -75,6 +76,9 @@ export default function CalendarScreen() {
   const [newEventUnit, setNewEventUnit] = useState(user?.unit?.toLowerCase() || 'tropa');
   const [newEventDate, setNewEventDate] = useState(selectedDate);
   const [showNewEventDatePicker, setShowNewEventDatePicker] = useState(false);
+
+  // Soporte universal para gestos de retroceso en Android, iOS y PWA
+  useModalBackHandler(modalVisible, () => setModalVisible(false));
 
   // Intervalo continuo de parpadeo a 500ms para la pelotita del día en el calendario
   useEffect(() => {

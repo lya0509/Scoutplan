@@ -27,6 +27,7 @@ import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { notificationService, AppNotification } from '../services/notificationService';
+import { useModalBackHandler } from '../hooks/useBackHandler';
 import { colors } from '../theme/colors';
 
 interface NotificationCenterModalProps {
@@ -38,6 +39,9 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
   const { notifications, unreadCount, markAsRead, markAllAsRead, refreshNotifications } = useNotifications();
   const { user } = useAuth();
   const { isDarkMode, theme } = useTheme();
+
+  // Soporte universal para gestos de retroceso en Android, iOS y PWA
+  useModalBackHandler(visible, onClose);
 
   const [activeTab, setActiveTab] = useState<'inbox' | 'test'>('inbox');
   const [testingType, setTestingType] = useState<string | null>(null);

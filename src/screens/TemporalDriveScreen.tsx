@@ -17,6 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { storageService } from '../lib/storageService';
 import { colors } from '../theme/colors';
+import { useModalBackHandler } from '../hooks/useBackHandler';
 import { showAlert } from '../utils/alert';
 import { checkProfileCompletion } from '../utils/profileGuard';
 
@@ -51,6 +52,11 @@ export default function TemporalDriveScreen({ navigation }: any) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState<DrivePhoto | null>(null);
   const [showVisibilityInfo, setShowVisibilityInfo] = useState(false);
+
+  // Soporte universal para gestos de retroceso en Android, iOS y PWA
+  useModalBackHandler(showCreateModal, () => setShowCreateModal(false));
+  useModalBackHandler(!!showPhotoModal, () => setShowPhotoModal(null));
+  useModalBackHandler(showVisibilityInfo, () => setShowVisibilityInfo(false));
 
   // Formulario Crear Álbum
   const [newTitle, setNewTitle] = useState('');

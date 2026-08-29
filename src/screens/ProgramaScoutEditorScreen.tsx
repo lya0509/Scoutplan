@@ -51,6 +51,7 @@ import { REGISTRATION_BADGES } from '../data/registrationBadgesData';
 import { programaService } from '../lib/programaService';
 import { dataService } from '../lib/dataService';
 import { autoSaveService } from '../services/autoSaveService';
+import { useModalBackHandler } from '../hooks/useBackHandler';
 import { ProgramaPdfPreviewModal } from '../components/ProgramaPdfPreviewModal';
 import { showAlert } from '../utils/alert';
 
@@ -90,6 +91,12 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
   // Estado para el selector interactivo de Fecha (Calendario)
   const [showDatePickerModal, setShowDatePickerModal] = useState(false);
+
+  // Soporte universal para gestos de retroceso en Android, iOS y PWA
+  useModalBackHandler(showPreviewModal, () => setShowPreviewModal(false));
+  useModalBackHandler(showTrimestreModal, () => setShowTrimestreModal(false));
+  useModalBackHandler(showDatePickerModal, () => setShowDatePickerModal(false));
+
   const initialDateObj = date ? new Date(date + 'T12:00:00') : new Date();
   const [calendarYear, setCalendarYear] = useState(isNaN(initialDateObj.getFullYear()) ? new Date().getFullYear() : initialDateObj.getFullYear());
   const [calendarMonth, setCalendarMonth] = useState(isNaN(initialDateObj.getMonth()) ? new Date().getMonth() : initialDateObj.getMonth());

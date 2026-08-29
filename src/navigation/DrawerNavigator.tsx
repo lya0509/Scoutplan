@@ -7,6 +7,7 @@ import { colors } from '../theme/colors';
 import { UserScoutAvatar } from '../components/UserScoutAvatar';
 import { Moon, Sun, Palette } from 'lucide-react-native';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
+import { useModalBackHandler } from '../hooks/useBackHandler';
 import { PWAInstallModal } from '../components/PWAInstallModal';
 
 // Pantallas del Drawer
@@ -134,6 +135,10 @@ export default function DrawerNavigator() {
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [showInstall, setShowInstall] = useState(false);
 
+  // Soporte universal para gestos de retroceso en Android, iOS y PWA
+  useModalBackHandler(showCustomizer, () => setShowCustomizer(false));
+  useModalBackHandler(showInstall, () => setShowInstall(false));
+
   return (
     <>
       <Drawer.Navigator
@@ -147,6 +152,8 @@ export default function DrawerNavigator() {
         )}
         screenOptions={{
           drawerType: 'front',
+          swipeEnabled: true,
+          swipeEdgeWidth: 120,
           overlayColor: isDarkMode ? 'rgba(0, 0, 0, 0.75)' : 'rgba(0, 0, 0, 0.5)',
           headerStyle: { backgroundColor: isDarkMode ? '#000000' : primaryColor },
           headerTintColor: '#fff',

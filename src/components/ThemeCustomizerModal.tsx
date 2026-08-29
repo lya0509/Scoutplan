@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Palette, X, Check, RotateCcw } from 'lucide-react-native';
 import { useTheme, THEME_COLOR_PRESETS } from '../context/ThemeContext';
+import { useModalBackHandler } from '../hooks/useBackHandler';
 import { showAlert } from '../utils/alert';
 
 interface Props {
@@ -20,6 +21,9 @@ interface Props {
 export function ThemeCustomizerModal({ visible, onClose }: Props) {
   const { isDarkMode, theme, primaryColor, setPrimaryColor, resetToDefaultColor } = useTheme();
   const [customHex, setCustomHex] = useState(primaryColor);
+
+  // Soporte universal para gestos de retroceso en Android, iOS y PWA
+  useModalBackHandler(visible, onClose);
 
   const isValidHex = (hex: string) => {
     return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex.trim());

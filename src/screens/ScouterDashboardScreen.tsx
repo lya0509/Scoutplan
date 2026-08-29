@@ -382,7 +382,6 @@ export default function ScouterDashboardScreen({ navigation }: any) {
 
   // Modal para agregar Evento CIP 6P
   const [showCipModal, setShowCipModal] = useState(false);
-  useModalBackHandler(showCipModal, () => setShowCipModal(false));
   const [cipTitle, setCipTitle] = useState('');
   const [cipScope, setCipScope] = useState<'distrital' | 'regional' | 'nacional' | 'internacional'>('distrital');
   const [cipDate, setCipDate] = useState(new Date().toISOString().split('T')[0]);
@@ -400,6 +399,12 @@ export default function ScouterDashboardScreen({ navigation }: any) {
   const [showPhotoRejectModal, setShowPhotoRejectModal] = useState(false);
   const [photoRejectReason, setPhotoRejectReason] = useState('');
   const [photoRejectScout, setPhotoRejectScout] = useState<any>(null);
+
+  // Soporte universal para gestos de retroceso en Android, iOS y PWA
+  useModalBackHandler(showCipModal, () => setShowCipModal(false));
+  useModalBackHandler(showMembershipModal, () => setShowMembershipModal(false));
+  useModalBackHandler(showRejectModal, () => setShowRejectModal(false));
+  useModalBackHandler(showPhotoRejectModal, () => setShowPhotoRejectModal(false));
 
   useFocusEffect(
     useCallback(() => { loadScouts(); }, [])

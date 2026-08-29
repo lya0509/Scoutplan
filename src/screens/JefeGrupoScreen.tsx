@@ -17,6 +17,7 @@ import {
 } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
+import { useModalBackHandler } from '../hooks/useBackHandler';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import {
   exportCensoExcel, exportPadronMedicoExcel, exportMembresiasExcel, printDocumentHTML, MemberRecord
@@ -96,6 +97,12 @@ export default function JefeGrupoScreen({ navigation }: any) {
   const [membershipDateInput, setMembershipDateInput] = useState('');
   const [showMembershipDatePicker, setShowMembershipDatePicker] = useState(false);
   const [approvingBatch, setApprovingBatch] = useState(false);
+
+  // Soporte universal para gestos de retroceso en Android, iOS y PWA
+  useModalBackHandler(showAddEventModal, () => setShowAddEventModal(false));
+  useModalBackHandler(showCensoModal, () => setShowCensoModal(false));
+  useModalBackHandler(showPadronMedicoModal, () => setShowPadronMedicoModal(false));
+  useModalBackHandler(showSemaforoModal, () => setShowSemaforoModal(false));
 
   useFocusEffect(
     useCallback(() => {

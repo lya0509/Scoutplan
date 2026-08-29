@@ -12,6 +12,7 @@ import {
 import { X, Download, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react-native';
 import { Profile } from '../types/progression';
 import { useTheme } from '../context/ThemeContext';
+import { useModalBackHandler } from '../hooks/useBackHandler';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 
@@ -27,6 +28,9 @@ export const CarnetScoutModal: React.FC<CarnetScoutModalProps> = ({
   onClose
 }) => {
   const { isDarkMode, theme } = useTheme();
+
+  // Soporte universal para gestos de retroceso en Android, iOS y PWA
+  useModalBackHandler(visible, onClose);
 
   if (!user) return null;
 

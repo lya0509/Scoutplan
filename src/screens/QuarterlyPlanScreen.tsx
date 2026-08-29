@@ -16,6 +16,7 @@ import { Calendar as RNCalendar, DateData } from 'react-native-calendars';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useModalBackHandler } from '../hooks/useBackHandler';
 import { dataService } from '../lib/dataService';
 import { supabase } from '../lib/supabaseClient';
 import { notificationService } from '../services/notificationService';
@@ -71,6 +72,10 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
   const [historyModalVisible, setHistoryModalVisible] = useState(false);
   const [historyPlans, setHistoryPlans] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // Soporte universal para gestos de retroceso en Android, iOS y PWA
+  useModalBackHandler(dayPickerVisible, () => setDayPickerVisible(false));
+  useModalBackHandler(historyModalVisible, () => setHistoryModalVisible(false));
 
   // Campos del Documento Oficial Scout
   const [elaboratedBy, setElaboratedBy] = useState('');
