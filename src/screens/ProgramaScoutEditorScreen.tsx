@@ -53,6 +53,7 @@ import { dataService } from '../lib/dataService';
 import { autoSaveService } from '../services/autoSaveService';
 import { useModalBackHandler } from '../hooks/useBackHandler';
 import { ProgramaPdfPreviewModal } from '../components/ProgramaPdfPreviewModal';
+import { notificationService } from '../services/notificationService';
 import { showAlert } from '../utils/alert';
 
 export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
@@ -60,7 +61,12 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
   const { isDarkMode, theme, primaryColor } = useTheme();
 
   const existingPrograma: ProgramaScout | undefined = route.params?.programa;
-  const userUnit = (user?.unit || existingPrograma?.unit || 'clan').toLowerCase() as 'manada' | 'tropa' | 'caminantes' | 'clan';
+  const passedInitialDate = route.params?.initialDate;
+  const passedInitialTitle = route.params?.initialTitle;
+  const passedInitialPlace = route.params?.initialPlace;
+  const passedInitialUnit = route.params?.initialUnit;
+
+  const userUnit = (passedInitialUnit || user?.unit || existingPrograma?.unit || 'clan').toLowerCase() as 'manada' | 'tropa' | 'caminantes' | 'clan';
 
   const [saving, setSaving] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -70,9 +76,9 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
   // Estados principales del programa
   const [id, setId] = useState(existingPrograma?.id || `prog_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`);
-  const [title, setTitle] = useState(existingPrograma?.title || '');
-  const [date, setDate] = useState(existingPrograma?.date || new Date().toISOString().split('T')[0]);
-  const [location, setLocation] = useState(existingPrograma?.location || '');
+  const [title, setTitle] = useState(existingPrograma?.title || passedInitialTitle || '');
+  const [date, setDate] = useState(existingPrograma?.date || passedInitialDate || new Date().toISOString().split('T')[0]);
+  const [location, setLocation] = useState(existingPrograma?.location || passedInitialPlace || '');
   const [activityType, setActivityType] = useState(existingPrograma?.activityType || '');
   const [unit] = useState<'manada' | 'tropa' | 'caminantes' | 'clan'>(userUnit);
   const [isSinodal, setIsSinodal] = useState<boolean>(existingPrograma?.isSinodal || false);
@@ -460,6 +466,17 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
       await programaService.savePrograma(programaToSave);
       await autoSaveService.removeDraft('active_programa_draft');
+
+      // Notificación automática instantánea en tiempo real
+      notificationService.sendNotification({
+        senderId: user?.id,
+        groupName: user?.group_name || undefined,
+        unit: unit,
+        title: `📋 ¡Nuevo Programa Scout Publicado!`,
+        message: `${title || 'Actividad Scout'} para el ${date} (${unit.toUpperCase()}). Ya puedes ver la ficha técnica, horarios y materiales.`,
+        type: 'program'
+      }).catch(() => {});
+
       setSaving(false);
       
       const statusMsg = completedAreasCount >= 6

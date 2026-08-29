@@ -33,6 +33,11 @@ interface ActivityRow {
   place: string;
   responsible: string;
   planB?: string;
+  isModified?: boolean;
+  originalActivity?: string;
+  modifiedReason?: string;
+  status?: 'programada' | 'realizada' | 'modificada' | 'suspendida';
+  programId?: string;
 }
 
 const MONTH_NAMES_BY_QUARTER: Record<string, string[]> = {
@@ -73,9 +78,20 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
   const [historyPlans, setHistoryPlans] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
+  // Modal de Modificación / Reprogramación de Actividad ("Modificado a...")
+  const [modifyModalVisible, setModifyModalVisible] = useState(false);
+  const [actToModify, setActToModify] = useState<ActivityRow | null>(null);
+  const [newActivityName, setNewActivityName] = useState('');
+  const [modificationReason, setModificationReason] = useState('');
+
+  // Estados de Evaluación CIP de Fin de Ciclo
+  const [evaluationConclusions, setEvaluationConclusions] = useState('');
+  const [evaluationGoalsReached, setEvaluationGoalsReached] = useState('');
+
   // Soporte universal para gestos de retroceso en Android, iOS y PWA
   useModalBackHandler(dayPickerVisible, () => setDayPickerVisible(false));
   useModalBackHandler(historyModalVisible, () => setHistoryModalVisible(false));
+  useModalBackHandler(modifyModalVisible, () => setModifyModalVisible(false));
 
   // Campos del Documento Oficial Scout
   const [elaboratedBy, setElaboratedBy] = useState('');
@@ -557,6 +573,75 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     setTargetActId(actId);
     setTargetMonthName(monthName);
     setDayPickerVisible(true);
+  };
+
+  // Manejadores para Modificar / Reprogramar Actividades ("Modificado a...")
+  const handleOpenModifyModal = (act: ActivityRow) => {
+    setActToModify(act);
+    setNewActivityName(act.activity);
+    setModificationReason(act.modifiedReason || '');
+    setModifyModalVisible(true);
+  };
+
+  const handleApplyModification = () => {
+    if (!actToModify || !newActivityName.trim()) {
+      showAlert('Campo requerido', 'Por favor ingresa el nuevo nombre de la actividad.');
+      return;
+    }
+    setActivities(prev => prev.map(a => {
+      if (a.id === actToModify.id) {
+        return {
+          ...a,
+          isModified: true,
+          originalActivity: a.originalActivity || a.activity,
+          activity: newActivityName.trim(),
+          modifiedReason: modificationReason.trim() || 'Ajuste de programa / Fuerza mayor',
+          status: 'modificada'
+        };
+      }
+      return a;
+    }));
+    setModifyModalVisible(false);
+    showAlert('Actividad Reprogramada', `La actividad ha sido modificada a "${newActivityName.trim()}". Se mantendrá el registro de la actividad original.`);
+  };
+
+  const handleRevertModification = (actId: string) => {
+    setActivities(prev => prev.map(a => {
+      if (a.id === actId && a.originalActivity) {
+        return {
+          ...a,
+          activity: a.originalActivity,
+          isModified: false,
+          originalActivity: undefined,
+          modifiedReason: undefined,
+          status: 'programada'
+        };
+      }
+      return a;
+    }));
+    showAlert('Restaurado', 'La actividad ha sido restaurada a su versión original.');
+  };
+
+  const handleNavigateToPrograma = (act: ActivityRow) => {
+    const monthMap: Record<string, string> = {
+      enero: '01', febrero: '02', marzo: '03', abril: '04',
+      mayo: '05', junio: '06', julio: '07', agosto: '08',
+      septiembre: '09', octubre: '10', noviembre: '11', diciembre: '12'
+    };
+    const mNum = monthMap[act.month.toLowerCase()] || '01';
+    const dayStr = String(act.day || '15').padStart(2, '0');
+    const targetDate = `${selectedYear}-${mNum}-${dayStr}`;
+    const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user?.unit || 'clan');
+
+    navigation.navigate('ProgramaScoutEditor', {
+      initialDate: targetDate,
+      initialTitle: act.activity,
+      initialPlace: act.place,
+      initialUnit: targetUnit,
+      initialQuarter: selectedQuarter,
+      initialYear: selectedYear,
+      planActivityId: act.id
+    });
   };
 
   const handleSaveScoutPlan = async () => {
@@ -1128,7 +1213,26 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
                       <Text style={[styles.noActText, { color: theme.subText }]}>No hay actividades registradas en {monthName}.</Text>
                     ) : (
                       monthActs.map(act => (
-                        <View key={act.id} style={[styles.activityRowCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+                        <View key={act.id} style={[styles.activityRowCard, { backgroundColor: theme.cardBg, borderColor: act.isModified ? '#f59e0b' : theme.border }]}>
+                          {/* BADGE DE MODIFICACIÓN / TRAZABILIDAD */}
+                          {act.isModified && (
+                            <View style={{ backgroundColor: isDarkMode ? '#451a03' : '#fef3c7', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#fde68a', marginBottom: 8 }}>
+                              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#b45309' }}>
+                                  ⚠️ Actividad Modificada (Original: {act.originalActivity})
+                                </Text>
+                                <TouchableOpacity onPress={() => handleRevertModification(act.id)} style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                                  <Text style={{ fontSize: 10, color: '#b45309', fontWeight: 'bold' }}>↩️ Revertir</Text>
+                                </TouchableOpacity>
+                              </View>
+                              {act.modifiedReason ? (
+                                <Text style={{ fontSize: 10, color: '#92400e', marginTop: 2 }}>
+                                  Motivo: {act.modifiedReason}
+                                </Text>
+                              ) : null}
+                            </View>
+                          )}
+
                           <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6, alignItems: 'center' }}>
                             <TouchableOpacity
                               style={[styles.dayPickerBtn, { backgroundColor: isDarkMode ? '#27272a' : '#e2e8f0', borderColor: theme.border }]}
@@ -1156,7 +1260,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
                             </TouchableOpacity>
                           </View>
 
-                          <View style={{ flexDirection: 'row', gap: 6 }}>
+                          <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
                             <TextInput
                               style={[styles.input, { flex: 1, backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
                               placeholder="Lugar (Sede, Playa...)"
@@ -1172,6 +1276,25 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
                               onChangeText={val => handleUpdateActivity(act.id, 'responsible', val)}
                             />
                           </View>
+
+                          {/* BARRA DE ACCIONES POR ACTIVIDAD: MODIFICAR / VINCULAR PROGRAMA */}
+                          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
+                            {!act.isModified && (
+                              <TouchableOpacity
+                                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? '#27272a' : '#fef3c7', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: '#fde68a' }}
+                                onPress={() => handleOpenModifyModal(act)}
+                              >
+                                <Text style={{ fontSize: 11, color: '#b45309', fontWeight: 'bold' }}>🔄 Modificar Actividad</Text>
+                              </TouchableOpacity>
+                            )}
+
+                            <TouchableOpacity
+                              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#9333ea', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6 }}
+                              onPress={() => handleNavigateToPrograma(act)}
+                            >
+                              <Text style={{ fontSize: 11, color: 'white', fontWeight: 'bold' }}>📝 Ficha de Programa</Text>
+                            </TouchableOpacity>
+                          </View>
                         </View>
                       ))
                     )}
@@ -1179,8 +1302,67 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
                 );
               })}
 
+              {/* SECCIÓN 4: EVALUACIÓN DE CUMPLIMIENTO DE CICLO DE PROGRAMA (CIP) */}
+              <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 26 }]}>
+                4. Evaluación de Cumplimiento de Ciclo de Programa (CIP)
+              </Text>
+
+              {/* TARJETAS DE MÉTRICAS DE CUMPLIMIENTO */}
+              <View style={{ flexDirection: 'row', gap: 8, marginVertical: 12 }}>
+                <View style={[styles.trafficCard, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border, flex: 1, padding: 8, borderRadius: 10, alignItems: 'center' }]}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{activities.length}</Text>
+                  <Text style={{ fontSize: 10, color: theme.subText, textAlign: 'center' }}>Total Programadas</Text>
+                </View>
+
+                <View style={[styles.trafficCard, { backgroundColor: '#dcfce7', borderColor: '#16a34a', flex: 1, padding: 8, borderRadius: 10, alignItems: 'center' }]}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#15803d' }}>
+                    {activities.filter(a => !a.isModified).length}
+                  </Text>
+                  <Text style={{ fontSize: 10, color: '#166534', textAlign: 'center' }}>Sin Cambios</Text>
+                </View>
+
+                <View style={[styles.trafficCard, { backgroundColor: '#fef3c7', borderColor: '#d97706', flex: 1, padding: 8, borderRadius: 10, alignItems: 'center' }]}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#b45309' }}>
+                    {activities.filter(a => a.isModified).length}
+                  </Text>
+                  <Text style={{ fontSize: 10, color: '#92400e', textAlign: 'center' }}>Modificadas</Text>
+                </View>
+
+                <View style={[styles.trafficCard, { backgroundColor: '#e0e7ff', borderColor: '#4f46e5', flex: 1.2, padding: 8, borderRadius: 10, alignItems: 'center' }]}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#4338ca' }}>
+                    {activities.length > 0 ? Math.round(((activities.filter(a => !a.isModified).length) / activities.length) * 100) : 100}%
+                  </Text>
+                  <Text style={{ fontSize: 10, color: '#3730a3', textAlign: 'center' }}>Cumplimiento</Text>
+                </View>
+              </View>
+
+              {/* CONCLUSIONES Y LECCIONES APRENDIDAS */}
+              <Text style={[styles.inputLabel, { color: theme.subText, marginTop: 8 }]}>
+                CONCLUSIONES Y LECCIONES APRENDIDAS (ASAMBLEA / CONSEJO DE RAMA)
+              </Text>
+              <TextInput
+                style={[styles.input, { height: 80, backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border, textAlignVertical: 'top', marginBottom: 12 }]}
+                placeholder="¿Qué actividades fueron las favoritas de los jóvenes? ¿Qué aprendizajes pedagógicos y logísticos quedan para el siguiente trimestre?"
+                placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                multiline
+                value={evaluationConclusions}
+                onChangeText={setEvaluationConclusions}
+              />
+
+              <Text style={[styles.inputLabel, { color: theme.subText }]}>
+                METAS Y ADELANTOS EDUCATIVOS ALCANZADOS
+              </Text>
+              <TextInput
+                style={[styles.input, { height: 65, backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border, textAlignVertical: 'top' }]}
+                placeholder="Insignias de etapa aprobadas, especialidades entregadas, proyectos de servicio completados..."
+                placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+                multiline
+                value={evaluationGoalsReached}
+                onChangeText={setEvaluationGoalsReached}
+              />
+
               {scoutPlan?.scouter_feedback ? (
-                <View style={[styles.feedbackBox, { backgroundColor: isDarkMode ? '#27272a' : '#fef3c7' }]}>
+                <View style={[styles.feedbackBox, { backgroundColor: isDarkMode ? '#27272a' : '#fef3c7', marginTop: 14 }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
                     <MessageSquare size={16} color="#d97706" style={{ marginRight: 6 }} />
                     <Text style={{ fontWeight: 'bold', color: '#d97706', fontSize: 12 }}>Observaciones del Scouter:</Text>
@@ -1558,6 +1740,72 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
                 </TouchableOpacity>
               </View>
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL DE REPROGRAMACIÓN / MODIFICACIÓN DE ACTIVIDAD ("MODIFICADO A...") */}
+      <Modal visible={modifyModalVisible} transparent animationType="fade" onRequestClose={() => setModifyModalVisible(false)}>
+        <View style={modalStyles.overlayPicker}>
+          <View style={[modalStyles.cardPicker, { backgroundColor: isDarkMode ? '#18181b' : 'white', borderColor: theme.border, maxWidth: 420 }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Edit3 size={18} color="#d97706" style={{ marginRight: 6 }} />
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.text }}>
+                  Modificar / Reprogramar
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setModifyModalVisible(false)} style={{ padding: 4 }}>
+                <X size={20} color={isDarkMode ? '#a1a1aa' : '#64748b'} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#fef3c7', padding: 10, borderRadius: 10, marginBottom: 12, borderWidth: 1, borderColor: '#fde68a' }}>
+              <Text style={{ fontSize: 11, color: '#92400e', fontWeight: 'bold' }}>
+                📌 Actividad Planificada Originalmente:
+              </Text>
+              <Text style={{ fontSize: 13, color: '#b45309', fontWeight: 'bold', marginTop: 2 }}>
+                {actToModify?.originalActivity || actToModify?.activity}
+              </Text>
+              <Text style={{ fontSize: 11, color: '#92400e', marginTop: 2 }}>
+                Fecha: {actToModify?.month} (Día {actToModify?.day})
+              </Text>
+            </View>
+
+            <Text style={[styles.label, { color: theme.subText, marginTop: 4 }]}>NUEVO NOMBRE DE LA ACTIVIDAD *</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border, marginBottom: 12 }]}
+              placeholder="Ej: Reunión de Nudos y Juegos en Sede"
+              placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+              value={newActivityName}
+              onChangeText={setNewActivityName}
+            />
+
+            <Text style={[styles.label, { color: theme.subText, marginTop: 4 }]}>MOTIVO DEL CAMBIO / AJUSTE *</Text>
+            <TextInput
+              style={[styles.input, { height: 65, backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border, marginBottom: 16, textAlignVertical: 'top' }]}
+              placeholder="Ej: Condiciones climáticas / Mantenimiento de instalaciones / Fuerza mayor"
+              placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
+              multiline
+              value={modificationReason}
+              onChangeText={setModificationReason}
+            />
+
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity
+                style={{ flex: 1, padding: 12, borderRadius: 10, backgroundColor: isDarkMode ? '#27272a' : '#e2e8f0', alignItems: 'center' }}
+                onPress={() => setModifyModalVisible(false)}
+              >
+                <Text style={{ color: theme.text, fontWeight: 'bold' }}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ flex: 1.5, padding: 12, borderRadius: 10, backgroundColor: '#d97706', alignItems: 'center' }}
+                onPress={handleApplyModification}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>Guardar Cambio</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>

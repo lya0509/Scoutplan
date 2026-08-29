@@ -9,7 +9,9 @@ import { dataService } from '../lib/dataService';
 import { colors } from '../theme/colors';
 import { useFocusEffect } from '@react-navigation/native';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
-import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, Target, FileText, CheckCircle } from 'lucide-react-native';
+import { ProgramaPdfPreviewModal } from '../components/ProgramaPdfPreviewModal';
+import { ProgramaScout } from '../types/programa';
+import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, Target, FileText, CheckCircle, Info, Eye } from 'lucide-react-native';
 
 const UNIT_COLORS: Record<string, string> = {
   'manada': '#ffb300',
@@ -38,8 +40,8 @@ const ONBOARDING_SLIDES = [
   },
   {
     icon: CheckCircle,
-    title: '🤝 Revisión con tu Scouter',
-    desc: 'Al completar los requisitos de tu etapa, envíala a tu dirigente. Él la revisará, aprobará tus logros y te otorgará tu nueva insignia.'
+    title: '⚜️ Aprobación y Validez Nacional',
+    desc: 'Tus dirigentes revisarán y certificarán tus insignias con validez oficial ante la Asociación de Scouts de Venezuela.'
   }
 ];
 
@@ -52,6 +54,12 @@ export default function ScoutDashboardScreen({ navigation }: any) {
   const [stageStatus, setStageStatus]     = useState<string>('En Progreso');
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [roversList, setRoversList] = useState<any[]>([]);
+
+  // Estados para previsualización interactiva de programas desde Próximas Actividades
+  const [selectedProgramaPreview, setSelectedProgramaPreview] = useState<ProgramaScout | null>(null);
+  const [selectedEventPendingModal, setSelectedEventPendingModal] = useState<any | null>(null);
+  const [loadingProgramaModal, setLoadingProgramaModal] = useState(false);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentSlide, setCurrentSlide]     = useState(0);
@@ -244,6 +252,57 @@ export default function ScoutDashboardScreen({ navigation }: any) {
     setLoading(false);
   };
 
+  const handlePressEvent = async (evt: any) => {
+    if (evt.id && String(evt.id).startsWith('prog_')) {
+      const realId = String(evt.id).replace('prog_', '');
+      setLoadingProgramaModal(true);
+      try {
+        const { data, error } = await supabase
+          .from('scout_programas')
+          .select('*')
+          .eq('id', realId)
+          .single();
+
+        if (data && !error) {
+          const formatted: ProgramaScout = {
+            id: data.id,
+            title: data.title,
+            date: data.date,
+            location: data.location || 'Sede Scout',
+            activityType: data.activity_type || data.activityType || 'Actividad Semanal',
+            unit: (data.unit || 'clan').toLowerCase(),
+            isSinodal: !!data.is_sinodal,
+            selectedUnits: data.selected_units || [data.unit || 'clan'],
+            participantProjection: data.participant_projection || 'Jóvenes de la Rama',
+            generalObjective: data.general_objective || '',
+            specificObjectives: data.specific_objectives || [],
+            specificMetas: data.specific_metas || [],
+            selectedSDGs: data.selected_sdgs || [],
+            indicators: data.indicators || [],
+            schedule: data.schedule || [],
+            importantNotes: data.important_notes || '',
+            registrationBadgeId: data.registration_badge_id || 'reg_2026',
+            createdBy: data.created_by,
+            creatorName: data.creator_name || 'Scouter Responsable',
+            groupName: data.group_name || 'Grupo Scout Orión #84',
+            createdAt: data.created_at,
+            updatedAt: data.updated_at
+          };
+          setSelectedProgramaPreview(formatted);
+          setLoadingProgramaModal(false);
+          return;
+        }
+      } catch (e) {
+        console.warn('Aviso abriendo programa scout:', e);
+      } finally {
+        setLoadingProgramaModal(false);
+      }
+    }
+
+    // Si es un evento regular o plan trimestral sin programa detallado publicado
+    setSelectedEventPendingModal(evt);
+  };
+
   const handleDismissNotification = async (id: string) => {
     await dataService.markNotificationRead(id);
     setNotifications(prev => prev.filter(n => n.id !== id));
@@ -420,21 +479,84 @@ export default function ScoutDashboardScreen({ navigation }: any) {
           const color = UNIT_COLORS[evt.unit?.toLowerCase()] || colors.primary;
           const displayTitle = (evt.title || '').replace(/\[6P\s*/gi, '[CIP ').replace(/\b6P\b/gi, 'CIP').replace(/6P/g, 'CIP');
           const displayDesc = evt.description ? evt.description.replace(/\b6P\b/gi, 'CIP').replace(/6P/g, 'CIP') : '';
+          const hasPrograma = evt.id && String(evt.id).startsWith('prog_');
 
           return (
-            <View key={evt.id} style={[styles.eventCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+            <TouchableOpacity
+              key={evt.id}
+              style={[styles.eventCard, { backgroundColor: theme.cardBg, borderColor: hasPrograma ? '#9333ea' : theme.border }]}
+              onPress={() => handlePressEvent(evt)}
+              activeOpacity={0.8}
+            >
               <View style={[styles.eventCircle, { backgroundColor: color }]}>
                 <Text style={styles.eventCircleText}>{evt.unit?.charAt(0).toUpperCase()}</Text>
               </View>
               <View style={styles.eventInfo}>
-                <Text style={[styles.eventTitle, { color: theme.text }]}>{displayTitle}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                  <Text style={[styles.eventTitle, { color: theme.text, flex: 1 }]}>{displayTitle}</Text>
+                  {hasPrograma && (
+                    <View style={{ backgroundColor: isDarkMode ? '#581c87' : '#f3e8ff', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#d8b4fe' }}>
+                      <Text style={{ fontSize: 9, color: '#9333ea', fontWeight: 'bold' }}>📄 Ficha Oficial</Text>
+                    </View>
+                  )}
+                </View>
                 <Text style={[styles.eventDate, { color: theme.subText }]}>📅 {evt.date}</Text>
                 {displayDesc ? <Text style={[styles.eventDesc, { color: theme.subText }]}>{displayDesc}</Text> : null}
               </View>
-            </View>
+              <ChevronRight size={18} color={theme.subText} style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
           );
         })
       )}
+
+      {/* MODAL DE PREVISUALIZACIÓN OFICIAL EN PDF / IMPRESIÓN DEL PROGRAMA SCOUT */}
+      <ProgramaPdfPreviewModal
+        visible={!!selectedProgramaPreview}
+        programa={selectedProgramaPreview}
+        onClose={() => setSelectedProgramaPreview(null)}
+      />
+
+      {/* MODAL INFORMATIVO PARA ACTIVIDADES SIN PROGRAMA PUBLICADO */}
+      <Modal visible={!!selectedEventPendingModal} transparent animationType="fade" onRequestClose={() => setSelectedEventPendingModal(null)}>
+        <View style={styles.tourModalBg}>
+          <View style={[styles.tourModalCard, { backgroundColor: theme.cardBg, maxWidth: 400 }]}>
+            <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(99, 102, 241, 0.12)', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+              <CalendarIcon size={26} color={colors.primary} />
+            </View>
+
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.text, textAlign: 'center', marginBottom: 4 }}>
+              {selectedEventPendingModal?.title}
+            </Text>
+
+            <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', padding: 10, borderRadius: 10, width: '100%', marginVertical: 8 }}>
+              <Text style={{ fontSize: 12, color: theme.text, textAlign: 'center', fontWeight: 'bold' }}>
+                📅 {selectedEventPendingModal?.date} • {selectedEventPendingModal?.unit?.toUpperCase()}
+              </Text>
+              {selectedEventPendingModal?.description ? (
+                <Text style={{ fontSize: 11, color: theme.subText, textAlign: 'center', marginTop: 4 }}>
+                  {selectedEventPendingModal?.description}
+                </Text>
+              ) : null}
+            </View>
+
+            <View style={{ backgroundColor: isDarkMode ? '#451a03' : '#fef3c7', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#fde68a', marginVertical: 8 }}>
+              <Text style={{ fontSize: 12, color: '#b45309', fontWeight: 'bold', textAlign: 'center' }}>
+                ⏳ Aún no se ha publicado el Programa Oficial
+              </Text>
+              <Text style={{ fontSize: 11, color: '#92400e', textAlign: 'center', marginTop: 4 }}>
+                Tu equipo de scouters publicará próximamente la minuta detallada, horarios por bloques y lista de materiales para esta actividad.
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={{ backgroundColor: colors.primary, width: '100%', paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginTop: 10 }}
+              onPress={() => setSelectedEventPendingModal(null)}
+            >
+              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>Entendido</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* MODAL INTERACTIVO DE GUÍA DE PRIMERA VEZ (ONBOARDING) */}
       <Modal visible={showOnboarding} transparent animationType="fade">
