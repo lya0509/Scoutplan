@@ -11,8 +11,9 @@ import {
   Modal,
   Platform
 } from 'react-native';
-import { UploadCloud, Award, Trash2, X, AlertTriangle, Image as ImageIcon, Sparkles, Download, Maximize2, ArrowLeft, Calendar as CalendarIcon, Check } from 'lucide-react-native';
+import { UploadCloud, Award, Trash2, X, AlertTriangle, Image as ImageIcon, Sparkles, Download, Maximize2, ArrowLeft, Calendar as CalendarIcon, Check, CheckCircle } from 'lucide-react-native';
 import { Calendar as RNCalendar, DateData } from 'react-native-calendars';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { dataService } from '../lib/dataService';
@@ -26,7 +27,8 @@ const LEVEL_COLORS: Record<string, string> = {
   oro: '#eab308',
 };
 
-export default function CertificateUploadScreen({ navigation }: any) {
+export default function CertificateUploadScreen({ route, navigation }: any) {
+  const returnToStage = route?.params?.returnToStage; // { stageId, reqId, reqText, level }
   const { user } = useAuth();
   const { isDarkMode, theme } = useTheme();
 
@@ -36,9 +38,9 @@ export default function CertificateUploadScreen({ navigation }: any) {
 
   const [showFormModal, setShowFormModal] = useState(false);
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('especialidades');
+  const [category, setCategory] = useState(returnToStage?.level ? 'especialidades' : 'especialidades');
   const [area, setArea] = useState(specialtyAreas[0].id);
-  const [level, setLevel] = useState('bronce');
+  const [level, setLevel] = useState(returnToStage?.level || 'bronce');
   const [fileUrl, setFileUrl] = useState('');
 
   // Fecha de expedición / realización del certificado
@@ -159,7 +161,7 @@ export default function CertificateUploadScreen({ navigation }: any) {
       const isSpec = category === 'especialidades';
       const simUrl = fileUrl || 'https://images.unsplash.com/photo-1589330694653-ded6df03f754?w=500&q=80';
 
-      await dataService.uploadCertificate(
+      const createdCert = await dataService.uploadCertificate(
         user.id,
         title.trim(),
         category,
@@ -167,6 +169,18 @@ export default function CertificateUploadScreen({ navigation }: any) {
         simUrl,
         issueDate
       );
+
+      if (returnToStage && user?.id) {
+        await dataService.toggleRequirement(user.id, returnToStage.stageId, returnToStage.reqId, true);
+        await AsyncStorage.setItem(
+          `@scout_req_linked_${user.id}_${returnToStage.stageId}_${returnToStage.reqId}`,
+          JSON.stringify({ certTitle: title.trim(), level: isSpec ? level : null, date: issueDate })
+        );
+        showAlert('¡Requisito Vinculado!', `Se ha registrado "${title.trim()}" y marcado tu requisito en la etapa.`);
+        setShowFormModal(false);
+        navigation.navigate('StageDetail', { stageId: returnToStage.stageId });
+        return;
+      }
 
       const msg = syncWithCurriculum
         ? 'Tu acreditación ha sido guardada y sincronizada automáticamente con tu Currículum Scout (Hoja de Vida).'
@@ -182,6 +196,21 @@ export default function CertificateUploadScreen({ navigation }: any) {
       showAlert('Error al guardar', error?.message || 'No se pudo guardar la acreditación.');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleSelectForRequirement = async (cert: any) => {
+    if (!returnToStage || !user?.id) return;
+    try {
+      await dataService.toggleRequirement(user.id, returnToStage.stageId, returnToStage.reqId, true);
+      await AsyncStorage.setItem(
+        `@scout_req_linked_${user.id}_${returnToStage.stageId}_${returnToStage.reqId}`,
+        JSON.stringify({ certId: cert.id, certTitle: cert.title, level: cert.level, date: cert.date || cert.created_at })
+      );
+      showAlert('¡Especialidad Vinculada!', `Has vinculado "${cert.title}" a tu requisito "${returnToStage.reqText}".`);
+      navigation.navigate('StageDetail', { stageId: returnToStage.stageId });
+    } catch (err: any) {
+      showAlert('Error', err?.message || 'No se pudo vincular la especialidad.');
     }
   };
 
@@ -235,6 +264,20 @@ export default function CertificateUploadScreen({ navigation }: any) {
           <Text style={[styles.title, { color: theme.text, flex: 1 }]}>Mis Acreditaciones e Iniciativas</Text>
         </View>
 
+        {returnToStage && (
+          <View style={{ backgroundColor: isDarkMode ? '#1e1b4b' : '#f5f3ff', borderWidth: 1.5, borderColor: '#8b5cf6', borderRadius: 12, padding: 12, marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Sparkles size={18} color="#8b5cf6" style={{ marginRight: 6 }} />
+              <Text style={{ fontSize: 13, fontWeight: 'bold', color: isDarkMode ? '#c4b5fd' : '#6d28d9', flex: 1 }}>
+                Vinculando para: {returnToStage.reqText}
+              </Text>
+            </View>
+            <Text style={{ fontSize: 11, color: isDarkMode ? '#a78bfa' : '#7c3aed', marginTop: 4 }}>
+              Toca "Vincular a este Requisito" en cualquiera de tus certificados o sube uno nuevo para marcar la etapa.
+            </Text>
+          </View>
+        )}
+
         <Text style={[styles.subtitle, { color: theme.subText }]}>
           Especialidades (Bronce/Plata/Oro), Iniciativas de Programa Nacionales (ej: Enseñas) y Cursos.
         </Text>
@@ -244,7 +287,9 @@ export default function CertificateUploadScreen({ navigation }: any) {
           onPress={() => setShowFormModal(true)}
         >
           <UploadCloud color="white" size={20} style={{ marginRight: 8 }} />
-          <Text style={styles.uploadBtnText}>Agregar Acreditación / Iniciativa</Text>
+          <Text style={styles.uploadBtnText}>
+            {returnToStage ? `Subir y Vincular para ${returnToStage.reqText}` : 'Agregar Acreditación / Iniciativa'}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -339,6 +384,31 @@ export default function CertificateUploadScreen({ navigation }: any) {
                     )}
                   </View>
                 </View>
+
+                {returnToStage && (
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: '#10b981',
+                      paddingVertical: 9,
+                      paddingHorizontal: 12,
+                      borderRadius: 10,
+                      marginTop: 10,
+                      gap: 6
+                    }}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleSelectForRequirement(cert);
+                    }}
+                  >
+                    <CheckCircle size={16} color="white" />
+                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>
+                      ✅ Vincular a este Requisito
+                    </Text>
+                  </TouchableOpacity>
+                )}
 
                 {cert.file_url ? (
                   <View style={styles.imagePreviewWrapper}>

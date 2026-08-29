@@ -10,7 +10,8 @@ import {
   TextInput
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { CheckSquare, Square, Lock, Send, Flag, X, CheckCircle } from 'lucide-react-native';
+import { CheckSquare, Square, Lock, Send, Flag, X, CheckCircle, Award, Sparkles, Plus, ExternalLink, Trash2 } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useModalBackHandler } from '../hooks/useBackHandler';
@@ -40,6 +41,13 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const [selectedReqForCip, setSelectedReqForCip] = useState<any>(null);
   const [loadingCip, setLoadingCip] = useState(false);
 
+  // Modal para vincular Especialidades / Cursos
+  const [showCertModal, setShowCertModal] = useState(false);
+  const [userCerts, setUserCerts] = useState<any[]>([]);
+  const [selectedReqForCert, setSelectedReqForCert] = useState<any>(null);
+  const [loadingCerts, setLoadingCerts] = useState(false);
+  const [linkedCertMap, setLinkedCertMap] = useState<Record<string, string>>({});
+
   // Formulario rápido para convalidar CIP previo
   const [showFastCipForm, setShowFastCipForm] = useState(false);
   const [fastCipName, setFastCipName] = useState('');
@@ -47,6 +55,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const [fastCipScope, setFastCipScope] = useState<'distrital' | 'regional' | 'nacional' | 'internacional'>('distrital');
 
   useModalBackHandler(showCipModal, () => setShowCipModal(false));
+  useModalBackHandler(showCertModal, () => setShowCertModal(false));
   useModalBackHandler(confirming, () => setConfirming(false));
 
   useFocusEffect(
@@ -61,11 +70,22 @@ export default function StageDetailScreen({ route, navigation }: any) {
       setStatus(stageStatus);
 
       const reqChecks: Record<string, boolean> = {};
+      const links: Record<string, string> = {};
+
       for (const req of stageTemplate.requirements) {
         const val = await dataService.getRequirement(user.id, stageId, req.id);
         reqChecks[req.id] = val;
+
+        try {
+          const linkedStr = await AsyncStorage.getItem(`@scout_req_linked_${user.id}_${stageId}_${req.id}`);
+          if (linkedStr) {
+            const parsed = JSON.parse(linkedStr);
+            links[req.id] = parsed.certTitle || parsed.title || '';
+          }
+        } catch {}
       }
       setChecks(reqChecks);
+      setLinkedCertMap(links);
     } catch (err) {
       console.error('Error al cargar avance de etapa:', err);
     } finally {
@@ -93,6 +113,55 @@ export default function StageDetailScreen({ route, navigation }: any) {
     setShowCipModal(false);
   };
 
+  const openCertModal = async (req: any) => {
+    setSelectedReqForCert(req);
+    setShowCertModal(true);
+    setLoadingCerts(true);
+    if (user?.id) {
+      const certs = await dataService.getCertificates(user.id);
+      setUserCerts(certs || []);
+    }
+    setLoadingCerts(false);
+  };
+
+  const handleSelectCert = async (cert: any) => {
+    if (!user || !selectedReqForCert) return;
+
+    setChecks(prev => ({ ...prev, [selectedReqForCert.id]: true }));
+    setLinkedCertMap(prev => ({ ...prev, [selectedReqForCert.id]: cert.title }));
+
+    await dataService.toggleRequirement(user.id, stageId, selectedReqForCert.id, true);
+    await AsyncStorage.setItem(
+      `@scout_req_linked_${user.id}_${stageId}_${selectedReqForCert.id}`,
+      JSON.stringify({ certId: cert.id, certTitle: cert.title, level: cert.level, date: cert.date || cert.created_at })
+    );
+
+    showAlert('¡Especialidad/Curso Vinculado!', `Has vinculado "${cert.title}" a tu requisito.`);
+    setShowCertModal(false);
+  };
+
+  const handleQuickToggleCert = async (newVal: boolean) => {
+    if (!user || !selectedReqForCert) return;
+
+    setChecks(prev => ({ ...prev, [selectedReqForCert.id]: newVal }));
+    if (!newVal) {
+      setLinkedCertMap(prev => {
+        const next = { ...prev };
+        delete next[selectedReqForCert.id];
+        return next;
+      });
+      await AsyncStorage.removeItem(`@scout_req_linked_${user.id}_${stageId}_${selectedReqForCert.id}`);
+    }
+
+    await dataService.toggleRequirement(user.id, stageId, selectedReqForCert.id, newVal);
+
+    showAlert(
+      newVal ? '¡Requisito Marcado!' : 'Requisito Desmarcado',
+      newVal ? `Has marcado "${selectedReqForCert.text}" como completado.` : `Has desmarcado "${selectedReqForCert.text}".`
+    );
+    setShowCertModal(false);
+  };
+
   const handleRequirementClick = async (req: any) => {
     if (isReadOnly) return;
     if (!checkProfileCompletion(user, navigation)) return;
@@ -108,7 +177,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
     }
 
     if (req.type === 'cursos' || req.type === 'especialidad') {
-      navigation.navigate('CertificateUpload');
+      openCertModal(req);
       return;
     }
 
@@ -245,7 +314,18 @@ export default function StageDetailScreen({ route, navigation }: any) {
                 )}
 
                 {(req.type === 'cursos' || req.type === 'especialidad') && (
-                  <Text style={styles.reqBadge}>Toca para subir certificado</Text>
+                  <View style={{ marginTop: 4 }}>
+                    {linkedCertMap[req.id] ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Sparkles size={12} color="#10b981" style={{ marginRight: 4 }} />
+                        <Text style={{ fontSize: 11, color: '#10b981', fontWeight: 'bold' }}>
+                          Acreditado: {linkedCertMap[req.id]}
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.reqBadge}>Toca para vincular especialidad / certificado</Text>
+                    )}
+                  </View>
                 )}
 
                 {(req.type === 'ciclos' || req.text.toLowerCase().includes('ciclo')) && (
@@ -275,6 +355,175 @@ export default function StageDetailScreen({ route, navigation }: any) {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* MODAL SELECCIÓN / VINCULACIÓN DE ESPECIALIDADES Y CURSOS */}
+      <Modal visible={showCertModal} transparent animationType="slide" onRequestClose={() => setShowCertModal(false)}>
+        <View style={modalStyles.overlay}>
+          <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', maxHeight: '85%' }]}>
+            <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 8 }}>
+                <Award color={colors.primary} size={22} style={{ marginRight: 8 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[modalStyles.title, { color: theme.text }]} numberOfLines={1}>
+                    Vincular Acreditación
+                  </Text>
+                  <Text style={{ fontSize: 11, color: theme.subText, marginTop: 1 }}>
+                    {selectedReqForCert?.text}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => setShowCertModal(false)}>
+                <X color={isDarkMode ? '#a1a1aa' : '#64748b'} size={22} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ padding: 18 }}>
+              {/* OPCIONES RÁPIDAS SUPERIORES */}
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+                <TouchableOpacity
+                  style={{
+                    flex: 1,
+                    backgroundColor: colors.primary,
+                    paddingVertical: 12,
+                    paddingHorizontal: 10,
+                    borderRadius: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6
+                  }}
+                  onPress={() => {
+                    const req = selectedReqForCert;
+                    setShowCertModal(false);
+                    navigation.navigate('CertificateUpload', {
+                      returnToStage: {
+                        stageId,
+                        reqId: req.id,
+                        reqText: req.text,
+                        level: req.level
+                      }
+                    });
+                  }}
+                >
+                  <Plus size={16} color="white" />
+                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>
+                    Subir Nueva
+                  </Text>
+                </TouchableOpacity>
+
+                {checks[selectedReqForCert?.id] ? (
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                      borderWidth: 1,
+                      borderColor: '#ef4444',
+                      paddingVertical: 12,
+                      paddingHorizontal: 10,
+                      borderRadius: 12,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6
+                    }}
+                    onPress={() => handleQuickToggleCert(false)}
+                  >
+                    <Trash2 size={16} color="#ef4444" />
+                    <Text style={{ color: '#ef4444', fontWeight: 'bold', fontSize: 12 }}>
+                      Desmarcar
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
+                      borderWidth: 1,
+                      borderColor: theme.border,
+                      paddingVertical: 12,
+                      paddingHorizontal: 10,
+                      borderRadius: 12,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6
+                    }}
+                    onPress={() => handleQuickToggleCert(true)}
+                  >
+                    <CheckCircle size={16} color={colors.primary} />
+                    <Text style={{ color: theme.text, fontWeight: 'bold', fontSize: 12 }}>
+                      Marcar Directo
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text, marginBottom: 10 }}>
+                O selecciona uno de tus certificados ya guardados:
+              </Text>
+
+              {loadingCerts ? (
+                <ActivityIndicator color={colors.primary} style={{ marginVertical: 30 }} />
+              ) : userCerts.length === 0 ? (
+                <View style={[modalStyles.emptyCard, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
+                  <Award size={36} color={theme.subText} style={{ marginBottom: 8 }} />
+                  <Text style={[modalStyles.emptyText, { color: theme.text, fontWeight: 'bold' }]}>
+                    No tienes certificados o especialidades subidas aún.
+                  </Text>
+                  <Text style={{ fontSize: 11, color: theme.subText, textAlign: 'center', marginTop: 4 }}>
+                    Puedes usar el botón superior "Subir Nueva" para adjuntar tu diploma o "Marcar Directo" si ya la completaste.
+                  </Text>
+                </View>
+              ) : (
+                userCerts.map((cert) => {
+                  const isSelected = linkedCertMap[selectedReqForCert?.id] === cert.title;
+                  return (
+                    <TouchableOpacity
+                      key={cert.id}
+                      style={[
+                        modalStyles.eventCard,
+                        {
+                          backgroundColor: isSelected ? (isDarkMode ? '#1e1b4b' : '#f5f3ff') : theme.cardBg,
+                          borderColor: isSelected ? '#8b5cf6' : theme.border,
+                          borderWidth: isSelected ? 1.5 : 1
+                        }
+                      ]}
+                      onPress={() => handleSelectCert(cert)}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                          <Text style={[modalStyles.eventTitle, { color: theme.text }]}>
+                            {cert.title}
+                          </Text>
+                          {cert.level && (
+                            <View style={{ backgroundColor: colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 9 }}>
+                                {cert.level.toUpperCase()}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text style={{ fontSize: 11, color: theme.subText }}>
+                          Categoría: {cert.category || 'Especialidad'}
+                        </Text>
+                        <Text style={modalStyles.eventDate}>
+                          Fecha: {cert.date || cert.created_at?.split('T')[0] || 'Registrado'}
+                        </Text>
+                      </View>
+
+                      <View style={{ backgroundColor: isSelected ? '#10b981' : colors.primary, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, marginLeft: 8 }}>
+                        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>
+                          {isSelected ? '✓ Vinculado' : 'Vincular'}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       {/* MODAL SELECCIÓN EVENTOS CIP 6P */}
       <Modal visible={showCipModal} transparent animationType="slide" onRequestClose={() => setShowCipModal(false)}>
