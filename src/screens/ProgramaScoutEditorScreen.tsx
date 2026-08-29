@@ -815,9 +815,9 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.sdgChipText, isSelected ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }]}>
-                    {sdg.icon} #{sdg.number} {sdg.shortName}
+                    {sdg.icon} #{sdg.number}. {sdg.name}
                   </Text>
-                  {isSelected && <CheckCircle size={12} color="#ffffff" style={{ marginLeft: 4 }} />}
+                  {isSelected && <CheckCircle size={13} color="#ffffff" style={{ marginLeft: 6 }} />}
                 </TouchableOpacity>
               );
             })}
@@ -1442,16 +1442,16 @@ const styles = StyleSheet.create({
   },
   countBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 },
   subTextHint: { fontSize: 11, marginBottom: 10, lineHeight: 16 },
-  sdgGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  sdgGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   sdgChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 8,
     borderWidth: 1,
   },
-  sdgChipText: { fontSize: 10 },
+  sdgChipText: { fontSize: 11, fontWeight: '500' },
   areaAccordion: {
     borderRadius: 10,
     borderWidth: 1,
