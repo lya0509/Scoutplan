@@ -25,8 +25,9 @@ export function exportCensoExcel(members: MemberRecord[], groupName: string) {
   
   let rowsHtml = '';
   members.forEach((m, idx) => {
+    const isJefe = m.role === 'jefe_grupo' || m.unit === 'grupo' || m.unit === 'jefatura';
     const roleLabel = m.role === 'jefe_grupo' ? 'Jefe de Grupo' : m.role === 'scouter' ? 'Scouter / Dirigente' : 'Joven Scout';
-    const unitLabel = (m.unit || 'General').toUpperCase();
+    const unitLabel = isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase();
     const isApproved = m.membership_status === 'approved' && m.membership_expires_at ? `Vigente (${m.membership_expires_at})` : 'Sin Registro';
 
     rowsHtml += `
@@ -199,7 +200,7 @@ export function exportMembresiasExcel(members: MemberRecord[], groupName: string
         <td style="text-align:center; padding: 6px; border: 1px solid #d1d5db;">${idx + 1}</td>
         <td style="font-weight: bold; padding: 6px; border: 1px solid #d1d5db;">${m.name}</td>
         <td style="padding: 6px; border: 1px solid #d1d5db;">${m.cedula || 'N/A'}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${(m.unit || 'General').toUpperCase()}</td>
+        <td style="padding: 6px; border: 1px solid #d1d5db;">${m.role === 'jefe_grupo' || m.unit === 'grupo' || m.unit === 'jefatura' ? 'JEFATURA' : (m.unit || 'General').toUpperCase()}</td>
         <td style="padding: 6px; border: 1px solid #d1d5db;">${m.role === 'scouter' ? 'Dirigente' : m.role === 'jefe_grupo' ? 'Jefe de Grupo' : 'Scout'}</td>
         <td style="padding: 6px; border: 1px solid #d1d5db; font-weight:bold; color:${statusColor};">${statusText}</td>
         <td style="padding: 6px; border: 1px solid #d1d5db;">${m.membership_expires_at || 'Sin fecha'}</td>

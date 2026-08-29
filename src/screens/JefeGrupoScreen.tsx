@@ -299,14 +299,46 @@ export default function JefeGrupoScreen({ navigation }: any) {
   // Filtrado de Censo
   const filteredCensoMembers = allMembers.filter(m => {
     const matchQuery = (m.name || '').toLowerCase().includes(censoSearch.toLowerCase()) || (m.cedula || '').includes(censoSearch);
-    const matchUnit = censoUnitFilter === 'all' ? true : (m.unit || '').toLowerCase() === censoUnitFilter.toLowerCase();
+    const u = (m.unit || '').toLowerCase();
+    const isJefe = m.role === 'jefe_grupo' || u === 'grupo' || u === 'jefatura';
+    
+    let matchUnit = true;
+    if (censoUnitFilter === 'jefatura' || censoUnitFilter === 'grupo') {
+      matchUnit = isJefe;
+    } else if (censoUnitFilter === 'clan') {
+      matchUnit = (u === 'clan') && !isJefe;
+    } else if (censoUnitFilter === 'manada') {
+      matchUnit = (u === 'manada') && !isJefe;
+    } else if (censoUnitFilter === 'tropa') {
+      matchUnit = (u === 'tropa') && !isJefe;
+    } else if (censoUnitFilter === 'caminantes') {
+      matchUnit = (u === 'caminantes' || u === 'comunidad') && !isJefe;
+    } else if (censoUnitFilter !== 'all') {
+      matchUnit = u === censoUnitFilter.toLowerCase();
+    }
     return matchQuery && matchUnit;
   });
 
   // Filtrado de Padrón Médico
   const filteredMedicoMembers = allMembers.filter(m => {
     const matchQuery = (m.name || '').toLowerCase().includes(medicoSearch.toLowerCase()) || (m.cedula || '').includes(medicoSearch);
-    const matchUnit = medicoUnitFilter === 'all' ? true : (m.unit || '').toLowerCase() === medicoUnitFilter.toLowerCase();
+    const u = (m.unit || '').toLowerCase();
+    const isJefe = m.role === 'jefe_grupo' || u === 'grupo' || u === 'jefatura';
+
+    let matchUnit = true;
+    if (medicoUnitFilter === 'jefatura' || medicoUnitFilter === 'grupo') {
+      matchUnit = isJefe;
+    } else if (medicoUnitFilter === 'clan') {
+      matchUnit = (u === 'clan') && !isJefe;
+    } else if (medicoUnitFilter === 'manada') {
+      matchUnit = (u === 'manada') && !isJefe;
+    } else if (medicoUnitFilter === 'tropa') {
+      matchUnit = (u === 'tropa') && !isJefe;
+    } else if (medicoUnitFilter === 'caminantes') {
+      matchUnit = (u === 'caminantes' || u === 'comunidad') && !isJefe;
+    } else if (medicoUnitFilter !== 'all') {
+      matchUnit = u === medicoUnitFilter.toLowerCase();
+    }
     return matchQuery && matchUnit;
   });
 
@@ -846,18 +878,21 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   style={[styles.exportBtn, { flex: 1, backgroundColor: primaryColor }]}
                   onPress={() => {
                     const headers = ['#', 'Nombre Completo', 'Cédula', 'Rol', 'Rama', 'Género', 'F. Nac.', 'F. Promesa', 'Teléfono', 'Carnet'];
-                    const rows = filteredCensoMembers.map((m, idx) => [
-                      idx + 1,
-                      m.name || 'Sin Nombre',
-                      m.cedula || 'N/A',
-                      m.role === 'jefe_grupo' ? 'Jefe de Grupo' : m.role === 'scouter' ? 'Scouter' : 'Scout',
-                      (m.unit || 'General').toUpperCase(),
-                      m.gender || 'N/A',
-                      m.birth_date || 'N/A',
-                      m.promise_date || 'N/A',
-                      m.phone || 'N/A',
-                      m.membership_status === 'approved' ? `Vigente (${m.membership_expires_at || ''})` : 'Sin Registro'
-                    ]);
+                    const rows = filteredCensoMembers.map((m, idx) => {
+                      const isJefe = m.role === 'jefe_grupo' || m.unit === 'grupo' || m.unit === 'jefatura';
+                      return [
+                        idx + 1,
+                        m.name || 'Sin Nombre',
+                        m.cedula || 'N/A',
+                        m.role === 'jefe_grupo' ? 'Jefe de Grupo' : m.role === 'scouter' ? 'Scouter' : 'Scout',
+                        isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase(),
+                        m.gender || 'N/A',
+                        m.birth_date || 'N/A',
+                        m.promise_date || 'N/A',
+                        m.phone || 'N/A',
+                        m.membership_status === 'approved' ? `Vigente (${m.membership_expires_at || ''})` : 'Sin Registro'
+                      ];
+                    });
                     printDocumentHTML('CENSO Y NÓMINA OFICIAL DE MIEMBROS', 'REGISTRO INSTITUCIONAL SCOUT', user?.group_name || 'Grupo Scout', headers, rows, primaryColor);
                   }}
                 >
@@ -873,7 +908,8 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   { id: 'manada', label: '🟡 Manada' },
                   { id: 'tropa', label: '🟢 Tropa' },
                   { id: 'caminantes', label: '🔵 Caminantes' },
-                  { id: 'clan', label: '🔴 Clan' }
+                  { id: 'clan', label: '🔴 Clan' },
+                  { id: 'jefatura', label: '⚜️ Jefatura' }
                 ].map(item => (
                   <TouchableOpacity
                     key={item.id}
@@ -899,29 +935,34 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   No se encontraron miembros con los filtros seleccionados.
                 </Text>
               ) : (
-                filteredCensoMembers.map((m, idx) => (
-                  <View key={m.id} style={[styles.tableRow, { backgroundColor: isDarkMode ? '#1f1f23' : '#f8fafc', borderColor: theme.border }]}>
-                    <Text style={[styles.tableIndex, { color: theme.subText }]}>{idx + 1}</Text>
-                    <View style={{ flex: 2 }}>
-                      <Text style={[styles.tableMainText, { color: theme.text }]}>{m.name}</Text>
-                      <Text style={{ fontSize: 11, color: theme.subText }}>C.I: {m.cedula || 'Sin C.I.'}</Text>
+                filteredCensoMembers.map((m, idx) => {
+                  const isJefe = m.role === 'jefe_grupo' || m.unit === 'grupo' || m.unit === 'jefatura';
+                  return (
+                    <View key={m.id} style={[styles.tableRow, { backgroundColor: isDarkMode ? '#1f1f23' : '#f8fafc', borderColor: theme.border }]}>
+                      <Text style={[styles.tableIndex, { color: theme.subText }]}>{idx + 1}</Text>
+                      <View style={{ flex: 2 }}>
+                        <Text style={[styles.tableMainText, { color: theme.text }]}>{m.name}</Text>
+                        <Text style={{ fontSize: 11, color: theme.subText }}>C.I: {m.cedula || 'Sin C.I.'}</Text>
+                      </View>
+                      <View style={{ flex: 1.5 }}>
+                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: isJefe ? '#9333ea' : primaryColor }}>
+                          {isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase()}
+                        </Text>
+                        <Text style={{ fontSize: 10, color: theme.subText }}>{m.role === 'scouter' ? 'Dirigente' : m.role === 'jefe_grupo' ? 'Jefe Grupo' : 'Scout'}</Text>
+                      </View>
+                      <View style={{ flex: 1.5 }}>
+                        <Text style={{ fontSize: 11, color: theme.text }}>Prom: {m.promise_date || 'N/A'}</Text>
+                        <Text style={{ fontSize: 10, color: theme.subText }}>Nac: {m.birth_date || 'N/A'}</Text>
+                      </View>
+                      <View style={{ flex: 1.5, alignItems: 'flex-end' }}>
+                        <Text style={{ fontSize: 11, color: theme.text, fontWeight: '500' }}>{m.phone || 'Sin tlf'}</Text>
+                        <Text style={{ fontSize: 10, color: m.membership_status === 'approved' ? '#16a34a' : '#dc2626', fontWeight: 'bold' }}>
+                          {m.membership_status === 'approved' ? '✓ Carnet' : 'Sin Carnet'}
+                        </Text>
+                      </View>
                     </View>
-                    <View style={{ flex: 1.5 }}>
-                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: primaryColor }}>{(m.unit || 'General').toUpperCase()}</Text>
-                      <Text style={{ fontSize: 10, color: theme.subText }}>{m.role === 'scouter' ? 'Dirigente' : m.role === 'jefe_grupo' ? 'Jefe Grupo' : 'Scout'}</Text>
-                    </View>
-                    <View style={{ flex: 1.5 }}>
-                      <Text style={{ fontSize: 11, color: theme.text }}>Prom: {m.promise_date || 'N/A'}</Text>
-                      <Text style={{ fontSize: 10, color: theme.subText }}>Nac: {m.birth_date || 'N/A'}</Text>
-                    </View>
-                    <View style={{ flex: 1.5, alignItems: 'flex-end' }}>
-                      <Text style={{ fontSize: 11, color: theme.text, fontWeight: '500' }}>{m.phone || 'Sin tlf'}</Text>
-                      <Text style={{ fontSize: 10, color: m.membership_status === 'approved' ? '#16a34a' : '#dc2626', fontWeight: 'bold' }}>
-                        {m.membership_status === 'approved' ? '✓ Carnet' : 'Sin Carnet'}
-                      </Text>
-                    </View>
-                  </View>
-                ))
+                  );
+                })
               )}
             </ScrollView>
           </View>
@@ -981,6 +1022,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                     const headers = ['#', 'Scout / Dirigente', 'Rama', 'Tipo Sangre', 'Alergias', 'Contacto Emergencia', 'Teléfono', 'Seguro'];
                     const rows = filteredMedicoMembers.map((m, idx) => {
                       const med = m.medical_data || {};
+                      const isJefe = m.role === 'jefe_grupo' || m.unit === 'grupo' || m.unit === 'jefatura';
                       let allergies = 'Ninguna';
                       if (med.allergies) {
                         const list = [];
@@ -992,7 +1034,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                       return [
                         idx + 1,
                         m.name,
-                        (m.unit || 'General').toUpperCase(),
+                        isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase(),
                         med.bloodType || 'Sin Registrar',
                         allergies,
                         med.emergencyContactName || 'Sin Registrar',
@@ -1015,7 +1057,8 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   { id: 'manada', label: '🟡 Manada' },
                   { id: 'tropa', label: '🟢 Tropa' },
                   { id: 'caminantes', label: '🔵 Caminantes' },
-                  { id: 'clan', label: '🔴 Clan' }
+                  { id: 'clan', label: '🔴 Clan' },
+                  { id: 'jefatura', label: '⚜️ Jefatura' }
                 ].map(item => (
                   <TouchableOpacity
                     key={item.id}
@@ -1043,6 +1086,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
               ) : (
                 filteredMedicoMembers.map((m, idx) => {
                   const med = m.medical_data || {};
+                  const isJefe = m.role === 'jefe_grupo' || m.unit === 'grupo' || m.unit === 'jefatura';
                   const blood = med.bloodType || 'S/R';
                   const hasAllergies = med.allergies && (med.allergies.medicamento || med.allergies.alimento || med.allergies.picada);
                   const contactPhone = med.emergencyPhonePersonal || med.emergencyPhoneHome || m.phone || '';
@@ -1052,7 +1096,9 @@ export default function JefeGrupoScreen({ navigation }: any) {
                       <Text style={[styles.tableIndex, { color: theme.subText }]}>{idx + 1}</Text>
                       <View style={{ flex: 2 }}>
                         <Text style={[styles.tableMainText, { color: theme.text }]}>{m.name}</Text>
-                        <Text style={{ fontSize: 11, color: theme.subText }}>{(m.unit || 'General').toUpperCase()}</Text>
+                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: isJefe ? '#9333ea' : theme.subText }}>
+                          {isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase()}
+                        </Text>
                       </View>
 
                       {/* BADGE SANGRE */}
