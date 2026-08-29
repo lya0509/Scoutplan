@@ -7,7 +7,8 @@ import {
   ActivityIndicator,
   ScrollView,
   Modal,
-  TextInput
+  TextInput,
+  useWindowDimensions
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
@@ -518,72 +519,139 @@ export default function ScouterDashboardScreen({ navigation }: any) {
         </View>
       </View>
 
-      {/* BARRA DE HERRAMIENTAS Y ACCESOS RÁPIDOS */}
+      {/* BARRA DE HERRAMIENTAS Y ACCESOS RÁPIDOS (WRAP EN ESCRITORIO) */}
       <View style={{ paddingVertical: 10, paddingHorizontal: 16 }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
-          <TouchableOpacity
-            style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-            onPress={() => navigation.navigate('ProgramaScout')}
-            activeOpacity={0.8}
-          >
-            <Calendar size={18} color={primaryColor} />
-            <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>📅 Programas</Text>
-          </TouchableOpacity>
+        {isDesktop ? (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('ProgramaScout')}
+              activeOpacity={0.8}
+            >
+              <Calendar size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>📅 Programas</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-            onPress={() => navigation.navigate('Documentos')}
-            activeOpacity={0.8}
-          >
-            <BookOpen size={18} color={primaryColor} />
-            <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Documentos & PDFs</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('Documentos')}
+              activeOpacity={0.8}
+            >
+              <BookOpen size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Documentos & PDFs</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-            onPress={() => navigation.navigate('QuarterlyPlan')}
-            activeOpacity={0.8}
-          >
-            <Compass size={18} color={primaryColor} />
-            <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Plan Trimestral</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('QuarterlyPlan')}
+              activeOpacity={0.8}
+            >
+              <Compass size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Plan Trimestral</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-            onPress={() => navigation.navigate('TemporalDrive')}
-            activeOpacity={0.8}
-          >
-            <Camera size={18} color={primaryColor} />
-            <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Drive Fotos</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('TemporalDrive')}
+              activeOpacity={0.8}
+            >
+              <Camera size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Drive Fotos</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-            onPress={() => navigation.navigate('CalendarStandalone')}
-            activeOpacity={0.8}
-          >
-            <Calendar size={18} color={primaryColor} />
-            <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Calendario</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('CalendarStandalone')}
+              activeOpacity={0.8}
+            >
+              <Calendar size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Calendario</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-            onPress={() => navigation.navigate('NudosManual')}
-            activeOpacity={0.8}
-          >
-            <FileText size={18} color={primaryColor} />
-            <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Manual Nudos</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('NudosManual')}
+              activeOpacity={0.8}
+            >
+              <FileText size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Manual Nudos</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-            onPress={() => navigation.navigate('Cancionero')}
-            activeOpacity={0.8}
-          >
-            <Music size={18} color={primaryColor} />
-            <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Cancionero</Text>
-          </TouchableOpacity>
-        </ScrollView>
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('Cancionero')}
+              activeOpacity={0.8}
+            >
+              <Music size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Cancionero</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('ProgramaScout')}
+              activeOpacity={0.8}
+            >
+              <Calendar size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>📅 Programas</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('Documentos')}
+              activeOpacity={0.8}
+            >
+              <BookOpen size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Documentos & PDFs</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('QuarterlyPlan')}
+              activeOpacity={0.8}
+            >
+              <Compass size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Plan Trimestral</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('TemporalDrive')}
+              activeOpacity={0.8}
+            >
+              <Camera size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Drive Fotos</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('CalendarStandalone')}
+              activeOpacity={0.8}
+            >
+              <Calendar size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Calendario</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('NudosManual')}
+              activeOpacity={0.8}
+            >
+              <FileText size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Manual Nudos</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('Cancionero')}
+              activeOpacity={0.8}
+            >
+              <Music size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Cancionero</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        )}
       </View>
 
       {/* ESTADÍSTICAS */}

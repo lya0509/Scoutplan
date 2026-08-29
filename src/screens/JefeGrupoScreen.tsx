@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Modal, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Modal, TextInput, Platform, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Calendar as RNCalendar, DateData } from 'react-native-calendars';
 import { useAuth } from '../context/AuthContext';
@@ -431,6 +431,100 @@ export default function JefeGrupoScreen({ navigation }: any) {
   const clanData = getBranchData('clan');
   const jefaturaMembers = allMembers.filter(m => m.role === 'jefe_grupo');
 
+  const { width } = useWindowDimensions();
+  const isDesktop = width > 768;
+
+  const quickToolButtons = (
+    <>
+      {/* BOTÓN DESTACADO PARA AGREGAR ACTIVIDADES GRUPALES / ASAMBLEAS */}
+      <TouchableOpacity
+        style={[styles.primaryActionBtn, { backgroundColor: primaryColor }]}
+        onPress={() => setShowAddEventModal(true)}
+        activeOpacity={0.8}
+      >
+        <Plus size={18} color="#ffffff" />
+        <Text style={styles.primaryActionBtnText}>+ Nueva Actividad / Asamblea</Text>
+      </TouchableOpacity>
+
+      {/* 1. CENSO Y NÓMINA OFICIAL */}
+      <TouchableOpacity
+        style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+        onPress={() => setShowCensoModal(true)}
+        activeOpacity={0.8}
+      >
+        <Users size={18} color="#9333ea" />
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>📊 Censo y Nómina</Text>
+      </TouchableOpacity>
+
+      {/* 2. PADRÓN DE EMERGENCIA MÉDICA */}
+      <TouchableOpacity
+        style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+        onPress={() => setShowPadronMedicoModal(true)}
+        activeOpacity={0.8}
+      >
+        <ShieldCheck size={18} color="#dc2626" />
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>🏥 Padrón Médico</Text>
+      </TouchableOpacity>
+
+      {/* 3. SEMÁFORO DE MEMBRESÍAS Y CARNETS */}
+      <TouchableOpacity
+        style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+        onPress={() => setShowSemaforoModal(true)}
+        activeOpacity={0.8}
+      >
+        <Clock size={18} color="#d97706" />
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>
+          🚦 Semáforo Carnets {semaforoCounts.pending > 0 ? `(${semaforoCounts.pending})` : ''}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+        onPress={() => navigation.navigate('ProgramaScout')}
+        activeOpacity={0.8}
+      >
+        <Calendar size={18} color={primaryColor} />
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Programas Oficiales</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+        onPress={() => navigation.navigate('CalendarStandalone')}
+        activeOpacity={0.8}
+      >
+        <CalendarIcon size={18} color={primaryColor} />
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Calendario General</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+        onPress={() => navigation.navigate('QuarterlyPlan')}
+        activeOpacity={0.8}
+      >
+        <FileText size={18} color={primaryColor} />
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Planes Trimestrales</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+        onPress={() => navigation.navigate('Documentos')}
+        activeOpacity={0.8}
+      >
+        <BookOpen size={18} color={primaryColor} />
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Documentos & PDFs</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+        onPress={() => navigation.navigate('TemporalDrive')}
+        activeOpacity={0.8}
+      >
+        <Camera size={18} color={primaryColor} />
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Drive Fotos</Text>
+      </TouchableOpacity>
+    </>
+  );
+
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -471,96 +565,17 @@ export default function JefeGrupoScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* BARRA DE ACCIONES RÁPIDAS Y HERRAMIENTAS INSTITUCIONALES */}
+        {/* BARRA DE ACCIONES RÁPIDAS Y HERRAMIENTAS INSTITUCIONALES (WRAP EN ESCRITORIO) */}
         <View style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
-            {/* BOTÓN DESTACADO PARA AGREGAR ACTIVIDADES GRUPALES / ASAMBLEAS */}
-            <TouchableOpacity
-              style={[styles.primaryActionBtn, { backgroundColor: primaryColor }]}
-              onPress={() => setShowAddEventModal(true)}
-              activeOpacity={0.8}
-            >
-              <Plus size={18} color="#ffffff" />
-              <Text style={styles.primaryActionBtnText}>+ Nueva Actividad / Asamblea</Text>
-            </TouchableOpacity>
-
-            {/* 1. CENSO Y NÓMINA OFICIAL */}
-            <TouchableOpacity
-              style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => setShowCensoModal(true)}
-              activeOpacity={0.8}
-            >
-              <Users size={18} color="#9333ea" />
-              <Text style={[styles.quickToolBtnText, { color: theme.text }]}>📊 Censo y Nómina</Text>
-            </TouchableOpacity>
-
-            {/* 2. PADRÓN DE EMERGENCIA MÉDICA */}
-            <TouchableOpacity
-              style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => setShowPadronMedicoModal(true)}
-              activeOpacity={0.8}
-            >
-              <ShieldCheck size={18} color="#dc2626" />
-              <Text style={[styles.quickToolBtnText, { color: theme.text }]}>🏥 Padrón Médico</Text>
-            </TouchableOpacity>
-
-            {/* 3. SEMÁFORO DE MEMBRESÍAS Y CARNETS */}
-            <TouchableOpacity
-              style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => setShowSemaforoModal(true)}
-              activeOpacity={0.8}
-            >
-              <Clock size={18} color="#d97706" />
-              <Text style={[styles.quickToolBtnText, { color: theme.text }]}>
-                🚦 Semáforo Carnets {semaforoCounts.pending > 0 ? `(${semaforoCounts.pending})` : ''}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('ProgramaScout')}
-              activeOpacity={0.8}
-            >
-              <Calendar size={18} color={primaryColor} />
-              <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Programas Oficiales</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('CalendarStandalone')}
-              activeOpacity={0.8}
-            >
-              <CalendarIcon size={18} color={primaryColor} />
-              <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Calendario General</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('QuarterlyPlan')}
-              activeOpacity={0.8}
-            >
-              <FileText size={18} color={primaryColor} />
-              <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Planes Trimestrales</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('Documentos')}
-              activeOpacity={0.8}
-            >
-              <BookOpen size={18} color={primaryColor} />
-              <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Documentos & PDFs</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('TemporalDrive')}
-              activeOpacity={0.8}
-            >
-              <Camera size={18} color={primaryColor} />
-              <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Drive Fotos</Text>
-            </TouchableOpacity>
-          </ScrollView>
+          {isDesktop ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+              {quickToolButtons}
+            </View>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+              {quickToolButtons}
+            </ScrollView>
+          )}
         </View>
         
         {loading ? (
