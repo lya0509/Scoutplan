@@ -429,7 +429,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={{ flexDirection: 'row', gap: 10, paddingVertical: 4 }}>
               {roversList.map(rover => (
-                <TouchableOpacity
+                <View
                   key={rover.id}
                   style={{
                     backgroundColor: theme.cardBg,
@@ -438,19 +438,16 @@ export default function ScoutDashboardScreen({ navigation }: any) {
                     borderRadius: 16,
                     padding: 12,
                     alignItems: 'center',
-                    minWidth: 110,
+                    minWidth: 115,
                     elevation: 2,
-                    cursor: 'pointer' as any,
                   }}
-                  activeOpacity={0.8}
-                  onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: rover.id })}
                 >
                   <View style={{ position: 'relative', marginBottom: 6 }}>
                     <DualProfileAvatar
                       scoutAvatarUrl={rover.avatar_url}
                       customAvatarUrl={rover.custom_avatar_url}
                       unit={rover.unit || 'clan'}
-                      size={48}
+                      size={52}
                       editable={false}
                     />
                     <View style={{
@@ -466,16 +463,38 @@ export default function ScoutDashboardScreen({ navigation }: any) {
                     }} />
                   </View>
 
-                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text, textAlign: 'center' }} numberOfLines={1}>
-                    {rover.name || 'Rover'}
-                  </Text>
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: rover.id })}
+                    style={{ alignItems: 'center' }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text, textAlign: 'center' }} numberOfLines={1}>
+                      {rover.name || 'Rover'}
+                    </Text>
+                  </TouchableOpacity>
                   
                   <View style={{ backgroundColor: rover.isOnline ? 'rgba(34, 197, 94, 0.15)' : 'rgba(156, 163, 175, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginTop: 4 }}>
                     <Text style={{ fontSize: 10, fontWeight: 'bold', color: rover.isOnline ? '#16a34a' : '#6b7280' }}>
                       {rover.isOnline ? '🟢 En línea' : '⚪ Desconectado'}
                     </Text>
                   </View>
-                </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={{
+                      marginTop: 8,
+                      paddingVertical: 3,
+                      paddingHorizontal: 8,
+                      borderRadius: 8,
+                      backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
+                    }}
+                    onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: rover.id })}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 10, color: colors.primary, fontWeight: 'bold' }}>
+                      Ver Perfil ⚜️
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               ))}
             </View>
           </ScrollView>
