@@ -22,7 +22,8 @@ import {
   Filter,
   Layers,
   FileCode,
-  ArrowLeft
+  ArrowLeft,
+  Globe
 } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -35,6 +36,7 @@ import HelpFloatingFAB from '../components/HelpFloatingFAB';
 const CATEGORIES = [
   { id: 'todos', label: 'Todos los Documentos', icon: Layers },
   { id: 'adelanto', label: '⚜️ Adelanto e Insignias', icon: BookOpen },
+  { id: 'iniciativas', label: '🌍 Programas e Iniciativas', icon: Globe },
   { id: 'manuales', label: '🏕️ Manuales Técnicos', icon: FileText },
   { id: 'reglamentos', label: '⚖️ Reglamentos ASV', icon: FileCode },
   { id: 'formacion', label: '🎓 Formación de Adultos', icon: CheckCircle },
