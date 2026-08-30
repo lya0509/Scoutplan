@@ -92,7 +92,7 @@ export default function PlanProgresivoScreen({ navigation }: any) {
           const isLocked     = stage.displayStatus === 'Bloqueada';
           const isApproved   = stage.displayStatus === 'Aprobada';
           const isInReview   = stage.displayStatus === 'En Revision';
-          const isClickable  = !isLocked && !isApproved;
+          const isClickable  = !isLocked;
 
           return (
             <TouchableOpacity
@@ -105,7 +105,7 @@ export default function PlanProgresivoScreen({ navigation }: any) {
                 isInReview && (isDarkMode ? styles.cardInReviewDark : styles.cardInReview),
               ]}
               onPress={() => isClickable && navigation.navigate('StageDetail', { stageId: stage.id })}
-              disabled={isLocked || isApproved}
+              disabled={isLocked}
               activeOpacity={isClickable ? 0.7 : 1}
             >
               <View style={styles.cardHeader}>
@@ -118,12 +118,12 @@ export default function PlanProgresivoScreen({ navigation }: any) {
                     {stage.name}
                   </Text>
                   <Text style={[styles.statusLabel,
-                    isApproved && { color: '#22c55e' },
-                    isInReview && { color: '#f59e0b' },
+                    isApproved && { color: '#22c55e', fontWeight: 'bold' },
+                    isInReview && { color: '#f59e0b', fontWeight: 'bold' },
                     isLocked   && { color: isDarkMode ? '#52525b' : '#bbb' },
                   ]}>
-                    {isApproved ? '✓ Aprobada'
-                     : isInReview ? '⏳ En Revisión'
+                    {isApproved ? '✓ Aprobada • Toca para previsualizar'
+                     : isInReview ? '⏳ En Revisión • Toca para previsualizar'
                      : isLocked  ? '🔒 Bloqueada'
                      : `${stage.progress}% completado`}
                   </Text>
@@ -146,7 +146,7 @@ export default function PlanProgresivoScreen({ navigation }: any) {
 
               {isApproved && (
                 <View style={[styles.approvedBanner, isDarkMode && { backgroundColor: '#064e3b' }]}>
-                  <Text style={[styles.approvedBannerText, isDarkMode && { color: '#6ee7b7' }]}>🏅 Etapa completada y aprobada por tu Scouter</Text>
+                  <Text style={[styles.approvedBannerText, isDarkMode && { color: '#6ee7b7' }]}>🏅 Etapa completada y aprobada • Toca para ver tus requisitos cumplidos</Text>
                 </View>
               )}
             </TouchableOpacity>

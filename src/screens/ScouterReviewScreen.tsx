@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen, Flag, Moon, ArrowLeft, Compass, Tent, HeartHandshake } from 'lucide-react-native';
+import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen, Flag, Moon, ArrowLeft, Compass, Tent, HeartHandshake, Sparkles } from 'lucide-react-native';
 import { dataService } from '../lib/dataService';
 import { notificationService } from '../services/notificationService';
 import { useTheme } from '../context/ThemeContext';
@@ -22,6 +22,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
   const [cipList, setCipList] = useState<any[]>([]);
   const [cipSelectionsMap, setCipSelectionsMap] = useState<Record<string, any[]>>({});
   const [vidaGrupoMap, setVidaGrupoMap] = useState<Record<string, any[]>>({});
+  const [linkedCertMap, setLinkedCertMap] = useState<Record<string, any>>({});
   const [showCatalogDetails, setShowCatalogDetails] = useState<Record<string, boolean>>({});
   const [nightsMap, setNightsMap] = useState<Record<string, any[]>>({});
   const [showNochesModal, setShowNochesModal] = useState(false);
@@ -40,6 +41,9 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
     const loadedNights: Record<string, any[]> = {};
     const loadedVg: Record<string, any[]> = {};
     const loadedCipSels: Record<string, any[]> = {};
+
+    const allLinks = await dataService.getAllLinkedCertificates(scoutId);
+    setLinkedCertMap(allLinks || {});
 
     for (const req of stageTemplate.requirements) {
       loadedChecks[req.id] = await dataService.getRequirement(scoutId, stageId, req.id);
@@ -277,6 +281,23 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                         🏕️ Ver registro de pernoctas ({totalNightsLogged} de {req.requiredCount || 10} noches registradas)
                       </Text>
                     </TouchableOpacity>
+                  )}
+
+                  {(req.type === 'cursos' || req.type === 'especialidad') && (
+                    <View style={{ marginTop: 6 }}>
+                      {linkedCertMap[req.id]?.certTitle || linkedCertMap[`${stageId}_${req.id}`]?.certTitle ? (
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Sparkles size={13} color="#10b981" style={{ marginRight: 4 }} />
+                          <Text style={{ fontSize: 12, color: '#10b981', fontWeight: 'bold' }}>
+                            Acreditación Vinculada: {linkedCertMap[req.id]?.certTitle || linkedCertMap[`${stageId}_${req.id}`]?.certTitle}
+                          </Text>
+                        </View>
+                      ) : (
+                        <Text style={{ fontSize: 11, color: theme.subText, fontStyle: 'italic' }}>
+                          Sin especialidad o curso formalmente vinculado
+                        </Text>
+                      )}
+                    </View>
                   )}
                 </View>
               </TouchableOpacity>

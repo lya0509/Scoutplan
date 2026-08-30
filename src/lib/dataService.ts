@@ -345,7 +345,10 @@ export const dataService = {
 
     if (error) throw error;
     return (data || []).filter(
-      d => !d.category?.startsWith('vida_grupo_') && !d.category?.startsWith('cip_sel_')
+      d =>
+        !d.category?.startsWith('vida_grupo_') &&
+        !d.category?.startsWith('cip_sel_') &&
+        !d.category?.startsWith('linked_cert_')
     );
   },
 
@@ -1281,5 +1284,143 @@ export const dataService = {
     }
 
     return events;
+  },
+
+  // --- GESTIÓN DE VINCULACIÓN DE CERTIFICADOS / ESPECIALIDADES / CURSOS ---
+  async saveLinkedCertificate(
+    scoutId: string,
+    stageId: string,
+    reqId: string,
+    certData: { certId?: string; certTitle: string; level?: string; date?: string } | null
+  ) {
+    const key = `@scout_req_linked_${scoutId}_${stageId}_${reqId}`;
+    if (certData) {
+      await AsyncStorage.setItem(key, JSON.stringify(certData));
+    } else {
+      await AsyncStorage.removeItem(key);
+    }
+
+    try {
+      // Eliminar registro previo en Supabase
+      await supabase
+        .from('certificates')
+        .delete()
+        .or(`scout_id.eq.${scoutId},user_id.eq.${scoutId}`)
+        .eq('category', `linked_cert_${stageId}_${reqId}`);
+
+      if (certData) {
+        await supabase.from('certificates').insert({
+          id: `link_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          scout_id: scoutId,
+          user_id: scoutId,
+          title: certData.certTitle,
+          category: `linked_cert_${stageId}_${reqId}`,
+          level: certData.level || null,
+          notes: certData.certId || null,
+          date: certData.date || new Date().toISOString().split('T')[0],
+          description: JSON.stringify(certData)
+        });
+      }
+    } catch (e) {
+      console.warn('Aviso guardando vinculacion en Supabase:', e);
+    }
+  },
+
+  async getAllLinkedCertificates(scoutId: string): Promise<Record<string, { certId?: string; certTitle: string; level?: string; date?: string }>> {
+    const result: Record<string, { certId?: string; certTitle: string; level?: string; date?: string }> = {};
+
+    // 1. Cargar desde Supabase
+    try {
+      const { data, error } = await supabase
+        .from('certificates')
+        .select('*')
+        .or(`scout_id.eq.${scoutId},user_id.eq.${scoutId}`)
+        .like('category', 'linked_cert_%');
+
+      if (!error && data && data.length > 0) {
+        for (const row of data) {
+          const rawCat = row.category.replace('linked_cert_', '');
+          let parsedDesc: any = null;
+          try { if (row.description) parsedDesc = JSON.parse(row.description); } catch {}
+
+          const certObj = {
+            certId: parsedDesc?.certId || row.notes || row.id,
+            certTitle: parsedDesc?.certTitle || row.title,
+            level: parsedDesc?.level || row.level,
+            date: parsedDesc?.date || row.date
+          };
+
+          result[rawCat] = certObj;
+
+          // Separar stageId y reqId para doble indexado
+          for (const stg of stagesData) {
+            if (rawCat.startsWith(stg.id + '_')) {
+              const reqId = rawCat.replace(stg.id + '_', '');
+              result[reqId] = certObj;
+              result[`${stg.id}_${reqId}`] = certObj;
+              AsyncStorage.setItem(`@scout_req_linked_${scoutId}_${stg.id}_${reqId}`, JSON.stringify(certObj)).catch(() => {});
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Aviso cargando vinculaciones desde Supabase:', e);
+    }
+
+    // 2. Cargar fallbacks desde AsyncStorage
+    for (const stg of stagesData) {
+      for (const r of stg.requirements) {
+        if (r.type === 'cursos' || r.type === 'especialidad') {
+          const key = `@scout_req_linked_${scoutId}_${stg.id}_${r.id}`;
+          if (!result[`${stg.id}_${r.id}`] && !result[r.id]) {
+            try {
+              const localStr = await AsyncStorage.getItem(key);
+              if (localStr) {
+                const parsed = JSON.parse(localStr);
+                result[`${stg.id}_${r.id}`] = parsed;
+                result[r.id] = parsed;
+              }
+            } catch {}
+          }
+        }
+      }
+    }
+
+    return result;
+  },
+
+  async getLinkedCertificate(scoutId: string, stageId: string, reqId: string) {
+    const key = `@scout_req_linked_${scoutId}_${stageId}_${reqId}`;
+    try {
+      const localStr = await AsyncStorage.getItem(key);
+      if (localStr) return JSON.parse(localStr);
+    } catch {}
+
+    try {
+      const { data } = await supabase
+        .from('certificates')
+        .select('*')
+        .or(`scout_id.eq.${scoutId},user_id.eq.${scoutId}`)
+        .eq('category', `linked_cert_${stageId}_${reqId}`)
+        .limit(1);
+
+      if (data && data.length > 0) {
+        const row = data[0];
+        let parsedDesc: any = null;
+        try { if (row.description) parsedDesc = JSON.parse(row.description); } catch {}
+
+        const certObj = {
+          certId: parsedDesc?.certId || row.notes || row.id,
+          certTitle: parsedDesc?.certTitle || row.title,
+          level: parsedDesc?.level || row.level,
+          date: parsedDesc?.date || row.date
+        };
+
+        await AsyncStorage.setItem(key, JSON.stringify(certObj)).catch(() => {});
+        return certObj;
+      }
+    } catch {}
+
+    return null;
   }
 };

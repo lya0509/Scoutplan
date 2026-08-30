@@ -91,12 +91,14 @@ export default function StageDetailScreen({ route, navigation }: any) {
     try {
       const stageStatus = await dataService.getStageStatus(user.id, stageId);
       setStatus(stageStatus);
-
       const reqChecks: Record<string, boolean> = {};
       const links: Record<string, { certId?: string; certTitle: string; level?: string }> = {};
       const nightsMap: Record<string, number> = {};
       const vgMap: Record<string, number> = {};
       const cipsMap: Record<string, number> = {};
+
+      const allLinkedCerts = await dataService.getAllLinkedCertificates(user.id);
+      const userCertsList = await dataService.getCertificates(user.id);
 
       for (const req of stageTemplate.requirements) {
         const val = await dataService.getRequirement(user.id, stageId, req.id);
@@ -135,17 +137,33 @@ export default function StageDetailScreen({ route, navigation }: any) {
           } catch {}
         }
 
-        try {
-          const linkedStr = await AsyncStorage.getItem(`@scout_req_linked_${user.id}_${stageId}_${req.id}`);
-          if (linkedStr) {
-            const parsed = JSON.parse(linkedStr);
-            links[req.id] = {
-              certId: parsed.certId,
-              certTitle: parsed.certTitle || parsed.title || '',
-              level: parsed.level
-            };
+        if (req.type === 'cursos' || req.type === 'especialidad') {
+          const directLink = allLinkedCerts[`${stageId}_${req.id}`] || allLinkedCerts[req.id];
+          if (directLink && directLink.certTitle) {
+            links[req.id] = directLink;
+            reqChecks[req.id] = true;
+          } else if (val && userCertsList && userCertsList.length > 0) {
+            const reqLower = req.text.toLowerCase();
+            const matchedCert = userCertsList.find(c => {
+              const cTitle = (c.title || '').toLowerCase();
+              if (reqLower.includes('horqueta') && cTitle.includes('horqueta')) return true;
+              if (reqLower.includes('remo') && cTitle.includes('remo')) return true;
+              if (reqLower.includes('canoa') && cTitle.includes('canoa')) return true;
+              if (req.level && (c.level || '').toLowerCase() === req.level.toLowerCase()) return true;
+              return false;
+            });
+            if (matchedCert) {
+              const recoveredLink = {
+                certId: matchedCert.id,
+                certTitle: matchedCert.title,
+                level: matchedCert.level,
+                date: matchedCert.date || matchedCert.created_at
+              };
+              links[req.id] = recoveredLink;
+              dataService.saveLinkedCertificate(user.id, stageId, req.id, recoveredLink).catch(() => {});
+            }
           }
-        } catch {}
+        }
       }
       setChecks(reqChecks);
       setLinkedCertMap(links);
@@ -173,17 +191,23 @@ export default function StageDetailScreen({ route, navigation }: any) {
   };
 
   const handleToggleCipEvent = async (event: any) => {
-    if (!user || !selectedReqForCip) return;
-    const isAlreadySelected = selectedCipList.some(e => e.id === event.id || e.title === event.title);
+    if (!user || !selectedReqForCip || isReadOnly) return;
+    const reqCount = selectedReqForCip.requiredCount || 1;
+    const exists = selectedCipList.some(e => e.id === event.id || e.title === event.title);
+
     let updated: any[];
-    if (isAlreadySelected) {
+    if (exists) {
       updated = selectedCipList.filter(e => e.id !== event.id && e.title !== event.title);
     } else {
+      if (selectedCipList.length >= reqCount) {
+        showAlert('Límite alcanzado', `Este requisito pide exactamente ${reqCount} actividad(es). Desmarca una para seleccionar otra.`);
+        return;
+      }
       updated = [...selectedCipList, event];
     }
+
     setSelectedCipList(updated);
     await dataService.saveCipSelections(user.id, stageId, selectedReqForCip.id, updated);
-    const reqCount = selectedReqForCip.requiredCount || 1;
     const isDone = updated.length >= reqCount;
     setChecks(prev => ({ ...prev, [selectedReqForCip.id]: isDone }));
     setCipCountMap(prev => ({ ...prev, [selectedReqForCip.id]: updated.length }));
@@ -191,11 +215,11 @@ export default function StageDetailScreen({ route, navigation }: any) {
   };
 
   const handleRemoveSelectedCip = async (eventId: string, eventTitle: string) => {
-    if (!user || !selectedReqForCip) return;
+    if (!user || !selectedReqForCip || isReadOnly) return;
+    const reqCount = selectedReqForCip.requiredCount || 1;
     const updated = selectedCipList.filter(e => e.id !== eventId && e.title !== eventTitle);
     setSelectedCipList(updated);
     await dataService.saveCipSelections(user.id, stageId, selectedReqForCip.id, updated);
-    const reqCount = selectedReqForCip.requiredCount || 1;
     const isDone = updated.length >= reqCount;
     setChecks(prev => ({ ...prev, [selectedReqForCip.id]: isDone }));
     setCipCountMap(prev => ({ ...prev, [selectedReqForCip.id]: updated.length }));
@@ -211,30 +235,32 @@ export default function StageDetailScreen({ route, navigation }: any) {
       const certs = await dataService.getCertificates(user.id);
       setUserCerts(certs || []);
 
+      const allLinks = await dataService.getAllLinkedCertificates(user.id);
+
       // Escanear todas las etapas y requisitos para detectar si algún certificado ya fue usado
       const usedMap: Record<string, { stageTitle: string; reqText: string }> = {};
       for (const stg of stagesData) {
         for (const r of stg.requirements) {
           if (stg.id === stageId && r.id === req.id) continue; // No bloquear el requisito actual
-          try {
-            const linkedStr = await AsyncStorage.getItem(`@scout_req_linked_${user.id}_${stg.id}_${r.id}`);
-            if (linkedStr) {
-              const parsed = JSON.parse(linkedStr);
-              if (parsed.certId) {
-                usedMap[parsed.certId] = {
-                  stageTitle: stg.title,
-                  reqText: r.text
-                };
-              }
-              if (parsed.certTitle) {
-                const key = `${parsed.certTitle}_${parsed.level || ''}`.toLowerCase();
-                usedMap[key] = {
-                  stageTitle: stg.title,
-                  reqText: r.text
-                };
-              }
+          const link = allLinks[`${stg.id}_${r.id}`] || allLinks[r.id];
+          if (link) {
+            if (link.certId) {
+              usedMap[link.certId] = {
+                stageTitle: stg.title,
+                reqText: r.text
+              };
             }
-          } catch {}
+            if (link.certTitle) {
+              usedMap[`${link.certTitle}_${link.level || ''}`.toLowerCase()] = {
+                stageTitle: stg.title,
+                reqText: r.text
+              };
+              usedMap[link.certTitle.toLowerCase()] = {
+                stageTitle: stg.title,
+                reqText: r.text
+              };
+            }
+          }
         }
       }
       setUsedElsewhereMap(usedMap);
@@ -243,9 +269,9 @@ export default function StageDetailScreen({ route, navigation }: any) {
   };
 
   const handleSelectCert = async (cert: any) => {
-    if (!user || !selectedReqForCert) return;
+    if (!user || !selectedReqForCert || isReadOnly) return;
 
-    const usedIn = usedElsewhereMap[cert.id] || usedElsewhereMap[`${cert.title}_${cert.level || ''}`.toLowerCase()];
+    const usedIn = usedElsewhereMap[cert.id] || usedElsewhereMap[`${cert.title}_${cert.level || ''}`.toLowerCase()] || usedElsewhereMap[cert.title.toLowerCase()];
     if (usedIn) {
       showAlert(
         'Certificado Ya Utilizado',
@@ -254,28 +280,28 @@ export default function StageDetailScreen({ route, navigation }: any) {
       return;
     }
 
+    const linkObj = {
+      certId: cert.id,
+      certTitle: cert.title,
+      level: cert.level,
+      date: cert.date || cert.created_at
+    };
+
     setChecks(prev => ({ ...prev, [selectedReqForCert.id]: true }));
     setLinkedCertMap(prev => ({
       ...prev,
-      [selectedReqForCert.id]: {
-        certId: cert.id,
-        certTitle: cert.title,
-        level: cert.level
-      }
+      [selectedReqForCert.id]: linkObj
     }));
 
     await dataService.toggleRequirement(user.id, stageId, selectedReqForCert.id, true);
-    await AsyncStorage.setItem(
-      `@scout_req_linked_${user.id}_${stageId}_${selectedReqForCert.id}`,
-      JSON.stringify({ certId: cert.id, certTitle: cert.title, level: cert.level, date: cert.date || cert.created_at })
-    );
+    await dataService.saveLinkedCertificate(user.id, stageId, selectedReqForCert.id, linkObj);
 
     showAlert('¡Especialidad/Curso Vinculado!', `Has vinculado "${cert.title}" a tu requisito.`);
     setShowCertModal(false);
   };
 
   const handleQuickToggleCert = async (newVal: boolean) => {
-    if (!user || !selectedReqForCert) return;
+    if (!user || !selectedReqForCert || isReadOnly) return;
 
     setChecks(prev => ({ ...prev, [selectedReqForCert.id]: newVal }));
     if (!newVal) {
@@ -284,7 +310,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
         delete next[selectedReqForCert.id];
         return next;
       });
-      await AsyncStorage.removeItem(`@scout_req_linked_${user.id}_${stageId}_${selectedReqForCert.id}`);
+      await dataService.saveLinkedCertificate(user.id, stageId, selectedReqForCert.id, null);
     }
 
     await dataService.toggleRequirement(user.id, stageId, selectedReqForCert.id, newVal);
@@ -297,7 +323,6 @@ export default function StageDetailScreen({ route, navigation }: any) {
   };
 
   const handleRequirementClick = async (req: any) => {
-    if (isReadOnly) return;
     if (!checkProfileCompletion(user, navigation)) return;
 
     if (req.type === 'basica' || req.type === 'opcional') {
@@ -331,6 +356,8 @@ export default function StageDetailScreen({ route, navigation }: any) {
       setShowNochesModal(true);
       return;
     }
+
+    if (isReadOnly) return;
 
     const currentVal = !!checks[req.id];
     const newVal = !currentVal;
@@ -452,7 +479,6 @@ export default function StageDetailScreen({ route, navigation }: any) {
                 isChecked && { borderColor: colors.primary, backgroundColor: isDarkMode ? '#1e1b4b' : 'rgba(99, 102, 241, 0.04)' }
               ]}
               onPress={() => handleRequirementClick(req)}
-              disabled={isReadOnly}
               activeOpacity={0.7}
             >
               <View style={{ marginRight: 12, marginTop: 2 }}>
