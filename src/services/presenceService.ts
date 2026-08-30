@@ -144,12 +144,17 @@ class PresenceService {
     if (this.currentUserId && userId === this.currentUserId) return true;
     if (this.onlineUserIds.has(userId)) return true;
 
-    // Respaldo por timestamp en base de datos (< 5 minutos)
+    // Si el canal de WebSockets está activo, el conjunto onlineUserIds es la verdad absoluta
+    if (this.channel) {
+      return false;
+    }
+
+    // Respaldo por timestamp en base de datos (< 2 minutos) solo si no hay WebSockets
     if (lastSeenIso) {
       try {
         const lastSeenTime = new Date(lastSeenIso).getTime();
         const diffMs = Date.now() - lastSeenTime;
-        if (diffMs < 5 * 60 * 1000) return true;
+        if (diffMs < 2 * 60 * 1000) return true;
       } catch (e) {
         return false;
       }
@@ -158,14 +163,28 @@ class PresenceService {
     return false;
   }
 
-  destroy() {
+  async destroy(userId?: string | null) {
+    const idToUntrack = userId || this.currentUserId;
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = null;
     }
     if (this.channel) {
-      supabase.removeChannel(this.channel);
+      try {
+        await this.channel.untrack();
+      } catch (e) {}
+      try {
+        await supabase.removeChannel(this.channel);
+      } catch (e) {}
       this.channel = null;
+    }
+    if (idToUntrack) {
+      this.onlineUserIds.delete(idToUntrack);
+      try {
+        await supabase.from('profiles').update({
+          updated_at: new Date(Date.now() - 30 * 60 * 1000).toISOString()
+        }).eq('id', idToUntrack);
+      } catch (e) {}
     }
     this.onlineUserIds.clear();
     this.listeners.clear();

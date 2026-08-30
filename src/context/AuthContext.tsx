@@ -219,6 +219,12 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     setIsLoading(false);
 
     try {
+      if (user?.id) {
+        await presenceService.destroy(user.id).catch(() => {});
+      } else {
+        await presenceService.destroy().catch(() => {});
+      }
+
       await AsyncStorage.removeItem(CACHED_PROFILE_KEY).catch(() => {});
       await AsyncStorage.removeItem(CACHED_SESSION_KEY).catch(() => {});
 

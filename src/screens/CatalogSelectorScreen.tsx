@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -63,9 +63,36 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
   const borderColor = theme?.border || (isDarkMode ? '#27272a' : '#e2e8f0');
   const inputBg = theme?.inputBg || (isDarkMode ? '#27272a' : '#f1f5f9');
 
+  const isBasicType = String(reqType).toLowerCase().includes('basic');
+
+  // Filtrar catálogo para obtener solo actividades válidas (excluyendo resúmenes de cuadros de adelanto)
+  const validCatalogActivities = activitiesCatalog.filter(act => {
+    if (
+      act.superArea === 'CUADRO DE ADELANTOS' || 
+      ['PRECURSOR', 'EXPEDICIONARIO', 'DESCUBRIDOR', 'FUNDADOR'].includes(act.superArea)
+    ) {
+      return false;
+    }
+    const superStr = (act.superArea || '').toUpperCase();
+    const subStr = (act.subArea || '').toUpperCase();
+    const areaStr = (act.area || '').toUpperCase();
+
+    const isMatchBasic = superStr === 'BÁSICAS' || subStr.includes('BÁSIC') || areaStr.includes('BÁSIC');
+    const isMatchOptional = superStr === 'OPCIONALES' || subStr.includes('OPCIONAL') || areaStr.includes('OPCIONAL');
+
+    return isBasicType ? isMatchBasic : isMatchOptional;
+  });
+
+  const validCatalogIdSet = new Set(validCatalogActivities.map(a => a.id));
+  const allCatalogIdSet = new Set(
+    activitiesCatalog
+      .filter(act => !['CUADRO DE ADELANTOS', 'PRECURSOR', 'EXPEDICIONARIO', 'DESCUBRIDOR', 'FUNDADOR'].includes(act.superArea))
+      .map(a => a.id)
+  );
+
   useEffect(() => {
     loadData();
-  }, [user, stageId]);
+  }, [user, stageId, reqType]);
 
   const loadData = async () => {
     if (!user) {
@@ -78,7 +105,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
       const status = await dataService.getStageStatus(user.id, stageId);
       setStageStatus(status || 'En Progreso');
 
-      // 2. Obtener todos los requisitos completados del usuario en una sola consulta
+      // 2. Obtener requisitos del usuario
       const { data: userReqs, error } = await supabase
         .from('requirement_progress')
         .select('requirement_id, stage_id, completed')
@@ -90,21 +117,32 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
       if (userReqs && userReqs.length > 0) {
         userReqs.forEach(r => {
           if (r.completed) {
-            if (r.stage_id === stageId) {
-              currentStageCompleted.push(r.requirement_id);
-            } else {
+            // Solo considerar si es una actividad válida del catálogo para este tipo
+            if (validCatalogIdSet.has(r.requirement_id)) {
+              if (r.stage_id === stageId) {
+                currentStageCompleted.push(r.requirement_id);
+              } else {
+                previousCompleted.push(r.requirement_id);
+              }
+            } else if (allCatalogIdSet.has(r.requirement_id) && r.stage_id !== stageId) {
               previousCompleted.push(r.requirement_id);
             }
           }
         });
-      } else {
-        // Fallback desde almacenamiento local
-        const rawLocal = await AsyncStorage.getItem(`@scout_catalog_ids_${user.id}`);
+      }
+
+      // Fallback local
+      try {
+        const rawLocal = await AsyncStorage.getItem(`@scout_catalog_ids_${user.id}_${stageId}_${reqType}`);
         if (rawLocal) {
           const parsed: string[] = JSON.parse(rawLocal);
-          parsed.forEach(id => currentStageCompleted.push(id));
+          parsed.forEach(id => {
+            if (validCatalogIdSet.has(id) && !currentStageCompleted.includes(id)) {
+              currentStageCompleted.push(id);
+            }
+          });
         }
-      }
+      } catch {}
 
       setSelectedIds(currentStageCompleted);
       setDisabledIds(previousCompleted);
@@ -129,7 +167,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
     const isCurrentlySelected = selectedIds.includes(id);
 
     if (!isCurrentlySelected && selectedIds.length >= requiredCount) {
-      setModalMessage(`Ya alcanzaste el cupo requerido de ${requiredCount} actividades ${reqType === 'basica' ? 'básicas' : 'opcionales'} para esta etapa.`);
+      setModalMessage(`Ya alcanzaste el cupo requerido de ${requiredCount} actividades ${isBasicType ? 'básicas' : 'opcionales'} para esta etapa.`);
       return;
     }
 
@@ -138,6 +176,12 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
       : [...selectedIds, id];
 
     setSelectedIds(newSelection);
+
+    // Guardar en almacenamiento local
+    await AsyncStorage.setItem(
+      `@scout_catalog_ids_${user.id}_${stageId}_${reqType}`,
+      JSON.stringify(newSelection)
+    ).catch(() => {});
 
     // Guardar la actividad del catálogo en Supabase y localmente
     await dataService.toggleRequirement(user.id, stageId, id, !isCurrentlySelected);
@@ -149,34 +193,13 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
     }
   };
 
-  const isBasicType = String(reqType).toLowerCase().includes('basic');
-
-  const filteredActivities = activitiesCatalog.filter(act => {
-    // 1. Excluir resúmenes del Cuadro de Adelantos y nombres de insignias/etapas (act_1 a act_87)
-    if (
-      act.superArea === 'CUADRO DE ADELANTOS' || 
-      ['PRECURSOR', 'EXPEDICIONARIO', 'DESCUBRIDOR', 'FUNDADOR'].includes(act.superArea)
-    ) {
-      return false;
-    }
-
-    // 2. Filtrar por el tipo actual (Básicas u Opcionales)
-    const superStr = (act.superArea || '').toUpperCase();
-    const subStr = (act.subArea || '').toUpperCase();
-    const areaStr = (act.area || '').toUpperCase();
-
-    const isMatchBasic = superStr === 'BÁSICAS' || subStr.includes('BÁSIC') || areaStr.includes('BÁSIC');
-    const isMatchOptional = superStr === 'OPCIONALES' || subStr.includes('OPCIONAL') || areaStr.includes('OPCIONAL');
-
-    if (isBasicType && !isMatchBasic) return false;
-    if (!isBasicType && !isMatchOptional) return false;
-
-    // 3. Filtrar por Categoría seleccionada (TODAS o subárea específica)
+  const filteredActivities = validCatalogActivities.filter(act => {
+    // 1. Filtrar por Categoría seleccionada (TODAS o subárea específica)
     const isAreaMatch = selectedArea === 'TODAS' || 
       act.subArea === selectedArea || 
       act.area === selectedArea;
 
-    // 4. Búsqueda por texto libre
+    // 2. Búsqueda por texto libre
     const isSearchMatch = searchQuery.trim() === '' || 
       (act.text && act.text.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (act.subArea && act.subArea.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -185,10 +208,12 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
   });
 
   const handleReturnToStage = () => {
-    if (stageId) {
-      navigation.navigate('StageDetail', { stageId });
-    } else if (navigation?.canGoBack()) {
+    if (navigation?.canGoBack()) {
       navigation.goBack();
+    } else if (stageId) {
+      navigation.navigate('StageDetail', { stageId });
+    } else {
+      navigation.navigate('PlanProgresivo');
     }
   };
 
