@@ -1,4 +1,4 @@
-﻿import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 class PresenceService {
@@ -11,7 +11,7 @@ class PresenceService {
   /**
    * Inicializa la suscripción de presencia para el usuario conectado.
    */
-  init(user: { id: string; name?: string; unit?: string; group_name?: string; role?: string }) {
+  init(user: { id: string; name?: string | null; unit?: string | null; group_name?: string | null; role?: string | null }) {
     if (!user?.id) return;
     this.currentUserId = user.id;
 
@@ -111,6 +111,17 @@ class PresenceService {
     } catch (err) {
       // Silencioso
     }
+  }
+
+  private notifyListeners() {
+    const copy = new Set(this.onlineUserIds);
+    this.listeners.forEach(cb => {
+      try {
+        cb(copy);
+      } catch (e) {
+        console.error('Error en listener de PresenceService:', e);
+      }
+    });
   }
 
   /**

@@ -303,9 +303,9 @@ export default function ProfileScreen() {
     if (!user?.id) return;
     const fieldToUpdate = type === 'scout' ? 'avatar_url' : 'custom_avatar_url';
     if (type === 'scout') {
-      setScoutAvatarUrl(null);
+      setScoutAvatarUrl('');
     } else {
-      setCustomAvatarUrl(null);
+      setCustomAvatarUrl('');
     }
     await updateUserProfile({ [fieldToUpdate]: null });
     try {
