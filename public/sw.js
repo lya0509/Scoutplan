@@ -1,5 +1,5 @@
 // Service Worker para Plan Progresivo Scout (PWA 100% Offline & Standalone)
-const CACHE_NAME = 'scoutplan-pwa-v6';
+const CACHE_NAME = 'scoutplan-pwa-v7';
 
 const CORE_STATIC_ASSETS = [
   '/',
@@ -124,3 +124,68 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// 4. Receptor de Notificaciones Web Push en Segundo Plano (App Cerrada y Pantalla Bloqueada)
+self.addEventListener('push', (event) => {
+  console.log('[SW] Evento Push recibido en segundo plano:', event);
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (err) {
+      data = {
+        title: 'Plan Progresivo Scout ⚜️',
+        body: event.data.text()
+      };
+    }
+  }
+
+  const title = data.title || 'Plan Progresivo Scout ⚜️';
+  const options = {
+    body: data.body || data.message || 'Tienes una nueva actualización en tu Plan Progresivo.',
+    icon: data.icon || '/icon-192.png',
+    badge: data.badge || '/icon-192.png',
+    image: data.image || undefined,
+    vibrate: [300, 150, 300, 150, 300],
+    tag: data.tag || `scout_push_${Date.now()}`,
+    renotify: true,
+    requireInteraction: true,
+    data: {
+      url: data.url || '/',
+      id: data.id || null,
+      timestamp: Date.now()
+    },
+    actions: [
+      { action: 'open', title: '⚜️ Ver en la App' }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+// 5. Interacción del Usuario con la Notificación en la Pantalla de Bloqueo
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Si ya hay una pestaña o ventana abierta de la app, enfocarla y navegar
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          if ('navigate' in client && targetUrl !== '/') {
+            client.navigate(targetUrl);
+          }
+          return client.focus();
+        }
+      }
+      // Si la app estaba cerrada por completo, abrirla directamente
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
+

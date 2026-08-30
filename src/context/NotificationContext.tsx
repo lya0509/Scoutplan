@@ -56,16 +56,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [user?.id, user?.group_name, user?.role, user?.unit]);
 
   const requestPushPermission = useCallback(async () => {
-    const res = await notificationService.requestBrowserNotificationPermission();
+    const res = await notificationService.requestBrowserNotificationPermission(user?.id);
     setPushStatus(res);
     if (res === 'granted') {
       notificationService.triggerSystemPushNotification(
         '🔔 Notificaciones Activadas',
-        '¡Genial! Ahora recibirás alertas automáticas de insignias, actividades y aprobaciones.'
+        '¡Genial! Ahora recibirás alertas automáticas de insignias, actividades y aprobaciones en segundo plano.'
       );
     }
     return res;
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -75,8 +75,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return;
     }
 
-    // Actualizar estado de permisos
-    setPushStatus(notificationService.getBrowserPermissionStatus());
+    // Actualizar estado de permisos y refrescar suscripción Web Push en segundo plano
+    const currentPerm = notificationService.getBrowserPermissionStatus();
+    setPushStatus(currentPerm);
+    if (currentPerm === 'granted') {
+      notificationService.requestBrowserNotificationPermission(user.id);
+    }
 
     refreshNotifications();
 

@@ -1,6 +1,7 @@
-﻿import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { webPushService } from './webPushService';
 
 export interface AppNotification {
   id: string;
@@ -32,12 +33,15 @@ class NotificationService {
   }
 
   /**
-   * Solicita permisos de notificación Push al navegador / dispositivo móvil.
+   * Solicita permisos de notificación Push al navegador / dispositivo móvil y suscribe en segundo plano.
    */
-  async requestBrowserNotificationPermission(): Promise<'granted' | 'denied' | 'default' | 'unsupported'> {
+  async requestBrowserNotificationPermission(userId?: string): Promise<'granted' | 'denied' | 'default' | 'unsupported'> {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       try {
         const perm = await window.Notification.requestPermission();
+        if (perm === 'granted' && userId) {
+          await webPushService.registerDevicePushSubscription(userId);
+        }
         return perm;
       } catch (e) {
         console.warn('Error solicitando permisos de notificación:', e);
@@ -283,6 +287,36 @@ class NotificationService {
         });
       }
     } catch (e) {}
+
+    // 4. Despacho de Web Push en Segundo Plano (Despierta teléfonos y PCs con app cerrada)
+    try {
+      const pushPayload = {
+        title: params.title,
+        body: params.message,
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        tag: `scout_push_${notifObj.id}`,
+        url: '/',
+        data: {
+          id: notifObj.id,
+          type: notifObj.type,
+          receiverId: params.receiverId
+        }
+      };
+
+      if (params.receiverId) {
+        webPushService.dispatchBackgroundPushToUser(params.receiverId, pushPayload);
+      } else if (params.groupName || params.unit || params.receiverRole) {
+        webPushService.dispatchBackgroundPushToGroupOrRole({
+          groupName: params.groupName,
+          unit: params.unit,
+          role: params.receiverRole,
+          payload: pushPayload
+        });
+      }
+    } catch (pushErr) {
+      console.warn('Aviso despachando Web Push en segundo plano:', pushErr);
+    }
 
     return notifObj;
   }

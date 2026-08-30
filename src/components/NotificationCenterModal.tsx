@@ -166,7 +166,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
                   <Radio size={12} color="#10b981" />
                   <Text style={{ fontSize: 10, color: '#10b981', fontWeight: 'bold' }}>
-                    WebSockets + Smart Polling Activo
+                    Web Push 24/7 + Segundo Plano Activo
                   </Text>
                 </View>
               </View>
@@ -250,7 +250,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
               }}>
                 <CheckCircle2 size={16} color="#16a34a" />
                 <Text style={{ fontSize: 11, fontWeight: 'bold', color: isDarkMode ? '#86efac' : '#15803d', flex: 1 }}>
-                  Push del Sistema y Sonido Activados ✅
+                  Push del Sistema, Segundo Plano y Pantalla de Bloqueo Activados ✅
                 </Text>
               </View>
             )}
