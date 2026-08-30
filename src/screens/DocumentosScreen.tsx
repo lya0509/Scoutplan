@@ -187,9 +187,13 @@ export default function DocumentosScreen({ navigation }: any) {
           {filteredDocs.length === 0 ? (
             <View style={[styles.emptyState, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
               <Filter size={36} color={theme.subText} style={{ marginBottom: 10 }} />
-              <Text style={[styles.emptyStateTitle, { color: theme.text }]}>No se encontraron documentos</Text>
+              <Text style={[styles.emptyStateTitle, { color: theme.text }]}>
+                {selectedCategory === 'manuales' ? 'Manuales Técnicos en Preparación' : 'No se encontraron documentos'}
+              </Text>
               <Text style={[styles.emptyStateDesc, { color: theme.subText }]}>
-                Intenta con otra palabra clave o selecciona otra categoría.
+                {selectedCategory === 'manuales'
+                  ? 'Próximamente se publicarán manuales técnicos oficiales (como manuales de vestimenta, campismo, etc.).'
+                  : 'Intenta con otra palabra clave o selecciona otra categoría.'}
               </Text>
             </View>
           ) : (

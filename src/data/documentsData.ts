@@ -81,9 +81,9 @@ export const SCOUT_DOCUMENTS: ScoutDocument[] = [
   {
     id: 'en_senas',
     title: 'En Señas',
-    category: 'manuales',
-    categoryLabel: 'Manuales Técnicos',
-    description: 'Manual de lengua de señas, comunicación accesible e integración de personas con discapacidad auditiva en el Movimiento Scout.',
+    category: 'iniciativas',
+    categoryLabel: 'Programas e Iniciativas',
+    description: 'Iniciativa nacional de lengua de señas, comunicación accesible e integración de personas con discapacidad auditiva en el Movimiento Scout.',
     badgeIcon: '🤟',
     size: '11.4 MB',
     pdfUrl: '/documentos/En_senas.pdf',
