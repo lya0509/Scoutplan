@@ -30,7 +30,13 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
   const { isDarkMode, theme } = useTheme();
   const { user } = useAuth();
 
-  const isScouterOrAdmin = user?.role === 'scouter' || user?.role === 'jefe_grupo' || (user?.role as any) === 'admin';
+  const isScouterOrAdmin =
+    user?.role === 'scouter' ||
+    user?.role === 'jefe_grupo' ||
+    user?.role === 'comisionado_distrital' ||
+    user?.role === 'comisionado_regional' ||
+    user?.role === 'nacional' ||
+    (user?.role as any) === 'admin';
 
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
@@ -285,7 +291,22 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
 
       <View style={{ paddingHorizontal: 16 }}>
         {stages.map(st => (
-          <View key={st.id} style={[styles.stageRowCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+          <TouchableOpacity
+            key={st.id}
+            style={[styles.stageRowCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+            onPress={() => {
+              if (isScouterOrAdmin) {
+                navigation.navigate('ScouterReview', {
+                  scoutId,
+                  stageId: st.id,
+                  scoutName: profile?.name || 'Scout'
+                });
+              } else {
+                navigation.navigate('StageDetail', { stageId: st.id });
+              }
+            }}
+            activeOpacity={0.7}
+          >
             <StageBadgeIcon stageId={st.id} size={42} />
             <View style={{ flex: 1, marginLeft: 12 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -301,8 +322,13 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
                 </View>
                 <Text style={[styles.pctText, { color: colors.primary }]}>{st.pct}%</Text>
               </View>
+              {isScouterOrAdmin && (
+                <Text style={{ fontSize: 11, color: colors.primary, fontWeight: 'bold', marginTop: 4 }}>
+                  Toca para ver desglose de requisitos y actividades ➔
+                </Text>
+              )}
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
 
