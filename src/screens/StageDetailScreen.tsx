@@ -8,11 +8,12 @@ import {
   ActivityIndicator,
   Modal,
   TextInput,
+  Image,
   Platform,
   Linking
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { CheckSquare, Square, Lock, Send, Flag, X, CheckCircle, Award, Sparkles, Plus, Trash2 } from 'lucide-react-native';
+import { CheckSquare, Square, Lock, Send, Flag, X, CheckCircle, Award, Sparkles, Plus, Trash2, LayoutGrid, List } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -51,6 +52,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const [loadingCerts, setLoadingCerts] = useState(false);
   const [linkedCertMap, setLinkedCertMap] = useState<Record<string, { certId?: string; certTitle: string; level?: string }>>({});
   const [certFilterLevel, setCertFilterLevel] = useState<string>('ALL');
+  const [certModalViewMode, setCertModalViewMode] = useState<'list' | 'grid'>('list');
   const [usedElsewhereMap, setUsedElsewhereMap] = useState<Record<string, { stageTitle: string; reqText: string }>>({});
 
   // Modal para Registro de Noches de Vida al Aire Libre
@@ -574,9 +576,50 @@ export default function StageDetailScreen({ route, navigation }: any) {
                 </View>
               )}
 
-              <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text, marginBottom: 10 }}>
-                Selecciona tu acreditación correspondiente:
-              </Text>
+              {/* SELECTOR DE VISTA: LISTA VS CUADRÍCULA */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>
+                  Selecciona tu acreditación:
+                </Text>
+
+                <View style={{ flexDirection: 'row', backgroundColor: isDarkMode ? '#27272a' : '#e2e8f0', borderRadius: 10, padding: 2 }}>
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingVertical: 5,
+                      paddingHorizontal: 9,
+                      borderRadius: 8,
+                      backgroundColor: certModalViewMode === 'list' ? colors.primary : 'transparent',
+                      gap: 4
+                    }}
+                    onPress={() => setCertModalViewMode('list')}
+                  >
+                    <List size={13} color={certModalViewMode === 'list' ? 'white' : theme.subText} />
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: certModalViewMode === 'list' ? 'white' : theme.subText }}>
+                      Lista
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingVertical: 5,
+                      paddingHorizontal: 9,
+                      borderRadius: 8,
+                      backgroundColor: certModalViewMode === 'grid' ? colors.primary : 'transparent',
+                      gap: 4
+                    }}
+                    onPress={() => setCertModalViewMode('grid')}
+                  >
+                    <LayoutGrid size={13} color={certModalViewMode === 'grid' ? 'white' : theme.subText} />
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: certModalViewMode === 'grid' ? 'white' : theme.subText }}>
+                      Cuadrícula
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
 
               {(() => {
                 const filteredModalCerts = userCerts.filter(cert => {
@@ -621,6 +664,76 @@ export default function StageDetailScreen({ route, navigation }: any) {
                       <Text style={{ fontSize: 11, color: theme.subText, textAlign: 'center', marginTop: 4 }}>
                         Usa el botón superior "Subir Nueva" para adjuntar tu diploma o "Marcar Directo" si ya lo completaste.
                       </Text>
+                    </View>
+                  );
+                }
+
+                if (certModalViewMode === 'grid') {
+                  return (
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 }}>
+                      {filteredModalCerts.map((cert) => {
+                        const linkedInfo = linkedCertMap[selectedReqForCert?.id];
+                        const isSelected = linkedInfo?.certId
+                          ? (linkedInfo.certId === cert.id)
+                          : (linkedInfo?.certTitle === cert.title && (!linkedInfo?.level || linkedInfo?.level === cert.level));
+
+                        const usedIn = usedElsewhereMap[cert.id] || usedElsewhereMap[`${cert.title}_${cert.level || ''}`.toLowerCase()];
+                        const certImg = cert.file_url || cert.image_url;
+
+                        return (
+                          <TouchableOpacity
+                            key={cert.id}
+                            style={[
+                              modalStyles.gridCertCard,
+                              {
+                                backgroundColor: isSelected
+                                  ? (isDarkMode ? '#1e1b4b' : '#f5f3ff')
+                                  : usedIn
+                                  ? (isDarkMode ? '#1c1917' : '#fef2f2')
+                                  : theme.cardBg,
+                                borderColor: isSelected ? '#8b5cf6' : usedIn ? '#fca5a5' : theme.border,
+                                borderWidth: isSelected ? 2 : 1,
+                                opacity: usedIn ? 0.75 : 1
+                              }
+                            ]}
+                            onPress={() => handleSelectCert(cert)}
+                            activeOpacity={0.8}
+                          >
+                            {certImg ? (
+                              <Image source={{ uri: certImg }} style={modalStyles.gridCertImage} resizeMode="cover" />
+                            ) : (
+                              <View style={[modalStyles.gridCertFallback, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
+                                <Award size={28} color={colors.primary} />
+                              </View>
+                            )}
+
+                            <View style={{ padding: 8, flex: 1, justifyContent: 'space-between' }}>
+                              <View>
+                                {cert.level && (
+                                  <View style={{ alignSelf: 'flex-start', backgroundColor: colors.primary, paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginBottom: 3 }}>
+                                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 8 }}>{cert.level.toUpperCase()}</Text>
+                                  </View>
+                                )}
+                                <Text style={[modalStyles.gridCertTitle, { color: theme.text }]} numberOfLines={2}>
+                                  {cert.title}
+                                </Text>
+                              </View>
+
+                              <View style={{
+                                marginTop: 6,
+                                paddingVertical: 4,
+                                borderRadius: 6,
+                                backgroundColor: isSelected ? '#10b981' : usedIn ? (isDarkMode ? '#44403c' : '#e2e8f0') : colors.primary,
+                                alignItems: 'center'
+                              }}>
+                                <Text style={{ color: usedIn ? theme.subText : 'white', fontWeight: 'bold', fontSize: 10 }}>
+                                  {isSelected ? '✓ Vinculado' : usedIn ? 'Bloqueado' : 'Vincular'}
+                                </Text>
+                              </View>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })}
                     </View>
                   );
                 }
@@ -1000,6 +1113,11 @@ const modalStyles = StyleSheet.create({
   eventTitle: { fontSize: 15, fontWeight: 'bold' },
   eventDesc: { fontSize: 12, marginTop: 2 },
   eventDate: { fontSize: 11, color: colors.primary, marginTop: 4, fontWeight: 'bold' },
+
+  gridCertCard: { width: '48%', borderRadius: 12, overflow: 'hidden', borderWidth: 1, marginBottom: 10 },
+  gridCertImage: { width: '100%', height: 90 },
+  gridCertFallback: { width: '100%', height: 90, alignItems: 'center', justifyContent: 'center' },
+  gridCertTitle: { fontSize: 12, fontWeight: 'bold', lineHeight: 16 },
 
   card: { width: '90%', alignSelf: 'center', borderRadius: 20, padding: 24, alignItems: 'center' },
   desc: { fontSize: 14, textAlign: 'center', marginBottom: 20, lineHeight: 20 },

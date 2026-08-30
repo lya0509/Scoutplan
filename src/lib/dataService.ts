@@ -610,14 +610,15 @@ export const dataService = {
 
     if (error) throw error;
 
-    if (reason && reason.trim()) {
-      await supabase.from('scout_notifications').insert({
-        scout_id: scoutId,
-        title: `Certificado Eliminado: ${certTitle || 'Certificado'}`,
-        reason: reason,
-        is_read: false
-      });
-    }
+    // Despachar notificación Push y guardar en bandeja del Scout
+    await notificationService.sendNotification({
+      receiverId: scoutId,
+      title: `⚠️ Certificado / Especialidad Eliminado: ${certTitle || 'Acreditación'}`,
+      message: reason && reason.trim()
+        ? `Tu dirigente ha eliminado "${certTitle || 'tu acreditación'}": ${reason}`
+        : `Tu dirigente ha eliminado el certificado/especialidad "${certTitle || 'Acreditación'}".`,
+      type: 'alert'
+    }).catch(() => {});
   },
 
   // ----------------------------------------------------
@@ -1021,6 +1022,16 @@ export const dataService = {
         membership_status: 'rejected',
         membership_rejected_reason: reason
       }).eq('id', scoutId);
+
+      // Notificación Push en tiempo real al Scout
+      await notificationService.sendNotification({
+        receiverId: scoutId,
+        title: '📑 Registro de Membresía Devuelto',
+        message: reason && reason.trim()
+          ? `Tu fecha de registro/membresía fue devuelta: ${reason}`
+          : 'Tu dirigente ha revisado tu fecha de membresía y requiere corrección.',
+        type: 'membership'
+      }).catch(() => {});
     } catch (e) {
       console.warn('Aviso rechazando membresía:', e);
     }
@@ -1032,6 +1043,16 @@ export const dataService = {
         avatar_url: null,
         photo_rejected_reason: reason
       }).eq('id', scoutId);
+
+      // Notificación Push en tiempo real al Scout
+      await notificationService.sendNotification({
+        receiverId: scoutId,
+        title: '📷 Foto de Perfil Removida por Dirigente',
+        message: reason && reason.trim()
+          ? `Tu dirigente ha solicitado cambiar tu foto de perfil: ${reason}`
+          : 'Tu dirigente ha removido tu foto de perfil. Por favor sube una foto con tu uniforme scout.',
+        type: 'alert'
+      }).catch(() => {});
     } catch (e) {
       console.warn('Aviso eliminando foto de perfil:', e);
     }
