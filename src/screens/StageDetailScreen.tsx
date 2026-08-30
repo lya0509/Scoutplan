@@ -21,6 +21,7 @@ import { dataService } from '../lib/dataService';
 import { notificationService } from '../services/notificationService';
 import { stagesData } from '../data/progressionTemplate';
 import { StageBadgeIcon } from '../components/StageBadgeIcon';
+import { NochesAireLibreModal } from '../components/NochesAireLibreModal';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 import { checkProfileCompletion } from '../utils/profileGuard';
@@ -52,6 +53,11 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const [certFilterLevel, setCertFilterLevel] = useState<string>('ALL');
   const [usedElsewhereMap, setUsedElsewhereMap] = useState<Record<string, { stageTitle: string; reqText: string }>>({});
 
+  // Modal para Registro de Noches de Vida al Aire Libre
+  const [showNochesModal, setShowNochesModal] = useState(false);
+  const [selectedReqForNoches, setSelectedReqForNoches] = useState<any>(null);
+  const [nochesCountMap, setNochesCountMap] = useState<Record<string, number>>({});
+
   // Formulario rápido para convalidar CIP previo
   const [showFastCipForm, setShowFastCipForm] = useState(false);
   const [fastCipName, setFastCipName] = useState('');
@@ -60,6 +66,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
 
   useModalBackHandler(showCipModal, () => setShowCipModal(false));
   useModalBackHandler(showCertModal, () => setShowCertModal(false));
+  useModalBackHandler(showNochesModal, () => setShowNochesModal(false));
   useModalBackHandler(confirming, () => setConfirming(false));
 
   useFocusEffect(
@@ -75,10 +82,22 @@ export default function StageDetailScreen({ route, navigation }: any) {
 
       const reqChecks: Record<string, boolean> = {};
       const links: Record<string, { certId?: string; certTitle: string; level?: string }> = {};
+      const nightsMap: Record<string, number> = {};
 
       for (const req of stageTemplate.requirements) {
         const val = await dataService.getRequirement(user.id, stageId, req.id);
         reqChecks[req.id] = val;
+
+        if (req.type === 'aire_libre' || req.text.toLowerCase().includes('noche')) {
+          try {
+            const nights = await dataService.getNightsLog(user.id, stageId, req.id);
+            const total = (nights || []).reduce((acc: number, item: any) => acc + (item.nightsCount || 1), 0);
+            nightsMap[req.id] = total;
+            if (total >= (req.requiredCount || 10)) {
+              reqChecks[req.id] = true;
+            }
+          } catch {}
+        }
 
         try {
           const linkedStr = await AsyncStorage.getItem(`@scout_req_linked_${user.id}_${stageId}_${req.id}`);
@@ -94,6 +113,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
       }
       setChecks(reqChecks);
       setLinkedCertMap(links);
+      setNochesCountMap(nightsMap);
     } catch (err) {
       console.error('Error al cargar avance de etapa:', err);
     } finally {
@@ -236,6 +256,12 @@ export default function StageDetailScreen({ route, navigation }: any) {
 
     if (req.type === 'ciclos' || req.text.toLowerCase().includes('ciclo') || req.text.toLowerCase().includes('6p')) {
       openCipModal(req);
+      return;
+    }
+
+    if (req.type === 'aire_libre' || req.text.toLowerCase().includes('noche')) {
+      setSelectedReqForNoches(req);
+      setShowNochesModal(true);
       return;
     }
 
@@ -383,6 +409,14 @@ export default function StageDetailScreen({ route, navigation }: any) {
 
                 {(req.type === 'ciclos' || req.text.toLowerCase().includes('ciclo')) && (
                   <Text style={[styles.reqBadge, { color: colors.primary }]}>Toca para seleccionar Evento CIP</Text>
+                )}
+
+                {(req.type === 'aire_libre' || req.text.toLowerCase().includes('noche')) && (
+                  <View style={{ marginTop: 4 }}>
+                    <Text style={[styles.reqBadge, { color: '#0ea5e9', fontWeight: 'bold' }]}>
+                      🏕️ {nochesCountMap[req.id] || 0} / {req.requiredCount || 10} noches registradas (Toca para ver o agregar fechas)
+                    </Text>
+                  </View>
                 )}
               </View>
             </TouchableOpacity>
@@ -896,6 +930,26 @@ export default function StageDetailScreen({ route, navigation }: any) {
           </View>
         </View>
       </Modal>
+
+      {/* MODAL DE REGISTRO DE NOCHES DE VIDA AL AIRE LIBRE */}
+      {user && selectedReqForNoches && (
+        <NochesAireLibreModal
+          visible={showNochesModal}
+          onClose={() => setShowNochesModal(false)}
+          scoutId={user.id}
+          stageId={stageId}
+          reqId={selectedReqForNoches.id}
+          reqTitle={selectedReqForNoches.text}
+          requiredCount={selectedReqForNoches.requiredCount || 10}
+          isReadOnly={isReadOnly}
+          onProgressChange={(totalNights, isCompleted) => {
+            if (selectedReqForNoches) {
+              setNochesCountMap(prev => ({ ...prev, [selectedReqForNoches.id]: totalNights }));
+              setChecks(prev => ({ ...prev, [selectedReqForNoches.id]: isCompleted }));
+            }
+          }}
+        />
+      )}
 
     </ScrollView>
   );

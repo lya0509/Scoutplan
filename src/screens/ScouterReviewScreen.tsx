@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen, Flag } from 'lucide-react-native';
+import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen, Flag, Moon } from 'lucide-react-native';
 import { dataService } from '../lib/dataService';
 import { notificationService } from '../services/notificationService';
 import { useTheme } from '../context/ThemeContext';
 import { stagesData } from '../data/progressionTemplate';
 import { activitiesCatalog } from '../data/activitiesCatalog';
+import { NochesAireLibreModal } from '../components/NochesAireLibreModal';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 
@@ -18,6 +19,9 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
   const [completedActivities, setCompletedActivities] = useState<any[]>([]);
   const [cipList, setCipList] = useState<any[]>([]);
   const [showCatalogDetails, setShowCatalogDetails] = useState<Record<string, boolean>>({});
+  const [nightsMap, setNightsMap] = useState<Record<string, any[]>>({});
+  const [showNochesModal, setShowNochesModal] = useState(false);
+  const [selectedReqForNoches, setSelectedReqForNoches] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,10 +31,18 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
   const loadData = async () => {
     if (!stageTemplate) return;
     const loadedChecks: Record<string, boolean> = {};
+    const loadedNights: Record<string, any[]> = {};
+
     for (const req of stageTemplate.requirements) {
       loadedChecks[req.id] = await dataService.getRequirement(scoutId, stageId, req.id);
+
+      if (req.type === 'aire_libre' || req.text.toLowerCase().includes('noche')) {
+        const logs = await dataService.getNightsLog(scoutId, stageId, req.id);
+        loadedNights[req.id] = logs || [];
+      }
     }
     setChecks(loadedChecks);
+    setNightsMap(loadedNights);
 
     // Obtener IDs de actividades completadas por el Scout
     const completedIds = await dataService.getCompletedCatalogActivityIds(scoutId);
@@ -133,7 +145,9 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
           const isChecked = checks[req.id];
           const isCatalogReq = req.type === 'basica' || req.type === 'opcional';
           const isCipReq = req.type === 'ciclos' || req.text.toLowerCase().includes('ciclo') || req.text.toLowerCase().includes('cip') || req.text.toLowerCase().includes('6p');
-          const isExpanded = !!showCatalogDetails[req.id];
+          const isNochesReq = req.type === 'aire_libre' || req.text.toLowerCase().includes('noche');
+          const isExpanded = !showCatalogDetails[req.id];
+          const totalNightsLogged = (nightsMap[req.id] || []).reduce((acc: number, item: any) => acc + (item.nightsCount || 1), 0);
 
           return (
             <View key={req.id} style={{ marginBottom: 10 }}>
@@ -189,6 +203,22 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                         {isExpanded ? 'Ocultar detalles del CIP' : `Ver CIPs registrados/convalidados (${cipList.length})`}
                       </Text>
                       {isExpanded ? <ChevronUp size={14} color={colors.primary} style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color={colors.primary} style={{ marginLeft: 2 }} />}
+                    </TouchableOpacity>
+                  )}
+
+                  {isNochesReq && (
+                    <TouchableOpacity 
+                      style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setSelectedReqForNoches(req);
+                        setShowNochesModal(true);
+                      }}
+                    >
+                      <Moon size={14} color="#0284c7" style={{ marginRight: 4 }} />
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#0284c7' }}>
+                        🏕️ Ver registro de pernoctas ({totalNightsLogged} de {req.requiredCount || 10} noches registradas)
+                      </Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -262,6 +292,20 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
           );
         })}
       </ScrollView>
+
+      {/* MODAL DE CONSULTA DE NOCHES PARA EL SCOUTER */}
+      {selectedReqForNoches && (
+        <NochesAireLibreModal
+          visible={showNochesModal}
+          onClose={() => setShowNochesModal(false)}
+          scoutId={scoutId}
+          stageId={stageId}
+          reqId={selectedReqForNoches.id}
+          reqTitle={selectedReqForNoches.text}
+          requiredCount={selectedReqForNoches.requiredCount || 10}
+          isReadOnly={true}
+        />
+      )}
 
       <View style={[styles.footer, { backgroundColor: theme.cardBg, borderTopColor: theme.border }]}>
         <TouchableOpacity 

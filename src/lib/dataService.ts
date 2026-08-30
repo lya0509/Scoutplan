@@ -1035,5 +1035,80 @@ export const dataService = {
     } catch (e) {
       console.warn('Aviso eliminando foto de perfil:', e);
     }
+  },
+
+  // --- GESTIÓN DE REGISTRO DE NOCHES DE VIDA AL AIRE LIBRE ---
+  async getNightsLog(scoutId: string, stageId: string, reqId: string) {
+    const key = `@scout_noches_${scoutId}_${stageId}_${reqId}`;
+    try {
+      const raw = await AsyncStorage.getItem(key);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+
+    try {
+      const { data } = await supabase
+        .from('certificates')
+        .select('*')
+        .eq('user_id', scoutId)
+        .eq('category', `aire_libre_${stageId}_${reqId}`)
+        .order('created_at', { ascending: false });
+
+      if (data && data.length > 0) {
+        const entries = data.map(d => ({
+          id: d.id,
+          date: d.date || (d.created_at ? d.created_at.split('T')[0] : ''),
+          location: d.title || 'Campamento / Pernocta',
+          nightsCount: parseInt(d.level || '1', 10) || 1,
+          notes: '',
+          createdAt: d.created_at
+        }));
+        await AsyncStorage.setItem(key, JSON.stringify(entries)).catch(() => {});
+        return entries;
+      }
+    } catch {}
+
+    return [];
+  },
+
+  async addNightEntry(scoutId: string, stageId: string, reqId: string, entry: { date: string; location: string; nightsCount: number; notes?: string }) {
+    const current = await this.getNightsLog(scoutId, stageId, reqId);
+    const newEntry = {
+      ...entry,
+      id: `night_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      createdAt: new Date().toISOString()
+    };
+    const updated = [newEntry, ...current];
+    const key = `@scout_noches_${scoutId}_${stageId}_${reqId}`;
+    await AsyncStorage.setItem(key, JSON.stringify(updated));
+
+    // Guardar en Supabase
+    try {
+      await supabase.from('certificates').insert({
+        id: newEntry.id,
+        user_id: scoutId,
+        category: `aire_libre_${stageId}_${reqId}`,
+        title: entry.location || 'Campamento / Pernocta',
+        level: String(entry.nightsCount || 1),
+        date: entry.date,
+        image_url: null
+      });
+    } catch (e) {
+      console.warn('Aviso guardando noche en Supabase:', e);
+    }
+
+    return updated;
+  },
+
+  async deleteNightEntry(scoutId: string, stageId: string, reqId: string, entryId: string) {
+    const current = await this.getNightsLog(scoutId, stageId, reqId);
+    const updated = current.filter((e: any) => e.id !== entryId);
+    const key = `@scout_noches_${scoutId}_${stageId}_${reqId}`;
+    await AsyncStorage.setItem(key, JSON.stringify(updated));
+
+    try {
+      await supabase.from('certificates').delete().eq('id', entryId);
+    } catch {}
+
+    return updated;
   }
 };
