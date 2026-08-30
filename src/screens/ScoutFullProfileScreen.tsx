@@ -145,6 +145,17 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
     }
   };
 
+  const handleDeleteScoutPhoto = async (type: 'scout' | 'custom') => {
+    const fieldToUpdate = type === 'scout' ? 'avatar_url' : 'custom_avatar_url';
+    try {
+      await supabase.from('profiles').update({ [fieldToUpdate]: null }).eq('id', scoutId);
+      loadFullScoutData();
+      showAlert('Foto Eliminada', 'Se ha eliminado la foto del perfil del scout.');
+    } catch (err: any) {
+      showAlert('Error', err?.message || 'No se pudo eliminar la foto.');
+    }
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', alignItems: 'center' }]}>
@@ -167,6 +178,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
             role="scout"
             size={80}
             editable={false}
+            onDeletePhoto={handleDeleteScoutPhoto}
           />
           <View style={{ flex: 1, marginLeft: 16 }}>
             <Text style={[styles.scoutName, { color: theme.text }]}>{profile?.name || 'Scout'}</Text>

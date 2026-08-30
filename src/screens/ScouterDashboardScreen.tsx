@@ -18,6 +18,7 @@ import HelpFloatingFAB from '../components/HelpFloatingFAB';
 import { dataService } from '../lib/dataService';
 import { supabase } from '../lib/supabaseClient';
 import { notificationService } from '../services/notificationService';
+import { presenceService } from '../services/presenceService';
 import { stagesData } from '../data/progressionTemplate';
 import { colors } from '../theme/colors';
 import { Calendar as RNCalendar, DateData } from 'react-native-calendars';
@@ -98,8 +99,19 @@ function MembersPanel({ scouts, onReview, onViewProfile, isDarkMode, theme }: { 
                   onPress={() => onViewProfile(scout)}
                   activeOpacity={0.7}
                 >
-                  <View style={[panelStyles.avatar, hasReview && { backgroundColor: '#f59e0b' }]}>
+                  <View style={[panelStyles.avatar, hasReview && { backgroundColor: '#f59e0b' }, { position: 'relative' }]}>
                     <Text style={panelStyles.avatarText}>{scout.name?.charAt(0)?.toUpperCase()}</Text>
+                    <View style={{
+                      position: 'absolute',
+                      bottom: -2,
+                      right: -2,
+                      width: 10,
+                      height: 10,
+                      borderRadius: 5,
+                      backgroundColor: presenceService.isUserOnline(scout.id, scout.updated_at) ? '#22c55e' : '#9ca3af',
+                      borderWidth: 1.5,
+                      borderColor: 'white'
+                    }} />
                   </View>
 
                   <View style={{ flex: 1, marginLeft: 12 }}>

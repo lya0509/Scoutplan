@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabaseClient';
+import { presenceService } from '../services/presenceService';
 import { Profile } from '../types/progression';
 
 const CACHED_PROFILE_KEY = '@scout_cached_profile';
@@ -36,6 +37,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         if (cachedProfileRaw) {
           const parsedUser = JSON.parse(cachedProfileRaw);
           setUser(parsedUser);
+          presenceService.init(parsedUser);
         }
         if (cachedSessionRaw) {
           setSession(JSON.parse(cachedSessionRaw));
@@ -70,6 +72,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         fetchProfile(currentSession.user.id, currentSession);
       } else if (_event === 'SIGNED_OUT') {
         setUser(null);
+        presenceService.destroy();
         AsyncStorage.removeItem(CACHED_PROFILE_KEY).catch(() => {});
         AsyncStorage.removeItem(CACHED_SESSION_KEY).catch(() => {});
         setIsLoading(false);
@@ -98,26 +101,26 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       const resolvedUnit = data?.unit || meta.unit || 'tropa';
       const resolvedGroupName = data?.group_name || meta.group_name || 'Grupo Orión';
       const resolvedName = data?.name || meta.name || sess?.user?.email?.split('@')[0] || 'Scout';
-      const resolvedCedula = data?.cedula || meta.cedula || null;
-      const resolvedBirthDate = data?.birth_date || meta.birth_date || null;
-      const resolvedPromiseDate = data?.promise_date || meta.promise_date || null;
-      const resolvedJoinDate = data?.join_date || meta.join_date || null;
-      const resolvedPhone = data?.phone || meta.phone || null;
-      const resolvedRegion = data?.region || meta.region || null;
-      const resolvedDistrict = data?.district || meta.district || null;
-      const resolvedAvatarUrl = data?.avatar_url || meta.avatar_url || null;
-      const resolvedCustomAvatarUrl = data?.custom_avatar_url || meta.custom_avatar_url || null;
-      const resolvedMembershipStatus = data?.membership_status || meta.membership_status || 'none';
+      const resolvedCedula = data?.cedula || meta.cedula || '';
+      const resolvedBirthDate = data?.birth_date || meta.birth_date || '';
+      const resolvedPromiseDate = data?.promise_date || meta.promise_date || '';
+      const resolvedJoinDate = data?.join_date || meta.join_date || '';
+      const resolvedPhone = data?.phone || meta.phone || '';
+      const resolvedRegion = data?.region || meta.region || '';
+      const resolvedDistrict = data?.district || meta.district || '';
+      const resolvedScoutAvatar = data?.scout_avatar_url || meta.scout_avatar_url || null;
+      const resolvedCustomAvatar = data?.custom_avatar_url || meta.custom_avatar_url || null;
+      const resolvedMembershipStatus = data?.membership_status || meta.membership_status || 'vigente';
       const resolvedMembershipExpiresAt = data?.membership_expires_at || meta.membership_expires_at || null;
       const resolvedMembershipRejectedReason = data?.membership_rejected_reason || meta.membership_rejected_reason || null;
 
       const mergedUser: Profile = {
         id: userId,
+        email: resolvedEmail,
         role: resolvedRole,
         unit: resolvedUnit,
         group_name: resolvedGroupName,
         name: resolvedName,
-        email: resolvedEmail,
         cedula: resolvedCedula,
         birth_date: resolvedBirthDate,
         promise_date: resolvedPromiseDate,
@@ -125,8 +128,8 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         phone: resolvedPhone,
         region: resolvedRegion,
         district: resolvedDistrict,
-        avatar_url: resolvedAvatarUrl,
-        custom_avatar_url: resolvedCustomAvatarUrl,
+        scout_avatar_url: resolvedScoutAvatar,
+        custom_avatar_url: resolvedCustomAvatar,
         membership_status: resolvedMembershipStatus,
         membership_expires_at: resolvedMembershipExpiresAt,
         membership_rejected_reason: resolvedMembershipRejectedReason,
@@ -135,6 +138,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       };
 
       setUser(mergedUser);
+      presenceService.init(mergedUser);
       await AsyncStorage.setItem(CACHED_PROFILE_KEY, JSON.stringify(mergedUser));
 
       // Si no existía el registro en profiles o faltaban campos, sincronizarlo en segundo plano

@@ -7,9 +7,10 @@ import {
   Image,
   PanResponder,
   ActivityIndicator,
+  Modal,
   Platform
 } from 'react-native';
-import { Camera, RefreshCw, User, Sparkles, Shield } from 'lucide-react-native';
+import { Camera, RefreshCw, User, Sparkles, Shield, Maximize2, Trash2, X, Download } from 'lucide-react-native';
 import { UserScoutAvatar } from './UserScoutAvatar';
 import { useTheme } from '../context/ThemeContext';
 import { showAlert } from '../utils/alert';
@@ -22,6 +23,7 @@ interface Props {
   size?: number;
   editable?: boolean;
   onPhotoChange?: (type: 'scout' | 'custom', newUrl: string) => Promise<void>;
+  onDeletePhoto?: (type: 'scout' | 'custom') => Promise<void>;
 }
 
 export function DualProfileAvatar({
@@ -32,10 +34,12 @@ export function DualProfileAvatar({
   size = 110,
   editable = false,
   onPhotoChange,
+  onDeletePhoto,
 }: Props) {
   const { isDarkMode, primaryColor } = useTheme();
   const [activeTab, setActiveTab] = useState<'scout' | 'custom'>('scout');
   const [uploading, setUploading] = useState(false);
+  const [showZoomModal, setShowZoomModal] = useState(false);
 
   // Gesto PanResponder para detectar arrastre / swipe horizontal fluido
   const panResponder = useRef(
@@ -123,10 +127,16 @@ export function DualProfileAvatar({
 
   const currentPhotoUrl = activeTab === 'scout' ? scoutAvatarUrl : customAvatarUrl;
 
+  const handleDeleteCurrentPhoto = async () => {
+    if (!onDeletePhoto) return;
+    setShowZoomModal(false);
+    await onDeletePhoto(activeTab);
+  };
+
   return (
     <View style={styles.wrapper}>
       {/* Contenedor circular con PanResponder para gestos */}
-      <View
+      <TouchableOpacity
         {...panResponder.panHandlers}
         style={[
           styles.avatarContainer,
@@ -138,6 +148,14 @@ export function DualProfileAvatar({
             backgroundColor: isDarkMode ? '#18181b' : '#f4f4f5',
           },
         ]}
+        onPress={() => {
+          if (currentPhotoUrl) {
+            setShowZoomModal(true);
+          } else if (editable) {
+            handlePickImage();
+          }
+        }}
+        activeOpacity={0.85}
       >
         {uploading ? (
           <ActivityIndicator size="small" color={primaryColor} />
@@ -174,7 +192,7 @@ export function DualProfileAvatar({
             <Camera size={14} color="#ffffff" />
           </TouchableOpacity>
         )}
-      </View>
+      </TouchableOpacity>
 
       {/* Indicador de Tipo de Foto y Deslizador (Swipe Dots) */}
       <View style={styles.indicatorRow}>
@@ -254,8 +272,79 @@ export function DualProfileAvatar({
       </View>
 
       <Text style={[styles.gestureTip, { color: isDarkMode ? '#71717a' : '#94a3b8' }]}>
-        ↔️ Desliza hacia los lados para alternar
+        ↔️ Desliza hacia los lados para alternar | Toca la foto para ampliar
       </Text>
+
+      {/* MODAL DE ZOOM / LIGHTBOX A PANTALLA COMPLETA */}
+      <Modal
+        visible={showZoomModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowZoomModal(false)}
+      >
+        <View style={styles.zoomOverlay}>
+          {/* Cabecera del visor */}
+          <View style={styles.zoomHeader}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Maximize2 size={18} color="white" />
+              <Text style={styles.zoomTitle}>
+                {activeTab === 'scout' ? '⚜️ Foto Institucional Scout' : '✨ Foto de Perfil Personal'}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.zoomCloseBtn}
+              onPress={() => setShowZoomModal(false)}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <X size={22} color="white" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Imagen a gran resolución */}
+          <View style={styles.zoomImageContainer}>
+            {currentPhotoUrl ? (
+              <Image
+                source={{ uri: currentPhotoUrl }}
+                style={styles.zoomImage}
+                resizeMode="contain"
+              />
+            ) : null}
+          </View>
+
+          {/* Barra de Acciones Inferior */}
+          <View style={styles.zoomActions}>
+            {editable && onPhotoChange && (
+              <TouchableOpacity
+                style={[styles.zoomActionBtn, { backgroundColor: primaryColor }]}
+                onPress={() => {
+                  setShowZoomModal(false);
+                  setTimeout(() => handlePickImage(), 300);
+                }}
+              >
+                <Camera size={16} color="white" />
+                <Text style={styles.zoomActionBtnText}>Cambiar Foto</Text>
+              </TouchableOpacity>
+            )}
+
+            {onDeletePhoto && currentPhotoUrl && (
+              <TouchableOpacity
+                style={[styles.zoomActionBtn, { backgroundColor: '#ef4444' }]}
+                onPress={handleDeleteCurrentPhoto}
+              >
+                <Trash2 size={16} color="white" />
+                <Text style={styles.zoomActionBtnText}>Eliminar Foto</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={[styles.zoomActionBtn, { backgroundColor: 'rgba(255,255,255,0.18)' }]}
+              onPress={() => setShowZoomModal(false)}
+            >
+              <Text style={styles.zoomActionBtnText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -332,5 +421,61 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 4,
     textAlign: 'center',
+  },
+  zoomOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.92)',
+    justifyContent: 'space-between',
+    paddingVertical: Platform.OS === 'ios' ? 50 : 25,
+    paddingHorizontal: 16,
+  },
+  zoomHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+  },
+  zoomTitle: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  zoomCloseBtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 8,
+    borderRadius: 20,
+  },
+  zoomImageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  zoomImage: {
+    width: '100%',
+    maxWidth: 380,
+    height: 380,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  zoomActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  zoomActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+  },
+  zoomActionBtnText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 12,
   },
 });

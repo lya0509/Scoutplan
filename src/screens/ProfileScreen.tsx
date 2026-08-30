@@ -299,6 +299,24 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleDeletePhoto = async (type: 'scout' | 'custom') => {
+    if (!user?.id) return;
+    const fieldToUpdate = type === 'scout' ? 'avatar_url' : 'custom_avatar_url';
+    if (type === 'scout') {
+      setScoutAvatarUrl(null);
+    } else {
+      setCustomAvatarUrl(null);
+    }
+    await updateUserProfile({ [fieldToUpdate]: null });
+    try {
+      await supabase.from('profiles').update({ [fieldToUpdate]: null }).eq('id', user.id);
+      await refreshProfile();
+      showAlert('Foto Eliminada', 'Se ha eliminado la foto de perfil.');
+    } catch (err: any) {
+      console.warn('Error eliminando foto de perfil:', err);
+    }
+  };
+
   const calcCompletion = () => {
     const requiredFields = [
       user?.name,
@@ -419,6 +437,7 @@ export default function ProfileScreen() {
             size={96}
             editable={true}
             onPhotoChange={handlePhotoChange}
+            onDeletePhoto={handleDeletePhoto}
           />
         </View>
         <Text style={[styles.name, { color: theme.text }]}>{user?.name || 'Scout'}</Text>

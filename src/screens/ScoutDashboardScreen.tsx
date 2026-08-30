@@ -6,6 +6,7 @@ import HelpFloatingFAB from '../components/HelpFloatingFAB';
 import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
 import { dataService } from '../lib/dataService';
+import { presenceService } from '../services/presenceService';
 import { colors } from '../theme/colors';
 import { useFocusEffect } from '@react-navigation/native';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
@@ -94,6 +95,18 @@ export default function ScoutDashboardScreen({ navigation }: any) {
   useEffect(() => {
     if (user) {
       loadDashboardData();
+
+      // Suscribirse a cambios de presencia en tiempo real
+      const unsubPresence = presenceService.subscribe((onlineIds) => {
+        setRoversList(prev => prev.map(r => ({
+          ...r,
+          isOnline: presenceService.isUserOnline(r.id, r.updated_at)
+        })));
+      });
+
+      return () => {
+        unsubPresence();
+      };
     }
   }, [user]);
 
@@ -114,7 +127,11 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
     // Obtener directorio de Rovers de la misma unidad
     const rovers = await dataService.getUnitRoversDirectory(user.group_name || 'Grupo Scout Orión #84', user.unit || 'clan');
-    setRoversList(rovers);
+    const enrichedRovers = rovers.map(r => ({
+      ...r,
+      isOnline: presenceService.isUserOnline(r.id, r.updated_at)
+    }));
+    setRoversList(enrichedRovers);
 
     const unreadNotifs = await dataService.getUnreadNotifications(user.id);
     setNotifications(unreadNotifs);

@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabaseClient';
 import { RequirementProgress, StageStatus } from '../types/progression';
 import { stagesData } from '../data/progressionTemplate';
+import { notificationService } from '../services/notificationService';
+import { presenceService } from '../services/presenceService';
 
 const SYNC_QUEUE_KEY = '@scout_offline_sync_queue';
 
@@ -288,6 +290,16 @@ export const dataService = {
       .update({ status: 'Aprobada', updated_at: new Date().toISOString() })
       .eq('scout_id', scoutId)
       .eq('stage_id', stageId);
+
+    const stageTitle = stagesData.find(s => s.id === stageId)?.title || 'Etapa';
+
+    // Despachar notificación Push y en vivo al Scout
+    await notificationService.sendNotification({
+      receiverId: scoutId,
+      title: '🎉 ¡Etapa e Insignia Aprobadas!',
+      message: `¡Felicidades! Tu dirigente ha aprobado oficialmente tu etapa "${stageTitle}". Ya pasaste a la siguiente etapa.`,
+      type: 'badge'
+    }).catch(() => {});
   },
 
   async rejectStage(scoutId: string, stageId: string, reason?: string) {
@@ -298,14 +310,16 @@ export const dataService = {
       .eq('scout_id', scoutId)
       .eq('stage_id', stageId);
 
-    if (reason) {
-      await supabase.from('scout_notifications').insert({
-        scout_id: scoutId,
-        title: 'Etapa Deuelta a Revisión',
-        reason: reason,
-        is_read: false
-      });
-    }
+    const stageTitle = stagesData.find(s => s.id === stageId)?.title || 'Etapa';
+
+    await notificationService.sendNotification({
+      receiverId: scoutId,
+      title: '📋 Ficha de Etapa Devuelta',
+      message: reason
+        ? `Tu dirigente devolvió tu etapa "${stageTitle}": ${reason}`
+        : `Tu dirigente ha revisado tu etapa "${stageTitle}" y requiere completar requisitos pendientes.`,
+      type: 'alert'
+    }).catch(() => {});
   },
 
   async getScoutsForScouter(unit: string, groupName: string) {
@@ -941,10 +955,8 @@ export const dataService = {
         filtered = data;
       }
 
-      const now = Date.now();
       return filtered.map(p => {
-        const lastSeenTime = p.updated_at ? new Date(p.updated_at).getTime() : (p.created_at ? new Date(p.created_at).getTime() : 0);
-        const isOnline = (now - lastSeenTime) < (10 * 60 * 1000);
+        const isOnline = presenceService.isUserOnline(p.id, p.updated_at);
         return {
           ...p,
           name: p.name || p.full_name || 'Scout',
