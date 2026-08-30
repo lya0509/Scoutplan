@@ -74,34 +74,6 @@ export default function PlanProgresivoScreen({ navigation }: any) {
     );
   }
 
-  const isClan = (user?.unit || 'clan').toLowerCase() === 'clan';
-
-  if (!isClan) {
-    return (
-      <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
-        <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(99, 102, 241, 0.15)', justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
-          <Text style={{ fontSize: 36 }}>🚀</Text>
-        </View>
-        <Text style={{ fontSize: 22, fontWeight: 'bold', color: theme.text, textAlign: 'center' }}>
-          Plan Progresivo Próximamente
-        </Text>
-        <Text style={{ fontSize: 14, color: theme.subText, textAlign: 'center', marginTop: 10, lineHeight: 22, maxWidth: 360 }}>
-          El Plan Progresivo para la unidad de <Text style={{ fontWeight: 'bold', color: colors.primary }}>{(user?.unit || 'tu unidad').toUpperCase()}</Text> se encuentra actualmente en fase de desarrollo e integración digital.
-        </Text>
-        <View style={{ marginTop: 24, backgroundColor: isDarkMode ? '#18181b' : '#f1f5f9', padding: 16, borderRadius: 16, width: '100%', maxWidth: 380, borderWidth: 1, borderColor: theme.border }}>
-          <Text style={{ fontSize: 13, fontWeight: 'bold', color: colors.primary, marginBottom: 6 }}>💡 Secciones 100% Activas para tu Unidad:</Text>
-          <Text style={{ fontSize: 12, color: theme.subText, lineHeight: 20 }}>
-            • 📅 Calendario de Eventos y Actividades{'\n'}
-            • 📋 Ficha Médica Scout Autocompletada{'\n'}
-            • 📷 Drive de Fotos y Multimedia{'\n'}
-            • 📜 Currículum Scout Exportable en Word{'\n'}
-            • 🪢 Manual de Nudos y Cancionero Offline
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.bg }]}>
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderBottomColor: theme.border }]}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,11 @@ import {
   ActivityIndicator,
   Modal
 } from 'react-native';
-import { Search, CheckSquare, Square, Lock, XCircle, ArrowLeft } from 'lucide-react-native';
+import { Search, CheckSquare, Square, Lock, XCircle, ArrowLeft, CheckCircle2 } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { supabase } from '../lib/supabaseClient';
 import { dataService } from '../lib/dataService';
 import { activitiesCatalog } from '../data/activitiesCatalog';
 import { colors } from '../theme/colors';
@@ -54,39 +56,53 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
   
   const [modalMessage, setModalMessage] = useState<string | null>(null);
 
+  const bg = theme?.bg || (isDarkMode ? '#09090b' : '#f8fafc');
+  const textColor = theme?.text || (isDarkMode ? '#f4f4f5' : '#0f172a');
+  const subTextColor = theme?.subText || (isDarkMode ? '#a1a1aa' : '#64748b');
+  const cardBg = theme?.cardBg || (isDarkMode ? '#18181b' : '#ffffff');
+  const borderColor = theme?.border || (isDarkMode ? '#27272a' : '#e2e8f0');
+  const inputBg = theme?.inputBg || (isDarkMode ? '#27272a' : '#f1f5f9');
+
   useEffect(() => {
     loadData();
-  }, [user]);
+  }, [user, stageId]);
 
   const loadData = async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
+      // 1. Obtener estado de la etapa
       const status = await dataService.getStageStatus(user.id, stageId);
-      setStageStatus(status);
+      setStageStatus(status || 'En Progreso');
 
-      const completedIds = await dataService.getCompletedCatalogActivityIds(user.id);
-      
+      // 2. Obtener todos los requisitos completados del usuario en una sola consulta
+      const { data: userReqs, error } = await supabase
+        .from('requirement_progress')
+        .select('requirement_id, stage_id, completed')
+        .eq('scout_id', user.id);
+
       const currentStageCompleted: string[] = [];
       const previousCompleted: string[] = [];
 
-      for (const id of completedIds) {
-        const isCurrent = await dataService.getRequirement(user.id, stageId, id);
-        const activityItem = activitiesCatalog.find(a => a.id === id);
-
-        const subStr = (activityItem?.subArea || '').toUpperCase();
-        const superStr = (activityItem?.superArea || '').toUpperCase();
-        const areaStr = (activityItem?.area || '').toUpperCase();
-
-        const isBasic = subStr.includes('BÁSIC') || superStr.includes('BÁSIC') || areaStr.includes('BÁSIC');
-        const isOptional = subStr.includes('OPCIONAL') || superStr.includes('OPCIONAL') || areaStr.includes('OPCIONAL');
-
-        const matchesType = reqType === 'basica' ? isBasic : isOptional;
-
-        if (isCurrent && matchesType) {
-          currentStageCompleted.push(id);
-        } else if (!isCurrent && matchesType) {
-          previousCompleted.push(id);
+      if (userReqs && userReqs.length > 0) {
+        userReqs.forEach(r => {
+          if (r.completed) {
+            if (r.stage_id === stageId) {
+              currentStageCompleted.push(r.requirement_id);
+            } else {
+              previousCompleted.push(r.requirement_id);
+            }
+          }
+        });
+      } else {
+        // Fallback desde almacenamiento local
+        const rawLocal = await AsyncStorage.getItem(`@scout_catalog_ids_${user.id}`);
+        if (rawLocal) {
+          const parsed: string[] = JSON.parse(rawLocal);
+          parsed.forEach(id => currentStageCompleted.push(id));
         }
       }
 
@@ -113,7 +129,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
     const isCurrentlySelected = selectedIds.includes(id);
 
     if (!isCurrentlySelected && selectedIds.length >= requiredCount) {
-      setModalMessage(`Ya alcanzaste el máximo de ${requiredCount} actividades ${reqType === 'basica' ? 'básicas' : 'opcionales'} para esta etapa.`);
+      setModalMessage(`Ya alcanzaste el cupo requerido de ${requiredCount} actividades ${reqType === 'basica' ? 'básicas' : 'opcionales'} para esta etapa.`);
       return;
     }
 
@@ -123,15 +139,17 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
 
     setSelectedIds(newSelection);
 
-    // Guardar la actividad del catálogo
+    // Guardar la actividad del catálogo en Supabase y localmente
     await dataService.toggleRequirement(user.id, stageId, id, !isCurrentlySelected);
 
-    // Si al hacer toggle se alcanza o desmarcan las actividades, actualizar automáticamente el requisito padre de la etapa si se especificó reqId
+    // Actualizar automáticamente el requisito padre de la etapa si se especificó reqId
     if (reqId) {
       const willBeCompleted = newSelection.length >= requiredCount;
       await dataService.toggleRequirement(user.id, stageId, reqId, willBeCompleted);
     }
   };
+
+  const isBasicType = String(reqType).toLowerCase().includes('basic');
 
   const filteredActivities = activitiesCatalog.filter(act => {
     // 1. Excluir resúmenes del Cuadro de Adelantos y nombres de insignias/etapas (act_1 a act_87)
@@ -143,7 +161,6 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
     }
 
     // 2. Filtrar por el tipo actual (Básicas u Opcionales)
-    const isBasicType = reqType === 'basica';
     const superStr = (act.superArea || '').toUpperCase();
     const subStr = (act.subArea || '').toUpperCase();
     const areaStr = (act.area || '').toUpperCase();
@@ -167,8 +184,6 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
     return isAreaMatch && isSearchMatch;
   });
 
-  const isClan = (user?.unit || 'clan').toLowerCase() === 'clan';
-
   const handleReturnToStage = () => {
     if (stageId) {
       navigation.navigate('StageDetail', { stageId });
@@ -177,59 +192,40 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
     }
   };
 
-  if (!isClan) {
-    return (
-      <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
-        <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(99, 102, 241, 0.15)', justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
-          <Text style={{ fontSize: 36 }}>🚀</Text>
-        </View>
-        <Text style={{ fontSize: 22, fontWeight: 'bold', color: theme.text, textAlign: 'center' }}>
-          Centro de Actividades Próximamente
-        </Text>
-        <Text style={{ fontSize: 14, color: theme.subText, textAlign: 'center', marginTop: 10, lineHeight: 22, maxWidth: 360 }}>
-          El catálogo oficial de actividades para la unidad de <Text style={{ fontWeight: 'bold', color: colors.primary }}>{(user?.unit || 'tu unidad').toUpperCase()}</Text> se encuentra en desarrollo.
-        </Text>
-        <TouchableOpacity
-          style={{ marginTop: 24, backgroundColor: colors.primary, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 14 }}
-          onPress={handleReturnToStage}
-        >
-          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>← Volver a la Etapa</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   return (
-    <View style={[styles.container, { backgroundColor: theme.bg }]}>
+    <View style={[styles.container, { backgroundColor: bg }]}>
       {/* Cabecera */}
-      <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderColor: theme.border }]}>
+      <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : '#ffffff', borderColor: borderColor }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
           <TouchableOpacity
             style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', marginRight: 10 }}
             onPress={handleReturnToStage}
           >
-            <ArrowLeft size={16} color={theme.text} style={{ marginRight: 4 }} />
-            <Text style={{ fontWeight: 'bold', fontSize: 13, color: theme.text }}>Volver</Text>
+            <ArrowLeft size={16} color={textColor} style={{ marginRight: 4 }} />
+            <Text style={{ fontWeight: 'bold', fontSize: 13, color: textColor }}>Volver</Text>
           </TouchableOpacity>
-          <Text style={[styles.title, { color: theme.text, flex: 1 }]}>
-            Catálogo de Actividades {reqType === 'basica' ? 'Básicas' : 'Opcionales'}
+          <Text style={[styles.title, { color: textColor, flex: 1 }]}>
+            Catálogo de Actividades {isBasicType ? 'Básicas' : 'Opcionales'}
           </Text>
         </View>
         
         <View style={styles.counterBox}>
-          <Text style={styles.counterText}>
+          <Text style={[styles.counterText, { color: subTextColor }]}>
             Seleccionadas: <Text style={styles.counterHighlight}>{selectedIds.length}</Text> / {requiredCount}
           </Text>
           {selectedIds.length >= requiredCount && (
-            <Text style={styles.completedBadge}>✓ REQUISITO CUMPLIDO</Text>
+            <View style={styles.completedBadgeWrapper}>
+              <CheckCircle2 size={14} color="#16a34a" style={{ marginRight: 4 }} />
+              <Text style={styles.completedBadge}>REQUISITO CUMPLIDO</Text>
+            </View>
           )}
         </View>
 
         {/* Buscador */}
-        <View style={[styles.searchWrapper, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
+        <View style={[styles.searchWrapper, { backgroundColor: inputBg, borderColor: borderColor }]}>
           <Search size={18} color={isDarkMode ? '#a1a1aa' : '#71717a'} style={{ marginRight: 8 }} />
           <TextInput
-            style={[styles.searchInput, { color: theme.text }]}
+            style={[styles.searchInput, { color: textColor }]}
             placeholder="Buscar por palabra clave, nudos, fogata, comunidad..."
             placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
             value={searchQuery}
@@ -237,21 +233,21 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
           />
         </View>
 
-        {/* Filtros por Categorías / Subáreas exactas del Excel */}
+        {/* Filtros por Categorías / Subáreas exactas */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }}>
           {SUB_AREAS.map(area => (
             <TouchableOpacity
               key={area}
               style={[
                 styles.chip,
-                { backgroundColor: theme.inputBg, borderColor: theme.border },
+                { backgroundColor: inputBg, borderColor: borderColor },
                 selectedArea === area && { backgroundColor: colors.primary, borderColor: colors.primary }
               ]}
               onPress={() => setSelectedArea(area)}
             >
               <Text style={[
                 styles.chipText,
-                { color: theme.subText },
+                { color: subTextColor },
                 selectedArea === area && { color: 'white', fontWeight: 'bold' }
               ]}>
                 {area === 'TODAS' ? 'TODAS LAS CATEGORÍAS' : area}
@@ -262,12 +258,16 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
       </View>
 
       {/* Lista de Actividades */}
-      <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 20 }}>
+      <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 30 }}>
         {loading ? (
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+          <View style={{ alignItems: 'center', marginTop: 40 }}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={{ color: subTextColor, marginTop: 12, fontSize: 13 }}>Cargando catálogo de actividades...</Text>
+          </View>
         ) : filteredActivities.length === 0 ? (
-          <View style={[styles.emptyCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-            <Text style={[styles.emptyTitle, { color: theme.text }]}>No se encontraron actividades</Text>
+          <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: borderColor }]}>
+            <Text style={[styles.emptyTitle, { color: textColor }]}>No se encontraron actividades</Text>
+            <Text style={{ color: subTextColor, fontSize: 12, marginTop: 4 }}>Prueba buscando otra palabra o selecciona "TODAS LAS CATEGORÍAS"</Text>
           </View>
         ) : (
           filteredActivities.map(act => {
@@ -279,7 +279,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
                 key={act.id}
                 style={[
                   styles.card,
-                  { backgroundColor: theme.cardBg, borderColor: theme.border },
+                  { backgroundColor: cardBg, borderColor: borderColor },
                   isSelected && (isDarkMode ? styles.cardSelectedDark : styles.cardSelected),
                   isDisabled && (isDarkMode ? styles.cardDisabledDark : styles.cardDisabled)
                 ]}
@@ -300,7 +300,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
                 <View style={{ flex: 1 }}>
                   <Text style={[
                     styles.cardText,
-                    { color: theme.text },
+                    { color: textColor },
                     isSelected && styles.cardTextSelected,
                     isDisabled && { color: isDarkMode ? '#52525b' : '#aaa' }
                   ]}>
@@ -309,7 +309,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
                   
                   <View style={styles.tagRow}>
                     {act.subArea ? <Text style={[styles.tagText, { color: colors.primary, fontWeight: 'bold' }]}>{act.subArea}</Text> : null}
-                    {act.area ? <Text style={[styles.tagAreaText, { color: theme.subText }]}>• {act.area}</Text> : null}
+                    {act.area ? <Text style={[styles.tagAreaText, { color: subTextColor }]}>• {act.area}</Text> : null}
                     {isDisabled && (
                       <Text style={styles.disabledTagText}>Completada en etapa anterior</Text>
                     )}
@@ -323,7 +323,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
 
       {/* BARRA INFERIOR: BOTÓN DE GUARDAR Y ACEPTAR REQUISITO */}
       {!isReadOnly && (
-        <View style={[styles.bottomBar, { backgroundColor: isDarkMode ? '#121214' : 'white', borderTopColor: theme.border }]}>
+        <View style={[styles.bottomBar, { backgroundColor: isDarkMode ? '#121214' : 'white', borderTopColor: borderColor }]}>
           <TouchableOpacity
             style={[
               styles.saveAcceptBtn,
@@ -357,10 +357,10 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
       {/* Modal de Aviso */}
       <Modal visible={modalMessage !== null} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
+          <View style={[styles.modalCard, { backgroundColor: cardBg, borderColor: borderColor, borderWidth: 1 }]}>
             <XCircle size={40} color="#f59e0b" style={{ marginBottom: 12 }} />
-            <Text style={[styles.modalTitle, { color: theme.text }]}>Atención</Text>
-            <Text style={[styles.modalDesc, { color: theme.subText }]}>{modalMessage}</Text>
+            <Text style={[styles.modalTitle, { color: textColor }]}>Atención</Text>
+            <Text style={[styles.modalDesc, { color: subTextColor }]}>{modalMessage}</Text>
             
             <TouchableOpacity style={styles.modalBtn} onPress={() => setModalMessage(null)}>
               <Text style={styles.modalBtnText}>Entendido</Text>
@@ -377,8 +377,9 @@ const styles = StyleSheet.create({
   header: { padding: 18, borderBottomWidth: 1 },
   title: { fontSize: 18, fontWeight: 'bold' },
   counterBox: { marginVertical: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  counterText: { fontSize: 14, color: '#475569', fontWeight: '600' },
+  counterText: { fontSize: 14, fontWeight: '600' },
   counterHighlight: { color: colors.primary, fontWeight: 'bold', fontSize: 16 },
+  completedBadgeWrapper: { flexDirection: 'row', alignItems: 'center' },
   completedBadge: { color: '#16a34a', fontWeight: 'bold', fontSize: 12 },
   searchWrapper: { flexDirection: 'row', alignItems: 'center', borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, height: 40, marginTop: 4 },
   searchInput: { flex: 1, fontSize: 14 },
