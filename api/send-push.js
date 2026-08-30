@@ -83,7 +83,11 @@ module.exports = async (req, res) => {
               auth: s.auth
             }
           },
-          payload
+          payload,
+          {
+            urgency: 'high',
+            TTL: 86400
+          }
         );
         sent++;
       } catch (err) {

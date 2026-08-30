@@ -306,7 +306,11 @@ class WebPushService {
     // 1. Intentar despacho mediante la función Serverless backend de Vercel (Sin bloqueo de CORS)
     try {
       if (typeof window !== 'undefined') {
-        const res = await fetch('/api/send-push', {
+        const pushApiUrl = window.location.hostname.includes('vercel.app')
+          ? '/api/send-push'
+          : 'https://scoutplan.vercel.app/api/send-push';
+
+        const res = await fetch(pushApiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -398,7 +402,11 @@ class WebPushService {
     // 1. Intentar despacho mediante backend Serverless
     try {
       if (typeof window !== 'undefined') {
-        const res = await fetch('/api/send-push', {
+        const pushApiUrl = window.location.hostname.includes('vercel.app')
+          ? '/api/send-push'
+          : 'https://scoutplan.vercel.app/api/send-push';
+
+        const res = await fetch(pushApiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
