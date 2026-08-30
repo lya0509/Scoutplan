@@ -128,6 +128,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         phone: resolvedPhone,
         region: resolvedRegion,
         district: resolvedDistrict,
+        avatar_url: resolvedScoutAvatar || data?.avatar_url || null,
         scout_avatar_url: resolvedScoutAvatar,
         custom_avatar_url: resolvedCustomAvatar,
         membership_status: resolvedMembershipStatus,
