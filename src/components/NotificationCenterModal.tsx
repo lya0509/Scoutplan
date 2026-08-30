@@ -51,6 +51,12 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
   // Soporte universal para gestos de retroceso en Android, iOS y PWA
   useModalBackHandler(visible, onClose);
 
+  React.useEffect(() => {
+    if (visible) {
+      refreshNotifications();
+    }
+  }, [visible, refreshNotifications]);
+
   const [activeTab, setActiveTab] = useState<'inbox' | 'test'>('inbox');
   const [testingType, setTestingType] = useState<string | null>(null);
   const [testSuccessMessage, setTestSuccessMessage] = useState<string | null>(null);

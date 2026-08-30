@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabaseClient';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface AppNotification {
   id: string;
@@ -16,8 +17,9 @@ export interface AppNotification {
 }
 
 class NotificationService {
-  private channel: RealtimeChannel | null = null;
+  private broadcastChannel: RealtimeChannel | null = null;
   private listeners: Set<(notification: AppNotification) => void> = new Set();
+  private processedIds: Set<string> = new Set();
 
   /**
    * Obtiene el estado actual del permiso de notificaciones Push del navegador.
@@ -63,7 +65,7 @@ class NotificationService {
         osc.frequency.setValueAtTime(740, ctx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
 
-        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
 
         osc.connect(gain);
@@ -85,7 +87,6 @@ class NotificationService {
 
     if (typeof window !== 'undefined' && 'Notification' in window && window.Notification.permission === 'granted') {
       try {
-        // Si hay un Service Worker activo (PWA / Mobile Chrome), usar showNotification
         if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
           navigator.serviceWorker.ready.then(reg => {
             reg.showNotification(title, {
@@ -108,7 +109,6 @@ class NotificationService {
           });
         }
 
-        // Vibración en dispositivos móviles
         if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
           navigator.vibrate([200, 100, 200]);
         }
@@ -119,7 +119,25 @@ class NotificationService {
   }
 
   /**
-   * Suscribe en tiempo real (WebSockets) a las notificaciones dirigidas al usuario, su grupo o su unidad.
+   * Guarda una notificación en el historial local del usuario.
+   */
+  private async saveLocalNotification(userId: string, notification: AppNotification) {
+    try {
+      const key = `@scout_notifications_storage_${userId}`;
+      const raw = await AsyncStorage.getItem(key);
+      const list: AppNotification[] = raw ? JSON.parse(raw) : [];
+
+      if (!list.some(n => n.id === notification.id)) {
+        const updated = [notification, ...list].slice(0, 100);
+        await AsyncStorage.setItem(key, JSON.stringify(updated));
+      }
+    } catch (e) {
+      console.warn('Error guardando notificación local:', e);
+    }
+  }
+
+  /**
+   * Suscribe en tiempo real (WebSockets + Broadcast Channel) a las notificaciones dirigidas al usuario.
    */
   subscribeToLiveNotifications(
     userId: string,
@@ -130,56 +148,71 @@ class NotificationService {
   ): () => void {
     this.listeners.add(onNotification);
 
-    if (!this.channel) {
+    if (!this.broadcastChannel) {
       try {
-        this.channel = supabase
-          .channel(`notifications_realtime_global_${Date.now()}`)
-          .on(
-            'postgres_changes',
-            { event: 'INSERT', schema: 'public', table: 'notifications' },
-            (payload) => {
-              const newNotif = payload.new as AppNotification;
-              if (!newNotif) return;
+        this.broadcastChannel = (supabase as any)
+          .channel('scout_realtime_notifications_hub')
+          .on('broadcast', { event: 'scout_notification' }, ({ payload }: any) => {
+            const newNotif = payload as AppNotification;
+            if (!newNotif || this.processedIds.has(newNotif.id)) return;
 
-              // Validar si la notificación corresponde a este usuario
+            const isDirectUser = Boolean(newNotif.receiver_id && newNotif.receiver_id === userId);
+            const isRoleMatch = Boolean(newNotif.receiver_role && role && newNotif.receiver_role.toLowerCase() === role.toLowerCase());
+            const isGroupMatch = !newNotif.receiver_id && Boolean(newNotif.group_name && groupName && newNotif.group_name.toLowerCase() === groupName.toLowerCase());
+            const isUnitMatch = !newNotif.unit || Boolean(unit && newNotif.unit.toLowerCase() === unit.toLowerCase());
+
+            if (isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !newNotif.group_name))) {
+              this.processedIds.add(newNotif.id);
+              this.saveLocalNotification(userId, newNotif);
+              this.triggerSystemPushNotification(newNotif.title, newNotif.message);
+
+              this.listeners.forEach(cb => {
+                try { cb(newNotif); } catch (e) {}
+              });
+            }
+          })
+          .on(
+            'postgres_changes' as any,
+            { event: 'INSERT', schema: 'public', table: 'notifications' },
+            (payload: any) => {
+              const newNotif = payload.new as AppNotification;
+              if (!newNotif || this.processedIds.has(newNotif.id)) return;
+
               const isDirectUser = Boolean(newNotif.receiver_id && newNotif.receiver_id === userId);
               const isRoleMatch = Boolean(newNotif.receiver_role && role && newNotif.receiver_role.toLowerCase() === role.toLowerCase());
               const isGroupMatch = !newNotif.receiver_id && Boolean(newNotif.group_name && groupName && newNotif.group_name.toLowerCase() === groupName.toLowerCase());
               const isUnitMatch = !newNotif.unit || Boolean(unit && newNotif.unit.toLowerCase() === unit.toLowerCase());
 
               if (isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !newNotif.group_name))) {
-                // Notificar en el sistema operativo / PUSH
+                this.processedIds.add(newNotif.id);
+                this.saveLocalNotification(userId, newNotif);
                 this.triggerSystemPushNotification(newNotif.title, newNotif.message);
 
                 this.listeners.forEach(cb => {
-                  try {
-                    cb(newNotif);
-                  } catch (e) {
-                    console.error('Error en callback de notificación en vivo:', e);
-                  }
+                  try { cb(newNotif); } catch (e) {}
                 });
               }
             }
           )
-          .subscribe((status) => {
-            console.log('📡 [Realtime] Conexión de Notificaciones en Vivo:', status);
+          .subscribe((status: any) => {
+            console.log('📡 [Realtime Hub] Conexión de Notificaciones en Vivo:', status);
           });
       } catch (err) {
-        console.warn('Aviso inicializando Realtime Channel de Notificaciones:', err);
+        console.warn('Aviso inicializando Realtime Channel:', err);
       }
     }
 
     return () => {
       this.listeners.delete(onNotification);
-      if (this.listeners.size === 0 && this.channel) {
-        supabase.removeChannel(this.channel);
-        this.channel = null;
+      if (this.listeners.size === 0 && this.broadcastChannel) {
+        supabase.removeChannel(this.broadcastChannel);
+        this.broadcastChannel = null;
       }
     };
   }
 
   /**
-   * Envía una notificación instantánea a la base de datos (se distribuye en vivo a todos los receptores).
+   * Envía una notificación instantánea (Broadcast en Vivo + Base de Datos + Almacenamiento Local).
    */
   async sendNotification(params: {
     senderId?: string;
@@ -191,39 +224,71 @@ class NotificationService {
     groupName?: string;
     unit?: string;
   }): Promise<AppNotification | null> {
-    try {
-      const payload = {
-        sender_id: params.senderId || null,
-        receiver_id: params.receiverId || null,
-        receiver_role: params.receiverRole || null,
-        title: params.title,
-        message: params.message,
-        type: params.type || 'info',
-        group_name: params.groupName || null,
-        unit: params.unit || null,
-        read: false
-      };
+    const notifObj: AppNotification = {
+      id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      sender_id: params.senderId || null,
+      receiver_id: params.receiverId || null,
+      receiver_role: params.receiverRole || null,
+      title: params.title,
+      message: params.message,
+      type: params.type || 'info',
+      group_name: params.groupName || null,
+      unit: params.unit || null,
+      read: false,
+      created_at: new Date().toISOString()
+    };
 
-      const { data, error } = await supabase
-        .from('notifications')
-        .insert(payload)
-        .select()
-        .single();
-
-      if (error) {
-        console.warn('Aviso enviando notificación a Supabase:', error.message);
-        return null;
-      }
-
-      return data as AppNotification;
-    } catch (e) {
-      console.warn('Error enviando notificación:', e);
-      return null;
+    // 1. Guardar en almacenamiento local del receptor
+    if (params.receiverId) {
+      await this.saveLocalNotification(params.receiverId, notifObj);
     }
+    await this.saveLocalNotification('global_all', notifObj);
+
+    // 2. Transmisión Instantánea por WebSocket Broadcast
+    try {
+      if (this.broadcastChannel) {
+        await this.broadcastChannel.send({
+          type: 'broadcast',
+          event: 'scout_notification',
+          payload: notifObj
+        });
+      } else {
+        const tempChannel = supabase.channel('scout_realtime_notifications_hub');
+        tempChannel.subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await tempChannel.send({
+              type: 'broadcast',
+              event: 'scout_notification',
+              payload: notifObj
+            });
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('Aviso enviando broadcast en vivo:', e);
+    }
+
+    // 3. Persistir en base de datos Supabase
+    try {
+      await supabase.from('notifications').insert(notifObj);
+    } catch (e) {}
+
+    try {
+      if (params.receiverId) {
+        await supabase.from('scout_notifications').insert({
+          scout_id: params.receiverId,
+          title: params.title,
+          reason: params.message,
+          is_read: false
+        });
+      }
+    } catch (e) {}
+
+    return notifObj;
   }
 
   /**
-   * Obtiene la lista de notificaciones históricas del usuario con filtrado seguro.
+   * Obtiene la lista de notificaciones históricas del usuario (Supabase + LocalStorage unificados).
    */
   async getUserNotifications(
     userId: string,
@@ -231,50 +296,89 @@ class NotificationService {
     role?: string | null,
     unit?: string | null
   ): Promise<AppNotification[]> {
+    const combinedMap = new Map<string, AppNotification>();
+
+    // 1. Cargar desde almacenamiento local
     try {
-      const { data, error } = await supabase
+      const rawUser = await AsyncStorage.getItem(`@scout_notifications_storage_${userId}`);
+      if (rawUser) {
+        const list: AppNotification[] = JSON.parse(rawUser);
+        list.forEach(item => combinedMap.set(item.id, item));
+      }
+
+      const rawGlobal = await AsyncStorage.getItem('@scout_notifications_storage_global_all');
+      if (rawGlobal) {
+        const list: AppNotification[] = JSON.parse(rawGlobal);
+        list.forEach(item => {
+          const isDirectUser = item.receiver_id === userId;
+          const isRoleMatch = Boolean(item.receiver_role && role && item.receiver_role.toLowerCase() === role.toLowerCase());
+          const isGroupMatch = !item.receiver_id && Boolean(item.group_name && groupName && item.group_name.toLowerCase() === groupName.toLowerCase());
+          const isUnitMatch = !item.unit || Boolean(unit && item.unit.toLowerCase() === unit.toLowerCase());
+
+          if (isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !item.group_name))) {
+            combinedMap.set(item.id, item);
+          }
+        });
+      }
+    } catch (e) {}
+
+    // 2. Cargar desde Supabase tabla 'notifications'
+    try {
+      const { data } = await supabase
         .from('notifications')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (error) {
-        console.warn('Aviso obteniendo notificaciones:', error.message);
-        return [];
+      if (data && data.length > 0) {
+        data.forEach((item: AppNotification) => {
+          const isDirectUser = item.receiver_id === userId;
+          const isRoleMatch = Boolean(item.receiver_role && role && item.receiver_role.toLowerCase() === role.toLowerCase());
+          const isGroupMatch = !item.receiver_id && Boolean(item.group_name && groupName && item.group_name.toLowerCase() === groupName.toLowerCase());
+          const isUnitMatch = !item.unit || Boolean(unit && item.unit.toLowerCase() === unit.toLowerCase());
+
+          if (isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !item.group_name))) {
+            combinedMap.set(item.id, item);
+          }
+        });
       }
+    } catch (e) {}
 
-      if (!data || data.length === 0) return [];
+    // 3. Cargar desde Supabase tabla 'scout_notifications' (si existían allí)
+    try {
+      const { data: legacyData } = await supabase
+        .from('scout_notifications')
+        .select('*')
+        .eq('scout_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-      // Filtrado robusto en memoria para compatibilidad total
-      const filtered = data.filter((item: AppNotification) => {
-        if (item.receiver_id && item.receiver_id === userId) return true;
-
-        if (item.receiver_role && role && item.receiver_role.toLowerCase() === role.toLowerCase()) {
-          if (!item.group_name || (groupName && item.group_name.toLowerCase() === groupName.toLowerCase())) {
-            return true;
+      if (legacyData && legacyData.length > 0) {
+        legacyData.forEach((item: any) => {
+          const legacyId = `legacy_${item.id}`;
+          if (!combinedMap.has(legacyId)) {
+            combinedMap.set(legacyId, {
+              id: legacyId,
+              receiver_id: userId,
+              title: item.title || 'Notificación Scout',
+              message: item.reason || item.message || '',
+              type: item.title?.includes('Aprobada') ? 'badge' : (item.title?.includes('Ficha') ? 'alert' : 'info'),
+              read: Boolean(item.is_read),
+              created_at: item.created_at || new Date().toISOString()
+            });
           }
-        }
+        });
+      }
+    } catch (e) {}
 
-        if (!item.receiver_id && !item.receiver_role) {
-          if (!item.group_name || (groupName && item.group_name.toLowerCase() === groupName.toLowerCase())) {
-            if (!item.unit || (unit && item.unit.toLowerCase() === unit.toLowerCase())) {
-              return true;
-            }
-          }
-        }
+    const results = Array.from(combinedMap.values());
+    results.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-        return false;
-      });
-
-      return filtered;
-    } catch (e) {
-      console.warn('Error procesando notificaciones:', e);
-      return [];
-    }
+    return results;
   }
 
   /**
-   * Marca una notificación como leída.
+   * Marca una notificación como leída en almacenamiento local y base de datos.
    */
   async markAsRead(notificationId: string): Promise<void> {
     try {
@@ -282,9 +386,17 @@ class NotificationService {
         .from('notifications')
         .update({ read: true })
         .eq('id', notificationId);
-    } catch (e) {
-      console.warn('Error marcando notificación leída:', e);
-    }
+    } catch (e) {}
+
+    try {
+      if (notificationId.startsWith('legacy_')) {
+        const rawId = notificationId.replace('legacy_', '');
+        await supabase
+          .from('scout_notifications')
+          .update({ is_read: true })
+          .eq('id', rawId);
+      }
+    } catch (e) {}
   }
 
   /**
@@ -292,13 +404,28 @@ class NotificationService {
    */
   async markAllAsRead(userId: string): Promise<void> {
     try {
+      const key = `@scout_notifications_storage_${userId}`;
+      const raw = await AsyncStorage.getItem(key);
+      if (raw) {
+        const list: AppNotification[] = JSON.parse(raw);
+        const updated = list.map(n => ({ ...n, read: true }));
+        await AsyncStorage.setItem(key, JSON.stringify(updated));
+      }
+    } catch (e) {}
+
+    try {
       await supabase
         .from('notifications')
         .update({ read: true })
         .eq('receiver_id', userId);
-    } catch (e) {
-      console.warn('Error marcando todas leídas:', e);
-    }
+    } catch (e) {}
+
+    try {
+      await supabase
+        .from('scout_notifications')
+        .update({ is_read: true })
+        .eq('scout_id', userId);
+    } catch (e) {}
   }
 }
 
