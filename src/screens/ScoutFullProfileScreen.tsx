@@ -146,11 +146,10 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
   };
 
   const handleDeleteScoutPhoto = async (type: 'scout' | 'custom') => {
-    const fieldToUpdate = type === 'scout' ? 'avatar_url' : 'custom_avatar_url';
     try {
-      await supabase.from('profiles').update({ [fieldToUpdate]: null }).eq('id', scoutId);
+      await dataService.deleteProfilePhotoWithReason(scoutId, '', type);
       loadFullScoutData();
-      showAlert('Foto Eliminada', 'Se ha eliminado la foto del perfil del scout.');
+      showAlert('Foto Eliminada', `Se ha eliminado la ${type === 'custom' ? 'foto personal' : 'foto scout'} del perfil.`);
     } catch (err: any) {
       showAlert('Error', err?.message || 'No se pudo eliminar la foto.');
     }

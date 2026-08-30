@@ -12,6 +12,8 @@ interface NotificationContextData {
   showManualToast: (title: string, message: string, type?: AppNotification['type']) => void;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
+  clearAllNotifications: () => Promise<void>;
   refreshNotifications: () => Promise<void>;
 }
 
@@ -133,14 +135,33 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   const markAsRead = async (id: string) => {
-    await notificationService.markAsRead(id);
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    if (user?.id) {
+      await notificationService.markAsRead(id, user.id);
+    } else {
+      await notificationService.markAsRead(id);
+    }
   };
 
   const markAllAsRead = async () => {
-    if (!user?.id) return;
-    await notificationService.markAllAsRead(user.id);
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    if (user?.id) {
+      await notificationService.markAllAsRead(user.id);
+    }
+  };
+
+  const deleteNotification = async (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    if (user?.id) {
+      await notificationService.deleteNotification(id, user.id);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    setNotifications([]);
+    if (user?.id) {
+      await notificationService.clearAllNotifications(user.id);
+    }
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -157,6 +178,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         showManualToast,
         markAsRead,
         markAllAsRead,
+        deleteNotification,
+        clearAllNotifications,
         refreshNotifications
       }}
     >

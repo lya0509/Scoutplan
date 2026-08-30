@@ -21,7 +21,8 @@ import {
   AlertTriangle,
   Play,
   CheckCircle2,
-  Radio
+  Radio,
+  Trash2
 } from 'lucide-react-native';
 import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
@@ -43,6 +44,8 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
     requestPushPermission,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
+    clearAllNotifications,
     refreshNotifications
   } = useNotifications();
   const { user } = useAuth();
@@ -259,15 +262,28 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                     <Text style={{ fontSize: 11, color: theme.subText }}>
                       {unreadCount} sin leer de {notifications.length} total
                     </Text>
-                    <TouchableOpacity
-                      style={styles.markAllBtn}
-                      onPress={markAllAsRead}
-                    >
-                      <CheckCheck size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                      <Text style={{ fontSize: 11, color: colors.primary, fontWeight: 'bold' }}>
-                        Marcar todo leído
-                      </Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                      {unreadCount > 0 && (
+                        <TouchableOpacity
+                          style={styles.markAllBtn}
+                          onPress={markAllAsRead}
+                        >
+                          <CheckCheck size={14} color={colors.primary} style={{ marginRight: 4 }} />
+                          <Text style={{ fontSize: 11, color: colors.primary, fontWeight: 'bold' }}>
+                            Marcar todo leído
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      <TouchableOpacity
+                        style={[styles.markAllBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}
+                        onPress={clearAllNotifications}
+                      >
+                        <Trash2 size={13} color={theme.subText} style={{ marginRight: 4 }} />
+                        <Text style={{ fontSize: 11, color: theme.subText, fontWeight: 'bold' }}>
+                          Vaciar
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 )}
 
@@ -302,7 +318,9 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                           borderLeftWidth: notif.read ? 1 : 4,
                         }
                       ]}
-                      onPress={() => markAsRead(notif.id)}
+                      onPress={() => {
+                        if (!notif.read) markAsRead(notif.id);
+                      }}
                       activeOpacity={0.8}
                     >
                       <View style={[styles.notifIconWrap, { backgroundColor: isDarkMode ? '#27272a' : '#f4f4f5' }]}>
@@ -340,9 +358,21 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                         )}
                       </View>
 
-                      {!notif.read && (
-                        <View style={styles.unreadDot} />
-                      )}
+                      <View style={{ alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                        {!notif.read && (
+                          <View style={styles.unreadDot} />
+                        )}
+                        <TouchableOpacity
+                          style={{ padding: 4 }}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            deleteNotification(notif.id);
+                          }}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Trash2 size={14} color={theme.subText} />
+                        </TouchableOpacity>
+                      </View>
                     </TouchableOpacity>
                   ))
                 )}

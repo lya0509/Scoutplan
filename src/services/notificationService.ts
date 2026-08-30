@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabaseClient';
+﻿import { supabase } from '../lib/supabaseClient';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -298,25 +298,45 @@ class NotificationService {
   ): Promise<AppNotification[]> {
     const combinedMap = new Map<string, AppNotification>();
 
+    // Cargar IDs leídos y eliminados localmente
+    let readIdsSet = new Set<string>();
+    let deletedIdsSet = new Set<string>();
+    try {
+      const rawRead = await AsyncStorage.getItem(`@scout_notifications_read_ids_${userId}`);
+      if (rawRead) readIdsSet = new Set(JSON.parse(rawRead));
+
+      const rawDeleted = await AsyncStorage.getItem(`@scout_notifications_deleted_ids_${userId}`);
+      if (rawDeleted) deletedIdsSet = new Set(JSON.parse(rawDeleted));
+    } catch (e) {}
+
     // 1. Cargar desde almacenamiento local
     try {
       const rawUser = await AsyncStorage.getItem(`@scout_notifications_storage_${userId}`);
       if (rawUser) {
         const list: AppNotification[] = JSON.parse(rawUser);
-        list.forEach(item => combinedMap.set(item.id, item));
+        list.forEach(item => {
+          if (!deletedIdsSet.has(item.id)) {
+            combinedMap.set(item.id, {
+              ...item,
+              read: item.read || readIdsSet.has(item.id)
+            });
+          }
+        });
       }
 
       const rawGlobal = await AsyncStorage.getItem('@scout_notifications_storage_global_all');
       if (rawGlobal) {
         const list: AppNotification[] = JSON.parse(rawGlobal);
         list.forEach(item => {
+          if (deletedIdsSet.has(item.id)) return;
           const isDirectUser = item.receiver_id === userId;
           const isRoleMatch = Boolean(item.receiver_role && role && item.receiver_role.toLowerCase() === role.toLowerCase());
           const isGroupMatch = !item.receiver_id && Boolean(item.group_name && groupName && item.group_name.toLowerCase() === groupName.toLowerCase());
           const isUnitMatch = !item.unit || Boolean(unit && item.unit.toLowerCase() === unit.toLowerCase());
 
           if (isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !item.group_name))) {
-            combinedMap.set(item.id, item);
+            const isRead = item.read || readIdsSet.has(item.id) || (combinedMap.has(item.id) && combinedMap.get(item.id)!.read);
+            combinedMap.set(item.id, { ...item, read: Boolean(isRead) });
           }
         });
       }
@@ -332,13 +352,15 @@ class NotificationService {
 
       if (data && data.length > 0) {
         data.forEach((item: AppNotification) => {
+          if (deletedIdsSet.has(item.id)) return;
           const isDirectUser = item.receiver_id === userId;
           const isRoleMatch = Boolean(item.receiver_role && role && item.receiver_role.toLowerCase() === role.toLowerCase());
           const isGroupMatch = !item.receiver_id && Boolean(item.group_name && groupName && item.group_name.toLowerCase() === groupName.toLowerCase());
           const isUnitMatch = !item.unit || Boolean(unit && item.unit.toLowerCase() === unit.toLowerCase());
 
           if (isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !item.group_name))) {
-            combinedMap.set(item.id, item);
+            const isRead = item.read || readIdsSet.has(item.id) || (combinedMap.has(item.id) && combinedMap.get(item.id)!.read);
+            combinedMap.set(item.id, { ...item, read: Boolean(isRead) });
           }
         });
       }
@@ -356,14 +378,16 @@ class NotificationService {
       if (legacyData && legacyData.length > 0) {
         legacyData.forEach((item: any) => {
           const legacyId = `legacy_${item.id}`;
+          if (deletedIdsSet.has(legacyId)) return;
           if (!combinedMap.has(legacyId)) {
+            const isRead = Boolean(item.is_read) || readIdsSet.has(legacyId);
             combinedMap.set(legacyId, {
               id: legacyId,
               receiver_id: userId,
               title: item.title || 'Notificación Scout',
               message: item.reason || item.message || '',
               type: item.title?.includes('Aprobada') ? 'badge' : (item.title?.includes('Ficha') ? 'alert' : 'info'),
-              read: Boolean(item.is_read),
+              read: isRead,
               created_at: item.created_at || new Date().toISOString()
             });
           }
@@ -380,7 +404,37 @@ class NotificationService {
   /**
    * Marca una notificación como leída en almacenamiento local y base de datos.
    */
-  async markAsRead(notificationId: string): Promise<void> {
+  async markAsRead(notificationId: string, userId?: string): Promise<void> {
+    if (userId) {
+      try {
+        const readKey = `@scout_notifications_read_ids_${userId}`;
+        const rawRead = await AsyncStorage.getItem(readKey);
+        const readSet: string[] = rawRead ? JSON.parse(rawRead) : [];
+        if (!readSet.includes(notificationId)) {
+          readSet.push(notificationId);
+          await AsyncStorage.setItem(readKey, JSON.stringify(readSet));
+        }
+
+        const userKey = `@scout_notifications_storage_${userId}`;
+        const rawUser = await AsyncStorage.getItem(userKey);
+        if (rawUser) {
+          const list: AppNotification[] = JSON.parse(rawUser);
+          const updated = list.map(n => n.id === notificationId ? { ...n, read: true } : n);
+          await AsyncStorage.setItem(userKey, JSON.stringify(updated));
+        }
+      } catch (e) {}
+    }
+
+    try {
+      const globalKey = '@scout_notifications_storage_global_all';
+      const rawGlobal = await AsyncStorage.getItem(globalKey);
+      if (rawGlobal) {
+        const list: AppNotification[] = JSON.parse(rawGlobal);
+        const updated = list.map(n => n.id === notificationId ? { ...n, read: true } : n);
+        await AsyncStorage.setItem(globalKey, JSON.stringify(updated));
+      }
+    } catch (e) {}
+
     try {
       await supabase
         .from('notifications')
@@ -404,13 +458,15 @@ class NotificationService {
    */
   async markAllAsRead(userId: string): Promise<void> {
     try {
-      const key = `@scout_notifications_storage_${userId}`;
-      const raw = await AsyncStorage.getItem(key);
-      if (raw) {
-        const list: AppNotification[] = JSON.parse(raw);
-        const updated = list.map(n => ({ ...n, read: true }));
-        await AsyncStorage.setItem(key, JSON.stringify(updated));
-      }
+      const userKey = `@scout_notifications_storage_${userId}`;
+      const raw = await AsyncStorage.getItem(userKey);
+      const list: AppNotification[] = raw ? JSON.parse(raw) : [];
+      const updated = list.map(n => ({ ...n, read: true }));
+      await AsyncStorage.setItem(userKey, JSON.stringify(updated));
+
+      const readKey = `@scout_notifications_read_ids_${userId}`;
+      const allIds = list.map(n => n.id);
+      await AsyncStorage.setItem(readKey, JSON.stringify(allIds));
     } catch (e) {}
 
     try {
@@ -425,6 +481,69 @@ class NotificationService {
         .from('scout_notifications')
         .update({ is_read: true })
         .eq('scout_id', userId);
+    } catch (e) {}
+  }
+
+  /**
+   * Elimina una notificación individual de la bandeja.
+   */
+  async deleteNotification(notificationId: string, userId: string): Promise<void> {
+    try {
+      const delKey = `@scout_notifications_deleted_ids_${userId}`;
+      const rawDel = await AsyncStorage.getItem(delKey);
+      const delSet: string[] = rawDel ? JSON.parse(rawDel) : [];
+      if (!delSet.includes(notificationId)) {
+        delSet.push(notificationId);
+        await AsyncStorage.setItem(delKey, JSON.stringify(delSet));
+      }
+
+      const userKey = `@scout_notifications_storage_${userId}`;
+      const rawUser = await AsyncStorage.getItem(userKey);
+      if (rawUser) {
+        const list: AppNotification[] = JSON.parse(rawUser);
+        const filtered = list.filter(n => n.id !== notificationId);
+        await AsyncStorage.setItem(userKey, JSON.stringify(filtered));
+      }
+    } catch (e) {}
+
+    try {
+      await supabase.from('notifications').delete().eq('id', notificationId);
+    } catch (e) {}
+
+    try {
+      if (notificationId.startsWith('legacy_')) {
+        const rawId = notificationId.replace('legacy_', '');
+        await supabase.from('scout_notifications').delete().eq('id', rawId);
+      }
+    } catch (e) {}
+  }
+
+  /**
+   * Limpia y vacía toda la bandeja de notificaciones.
+   */
+  async clearAllNotifications(userId: string): Promise<void> {
+    try {
+      const userKey = `@scout_notifications_storage_${userId}`;
+      const raw = await AsyncStorage.getItem(userKey);
+      if (raw) {
+        const list: AppNotification[] = JSON.parse(raw);
+        const delKey = `@scout_notifications_deleted_ids_${userId}`;
+        const rawDel = await AsyncStorage.getItem(delKey);
+        const delSet: string[] = rawDel ? JSON.parse(rawDel) : [];
+        list.forEach(n => {
+          if (!delSet.includes(n.id)) delSet.push(n.id);
+        });
+        await AsyncStorage.setItem(delKey, JSON.stringify(delSet));
+        await AsyncStorage.removeItem(userKey);
+      }
+    } catch (e) {}
+
+    try {
+      await supabase.from('notifications').delete().eq('receiver_id', userId);
+    } catch (e) {}
+
+    try {
+      await supabase.from('scout_notifications').delete().eq('scout_id', userId);
     } catch (e) {}
   }
 }

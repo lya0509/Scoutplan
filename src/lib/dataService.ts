@@ -1037,20 +1037,23 @@ export const dataService = {
     }
   },
 
-  async deleteProfilePhotoWithReason(scoutId: string, reason: string) {
+  async deleteProfilePhotoWithReason(scoutId: string, reason: string, photoType: 'scout' | 'custom' | 'both' = 'both') {
     try {
-      await supabase.from('profiles').update({
-        avatar_url: null,
-        photo_rejected_reason: reason
-      }).eq('id', scoutId);
+      const updatePayload: any = { photo_rejected_reason: reason || null };
+      if (photoType === 'scout' || photoType === 'both') updatePayload.avatar_url = null;
+      if (photoType === 'custom' || photoType === 'both') updatePayload.custom_avatar_url = null;
+
+      await supabase.from('profiles').update(updatePayload).eq('id', scoutId);
+
+      const typeLabel = photoType === 'custom' ? 'Foto Personal' : (photoType === 'scout' ? 'Foto Scout con Uniforme' : 'Foto de Perfil');
 
       // Notificación Push en tiempo real al Scout
       await notificationService.sendNotification({
         receiverId: scoutId,
-        title: '📷 Foto de Perfil Removida por Dirigente',
+        title: `📷 ${typeLabel} Removida por Dirigente`,
         message: reason && reason.trim()
-          ? `Tu dirigente ha solicitado cambiar tu foto de perfil: ${reason}`
-          : 'Tu dirigente ha removido tu foto de perfil. Por favor sube una foto con tu uniforme scout.',
+          ? `Tu dirigente ha solicitado cambiar tu ${typeLabel.toLowerCase()}: ${reason}`
+          : `Tu dirigente ha removido tu ${typeLabel.toLowerCase()}. Por favor sube una foto adecuada.`,
         type: 'alert'
       }).catch(() => {});
     } catch (e) {
