@@ -303,6 +303,31 @@ class WebPushService {
     targetUserId: string,
     payload: PushPayload
   ): Promise<number> {
+    // 1. Intentar despacho mediante la función Serverless backend de Vercel (Sin bloqueo de CORS)
+    try {
+      if (typeof window !== 'undefined') {
+        const res = await fetch('/api/send-push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            receiverId: targetUserId,
+            title: payload.title,
+            message: payload.body,
+            url: payload.url || '/',
+            data: payload.data || {}
+          })
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          if (json.count !== undefined) return json.count;
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Aviso intentando dispatch vía /api/send-push:', apiErr);
+    }
+
+    // 2. Fallback: Despacho directo con Web Crypto API
     try {
       const { data: subscriptions, error } = await supabase
         .from('push_subscriptions')
@@ -370,6 +395,33 @@ class WebPushService {
     role?: string;
     payload: PushPayload;
   }): Promise<number> {
+    // 1. Intentar despacho mediante backend Serverless
+    try {
+      if (typeof window !== 'undefined') {
+        const res = await fetch('/api/send-push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            groupName: params.groupName,
+            unit: params.unit,
+            receiverRole: params.role,
+            title: params.payload.title,
+            message: params.payload.body,
+            url: params.payload.url || '/',
+            data: params.payload.data || {}
+          })
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          if (json.count !== undefined) return json.count;
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Aviso intentando dispatch masivo vía /api/send-push:', apiErr);
+    }
+
+    // 2. Fallback
     try {
       let query = supabase.from('profiles').select('id');
       if (params.role) query = query.eq('role', params.role);
