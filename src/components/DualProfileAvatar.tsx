@@ -10,7 +10,7 @@ import {
   Modal,
   Platform
 } from 'react-native';
-import { Camera, RefreshCw, User, Sparkles, Shield, Maximize2, Trash2, X, Download } from 'lucide-react-native';
+import { Camera, Sparkles, Maximize2, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { UserScoutAvatar } from './UserScoutAvatar';
 import { useTheme } from '../context/ThemeContext';
 import { showAlert } from '../utils/alert';
@@ -41,24 +41,69 @@ export function DualProfileAvatar({
   const [uploading, setUploading] = useState(false);
   const [showZoomModal, setShowZoomModal] = useState(false);
 
-  // Gesto PanResponder para detectar arrastre / swipe horizontal fluido
+  // Soporte universal para gestos de arrastre / swipe (Tanto Web como Móvil)
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const isSwipeGesture = useRef(false);
+
+  // PanResponder nativo optimizado
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => false,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 12;
+        return Math.abs(gestureState.dx) > 10;
+      },
+      onMoveShouldSetPanResponderCapture: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 10;
+      },
+      onPanResponderGrant: () => {
+        isSwipeGesture.current = false;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (Math.abs(gestureState.dx) > 15) {
+          isSwipeGesture.current = true;
+        }
       },
       onPanResponderRelease: (_, gestureState) => {
         if (gestureState.dx < -25) {
-          // Deslizar hacia la izquierda -> Foto Personal
+          // Deslizar izquierda -> Foto Personal
           setActiveTab('custom');
         } else if (gestureState.dx > 25) {
-          // Deslizar hacia la derecha -> Foto Scout Institucional
+          // Deslizar derecha -> Foto Scout Institucional
           setActiveTab('scout');
+        } else if (!isSwipeGesture.current && Math.abs(gestureState.dx) < 10 && Math.abs(gestureState.dy) < 10) {
+          // Toque simple sin arrastre (Click / Tap)
+          if (activeTab === 'scout' ? scoutAvatarUrl : customAvatarUrl) {
+            setShowZoomModal(true);
+          } else if (editable) {
+            handlePickImage();
+          }
         }
       },
     })
   ).current;
+
+  // Web direct touch handlers fallback
+  const handleTouchStart = (e: any) => {
+    const x = e?.touches?.[0]?.clientX ?? e?.nativeEvent?.pageX ?? e?.clientX;
+    touchStartX.current = x;
+    isSwipeGesture.current = false;
+  };
+
+  const handleTouchEnd = (e: any) => {
+    if (touchStartX.current === null) return;
+    const x = e?.changedTouches?.[0]?.clientX ?? e?.nativeEvent?.pageX ?? e?.clientX;
+    if (x !== undefined && x !== null) {
+      const diff = x - touchStartX.current;
+      if (diff < -25) {
+        setActiveTab('custom');
+      } else if (diff > 25) {
+        setActiveTab('scout');
+      }
+    }
+    touchStartX.current = null;
+  };
 
   const handlePickImage = () => {
     if (!editable || !onPhotoChange) return;
@@ -77,7 +122,6 @@ export function DualProfileAvatar({
           reader.onload = async (event) => {
             const dataUrl = event.target?.result as string;
             if (dataUrl) {
-              // Redimensionar imagen a máx 800px para que cargue ultra rápido
               const img = new (window as any).Image();
               img.onload = async () => {
                 const canvas = document.createElement('canvas');
@@ -135,9 +179,11 @@ export function DualProfileAvatar({
 
   return (
     <View style={styles.wrapper}>
-      {/* Contenedor circular con PanResponder para gestos */}
-      <TouchableOpacity
+      {/* Contenedor circular limpio con soporte de gestos */}
+      <View
         {...panResponder.panHandlers}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         style={[
           styles.avatarContainer,
           {
@@ -146,16 +192,9 @@ export function DualProfileAvatar({
             borderRadius: size / 2,
             borderColor: activeTab === 'scout' ? primaryColor : '#10b981',
             backgroundColor: isDarkMode ? '#18181b' : '#f4f4f5',
+            cursor: 'pointer' as any,
           },
         ]}
-        onPress={() => {
-          if (currentPhotoUrl) {
-            setShowZoomModal(true);
-          } else if (editable) {
-            handlePickImage();
-          }
-        }}
-        activeOpacity={0.85}
       >
         {uploading ? (
           <ActivityIndicator size="small" color={primaryColor} />
@@ -176,7 +215,7 @@ export function DualProfileAvatar({
           </View>
         )}
 
-        {/* Botón flotante para cambiar foto si es editable */}
+        {/* Botón flotante de cámara solo si es editable */}
         {editable && (
           <TouchableOpacity
             style={[
@@ -192,88 +231,7 @@ export function DualProfileAvatar({
             <Camera size={14} color="#ffffff" />
           </TouchableOpacity>
         )}
-      </TouchableOpacity>
-
-      {/* Indicador de Tipo de Foto y Deslizador (Swipe Dots) */}
-      <View style={styles.indicatorRow}>
-        <TouchableOpacity
-          style={[
-            styles.modePill,
-            {
-              backgroundColor:
-                activeTab === 'scout'
-                  ? primaryColor + '20'
-                  : isDarkMode
-                  ? '#27272a'
-                  : '#f1f5f9',
-              borderColor: activeTab === 'scout' ? primaryColor : 'transparent',
-            },
-          ]}
-          onPress={() => setActiveTab('scout')}
-          activeOpacity={0.7}
-        >
-          <Text
-            style={[
-              styles.modePillText,
-              {
-                color: activeTab === 'scout' ? primaryColor : isDarkMode ? '#a1a1aa' : '#64748b',
-                fontWeight: activeTab === 'scout' ? 'bold' : 'normal',
-              },
-            ]}
-          >
-            ⚜️ Foto Scout
-          </Text>
-        </TouchableOpacity>
-
-        {/* Indicador de Puntos (Dots) */}
-        <View style={styles.dotsContainer}>
-          <View
-            style={[
-              styles.dot,
-              { backgroundColor: activeTab === 'scout' ? primaryColor : isDarkMode ? '#52525b' : '#cbd5e1' },
-            ]}
-          />
-          <View
-            style={[
-              styles.dot,
-              { backgroundColor: activeTab === 'custom' ? '#10b981' : isDarkMode ? '#52525b' : '#cbd5e1' },
-            ]}
-          />
-        </View>
-
-        <TouchableOpacity
-          style={[
-            styles.modePill,
-            {
-              backgroundColor:
-                activeTab === 'custom'
-                  ? '#10b98120'
-                  : isDarkMode
-                  ? '#27272a'
-                  : '#f1f5f9',
-              borderColor: activeTab === 'custom' ? '#10b981' : 'transparent',
-            },
-          ]}
-          onPress={() => setActiveTab('custom')}
-          activeOpacity={0.7}
-        >
-          <Text
-            style={[
-              styles.modePillText,
-              {
-                color: activeTab === 'custom' ? '#10b981' : isDarkMode ? '#a1a1aa' : '#64748b',
-                fontWeight: activeTab === 'custom' ? 'bold' : 'normal',
-              },
-            ]}
-          >
-            ✨ Foto Personal
-          </Text>
-        </TouchableOpacity>
       </View>
-
-      <Text style={[styles.gestureTip, { color: isDarkMode ? '#71717a' : '#94a3b8' }]}>
-        ↔️ Desliza hacia los lados para alternar | Toca la foto para ampliar
-      </Text>
 
       {/* MODAL DE ZOOM / LIGHTBOX A PANTALLA COMPLETA */}
       <Modal
@@ -300,22 +258,49 @@ export function DualProfileAvatar({
             </TouchableOpacity>
           </View>
 
-          {/* Imagen a gran resolución */}
+          {/* Imagen a gran resolución con flechas de alternar foto */}
           <View style={styles.zoomImageContainer}>
+            <TouchableOpacity
+              style={styles.navArrowBtn}
+              onPress={() => setActiveTab(prev => prev === 'scout' ? 'custom' : 'scout')}
+            >
+              <ChevronLeft size={28} color="white" />
+            </TouchableOpacity>
+
             {currentPhotoUrl ? (
               <Image
                 source={{ uri: currentPhotoUrl }}
                 style={styles.zoomImage}
                 resizeMode="contain"
               />
-            ) : null}
+            ) : (
+              <View style={[styles.zoomImage, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={{ color: '#ffffff', opacity: 0.7 }}>Sin foto cargada</Text>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={styles.navArrowBtn}
+              onPress={() => setActiveTab(prev => prev === 'scout' ? 'custom' : 'scout')}
+            >
+              <ChevronRight size={28} color="white" />
+            </TouchableOpacity>
           </View>
 
           {/* Barra de Acciones Inferior */}
           <View style={styles.zoomActions}>
+            <TouchableOpacity
+              style={[styles.zoomActionBtn, { backgroundColor: activeTab === 'scout' ? primaryColor : '#10b981' }]}
+              onPress={() => setActiveTab(prev => prev === 'scout' ? 'custom' : 'scout')}
+            >
+              <Text style={styles.zoomActionBtnText}>
+                {activeTab === 'scout' ? 'Ver Foto Personal ➡️' : '⬅️ Ver Foto Scout'}
+              </Text>
+            </TouchableOpacity>
+
             {editable && onPhotoChange && (
               <TouchableOpacity
-                style={[styles.zoomActionBtn, { backgroundColor: primaryColor }]}
+                style={[styles.zoomActionBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
                 onPress={() => {
                   setShowZoomModal(false);
                   setTimeout(() => handlePickImage(), 300);
@@ -390,38 +375,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 4,
   },
-  indicatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-    gap: 6,
-  },
-  modePill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  modePillText: {
-    fontSize: 10,
-  },
-  dotsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 2,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  gestureTip: {
-    fontSize: 10,
-    marginTop: 4,
-    textAlign: 'center',
-  },
   zoomOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.92)',
@@ -447,12 +400,21 @@ const styles = StyleSheet.create({
   },
   zoomImageContainer: {
     flex: 1,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginVertical: 20,
+    gap: 8,
+  },
+  navArrowBtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    padding: 8,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   zoomImage: {
-    width: '100%',
+    flex: 1,
     maxWidth: 380,
     height: 380,
     borderRadius: 20,
