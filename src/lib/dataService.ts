@@ -344,7 +344,9 @@ export const dataService = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).filter(
+      d => !d.category?.startsWith('vida_grupo_') && !d.category?.startsWith('cip_sel_')
+    );
   },
 
   async uploadCertificate(scoutId: string, title: string, category: string, level: string | null, fileUrl: string, date?: string) {
