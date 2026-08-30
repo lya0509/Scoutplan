@@ -13,7 +13,7 @@ import {
   Linking
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { CheckSquare, Square, Lock, Send, Flag, X, CheckCircle, Award, Sparkles, Plus, Trash2, LayoutGrid, List } from 'lucide-react-native';
+import { CheckSquare, Square, Lock, Send, Flag, X, CheckCircle, Award, Sparkles, Plus, Trash2, LayoutGrid, List, ArrowLeft } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -326,6 +326,24 @@ export default function StageDetailScreen({ route, navigation }: any) {
     <ScrollView style={[styles.container, { backgroundColor: theme.bg }]}>
       {/* Cabecera de Etapa */}
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderBottomColor: theme.border }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              borderRadius: 10,
+              backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
+              gap: 6
+            }}
+            onPress={() => navigation.goBack()}
+          >
+            <ArrowLeft size={16} color={theme.text} />
+            <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>Volver al Plan Progresivo</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.headerTitleRow}>
           <StageBadgeIcon stageId={stageTemplate.id} size={50} />
           <View style={{ flex: 1, marginLeft: 14 }}>

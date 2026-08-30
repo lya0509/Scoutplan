@@ -108,8 +108,8 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       const resolvedPhone = data?.phone || meta.phone || '';
       const resolvedRegion = data?.region || meta.region || '';
       const resolvedDistrict = data?.district || meta.district || '';
-      const resolvedScoutAvatar = data?.scout_avatar_url || meta.scout_avatar_url || null;
-      const resolvedCustomAvatar = data?.custom_avatar_url || meta.custom_avatar_url || null;
+      const resolvedScoutAvatar = data ? (data.scout_avatar_url || data.avatar_url || null) : (meta.scout_avatar_url || null);
+      const resolvedCustomAvatar = data ? (data.custom_avatar_url || null) : (meta.custom_avatar_url || null);
       const resolvedMembershipStatus = data?.membership_status || meta.membership_status || 'vigente';
       const resolvedMembershipExpiresAt = data?.membership_expires_at || meta.membership_expires_at || null;
       const resolvedMembershipRejectedReason = data?.membership_rejected_reason || meta.membership_rejected_reason || null;
@@ -128,7 +128,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         phone: resolvedPhone,
         region: resolvedRegion,
         district: resolvedDistrict,
-        avatar_url: resolvedScoutAvatar || data?.avatar_url || null,
+        avatar_url: resolvedScoutAvatar,
         scout_avatar_url: resolvedScoutAvatar,
         custom_avatar_url: resolvedCustomAvatar,
         membership_status: resolvedMembershipStatus,

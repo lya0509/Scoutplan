@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen, Flag, Moon } from 'lucide-react-native';
+import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen, Flag, Moon, ArrowLeft } from 'lucide-react-native';
 import { dataService } from '../lib/dataService';
 import { notificationService } from '../services/notificationService';
 import { useTheme } from '../context/ThemeContext';
@@ -116,6 +116,24 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <View style={[styles.header, isDarkMode && { backgroundColor: '#121214', borderBottomWidth: 1, borderBottomColor: '#27272a' }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              borderRadius: 10,
+              backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
+              gap: 6
+            }}
+            onPress={() => navigation.goBack()}
+          >
+            <ArrowLeft size={16} color={theme.text} />
+            <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>Volver al Panel</Text>
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.subtitle}>Revisando ficha de:</Text>
         <Text style={styles.title}>{scoutName}</Text>
 

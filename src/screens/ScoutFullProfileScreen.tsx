@@ -20,7 +20,7 @@ import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import { StageBadgeIcon } from '../components/StageBadgeIcon';
 import { certificateCategories, specialtyLevels } from '../data/specialtiesData';
 import { colors } from '../theme/colors';
-import { Trash2, AlertTriangle, Award, CheckCircle, Mail, MapPin, Shield, Download, X, Maximize2 } from 'lucide-react-native';
+import { Trash2, AlertTriangle, Award, CheckCircle, Mail, MapPin, Shield, Download, X, Maximize2, ArrowLeft } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 
 export default function ScoutFullProfileScreen({ route, navigation }: any) {
@@ -165,10 +165,39 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ paddingBottom: 40 }}>
-      
-      {/* TARJETA SUPERIOR DE PERFIL DE SCOUT */}
-      <View style={[styles.profileHeaderCard, { backgroundColor: isDarkMode ? '#121214' : 'white', borderColor: theme.border }]}>
+    <View style={{ flex: 1, backgroundColor: theme.bg }}>
+      {/* BARRA SUPERIOR DE NAVEGACIÓN (PC Y MÓVIL) */}
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: isDarkMode ? '#121214' : 'white',
+        borderBottomWidth: 1,
+        borderBottomColor: theme.border
+      }}>
+        <TouchableOpacity
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 6,
+            paddingHorizontal: 12,
+            borderRadius: 10,
+            backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
+            gap: 6
+          }}
+          onPress={() => navigation.goBack()}
+        >
+          <ArrowLeft size={16} color={theme.text} />
+          <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>Volver al Panel</Text>
+        </TouchableOpacity>
+        <Text style={{ fontSize: 14, fontWeight: 'bold', color: theme.text }}>Ficha del Scout</Text>
+      </View>
+
+      <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ paddingBottom: 40 }}>
+        {/* TARJETA SUPERIOR DE PERFIL DE SCOUT */}
+        <View style={[styles.profileHeaderCard, { backgroundColor: isDarkMode ? '#121214' : 'white', borderColor: theme.border }]}>
         <View style={styles.avatarRow}>
           <DualProfileAvatar
             scoutAvatarUrl={profile?.avatar_url}
@@ -433,7 +462,8 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
         </View>
       </Modal>
 
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 

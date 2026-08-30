@@ -21,7 +21,8 @@ import {
   ExternalLink,
   Filter,
   Layers,
-  FileCode
+  FileCode,
+  ArrowLeft
 } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useModalBackHandler } from '../hooks/useBackHandler';
@@ -37,7 +38,7 @@ const CATEGORIES = [
   { id: 'formacion', label: '🎓 Formación de Adultos', icon: CheckCircle },
 ];
 
-export default function DocumentosScreen() {
+export default function DocumentosScreen({ navigation }: any) {
   const { isDarkMode, theme, primaryColor } = useTheme();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,6 +89,25 @@ export default function DocumentosScreen() {
       >
         {/* Cabecera Principal */}
         <View style={[styles.headerBanner, { backgroundColor: isDarkMode ? '#18181b' : primaryColor }]}>
+          {navigation?.canGoBack?.() && (
+            <TouchableOpacity
+              style={{
+                alignSelf: 'flex-start',
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 5,
+                paddingHorizontal: 10,
+                borderRadius: 8,
+                backgroundColor: 'rgba(0,0,0,0.2)',
+                marginBottom: 10,
+                gap: 6
+              }}
+              onPress={() => navigation.goBack()}
+            >
+              <ArrowLeft size={16} color="#ffffff" />
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#ffffff' }}>Volver</Text>
+            </TouchableOpacity>
+          )}
           <View style={styles.headerIconCircle}>
             <BookOpen size={28} color="#ffffff" />
           </View>

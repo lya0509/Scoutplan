@@ -26,7 +26,8 @@ import {
   FileText,
   Sparkles,
   BookOpen,
-  Filter
+  Filter,
+  ArrowLeft
 } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -180,17 +181,36 @@ export default function ProgramaScoutScreen({ navigation }: any) {
       <View style={styles.contentWrapper}>
         {/* HEADER SUPERIOR */}
         <View style={[styles.header, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', borderBottomColor: theme.border }]}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.headerTitle, { color: theme.text }]}>Programas de Actividades</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e', marginRight: 5 }} />
-              <Text style={{ fontSize: 11, color: theme.subText }}>
-                {isJefe 
-                  ? 'Jefatura de Grupo • En vivo'
-                  : isScouter
-                  ? `Dirigente Scout • Rama ${userUnit.toUpperCase()} • En vivo`
-                  : `Rama ${userUnit.toUpperCase()} • Sincronizado en vivo`}
-              </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 5,
+                paddingHorizontal: 10,
+                borderRadius: 8,
+                backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
+                marginRight: 10,
+                gap: 4
+              }}
+              onPress={() => navigation.goBack()}
+            >
+              <ArrowLeft size={16} color={theme.text} />
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>
+            </TouchableOpacity>
+
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.headerTitle, { color: theme.text }]}>Programas de Actividades</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e', marginRight: 5 }} />
+                <Text style={{ fontSize: 11, color: theme.subText }}>
+                  {isJefe 
+                    ? 'Jefatura de Grupo • En vivo'
+                    : isScouter
+                    ? `Dirigente Scout • Rama ${userUnit.toUpperCase()} • En vivo`
+                    : `Rama ${userUnit.toUpperCase()} • Sincronizado en vivo`}
+                </Text>
+              </View>
             </View>
           </View>
 

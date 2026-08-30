@@ -7,7 +7,7 @@ import {
   ScrollView,
   TextInput
 } from 'react-native';
-import { Music, Search, ChevronRight, Heart, Sparkles, BookOpen } from 'lucide-react-native';
+import { Music, Search, ChevronRight, Heart, Sparkles, BookOpen, ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { colors } from '../theme/colors';
 
@@ -58,7 +58,7 @@ Que así sea...`
   }
 ];
 
-export default function CancioneroScreen() {
+export default function CancioneroScreen({ navigation }: any) {
   const { isDarkMode, theme } = useTheme();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string>('todos');
@@ -73,6 +73,25 @@ export default function CancioneroScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderColor: theme.border }]}>
+        {navigation?.canGoBack?.() && (
+          <TouchableOpacity
+            style={{
+              alignSelf: 'flex-start',
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingVertical: 5,
+              paddingHorizontal: 10,
+              borderRadius: 8,
+              backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
+              marginBottom: 10,
+              gap: 6
+            }}
+            onPress={() => navigation.goBack()}
+          >
+            <ArrowLeft size={16} color={theme.text} />
+            <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>
+          </TouchableOpacity>
+        )}
         <Text style={styles.offlineBadge}>⚡ 100% OFFLINE (CANCIONES Y ORACIONES EN TU BOLSILLO)</Text>
         <Text style={[styles.title, { color: theme.text }]}>Cancionero & Oraciones Scout</Text>
 

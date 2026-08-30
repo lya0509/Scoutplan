@@ -11,7 +11,7 @@ import {
   Platform,
   Alert
 } from 'react-native';
-import { Compass, Edit3, MessageSquare, Plus, CheckCircle, AlertCircle, X, Shield, Calendar as CalendarIcon, Trash2, Check, Eye, Download, ChevronLeft, ChevronRight, Copy, FileSpreadsheet, History } from 'lucide-react-native';
+import { Compass, Edit3, MessageSquare, Plus, CheckCircle, AlertCircle, X, Shield, Calendar as CalendarIcon, Trash2, Check, Eye, Download, ChevronLeft, ChevronRight, Copy, FileSpreadsheet, History, ArrowLeft } from 'lucide-react-native';
 import { Calendar as RNCalendar, DateData } from 'react-native-calendars';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
@@ -866,6 +866,24 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
       
       {/* CABECERA OFICIAL ASOCIACIÓN DE SCOUTS */}
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderColor: theme.border }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingVertical: 5,
+              paddingHorizontal: 10,
+              borderRadius: 8,
+              backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
+              gap: 6
+            }}
+            onPress={() => navigation.goBack()}
+          >
+            <ArrowLeft size={16} color={theme.text} />
+            <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* BANNER DE ASOCIACIÓN */}
         <View style={styles.asociacionBanner}>
           <Text style={styles.asociacionText}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>

@@ -10,7 +10,7 @@ import {
   Image,
   Platform
 } from 'react-native';
-import { FileText, Download, Shield, Plus, Trash2, Camera, CheckCircle, AlertCircle, Save } from 'lucide-react-native';
+import { FileText, Download, Shield, Plus, Trash2, Camera, CheckCircle, AlertCircle, Save, ArrowLeft } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
@@ -455,17 +455,35 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
       
       {/* CABECERA */}
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderColor: theme.border }]}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.asociacionBanner}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>
-            <Text style={[styles.title, { color: theme.text }]}>Ficha Médica Oficial</Text>
-          </View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingVertical: 5,
+              paddingHorizontal: 10,
+              borderRadius: 8,
+              backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
+              gap: 6
+            }}
+            onPress={() => navigation.goBack()}
+          >
+            <ArrowLeft size={16} color={theme.text} />
+            <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>
+          </TouchableOpacity>
           {isViewOnlyForScouter && (
             <View style={styles.scouterBadge}>
               <Shield size={12} color="white" style={{ marginRight: 4 }} />
               <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 10 }}>Modo Scouter</Text>
             </View>
           )}
+        </View>
+
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.asociacionBanner}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>
+            <Text style={[styles.title, { color: theme.text }]}>Ficha Médica Oficial</Text>
+          </View>
         </View>
 
         {hasChanges && !isViewOnlyForScouter && (

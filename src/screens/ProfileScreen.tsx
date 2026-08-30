@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
 import { colors } from '../theme/colors';
-import { Edit2, ShieldCheck, AlertTriangle, Plus, Camera, CheckCircle } from 'lucide-react-native';
+import { Edit2, ShieldCheck, AlertTriangle, Plus, Camera, CheckCircle, ArrowLeft } from 'lucide-react-native';
 import { UserScoutAvatar } from '../components/UserScoutAvatar';
 import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import { CarnetScoutModal } from '../components/CarnetScoutModal';
@@ -170,7 +170,7 @@ const progStyles = StyleSheet.create({
   hint: { fontSize: 12, fontStyle: 'italic' },
 });
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ navigation }: any) {
   const { user, refreshProfile, updateUserProfile } = useAuth();
   const { isDarkMode, theme } = useTheme();
 
@@ -249,8 +249,8 @@ export default function ProfileScreen() {
         if (data.membership_expires_at) setMembershipExpiresAt(data.membership_expires_at);
         if (data.membership_status) setMembershipStatus(data.membership_status);
         if (data.membership_rejected_reason) setMembershipRejectedReason(data.membership_rejected_reason);
-        if (data.avatar_url) setScoutAvatarUrl(data.avatar_url);
-        if (data.custom_avatar_url) setCustomAvatarUrl(data.custom_avatar_url);
+        setScoutAvatarUrl(data.avatar_url || '');
+        setCustomAvatarUrl(data.custom_avatar_url || '');
 
         if (data.birth_date) {
           const [y,m,d] = data.birth_date.split('-');
@@ -425,13 +425,30 @@ export default function ProfileScreen() {
     <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ paddingBottom: 40 }}>
       {/* TARJETA DE CABECERA CON AVATAR DUAL SWIPEABLE */}
       <View style={[styles.headerCard, isDarkMode && { backgroundColor: '#121214', borderBottomColor: '#27272a' }]}>
-        <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'flex-end', marginBottom: -10 }}>
+        <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          {navigation?.canGoBack?.() ? (
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 6,
+                paddingHorizontal: 12,
+                borderRadius: 10,
+                backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
+                gap: 6
+              }}
+              onPress={() => navigation.goBack()}
+            >
+              <ArrowLeft size={16} color={theme.text} />
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>
+            </TouchableOpacity>
+          ) : <View />}
           <NotificationHeaderBell />
         </View>
         <View style={{ marginBottom: 12 }}>
           <DualProfileAvatar
-            scoutAvatarUrl={scoutAvatarUrl || user?.avatar_url}
-            customAvatarUrl={customAvatarUrl || user?.custom_avatar_url}
+            scoutAvatarUrl={scoutAvatarUrl}
+            customAvatarUrl={customAvatarUrl}
             unit={user?.unit || undefined}
             role={user?.role}
             size={96}
