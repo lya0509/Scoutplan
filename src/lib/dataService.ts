@@ -1134,5 +1134,150 @@ export const dataService = {
     } catch {}
 
     return updated;
+  },
+
+  // --- GESTIÓN DE REGISTRO DE VIDA DE GRUPO (PEREGRINAJES, CAMPAMENTOS, PROYECTOS) ---
+  async getVidaGrupoLog(scoutId: string, stageId: string, reqId: string) {
+    const key = `@scout_vidagrupo_${scoutId}_${stageId}_${reqId}`;
+    try {
+      const raw = await AsyncStorage.getItem(key);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+
+    try {
+      const { data } = await supabase
+        .from('certificates')
+        .select('*')
+        .eq('user_id', scoutId)
+        .eq('category', `vida_grupo_${stageId}_${reqId}`)
+        .order('created_at', { ascending: false });
+
+      if (data && data.length > 0) {
+        const entries = data.map(d => ({
+          id: d.id,
+          type: (d.issuer || 'peregrinaje') as any,
+          subtype: d.level || undefined,
+          location: d.notes || '',
+          title: d.title || 'Evento de Vida de Grupo',
+          date: d.date || (d.created_at ? d.created_at.split('T')[0] : ''),
+          description: d.description || '',
+          createdAt: d.created_at
+        }));
+        await AsyncStorage.setItem(key, JSON.stringify(entries)).catch(() => {});
+        return entries;
+      }
+    } catch {}
+
+    return [];
+  },
+
+  async addVidaGrupoEntry(
+    scoutId: string,
+    stageId: string,
+    reqId: string,
+    entry: { type: string; subtype?: string; location: string; title: string; date: string; description?: string }
+  ) {
+    const current = await this.getVidaGrupoLog(scoutId, stageId, reqId);
+    const newEntry = {
+      ...entry,
+      id: `vg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      createdAt: new Date().toISOString()
+    };
+    const updated = [newEntry, ...current];
+    const key = `@scout_vidagrupo_${scoutId}_${stageId}_${reqId}`;
+    await AsyncStorage.setItem(key, JSON.stringify(updated));
+
+    try {
+      await supabase.from('certificates').insert({
+        id: newEntry.id,
+        user_id: scoutId,
+        category: `vida_grupo_${stageId}_${reqId}`,
+        title: entry.title,
+        issuer: entry.type,
+        level: entry.subtype || null,
+        notes: entry.location || null,
+        description: entry.description || null,
+        date: entry.date,
+        image_url: null
+      });
+    } catch (e) {
+      console.warn('Aviso guardando Vida de Grupo en Supabase:', e);
+    }
+
+    return newEntry;
+  },
+
+  async deleteVidaGrupoEntry(scoutId: string, stageId: string, reqId: string, entryId: string) {
+    const current = await this.getVidaGrupoLog(scoutId, stageId, reqId);
+    const updated = current.filter((e: any) => e.id !== entryId);
+    const key = `@scout_vidagrupo_${scoutId}_${stageId}_${reqId}`;
+    await AsyncStorage.setItem(key, JSON.stringify(updated));
+
+    try {
+      await supabase.from('certificates').delete().eq('id', entryId);
+    } catch {}
+
+    return updated;
+  },
+
+  // --- GESTIÓN DE SELECCIONES MÚLTIPLES DE CIP / CICLOS INSTITUCIONALES ---
+  async getCipSelections(scoutId: string, stageId: string, reqId: string) {
+    const key = `@scout_cip_selections_${scoutId}_${stageId}_${reqId}`;
+    try {
+      const raw = await AsyncStorage.getItem(key);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+
+    try {
+      const { data } = await supabase
+        .from('certificates')
+        .select('*')
+        .eq('user_id', scoutId)
+        .eq('category', `cip_sel_${stageId}_${reqId}`)
+        .order('created_at', { ascending: false });
+
+      if (data && data.length > 0) {
+        const events = data.map(d => ({
+          id: d.id,
+          title: d.title,
+          scope: d.level || 'distrital',
+          date: d.date || (d.created_at ? d.created_at.split('T')[0] : ''),
+          location: d.notes || '',
+          description: d.description || ''
+        }));
+        await AsyncStorage.setItem(key, JSON.stringify(events)).catch(() => {});
+        return events;
+      }
+    } catch {}
+
+    return [];
+  },
+
+  async saveCipSelections(scoutId: string, stageId: string, reqId: string, events: any[]) {
+    const key = `@scout_cip_selections_${scoutId}_${stageId}_${reqId}`;
+    await AsyncStorage.setItem(key, JSON.stringify(events));
+
+    try {
+      // Eliminar anteriores y re-insertar
+      await supabase.from('certificates').delete().eq('user_id', scoutId).eq('category', `cip_sel_${stageId}_${reqId}`);
+      if (events.length > 0) {
+        const rows = events.map(evt => ({
+          id: evt.id || `cip_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          user_id: scoutId,
+          category: `cip_sel_${stageId}_${reqId}`,
+          title: evt.title,
+          level: evt.scope || 'distrital',
+          notes: evt.location || null,
+          description: evt.description || null,
+          date: evt.date,
+          image_url: null
+        }));
+        await supabase.from('certificates').insert(rows);
+      }
+    } catch (e) {
+      console.warn('Aviso guardando CIP en Supabase:', e);
+    }
+
+    return events;
   }
 };

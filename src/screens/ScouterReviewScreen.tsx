@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen, Flag, Moon, ArrowLeft } from 'lucide-react-native';
+import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen, Flag, Moon, ArrowLeft, Compass, Tent, HeartHandshake } from 'lucide-react-native';
 import { dataService } from '../lib/dataService';
 import { notificationService } from '../services/notificationService';
 import { useTheme } from '../context/ThemeContext';
 import { stagesData } from '../data/progressionTemplate';
 import { activitiesCatalog } from '../data/activitiesCatalog';
 import { NochesAireLibreModal } from '../components/NochesAireLibreModal';
+import { VidaGrupoModal } from '../components/VidaGrupoModal';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 import { navigateBackOrHome } from '../utils/navigationHelper';
@@ -19,10 +20,14 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
   const [checks, setChecks] = useState<Record<string, boolean>>({});
   const [completedActivities, setCompletedActivities] = useState<any[]>([]);
   const [cipList, setCipList] = useState<any[]>([]);
+  const [cipSelectionsMap, setCipSelectionsMap] = useState<Record<string, any[]>>({});
+  const [vidaGrupoMap, setVidaGrupoMap] = useState<Record<string, any[]>>({});
   const [showCatalogDetails, setShowCatalogDetails] = useState<Record<string, boolean>>({});
   const [nightsMap, setNightsMap] = useState<Record<string, any[]>>({});
   const [showNochesModal, setShowNochesModal] = useState(false);
   const [selectedReqForNoches, setSelectedReqForNoches] = useState<any>(null);
+  const [showVidaGrupoModal, setShowVidaGrupoModal] = useState(false);
+  const [selectedReqForVidaGrupo, setSelectedReqForVidaGrupo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,6 +38,8 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
     if (!stageTemplate) return;
     const loadedChecks: Record<string, boolean> = {};
     const loadedNights: Record<string, any[]> = {};
+    const loadedVg: Record<string, any[]> = {};
+    const loadedCipSels: Record<string, any[]> = {};
 
     for (const req of stageTemplate.requirements) {
       loadedChecks[req.id] = await dataService.getRequirement(scoutId, stageId, req.id);
@@ -41,9 +48,21 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
         const logs = await dataService.getNightsLog(scoutId, stageId, req.id);
         loadedNights[req.id] = logs || [];
       }
+
+      if (req.type === 'vida_grupo' || req.text.toLowerCase().includes('peregrinaje') || req.text.toLowerCase().includes('campamento') || req.text.toLowerCase().includes('proyecto de servicio') || req.text.toLowerCase().includes('vida de grupo')) {
+        const logs = await dataService.getVidaGrupoLog(scoutId, stageId, req.id);
+        loadedVg[req.id] = logs || [];
+      }
+
+      if (req.type === 'ciclos' || req.text.toLowerCase().includes('ciclo')) {
+        const sels = await dataService.getCipSelections(scoutId, stageId, req.id);
+        loadedCipSels[req.id] = sels || [];
+      }
     }
     setChecks(loadedChecks);
     setNightsMap(loadedNights);
+    setVidaGrupoMap(loadedVg);
+    setCipSelectionsMap(loadedCipSels);
 
     // Obtener IDs de actividades completadas por el Scout
     const completedIds = await dataService.getCompletedCatalogActivityIds(scoutId);
@@ -165,8 +184,11 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
           const isCatalogReq = req.type === 'basica' || req.type === 'opcional';
           const isCipReq = req.type === 'ciclos' || req.text.toLowerCase().includes('ciclo') || req.text.toLowerCase().includes('cip') || req.text.toLowerCase().includes('6p');
           const isNochesReq = req.type === 'aire_libre' || req.text.toLowerCase().includes('noche');
+          const isVidaGrupoReq = req.type === 'vida_grupo' || req.text.toLowerCase().includes('peregrinaje') || req.text.toLowerCase().includes('campamento') || req.text.toLowerCase().includes('proyecto de servicio') || req.text.toLowerCase().includes('vida de grupo');
           const isExpanded = !showCatalogDetails[req.id];
           const totalNightsLogged = (nightsMap[req.id] || []).reduce((acc: number, item: any) => acc + (item.nightsCount || 1), 0);
+          const reqVgEntries = vidaGrupoMap[req.id] || [];
+          const reqCipSelections = cipSelectionsMap[req.id] || [];
 
           return (
             <View key={req.id} style={{ marginBottom: 10 }}>
@@ -219,9 +241,25 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                     >
                       <Flag size={14} color={colors.primary} style={{ marginRight: 4 }} />
                       <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>
-                        {isExpanded ? 'Ocultar detalles del CIP' : `Ver CIPs registrados/convalidados (${cipList.length})`}
+                        {isExpanded ? 'Ocultar actividades CIP' : `Ver actividades seleccionadas/convalidadas (${reqCipSelections.length || cipList.length})`}
                       </Text>
                       {isExpanded ? <ChevronUp size={14} color={colors.primary} style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color={colors.primary} style={{ marginLeft: 2 }} />}
+                    </TouchableOpacity>
+                  )}
+
+                  {isVidaGrupoReq && (
+                    <TouchableOpacity 
+                      style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        toggleShowDetails(req.id);
+                      }}
+                    >
+                      <Compass size={14} color="#8b5cf6" style={{ marginRight: 4 }} />
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#8b5cf6' }}>
+                        {isExpanded ? 'Ocultar desglose de Vida de Grupo' : `Ver desglose de registros (${reqVgEntries.length} de ${req.requiredCount || 1})`}
+                      </Text>
+                      {isExpanded ? <ChevronUp size={14} color="#8b5cf6" style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color="#8b5cf6" style={{ marginLeft: 2 }} />}
                     </TouchableOpacity>
                   )}
 
@@ -275,18 +313,18 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                 </View>
               )}
 
-              {/* LISTA DESPLEGABLE DE CIPS REGISTRADOS O CONVALIDADOS */}
+              {/* LISTA DESPLEGABLE DE ACTIVIDADES CIP SELECCIONADAS / CONVALIDADAS */}
               {isCipReq && isExpanded && (
                 <View style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.border, borderRadius: 12, padding: 12, marginTop: -4, marginLeft: 10, marginRight: 10 }}>
                   <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text, marginBottom: 8 }}>
-                    Eventos CIP vinculados / convalidados en la unidad:
+                    Actividades CIP seleccionadas por {scoutName} ({reqCipSelections.length} de {req.requiredCount || 1}):
                   </Text>
-                  {cipList.length === 0 ? (
+                  {(reqCipSelections.length > 0 ? reqCipSelections : cipList).length === 0 ? (
                     <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic' }}>
                       No hay eventos CIP registrados o convalidados aún.
                     </Text>
                   ) : (
-                    cipList.map((cip, index) => (
+                    (reqCipSelections.length > 0 ? reqCipSelections : cipList).map((cip, index) => (
                       <View key={cip.id || index} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8, backgroundColor: theme.cardBg, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: theme.border }}>
                         <Flag size={16} color={colors.primary} style={{ marginRight: 8, marginTop: 2 }} />
                         <View style={{ flex: 1 }}>
@@ -294,11 +332,55 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                             {(cip.title || '').replace(/\[6P\s*/gi, '[CIP ').replace(/\b6P\b/gi, 'CIP')}
                           </Text>
                           <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
-                            📅 Fecha / Año: {cip.date || 'Sin fecha'}
+                            📅 Fecha / Año: {cip.date || 'Sin fecha'} {cip.scope ? `(${cip.scope.toUpperCase()})` : ''}
                           </Text>
                           {cip.description ? (
                             <Text style={{ fontSize: 10, color: theme.subText, fontStyle: 'italic', marginTop: 1 }}>
                               {cip.description.replace(/\b6P\b/gi, 'CIP')}
+                            </Text>
+                          ) : null}
+                        </View>
+                      </View>
+                    ))
+                  )}
+                </View>
+              )}
+
+              {/* LISTA DESPLEGABLE DE REGISTROS DE VIDA DE GRUPO */}
+              {isVidaGrupoReq && isExpanded && (
+                <View style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: '#8b5cf6', borderRadius: 12, padding: 12, marginTop: -4, marginLeft: 10, marginRight: 10 }}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#8b5cf6', marginBottom: 8 }}>
+                    Desglose de Vida de Grupo ({reqVgEntries.length} de {req.requiredCount || 1} registrados):
+                  </Text>
+                  {reqVgEntries.length === 0 ? (
+                    <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic' }}>
+                      El Scout aún no ha registrado los detalles para este requisito.
+                    </Text>
+                  ) : (
+                    reqVgEntries.map((entry, index) => (
+                      <View key={entry.id || index} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8, backgroundColor: theme.cardBg, padding: 10, borderRadius: 8, borderWidth: 1, borderColor: theme.border }}>
+                        {entry.type === 'peregrinaje' ? (
+                          <Compass size={18} color={colors.primary} style={{ marginRight: 8, marginTop: 2 }} />
+                        ) : entry.type === 'campamento' ? (
+                          <Tent size={18} color="#16a34a" style={{ marginRight: 8, marginTop: 2 }} />
+                        ) : (
+                          <HeartHandshake size={18} color="#8b5cf6" style={{ marginRight: 8, marginTop: 2 }} />
+                        )}
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>
+                            {entry.title || (entry.type === 'peregrinaje' ? `Peregrinaje ${entry.subtype || ''}` : 'Registro de Vida de Grupo')}
+                          </Text>
+                          {entry.location ? (
+                            <Text style={{ fontSize: 11, color: theme.text, marginTop: 2 }}>
+                              📍 Destino / Lugar: <Text style={{ fontWeight: 'bold' }}>{entry.location}</Text>
+                            </Text>
+                          ) : null}
+                          <Text style={{ fontSize: 11, color: theme.subText, marginTop: 1 }}>
+                            📅 Fecha: {entry.date || 'Sin fecha'} {entry.subtype ? `• Tipo: ${entry.subtype}` : ''}
+                          </Text>
+                          {entry.description ? (
+                            <Text style={{ fontSize: 11, color: theme.subText, fontStyle: 'italic', marginTop: 2 }}>
+                              "{entry.description}"
                             </Text>
                           ) : null}
                         </View>
@@ -322,6 +404,20 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
           reqId={selectedReqForNoches.id}
           reqTitle={selectedReqForNoches.text}
           requiredCount={selectedReqForNoches.requiredCount || 10}
+          isReadOnly={true}
+        />
+      )}
+
+      {/* MODAL DE CONSULTA DE VIDA DE GRUPO PARA EL SCOUTER */}
+      {selectedReqForVidaGrupo && (
+        <VidaGrupoModal
+          visible={showVidaGrupoModal}
+          onClose={() => setShowVidaGrupoModal(false)}
+          scoutId={scoutId}
+          stageId={stageId}
+          reqId={selectedReqForVidaGrupo.id}
+          reqTitle={selectedReqForVidaGrupo.text}
+          requiredCount={selectedReqForVidaGrupo.requiredCount || 1}
           isReadOnly={true}
         />
       )}

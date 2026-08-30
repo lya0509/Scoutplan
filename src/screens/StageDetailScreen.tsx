@@ -23,6 +23,7 @@ import { notificationService } from '../services/notificationService';
 import { stagesData } from '../data/progressionTemplate';
 import { StageBadgeIcon } from '../components/StageBadgeIcon';
 import { NochesAireLibreModal } from '../components/NochesAireLibreModal';
+import { VidaGrupoModal } from '../components/VidaGrupoModal';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 import { checkProfileCompletion } from '../utils/profileGuard';
@@ -45,6 +46,8 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const [cipEvents, setCipEvents] = useState<any[]>([]);
   const [selectedReqForCip, setSelectedReqForCip] = useState<any>(null);
   const [loadingCip, setLoadingCip] = useState(false);
+  const [selectedCipList, setSelectedCipList] = useState<any[]>([]);
+  const [cipCountMap, setCipCountMap] = useState<Record<string, number>>({});
 
   // Modal para vincular Especialidades / Cursos
   const [showCertModal, setShowCertModal] = useState(false);
@@ -61,6 +64,11 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const [selectedReqForNoches, setSelectedReqForNoches] = useState<any>(null);
   const [nochesCountMap, setNochesCountMap] = useState<Record<string, number>>({});
 
+  // Modal para Vida de Grupo (Peregrinajes, Campamentos, Proyecto de Servicio)
+  const [showVidaGrupoModal, setShowVidaGrupoModal] = useState(false);
+  const [selectedReqForVidaGrupo, setSelectedReqForVidaGrupo] = useState<any>(null);
+  const [vidaGrupoCountMap, setVidaGrupoCountMap] = useState<Record<string, number>>({});
+
   // Formulario rápido para convalidar CIP previo
   const [showFastCipForm, setShowFastCipForm] = useState(false);
   const [fastCipName, setFastCipName] = useState('');
@@ -70,6 +78,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
   useModalBackHandler(showCipModal, () => setShowCipModal(false));
   useModalBackHandler(showCertModal, () => setShowCertModal(false));
   useModalBackHandler(showNochesModal, () => setShowNochesModal(false));
+  useModalBackHandler(showVidaGrupoModal, () => setShowVidaGrupoModal(false));
   useModalBackHandler(confirming, () => setConfirming(false));
 
   useFocusEffect(
@@ -86,6 +95,8 @@ export default function StageDetailScreen({ route, navigation }: any) {
       const reqChecks: Record<string, boolean> = {};
       const links: Record<string, { certId?: string; certTitle: string; level?: string }> = {};
       const nightsMap: Record<string, number> = {};
+      const vgMap: Record<string, number> = {};
+      const cipsMap: Record<string, number> = {};
 
       for (const req of stageTemplate.requirements) {
         const val = await dataService.getRequirement(user.id, stageId, req.id);
@@ -97,6 +108,28 @@ export default function StageDetailScreen({ route, navigation }: any) {
             const total = (nights || []).reduce((acc: number, item: any) => acc + (item.nightsCount || 1), 0);
             nightsMap[req.id] = total;
             if (total >= (req.requiredCount || 10)) {
+              reqChecks[req.id] = true;
+            }
+          } catch {}
+        }
+
+        if (req.type === 'vida_grupo' || req.text.toLowerCase().includes('peregrinaje') || req.text.toLowerCase().includes('campamento') || req.text.toLowerCase().includes('proyecto de servicio') || req.text.toLowerCase().includes('vida de grupo')) {
+          try {
+            const vgLogs = await dataService.getVidaGrupoLog(user.id, stageId, req.id);
+            const total = (vgLogs || []).length;
+            vgMap[req.id] = total;
+            if (total >= (req.requiredCount || 1)) {
+              reqChecks[req.id] = true;
+            }
+          } catch {}
+        }
+
+        if (req.type === 'ciclos' || req.text.toLowerCase().includes('ciclo')) {
+          try {
+            const cipSels = await dataService.getCipSelections(user.id, stageId, req.id);
+            const total = (cipSels || []).length;
+            cipsMap[req.id] = total;
+            if (total >= (req.requiredCount || 1)) {
               reqChecks[req.id] = true;
             }
           } catch {}
@@ -117,6 +150,8 @@ export default function StageDetailScreen({ route, navigation }: any) {
       setChecks(reqChecks);
       setLinkedCertMap(links);
       setNochesCountMap(nightsMap);
+      setVidaGrupoCountMap(vgMap);
+      setCipCountMap(cipsMap);
     } catch (err) {
       console.error('Error al cargar avance de etapa:', err);
     } finally {
@@ -130,18 +165,41 @@ export default function StageDetailScreen({ route, navigation }: any) {
     setLoadingCip(true);
     const events = await dataService.getCipEvents(user?.unit || undefined);
     setCipEvents(events);
+    if (user?.id) {
+      const sels = await dataService.getCipSelections(user.id, stageId, req.id);
+      setSelectedCipList(sels || []);
+    }
     setLoadingCip(false);
   };
 
-  const handleSelectCipEvent = async (event: any) => {
+  const handleToggleCipEvent = async (event: any) => {
     if (!user || !selectedReqForCip) return;
-    
-    // Marcar el requisito como completado
-    setChecks(prev => ({ ...prev, [selectedReqForCip.id]: true }));
-    await dataService.toggleRequirement(user.id, stageId, selectedReqForCip.id, true);
+    const isAlreadySelected = selectedCipList.some(e => e.id === event.id || e.title === event.title);
+    let updated: any[];
+    if (isAlreadySelected) {
+      updated = selectedCipList.filter(e => e.id !== event.id && e.title !== event.title);
+    } else {
+      updated = [...selectedCipList, event];
+    }
+    setSelectedCipList(updated);
+    await dataService.saveCipSelections(user.id, stageId, selectedReqForCip.id, updated);
+    const reqCount = selectedReqForCip.requiredCount || 1;
+    const isDone = updated.length >= reqCount;
+    setChecks(prev => ({ ...prev, [selectedReqForCip.id]: isDone }));
+    setCipCountMap(prev => ({ ...prev, [selectedReqForCip.id]: updated.length }));
+    await dataService.toggleRequirement(user.id, stageId, selectedReqForCip.id, isDone);
+  };
 
-    showAlert('¡Evento CIP Vinculado!', `Se ha registrado "${event.title}" para tu requisito.`);
-    setShowCipModal(false);
+  const handleRemoveSelectedCip = async (eventId: string, eventTitle: string) => {
+    if (!user || !selectedReqForCip) return;
+    const updated = selectedCipList.filter(e => e.id !== eventId && e.title !== eventTitle);
+    setSelectedCipList(updated);
+    await dataService.saveCipSelections(user.id, stageId, selectedReqForCip.id, updated);
+    const reqCount = selectedReqForCip.requiredCount || 1;
+    const isDone = updated.length >= reqCount;
+    setChecks(prev => ({ ...prev, [selectedReqForCip.id]: isDone }));
+    setCipCountMap(prev => ({ ...prev, [selectedReqForCip.id]: updated.length }));
+    await dataService.toggleRequirement(user.id, stageId, selectedReqForCip.id, isDone);
   };
 
   const openCertModal = async (req: any) => {
@@ -262,6 +320,12 @@ export default function StageDetailScreen({ route, navigation }: any) {
       return;
     }
 
+    if (req.type === 'vida_grupo' || req.text.toLowerCase().includes('peregrinaje') || req.text.toLowerCase().includes('campamento') || req.text.toLowerCase().includes('proyecto de servicio') || req.text.toLowerCase().includes('vida de grupo')) {
+      setSelectedReqForVidaGrupo(req);
+      setShowVidaGrupoModal(true);
+      return;
+    }
+
     if (req.type === 'aire_libre' || req.text.toLowerCase().includes('noche')) {
       setSelectedReqForNoches(req);
       setShowNochesModal(true);
@@ -297,115 +361,110 @@ export default function StageDetailScreen({ route, navigation }: any) {
     await dataService.submitStageForReview(user.id, stageId);
     setStatus('En Revision');
 
-    // Notificar en vivo a los Scouters de la unidad y grupo
-    notificationService.sendNotification({
-      senderId: user.id,
-      groupName: user.group_name || undefined,
-      unit: user.unit || undefined,
-      receiverRole: 'scouter',
-      title: '⚜️ Ficha Enviada a Revisión',
-      message: `${user.name} ha completado y enviado su etapa "${stageTemplate?.title || 'Etapa'}" a revisión.`,
-      type: 'badge'
-    }).catch(() => {});
+    try {
+      await notificationService.sendNotification({
+        senderId: user.id,
+        groupName: user.group_name || undefined,
+        unit: user.unit || undefined,
+        receiverRole: 'scouter',
+        title: '⚜️ Ficha Enviada a Revisión',
+        message: `${user.name || 'Scout'} ha enviado la etapa "${stageTemplate?.title || 'Etapa'}" a revisión.`,
+        type: 'badge'
+      });
+    } catch {}
 
-    showAlert('Enviado a Revisión', 'Tu etapa ha sido enviada al dirigente para su aprobación.');
+    showAlert('¡Ficha Enviada!', 'Tu etapa ha sido enviada a revisión por tu dirigente.');
   };
-
-  const progressPct = calculateProgress();
-  const allCompleted = progressPct === 100;
-  const isReadOnly = status === 'En Revision' || status === 'Aprobada';
 
   if (loading || !stageTemplate) {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: theme.subText }}>Cargando requisitos...</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
+  const progress = calculateProgress();
+  const isReadOnly = status === 'En Revision' || status === 'Aprobada';
+
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.bg }]}>
-      {/* Cabecera de Etapa */}
-      <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderBottomColor: theme.border }]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+    <View style={[styles.container, { backgroundColor: theme.bg }]}>
+      {/* CABECERA */}
+      <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderColor: theme.border }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
           <TouchableOpacity
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              paddingVertical: 6,
-              paddingHorizontal: 12,
-              borderRadius: 10,
+              paddingVertical: 5,
+              paddingHorizontal: 10,
+              borderRadius: 8,
               backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
-              gap: 6
+              marginRight: 10,
+              gap: 4
             }}
             onPress={() => navigateBackOrHome(navigation, user?.role)}
           >
             <ArrowLeft size={16} color={theme.text} />
-            <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>Volver al Plan Progresivo</Text>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>
           </TouchableOpacity>
-        </View>
-
-        <View style={styles.headerTitleRow}>
-          <StageBadgeIcon stageId={stageTemplate.id} size={50} />
-          <View style={{ flex: 1, marginLeft: 14 }}>
-            <Text style={[styles.stageTitle, { color: theme.text }]}>{stageTemplate.title}</Text>
-            <Text style={[styles.stageSub, { color: theme.subText }]}>{stageTemplate.description}</Text>
+          <StageBadgeIcon stageId={stageId} size={32} />
+          <View style={{ marginLeft: 10, flex: 1 }}>
+            <Text style={[styles.title, { color: theme.text }]}>{stageTemplate.title}</Text>
+            <Text style={[styles.subtitle, { color: theme.subText }]}>{stageTemplate.estimatedTime}</Text>
+          </View>
+          <View style={[styles.statusBadge, {
+            backgroundColor: status === 'Aprobada' ? 'rgba(34, 197, 94, 0.15)' : status === 'En Revision' ? 'rgba(234, 179, 8, 0.15)' : 'rgba(99, 102, 241, 0.15)'
+          }]}>
+            <Text style={[styles.statusText, {
+              color: status === 'Aprobada' ? '#16a34a' : status === 'En Revision' ? '#ca8a04' : colors.primary
+            }]}>
+              {status}
+            </Text>
           </View>
         </View>
 
-        <View style={styles.progressRow}>
-          <Text style={[styles.progressLabel, { color: theme.subText }]}>Avance de Etapa:</Text>
-          <Text style={styles.progressPct}>{progressPct}%</Text>
-        </View>
-
-        <View style={[styles.barBg, { backgroundColor: isDarkMode ? '#27272a' : '#e2e8f0' }]}>
-          <View style={[styles.barFill, { width: `${progressPct}%` }]} />
-        </View>
-
-        <View style={[
-          styles.statusBadge,
-          status === 'Aprobada' ? styles.statusApproved :
-          status === 'En Revision' ? styles.statusReview :
-          styles.statusProgress
-        ]}>
-          <Text style={styles.statusBadgeText}>Estado: {status}</Text>
+        {/* BARRA DE PROGRESO */}
+        <View style={styles.progressSection}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: theme.subText }}>Progreso de la Etapa</Text>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>{progress}%</Text>
+          </View>
+          <View style={[styles.progressBarBg, { backgroundColor: theme.inputBg }]}>
+            <View style={[styles.progressBarFill, { width: `${progress}%`, backgroundColor: colors.primary }]} />
+          </View>
         </View>
       </View>
 
-      {/* Lista de Requisitos */}
-      <View style={styles.reqList}>
-        {stageTemplate.requirements.map((req, idx) => {
+      {/* LISTA DE REQUISITOS */}
+      <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 100 }}>
+        {stageTemplate.requirements.map(req => {
           const isChecked = !!checks[req.id];
+          const isVidaGrupo = req.type === 'vida_grupo' || req.text.toLowerCase().includes('peregrinaje') || req.text.toLowerCase().includes('campamento') || req.text.toLowerCase().includes('proyecto de servicio') || req.text.toLowerCase().includes('vida de grupo');
+          const isCiclos = req.type === 'ciclos' || req.text.toLowerCase().includes('ciclo');
 
           return (
             <TouchableOpacity
               key={req.id}
               style={[
-                styles.reqCard,
-                { backgroundColor: theme.cardBg, borderColor: theme.border },
-                isChecked && (isDarkMode ? styles.reqCardCheckedDark : styles.reqCardChecked),
-                isReadOnly && styles.reqCardDisabled
+                styles.reqRow,
+                { backgroundColor: isDarkMode ? '#18181b' : 'white', borderColor: theme.border },
+                isChecked && { borderColor: colors.primary, backgroundColor: isDarkMode ? '#1e1b4b' : 'rgba(99, 102, 241, 0.04)' }
               ]}
               onPress={() => handleRequirementClick(req)}
               disabled={isReadOnly}
               activeOpacity={0.7}
             >
-              <View style={styles.reqIconWrapper}>
-                {isReadOnly && !isChecked ? (
-                  <Lock size={22} color={isDarkMode ? '#52525b' : '#aaa'} />
-                ) : isChecked ? (
-                  <CheckSquare size={22} color={colors.primary} />
+              <View style={{ marginRight: 12, marginTop: 2 }}>
+                {isChecked ? (
+                  <CheckSquare color={colors.primary} size={22} />
                 ) : (
-                  <Square size={22} color={isDarkMode ? '#71717a' : '#888'} />
+                  <Square color={isDarkMode ? '#52525b' : '#cbd5e1'} size={22} />
                 )}
               </View>
 
               <View style={{ flex: 1 }}>
-                <Text style={[
-                  styles.reqText,
-                  { color: theme.text },
-                  isChecked && styles.reqTextChecked
-                ]}>
+                <Text style={[styles.reqText, { color: theme.text }, isChecked && styles.reqTextChecked]}>
                   {req.text}
                 </Text>
 
@@ -419,7 +478,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <Sparkles size={12} color="#10b981" style={{ marginRight: 4 }} />
                         <Text style={{ fontSize: 11, color: '#10b981', fontWeight: 'bold' }}>
-                          Acreditado: {linkedCertMap[req.id].certTitle} {linkedCertMap[req.id]?.level ? `(${linkedCertMap[req.id].level?.toUpperCase()})` : ''}
+                          Acreditado: {linkedCertMap[req.id].certTitle}
                         </Text>
                       </View>
                     ) : (
@@ -428,8 +487,20 @@ export default function StageDetailScreen({ route, navigation }: any) {
                   </View>
                 )}
 
-                {(req.type === 'ciclos' || req.text.toLowerCase().includes('ciclo')) && (
-                  <Text style={[styles.reqBadge, { color: colors.primary }]}>Toca para seleccionar Evento CIP</Text>
+                {isCiclos && (
+                  <View style={{ marginTop: 4 }}>
+                    <Text style={[styles.reqBadge, { color: colors.primary, fontWeight: 'bold' }]}>
+                      🚩 {cipCountMap[req.id] || 0} / {req.requiredCount || 1} actividades seleccionadas (Toca para seleccionar o agregar)
+                    </Text>
+                  </View>
+                )}
+
+                {isVidaGrupo && (
+                  <View style={{ marginTop: 4 }}>
+                    <Text style={[styles.reqBadge, { color: '#8b5cf6', fontWeight: 'bold' }]}>
+                      🏕️ {vidaGrupoCountMap[req.id] || 0} / {req.requiredCount || 1} registros guardados (Toca para ver o agregar)
+                    </Text>
+                  </View>
                 )}
 
                 {(req.type === 'aire_libre' || req.text.toLowerCase().includes('noche')) && (
@@ -443,7 +514,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
             </TouchableOpacity>
           );
         })}
-      </View>
+      </ScrollView>
 
       {/* BOTÓN ENVIAR A REVISIÓN */}
       {!isReadOnly && (
@@ -451,14 +522,14 @@ export default function StageDetailScreen({ route, navigation }: any) {
           <TouchableOpacity
             style={[
               styles.sendReviewBtn,
-              !allCompleted && styles.sendReviewBtnDisabled
+              progress < 100 && styles.sendReviewBtnDisabled
             ]}
             onPress={() => setConfirming(true)}
-            disabled={!allCompleted}
+            disabled={progress < 100}
           >
             <Send size={18} color="white" style={{ marginRight: 8 }} />
             <Text style={styles.sendReviewBtnText}>
-              {allCompleted ? 'ENVIAR ETAPA A REVISIÓN' : 'COMPLETA EL 100% PARA ENVIAR'}
+              {progress === 100 ? 'ENVIAR ETAPA A REVISIÓN' : 'COMPLETA EL 100% PARA ENVIAR'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -846,9 +917,16 @@ export default function StageDetailScreen({ route, navigation }: any) {
         <View style={modalStyles.overlay}>
           <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
             <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                 <Flag color={colors.primary} size={20} style={{ marginRight: 8 }} />
-                <Text style={[modalStyles.title, { color: theme.text }]}>Seleccionar Ciclo Institucional de Programa (CIP)</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[modalStyles.title, { color: theme.text }]}>Ciclos Institucionales (CIP)</Text>
+                  {selectedReqForCip && (
+                    <Text style={{ fontSize: 11, color: colors.primary, fontWeight: 'bold' }}>
+                      {selectedCipList.length} / {selectedReqForCip.requiredCount || 1} seleccionados
+                    </Text>
+                  )}
+                </View>
               </View>
               <TouchableOpacity onPress={() => setShowCipModal(false)}>
                 <X color={isDarkMode ? '#a1a1aa' : '#64748b'} size={22} />
@@ -856,6 +934,26 @@ export default function StageDetailScreen({ route, navigation }: any) {
             </View>
 
             <ScrollView style={{ padding: 20 }}>
+              {/* Chips de eventos ya seleccionados */}
+              {selectedCipList.length > 0 && (
+                <View style={{ marginBottom: 16 }}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary, marginBottom: 8 }}>
+                    ✅ ACTIVIDADES SELECCIONADAS ({selectedCipList.length} / {selectedReqForCip?.requiredCount || 1})
+                  </Text>
+                  {selectedCipList.map((evt, idx) => (
+                    <View key={evt.id || idx} style={{
+                      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                      backgroundColor: 'rgba(99,102,241,0.1)', borderRadius: 10, padding: 10, marginBottom: 6, borderWidth: 1, borderColor: colors.primary
+                    }}>
+                      <Text style={{ flex: 1, fontSize: 13, fontWeight: 'bold', color: colors.primary }}>{evt.title}</Text>
+                      <TouchableOpacity onPress={() => handleRemoveSelectedCip(evt.id, evt.title)}>
+                        <X size={16} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+
               {/* BOTÓN Y FORMULARIO DE CONVALIDACIÓN RÁPIDA DE CIP */}
               <View
                 style={{
@@ -873,10 +971,10 @@ export default function StageDetailScreen({ route, navigation }: any) {
                 >
                   <View style={{ flex: 1, paddingRight: 6 }}>
                     <Text style={{ fontWeight: 'bold', color: colors.primary, fontSize: 13 }}>
-                      ⚡ Convalidar CIP Anterior / Previo
+                      ⚡ + Agregar Actividad / Convalidar CIP Previo
                     </Text>
                     <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
-                      Escribe el nombre y año del CIP en el que participaste anteriormente.
+                      Escribe el nombre y año del CIP en el que participaste.
                     </Text>
                   </View>
                   <Text style={{ fontWeight: 'bold', color: colors.primary, fontSize: 12 }}>
@@ -967,7 +1065,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                         const fullTitle = `${fastCipName.trim()} (${yearStr})`;
 
                         try {
-                          await dataService.createCipEvent({
+                          const newEvt = await dataService.createCipEvent({
                             title: fullTitle,
                             scope: fastCipScope,
                             unit: user.unit ? user.unit.toLowerCase() : 'clan',
@@ -976,20 +1074,27 @@ export default function StageDetailScreen({ route, navigation }: any) {
                             created_by: user.id
                           });
 
-                          setChecks(prev => ({ ...prev, [selectedReqForCip.id]: true }));
-                          await dataService.toggleRequirement(user.id, stageId, selectedReqForCip.id, true);
+                          // Agregar automáticamente a la lista de seleccionados
+                          const newEvtObj = { id: newEvt?.id || fullTitle, title: fullTitle, scope: fastCipScope, date: `${yearStr}-01-01` };
+                          const updated = [...selectedCipList, newEvtObj];
+                          setSelectedCipList(updated);
+                          await dataService.saveCipSelections(user.id, stageId, selectedReqForCip.id, updated);
+                          const reqCount = selectedReqForCip.requiredCount || 1;
+                          const isDone = updated.length >= reqCount;
+                          setChecks(prev => ({ ...prev, [selectedReqForCip.id]: isDone }));
+                          setCipCountMap(prev => ({ ...prev, [selectedReqForCip.id]: updated.length }));
+                          await dataService.toggleRequirement(user.id, stageId, selectedReqForCip.id, isDone);
 
-                          showAlert('¡CIP Convalidado!', `Se registró correctamente "${fullTitle}". Tu dirigente podrá revisarlo.`);
+                          showAlert('¡Actividad Agregada!', `"${fullTitle}" ha sido registrada y seleccionada.`);
                           setFastCipName('');
                           setShowFastCipForm(false);
-                          setShowCipModal(false);
                         } catch (e: any) {
-                          showAlert('Error', e?.message || 'No se pudo convalidar el CIP.');
+                          showAlert('Error', e?.message || 'No se pudo agregar la actividad.');
                         }
                       }}
                     >
                       <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>
-                        Guardar y Convalidar CIP
+                        Agregar y Seleccionar Actividad
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -997,7 +1102,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
               </View>
 
               <Text style={[modalStyles.subtitle, { color: theme.subText }]}>
-                O selecciona un evento CIP publicado por tus dirigentes:
+                O selecciona un evento CIP publicado por tus dirigentes (puedes seleccionar varios):
               </Text>
 
               {loadingCip ? (
@@ -1005,36 +1110,61 @@ export default function StageDetailScreen({ route, navigation }: any) {
               ) : cipEvents.length === 0 ? (
                 <View style={[modalStyles.emptyCard, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
                   <Text style={[modalStyles.emptyText, { color: theme.subText }]}>
-                    No hay Ciclos Institucionales de Programa (CIP) registrados por los dirigentes de tu unidad aún. Usa el botón superior de Convalidación Rápida.
+                    No hay Ciclos Institucionales de Programa (CIP) registrados por los dirigentes de tu unidad aún. Usa el botón superior para agregar y convalidar.
                   </Text>
                 </View>
               ) : (
                 cipEvents.map((evt) => {
                   const displayTitle = (evt.title || '').replace(/\[6P\s*/gi, '[CIP ').replace(/\b6P\b/gi, 'CIP');
                   const displayDesc  = evt.description ? evt.description.replace(/\b6P\b/gi, 'CIP') : '';
+                  const isSelected = selectedCipList.some(e => e.id === evt.id || e.title === evt.title);
 
                   return (
                     <TouchableOpacity
                       key={evt.id}
-                      style={[modalStyles.eventCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-                      onPress={() => handleSelectCipEvent(evt)}
+                      style={[
+                        modalStyles.eventCard,
+                        {
+                          backgroundColor: isSelected ? (isDarkMode ? '#1e1b4b' : 'rgba(99,102,241,0.06)') : theme.cardBg,
+                          borderColor: isSelected ? colors.primary : theme.border,
+                          borderWidth: isSelected ? 1.5 : 1
+                        }
+                      ]}
+                      onPress={() => handleToggleCipEvent(evt)}
                     >
                       <View style={{ flex: 1 }}>
-                        <Text style={[modalStyles.eventTitle, { color: theme.text }]}>{displayTitle}</Text>
+                        <Text style={[modalStyles.eventTitle, { color: isSelected ? colors.primary : theme.text }]}>{displayTitle}</Text>
                         {displayDesc ? <Text style={[modalStyles.eventDesc, { color: theme.subText }]}>{displayDesc}</Text> : null}
                         <Text style={modalStyles.eventDate}>Fecha: {evt.date}</Text>
                       </View>
-                      <CheckCircle size={20} color={colors.primary} />
+                      {isSelected ? (
+                        <CheckCircle size={22} color={colors.primary} />
+                      ) : (
+                        <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: theme.border }} />
+                      )}
                     </TouchableOpacity>
                   );
                 })
               )}
             </ScrollView>
+
+            {/* Botón de confirmar selección */}
+            <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: theme.border }}>
+              <TouchableOpacity
+                style={[modalStyles.btnPrimary, { paddingVertical: 14 }]}
+                onPress={() => setShowCipModal(false)}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>
+                  Confirmar Selección ({selectedCipList.length} / {selectedReqForCip?.requiredCount || 1})
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
 
       {/* MODAL DE CONFIRMACIÓN */}
+
       <Modal visible={confirming} transparent animationType="fade" onRequestClose={() => setConfirming(false)}>
         <View style={modalStyles.overlay}>
           <View style={[modalStyles.card, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
@@ -1083,37 +1213,43 @@ export default function StageDetailScreen({ route, navigation }: any) {
         />
       )}
 
-    </ScrollView>
+      {/* MODAL DE VIDA DE GRUPO (Peregrinajes, Campamentos, Proyectos) */}
+      {user && selectedReqForVidaGrupo && (
+        <VidaGrupoModal
+          visible={showVidaGrupoModal}
+          onClose={() => setShowVidaGrupoModal(false)}
+          scoutId={user.id}
+          stageId={stageId}
+          reqId={selectedReqForVidaGrupo.id}
+          reqTitle={selectedReqForVidaGrupo.text}
+          requiredCount={selectedReqForVidaGrupo.requiredCount || 1}
+          isReadOnly={isReadOnly}
+          onProgressChange={(total: number, isCompleted: boolean) => {
+            setVidaGrupoCountMap(prev => ({ ...prev, [selectedReqForVidaGrupo.id]: total }));
+            setChecks(prev => ({ ...prev, [selectedReqForVidaGrupo.id]: isCompleted }));
+          }}
+        />
+      )}
+
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 20, borderBottomWidth: 1 },
-  headerTitleRow: { flexDirection: 'row', alignItems: 'center' },
-  stageTitle: { fontSize: 22, fontWeight: 'bold' },
-  stageSub: { fontSize: 13, marginTop: 2 },
-  progressRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18, marginBottom: 6 },
-  progressLabel: { fontSize: 13, fontWeight: '600' },
-  progressPct: { fontSize: 15, fontWeight: 'bold', color: colors.primary },
-  barBg: { height: 10, borderRadius: 5, overflow: 'hidden' },
-  barFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 5 },
-  statusBadge: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, marginTop: 12 },
-  statusProgress: { backgroundColor: '#e0f2fe' },
-  statusReview: { backgroundColor: '#fef3c7' },
-  statusApproved: { backgroundColor: '#dcfce7' },
-  statusBadgeText: { fontSize: 12, fontWeight: 'bold', color: '#0369a1' },
-
-  reqList: { padding: 16 },
-  reqCard: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 14, marginBottom: 10, borderWidth: 1, elevation: 2 },
-  reqCardChecked: { backgroundColor: '#faf5ff', borderColor: '#d8b4fe' },
-  reqCardCheckedDark: { backgroundColor: '#2e1065', borderColor: '#7c3aed' },
-  reqCardDisabled: { opacity: 0.7 },
-  reqIconWrapper: { marginRight: 14 },
+  title: { fontSize: 18, fontWeight: 'bold' },
+  subtitle: { fontSize: 12, marginTop: 2 },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  statusText: { fontSize: 11, fontWeight: 'bold' },
+  progressSection: { marginTop: 10 },
+  progressBarBg: { height: 8, borderRadius: 4, overflow: 'hidden' },
+  progressBarFill: { height: '100%', borderRadius: 4 },
+  scroll: { flex: 1, paddingHorizontal: 16, paddingTop: 12 },
+  reqRow: { flexDirection: 'row', alignItems: 'flex-start', padding: 14, borderRadius: 14, marginBottom: 10, borderWidth: 1 },
   reqText: { fontSize: 14, fontWeight: '600', lineHeight: 20 },
   reqTextChecked: { color: colors.primary, fontWeight: 'bold' },
   reqBadge: { fontSize: 11, color: '#9333ea', fontWeight: 'bold', marginTop: 4 },
-
   footerAction: { padding: 16, paddingBottom: 40 },
   sendReviewBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 14 },
   sendReviewBtnDisabled: { backgroundColor: '#94a3b8' },
@@ -1144,3 +1280,4 @@ const modalStyles = StyleSheet.create({
   btnSecondary: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
   btnPrimary: { flex: 1, paddingVertical: 12, backgroundColor: colors.primary, borderRadius: 10, alignItems: 'center' }
 });
+
