@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useModalBackHandler } from '../hooks/useBackHandler';
+import { supabase } from '../lib/supabaseClient';
 import { dataService } from '../lib/dataService';
 import { notificationService } from '../services/notificationService';
 import { stagesData } from '../data/progressionTemplate';
@@ -89,8 +90,37 @@ export default function StageDetailScreen({ route, navigation }: any) {
     if (!user || !stageTemplate) return;
     setLoading(true);
     try {
-      const stageStatus = await dataService.getStageStatus(user.id, stageId);
-      setStatus(stageStatus);
+      // 1. Obtener estado en base a la progresión general
+      const { data: stageRows } = await supabase
+        .from('stage_progress')
+        .select('stage_id, status')
+        .eq('scout_id', user.id);
+
+      const statusMap: Record<string, string> = {};
+      stageRows?.forEach((r: any) => { statusMap[r.stage_id] = r.status; });
+
+      let prevApproved = true;
+      let effectiveStatus = 'En Progreso';
+      for (const stg of stagesData) {
+        const dbStatus = statusMap[stg.id];
+        let displayStatus: string;
+        if (!prevApproved) {
+          displayStatus = 'Bloqueada';
+        } else if (dbStatus === 'Aprobada') {
+          displayStatus = 'Aprobada';
+        } else if (dbStatus === 'En Revision') {
+          displayStatus = 'En Revision';
+        } else {
+          displayStatus = 'En Progreso';
+        }
+        prevApproved = dbStatus === 'Aprobada';
+        if (stg.id === stageId) {
+          effectiveStatus = displayStatus;
+          break;
+        }
+      }
+
+      setStatus(effectiveStatus as any);
       const reqChecks: Record<string, boolean> = {};
       const links: Record<string, { certId?: string; certTitle: string; level?: string }> = {};
       const nightsMap: Record<string, number> = {};
@@ -411,8 +441,9 @@ export default function StageDetailScreen({ route, navigation }: any) {
     );
   }
 
-  const progress = calculateProgress();
-  const isReadOnly = status === 'En Revision' || status === 'Aprobada';
+  const isBlocked = status === 'Bloqueada';
+  const isReadOnly = status === 'En Revision' || status === 'Aprobada' || status === 'Bloqueada';
+  const progress = isBlocked ? 0 : calculateProgress();
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
@@ -435,18 +466,32 @@ export default function StageDetailScreen({ route, navigation }: any) {
             <ArrowLeft size={16} color={theme.text} />
             <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>
           </TouchableOpacity>
-          <StageBadgeIcon stageId={stageId} size={32} />
+          <StageBadgeIcon stageId={stageId} size={32} isLocked={isBlocked} />
           <View style={{ marginLeft: 10, flex: 1 }}>
             <Text style={[styles.title, { color: theme.text }]}>{stageTemplate.title}</Text>
             <Text style={[styles.subtitle, { color: theme.subText }]}>{stageTemplate.estimatedTime}</Text>
           </View>
           <View style={[styles.statusBadge, {
-            backgroundColor: status === 'Aprobada' ? 'rgba(34, 197, 94, 0.15)' : status === 'En Revision' ? 'rgba(234, 179, 8, 0.15)' : 'rgba(99, 102, 241, 0.15)'
+            backgroundColor: status === 'Aprobada'
+              ? 'rgba(34, 197, 94, 0.15)'
+              : status === 'En Revision'
+              ? 'rgba(234, 179, 8, 0.15)'
+              : status === 'Bloqueada'
+              ? (isDarkMode ? '#27272a' : '#f1f5f9')
+              : 'rgba(99, 102, 241, 0.15)',
+            borderWidth: status === 'Bloqueada' ? 1 : 0,
+            borderColor: isDarkMode ? '#3f3f46' : '#cbd5e1'
           }]}>
             <Text style={[styles.statusText, {
-              color: status === 'Aprobada' ? '#16a34a' : status === 'En Revision' ? '#ca8a04' : colors.primary
+              color: status === 'Aprobada'
+                ? '#16a34a'
+                : status === 'En Revision'
+                ? '#ca8a04'
+                : status === 'Bloqueada'
+                ? (isDarkMode ? '#94a3b8' : '#64748b')
+                : colors.primary
             }]}>
-              {status}
+              {status === 'Bloqueada' ? '🔒 Bloqueada' : status}
             </Text>
           </View>
         </View>
@@ -454,11 +499,15 @@ export default function StageDetailScreen({ route, navigation }: any) {
         {/* BARRA DE PROGRESO */}
         <View style={styles.progressSection}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: theme.subText }}>Progreso de la Etapa</Text>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>{progress}%</Text>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: theme.subText }}>
+              {isBlocked ? 'Progreso (Etapa bloqueada)' : 'Progreso de la Etapa'}
+            </Text>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', color: isBlocked ? (isDarkMode ? '#94a3b8' : '#64748b') : colors.primary }}>
+              {progress}%
+            </Text>
           </View>
           <View style={[styles.progressBarBg, { backgroundColor: theme.inputBg }]}>
-            <View style={[styles.progressBarFill, { width: `${progress}%`, backgroundColor: colors.primary }]} />
+            <View style={[styles.progressBarFill, { width: `${progress}%`, backgroundColor: isBlocked ? (isDarkMode ? '#52525b' : '#cbd5e1') : colors.primary }]} />
           </View>
         </View>
       </View>
@@ -542,8 +591,62 @@ export default function StageDetailScreen({ route, navigation }: any) {
         })}
       </ScrollView>
 
-      {/* BOTÓN ENVIAR A REVISIÓN */}
-      {!isReadOnly && (
+      {/* BOTÓN O INFORMACIÓN DE ESTADO INFERIOR */}
+      {status === 'Bloqueada' ? (
+        <View style={styles.footerAction}>
+          <View style={{
+            backgroundColor: isDarkMode ? '#18181b' : '#f8fafc',
+            padding: 14,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: isDarkMode ? '#27272a' : '#e2e8f0',
+            alignItems: 'center',
+            flexDirection: 'row',
+            gap: 10
+          }}>
+            <Lock size={18} color={isDarkMode ? '#94a3b8' : '#64748b'} />
+            <Text style={{ fontSize: 12, color: isDarkMode ? '#94a3b8' : '#64748b', flex: 1, fontWeight: '500' }}>
+              Esta etapa está en modo de consulta (bloqueada). Se habilitará para registro cuando tu dirigente apruebe la etapa anterior.
+            </Text>
+          </View>
+        </View>
+      ) : status === 'Aprobada' ? (
+        <View style={styles.footerAction}>
+          <View style={{
+            backgroundColor: isDarkMode ? '#064e3b' : '#f0fdf4',
+            padding: 14,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: isDarkMode ? '#065f46' : '#86efac',
+            alignItems: 'center',
+            flexDirection: 'row',
+            gap: 10
+          }}>
+            <CheckCircle size={18} color="#16a34a" />
+            <Text style={{ fontSize: 12, color: isDarkMode ? '#6ee7b7' : '#15803d', flex: 1, fontWeight: 'bold' }}>
+              🏅 ¡Etapa aprobada por tu dirigente! Puedes consultar todos los requisitos completados.
+            </Text>
+          </View>
+        </View>
+      ) : status === 'En Revision' ? (
+        <View style={styles.footerAction}>
+          <View style={{
+            backgroundColor: isDarkMode ? '#451a03' : '#fffbeb',
+            padding: 14,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: isDarkMode ? '#b45309' : '#fcd34d',
+            alignItems: 'center',
+            flexDirection: 'row',
+            gap: 10
+          }}>
+            <Sparkles size={18} color="#d97706" />
+            <Text style={{ fontSize: 12, color: isDarkMode ? '#fde68a' : '#b45309', flex: 1, fontWeight: 'bold' }}>
+              ⏳ Etapa enviada a revisión. Tu dirigente evaluará tus requisitos próximamente.
+            </Text>
+          </View>
+        </View>
+      ) : (
         <View style={styles.footerAction}>
           <TouchableOpacity
             style={[

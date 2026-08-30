@@ -92,7 +92,6 @@ export default function PlanProgresivoScreen({ navigation }: any) {
           const isLocked     = stage.displayStatus === 'Bloqueada';
           const isApproved   = stage.displayStatus === 'Aprobada';
           const isInReview   = stage.displayStatus === 'En Revision';
-          const isClickable  = !isLocked;
 
           return (
             <TouchableOpacity
@@ -104,9 +103,8 @@ export default function PlanProgresivoScreen({ navigation }: any) {
                 isApproved && (isDarkMode ? styles.cardApprovedDark : styles.cardApproved),
                 isInReview && (isDarkMode ? styles.cardInReviewDark : styles.cardInReview),
               ]}
-              onPress={() => isClickable && navigation.navigate('StageDetail', { stageId: stage.id })}
-              disabled={isLocked}
-              activeOpacity={isClickable ? 0.7 : 1}
+              onPress={() => navigation.navigate('StageDetail', { stageId: stage.id })}
+              activeOpacity={0.7}
             >
               <View style={styles.cardHeader}>
                 <View style={styles.badgeWrapper}>
@@ -114,17 +112,17 @@ export default function PlanProgresivoScreen({ navigation }: any) {
                 </View>
 
                 <View style={{ flex: 1, marginLeft: 15 }}>
-                  <Text style={[styles.stageName, { color: theme.text }, isLocked && { color: isDarkMode ? '#52525b' : '#aaa' }]}>
+                  <Text style={[styles.stageName, { color: theme.text }, isLocked && { color: isDarkMode ? '#a1a1aa' : '#475569' }]}>
                     {stage.name}
                   </Text>
                   <Text style={[styles.statusLabel,
                     isApproved && { color: '#22c55e', fontWeight: 'bold' },
                     isInReview && { color: '#f59e0b', fontWeight: 'bold' },
-                    isLocked   && { color: isDarkMode ? '#52525b' : '#bbb' },
+                    isLocked   && { color: isDarkMode ? '#94a3b8' : '#64748b' },
                   ]}>
                     {isApproved ? '✓ Aprobada • Toca para previsualizar'
                      : isInReview ? '⏳ En Revisión • Toca para previsualizar'
-                     : isLocked  ? '🔒 Bloqueada'
+                     : isLocked  ? '🔒 Bloqueada • Toca para previsualizar'
                      : `${stage.progress}% completado`}
                   </Text>
                 </View>
@@ -132,7 +130,7 @@ export default function PlanProgresivoScreen({ navigation }: any) {
                 {!isLocked && !isApproved && !isInReview && (
                   <Text style={[styles.progressText, { color }]}>{stage.progress}%</Text>
                 )}
-                {isClickable && <ChevronRight size={18} color={isLocked ? '#444' : color} />}
+                <ChevronRight size={18} color={isLocked ? (isDarkMode ? '#64748b' : '#94a3b8') : color} />
               </View>
 
               {!isLocked && !isApproved && (
@@ -147,6 +145,12 @@ export default function PlanProgresivoScreen({ navigation }: any) {
               {isApproved && (
                 <View style={[styles.approvedBanner, isDarkMode && { backgroundColor: '#064e3b' }]}>
                   <Text style={[styles.approvedBannerText, isDarkMode && { color: '#6ee7b7' }]}>🏅 Etapa completada y aprobada • Toca para ver tus requisitos cumplidos</Text>
+                </View>
+              )}
+
+              {isLocked && (
+                <View style={[styles.approvedBanner, isDarkMode ? { backgroundColor: '#1e293b' } : { backgroundColor: '#f1f5f9' }]}>
+                  <Text style={[styles.approvedBannerText, isDarkMode ? { color: '#94a3b8' } : { color: '#64748b' }]}>🔒 Etapa bloqueada • Toca para consultar el contenido y requisitos</Text>
                 </View>
               )}
             </TouchableOpacity>
