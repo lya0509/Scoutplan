@@ -10,6 +10,7 @@ import { presenceService } from '../services/presenceService';
 import { colors } from '../theme/colors';
 import { useFocusEffect } from '@react-navigation/native';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
+import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import { ProgramaPdfPreviewModal } from '../components/ProgramaPdfPreviewModal';
 import { ProgramaScout } from '../types/programa';
 import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, Target, FileText, CheckCircle, Info, Eye } from 'lucide-react-native';
@@ -428,7 +429,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={{ flexDirection: 'row', gap: 10, paddingVertical: 4 }}>
               {roversList.map(rover => (
-                <View
+                <TouchableOpacity
                   key={rover.id}
                   style={{
                     backgroundColor: theme.cardBg,
@@ -439,14 +440,19 @@ export default function ScoutDashboardScreen({ navigation }: any) {
                     alignItems: 'center',
                     minWidth: 110,
                     elevation: 2,
+                    cursor: 'pointer' as any,
                   }}
+                  activeOpacity={0.8}
+                  onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: rover.id })}
                 >
                   <View style={{ position: 'relative', marginBottom: 6 }}>
-                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
-                      <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
-                        {rover.name?.charAt(0)?.toUpperCase() || 'R'}
-                      </Text>
-                    </View>
+                    <DualProfileAvatar
+                      scoutAvatarUrl={rover.avatar_url}
+                      customAvatarUrl={rover.custom_avatar_url}
+                      unit={rover.unit || 'clan'}
+                      size={48}
+                      editable={false}
+                    />
                     <View style={{
                       position: 'absolute',
                       bottom: 0,
@@ -469,7 +475,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
                       {rover.isOnline ? '🟢 En línea' : '⚪ Desconectado'}
                     </Text>
                   </View>
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
           </ScrollView>

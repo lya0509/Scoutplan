@@ -21,6 +21,7 @@ import { dataService } from '../lib/dataService';
 import { certificateCategories, specialtyAreas, specialtyLevels, wosmProgramsList, initiativesList, coursesAndWorkshopsList, DROPBOX_SPECIALTIES_CATALOG_URL } from '../data/specialtiesData';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
+import { navigateBackOrHome } from '../utils/navigationHelper';
 
 // Configuración del calendario en Español
 LocaleConfig.locales['es'] = {
@@ -336,15 +337,13 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
       {/* Cabecera */}
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderColor: theme.border }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-          {navigation?.canGoBack() && (
-            <TouchableOpacity
-              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', marginRight: 10 }}
-              onPress={() => navigation.goBack()}
-            >
-              <ArrowLeft size={16} color={theme.text} style={{ marginRight: 4 }} />
-              <Text style={{ fontWeight: 'bold', fontSize: 13, color: theme.text }}>Volver</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', marginRight: 10 }}
+            onPress={() => navigateBackOrHome(navigation, user?.role)}
+          >
+            <ArrowLeft size={16} color={theme.text} style={{ marginRight: 4 }} />
+            <Text style={{ fontWeight: 'bold', fontSize: 13, color: theme.text }}>Volver</Text>
+          </TouchableOpacity>
           <Text style={[styles.title, { color: theme.text, flex: 1 }]}>Mis Acreditaciones e Iniciativas</Text>
         </View>
 

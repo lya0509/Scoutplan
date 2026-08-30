@@ -25,9 +25,11 @@ import {
   ArrowLeft
 } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { useModalBackHandler } from '../hooks/useBackHandler';
 import { SCOUT_DOCUMENTS, ScoutDocument } from '../data/documentsData';
 import { showAlert } from '../utils/alert';
+import { navigateBackOrHome } from '../utils/navigationHelper';
 import HelpFloatingFAB from '../components/HelpFloatingFAB';
 
 const CATEGORIES = [
@@ -40,6 +42,7 @@ const CATEGORIES = [
 
 export default function DocumentosScreen({ navigation }: any) {
   const { isDarkMode, theme, primaryColor } = useTheme();
+  const { user } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('todos');
@@ -102,7 +105,7 @@ export default function DocumentosScreen({ navigation }: any) {
                 marginBottom: 10,
                 gap: 6
               }}
-              onPress={() => navigation.goBack()}
+              onPress={() => navigateBackOrHome(navigation, user?.role)}
             >
               <ArrowLeft size={16} color="#ffffff" />
               <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#ffffff' }}>Volver</Text>

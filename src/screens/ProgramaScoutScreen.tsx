@@ -36,6 +36,7 @@ import { programaService } from '../lib/programaService';
 import { docxProgramaGenerator } from '../lib/docxProgramaGenerator';
 import { ProgramaPdfPreviewModal } from '../components/ProgramaPdfPreviewModal';
 import { showAlert } from '../utils/alert';
+import { navigateBackOrHome } from '../utils/navigationHelper';
 
 export default function ProgramaScoutScreen({ navigation }: any) {
   const { user } = useAuth();
@@ -193,7 +194,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                 marginRight: 10,
                 gap: 4
               }}
-              onPress={() => navigation.goBack()}
+              onPress={() => navigateBackOrHome(navigation, user?.role)}
             >
               <ArrowLeft size={16} color={theme.text} />
               <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>

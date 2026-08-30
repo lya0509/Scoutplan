@@ -4,6 +4,8 @@ import { colors } from '../theme/colors';
 import { Search, Moon, Sun, Bookmark, ArrowLeft } from 'lucide-react-native';
 import { activitiesCatalog, CatalogActivity } from '../data/activitiesCatalog';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import { navigateBackOrHome } from '../utils/navigationHelper';
 
 const SUB_AREAS = [
   'TODAS',
@@ -28,6 +30,7 @@ const SUB_AREAS = [
 
 export default function ActivityCenterScreen({ navigation }: any) {
   const { isDarkMode, toggleDarkMode, theme } = useTheme();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'basicas' | 'opcionales'>('basicas');
   const [selectedSubArea, setSelectedSubArea] = useState('TODAS');
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,25 +65,23 @@ export default function ActivityCenterScreen({ navigation }: any) {
       
       {/* CABECERA CON BOTÓN PROMINENTE DE MODO OSCURO */}
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderColor: theme.border }]}>
-        {navigation?.canGoBack?.() && (
-          <TouchableOpacity
-            style={{
-              alignSelf: 'flex-start',
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingVertical: 5,
-              paddingHorizontal: 10,
-              borderRadius: 8,
-              backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
-              marginBottom: 10,
-              gap: 6
-            }}
-            onPress={() => navigation.goBack()}
-          >
-            <ArrowLeft size={16} color={theme.text} />
-            <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={{
+            alignSelf: 'flex-start',
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 5,
+            paddingHorizontal: 10,
+            borderRadius: 8,
+            backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
+            marginBottom: 10,
+            gap: 6
+          }}
+          onPress={() => navigateBackOrHome(navigation, user?.role)}
+        >
+          <ArrowLeft size={16} color={theme.text} />
+          <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>
+        </TouchableOpacity>
         <View style={styles.topRow}>
           <View style={{ flex: 1, paddingRight: 10 }}>
             <Text style={[styles.title, { color: theme.text }]}>Biblioteca Scout</Text>

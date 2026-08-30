@@ -15,6 +15,7 @@ import { CarnetScoutModal } from '../components/CarnetScoutModal';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { storageService } from '../lib/storageService';
 import { showAlert } from '../utils/alert';
+import { navigateBackOrHome } from '../utils/navigationHelper';
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                 'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -437,7 +438,7 @@ export default function ProfileScreen({ navigation }: any) {
                 backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
                 gap: 6
               }}
-              onPress={() => navigation.goBack()}
+              onPress={() => navigateBackOrHome(navigation, user?.role)}
             >
               <ArrowLeft size={16} color={theme.text} />
               <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>

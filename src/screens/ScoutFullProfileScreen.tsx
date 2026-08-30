@@ -12,6 +12,7 @@ import {
   Platform
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { dataService } from '../lib/dataService';
 import { stagesData } from '../data/progressionTemplate';
@@ -22,10 +23,14 @@ import { certificateCategories, specialtyLevels } from '../data/specialtiesData'
 import { colors } from '../theme/colors';
 import { Trash2, AlertTriangle, Award, CheckCircle, Mail, MapPin, Shield, Download, X, Maximize2, ArrowLeft } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
+import { navigateBackOrHome } from '../utils/navigationHelper';
 
 export default function ScoutFullProfileScreen({ route, navigation }: any) {
   const { scoutId } = route.params;
   const { isDarkMode, theme } = useTheme();
+  const { user } = useAuth();
+
+  const isScouterOrAdmin = user?.role === 'scouter' || user?.role === 'jefe_grupo' || (user?.role as any) === 'admin';
 
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
@@ -187,12 +192,14 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
             backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
             gap: 6
           }}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigateBackOrHome(navigation, user?.role)}
         >
           <ArrowLeft size={16} color={theme.text} />
           <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>Volver al Panel</Text>
         </TouchableOpacity>
-        <Text style={{ fontSize: 14, fontWeight: 'bold', color: theme.text }}>Ficha del Scout</Text>
+        <Text style={{ fontSize: 14, fontWeight: 'bold', color: theme.text }}>
+          {isScouterOrAdmin ? 'Ficha del Scout' : 'Perfil Scout'}
+        </Text>
       </View>
 
       <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -205,8 +212,8 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
             unit={profile?.unit}
             role="scout"
             size={80}
-            editable={false}
-            onDeletePhoto={handleDeleteScoutPhoto}
+            editable={isScouterOrAdmin}
+            onDeletePhoto={isScouterOrAdmin ? handleDeleteScoutPhoto : undefined}
           />
           <View style={{ flex: 1, marginLeft: 16 }}>
             <Text style={[styles.scoutName, { color: theme.text }]}>{profile?.name || 'Scout'}</Text>
@@ -242,30 +249,32 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
           ) : null}
         </View>
 
-        {/* BOTONES DE DOCUMENTACIÓN OFICIAL DEL SCOUT (FICHA MÉDICA Y CURRÍCULUM) */}
-        <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-          <TouchableOpacity
-            style={[styles.docBtn, { backgroundColor: 'rgba(99, 102, 241, 0.12)', borderColor: colors.primary }]}
-            onPress={() => navigation.navigate('FichaMedica', { targetUserId: scoutId })}
-          >
-            <Text style={{ fontSize: 18, marginRight: 6 }}>📋</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>Ficha Médica</Text>
-              <Text style={{ fontSize: 10, color: theme.subText }}>Ver y Descargar Word</Text>
-            </View>
-          </TouchableOpacity>
+        {/* BOTONES DE DOCUMENTACIÓN OFICIAL DEL SCOUT (FICHA MÉDICA Y CURRÍCULUM) - SOLO PARA SCOUTERS / JEFATURA */}
+        {isScouterOrAdmin && (
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+            <TouchableOpacity
+              style={[styles.docBtn, { backgroundColor: 'rgba(99, 102, 241, 0.12)', borderColor: colors.primary }]}
+              onPress={() => navigation.navigate('FichaMedica', { targetUserId: scoutId })}
+            >
+              <Text style={{ fontSize: 18, marginRight: 6 }}>📋</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>Ficha Médica</Text>
+                <Text style={{ fontSize: 10, color: theme.subText }}>Ver y Descargar Word</Text>
+              </View>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.docBtn, { backgroundColor: 'rgba(99, 102, 241, 0.12)', borderColor: colors.primary }]}
-            onPress={() => navigation.navigate('CurriculumScout', { targetUserId: scoutId })}
-          >
-            <Text style={{ fontSize: 18, marginRight: 6 }}>📜</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>Currículum Scout</Text>
-              <Text style={{ fontSize: 10, color: theme.subText }}>Ver y Descargar Word</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              style={[styles.docBtn, { backgroundColor: 'rgba(99, 102, 241, 0.12)', borderColor: colors.primary }]}
+              onPress={() => navigation.navigate('CurriculumScout', { targetUserId: scoutId })}
+            >
+              <Text style={{ fontSize: 18, marginRight: 6 }}>📜</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>Currículum Scout</Text>
+                <Text style={{ fontSize: 10, color: theme.subText }}>Ver y Descargar Word</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       {/* SECCIÓN 1: AVANCE EN LAS INSIGNIAS DE ETAPAS */}
@@ -341,12 +350,14 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
                       <Download size={18} color={colors.primary} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity
-                      style={styles.actionIconBtn}
-                      onPress={() => setDeleteModalCert(cert)}
-                    >
-                      <Trash2 size={18} color="#ef4444" />
-                    </TouchableOpacity>
+                    {isScouterOrAdmin && (
+                      <TouchableOpacity
+                        style={styles.actionIconBtn}
+                        onPress={() => setDeleteModalCert(cert)}
+                      >
+                        <Trash2 size={18} color="#ef4444" />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
 

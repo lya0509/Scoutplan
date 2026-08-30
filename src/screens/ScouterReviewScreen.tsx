@@ -9,6 +9,7 @@ import { activitiesCatalog } from '../data/activitiesCatalog';
 import { NochesAireLibreModal } from '../components/NochesAireLibreModal';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
+import { navigateBackOrHome } from '../utils/navigationHelper';
 
 export default function ScouterReviewScreen({ route, navigation }: any) {
   const { scoutId, stageId, scoutName } = route.params;
@@ -127,7 +128,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
               backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
               gap: 6
             }}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigateBackOrHome(navigation, 'scouter')}
           >
             <ArrowLeft size={16} color={theme.text} />
             <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>Volver al Panel</Text>

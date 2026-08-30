@@ -19,6 +19,7 @@ import { storageService } from '../lib/storageService';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 import { exportDocxInBrowser } from '../utils/docxExporter';
+import { navigateBackOrHome } from '../utils/navigationHelper';
 
 export default function CurriculumScoutScreen({ route, navigation }: any) {
   const { user } = useAuth();
@@ -486,7 +487,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
               backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
               gap: 6
             }}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigateBackOrHome(navigation, user?.role)}
           >
             <ArrowLeft size={16} color={theme.text} />
             <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>
