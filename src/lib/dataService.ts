@@ -117,18 +117,20 @@ export const dataService = {
         .select('status')
         .eq('scout_id', scoutId)
         .eq('stage_id', stageId)
-        .single();
+        .maybeSingle();
         
       if (data?.status) {
         AsyncStorage.setItem(`@scout_stage_status_${scoutId}_${stageId}`, data.status).catch(() => {});
         return data.status as StageStatus;
+      } else {
+        AsyncStorage.removeItem(`@scout_stage_status_${scoutId}_${stageId}`).catch(() => {});
       }
     } catch (e) {
-      // Fallback a almacenamiento local offline
+      // Fallback a almacenamiento local offline solo si hubo error de red
       const local = await AsyncStorage.getItem(`@scout_stage_status_${scoutId}_${stageId}`);
       if (local) return local as StageStatus;
     }
-    return 'En Progreso';
+    return stageId === 'precursor' ? 'En Progreso' : 'Bloqueada';
   },
 
   async getRequirement(scoutId: string, stageId: string, reqId: string): Promise<boolean> {
@@ -140,21 +142,23 @@ export const dataService = {
         .eq('scout_id', scoutId)
         .eq('stage_id', stageId)
         .eq('requirement_id', reqId)
-        .single();
+        .maybeSingle();
         
-      if (data !== undefined && data !== null) {
+      if (data && data.completed !== undefined && data.completed !== null) {
         AsyncStorage.setItem(localKey, String(data.completed)).catch(() => {});
         return data.completed;
+      } else {
+        AsyncStorage.removeItem(localKey).catch(() => {});
+        return false;
       }
     } catch (e) {
-      // Si estamos sin conexión, leer del almacenamiento local
+      // Fallback a almacenamiento local offline solo si no hay red
       const local = await AsyncStorage.getItem(localKey);
       if (local !== null) {
         return local === 'true';
       }
     }
-    const local = await AsyncStorage.getItem(localKey);
-    return local === 'true';
+    return false;
   },
 
   async getCompletedCatalogActivityIds(scoutId: string): Promise<string[]> {
