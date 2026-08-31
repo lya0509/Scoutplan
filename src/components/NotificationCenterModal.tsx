@@ -63,6 +63,16 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
   const [activeTab, setActiveTab] = useState<'inbox' | 'test'>('inbox');
   const [testingType, setTestingType] = useState<string | null>(null);
   const [testSuccessMessage, setTestSuccessMessage] = useState<string | null>(null);
+  const [expandedNotifIds, setExpandedNotifIds] = useState<Set<string>>(new Set());
+
+  const toggleExpandNotif = (id: string) => {
+    setExpandedNotifIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const getIconForType = (type: AppNotification['type']) => {
     switch (type) {
@@ -343,12 +353,35 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                           </Text>
                         </View>
 
-                        <Text style={[styles.notifItemMsg, { color: theme.subText }]} numberOfLines={3}>
+                        <Text
+                          style={[
+                            styles.notifItemMsg,
+                            {
+                              color: isDarkMode ? '#d4d4d8' : '#4b5563',
+                              lineHeight: 18
+                            }
+                          ]}
+                          numberOfLines={expandedNotifIds.has(notif.id) ? undefined : 3}
+                        >
                           {notif.message}
                         </Text>
 
+                        {notif.message && notif.message.length > 80 && (
+                          <TouchableOpacity
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              toggleExpandNotif(notif.id);
+                            }}
+                            style={{ marginTop: 4, alignSelf: 'flex-start' }}
+                          >
+                            <Text style={{ fontSize: 11, color: colors.primary, fontWeight: 'bold' }}>
+                              {expandedNotifIds.has(notif.id) ? '▲ Mostrar menos' : '▼ Leer comunicado completo'}
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+
                         {notif.unit && (
-                          <View style={{ flexDirection: 'row', marginTop: 4 }}>
+                          <View style={{ flexDirection: 'row', marginTop: 6 }}>
                             <View style={[styles.unitTag, { backgroundColor: isDarkMode ? '#3f3f46' : '#e4e4e7' }]}>
                               <Text style={{ fontSize: 9, fontWeight: 'bold', color: theme.text }}>
                                 ⚜️ {notif.unit.toUpperCase()}

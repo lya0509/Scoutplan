@@ -17,6 +17,27 @@ export interface AppNotification {
   created_at: string;
 }
 
+export const OFFICIAL_SYSTEM_ANNOUNCEMENTS: AppNotification[] = [
+  {
+    id: 'system_maint_2026_08_30',
+    title: '🛠️ Comunicado Oficial: Mantenimiento y Actualizaciones del Plan Progresivo',
+    message: `Estimada Comunidad Scout:
+
+La plataforma ha completado con éxito un mantenimiento preventivo y optimización integral del módulo de Progresión y Acreditaciones.
+
+📋 Resumen de cambios y mejoras implementadas:
+1. 🏅 Previsualización Integral de Etapas: Ahora puedes consultar en cualquier momento los requisitos de tus etapas aprobadas y de las etapas bloqueadas en modo de solo lectura.
+2. 🔗 Corrección en Especialidades y Cursos: Se implementó la vinculación individual estricta por etapa y el bloqueo de diplomas ya utilizados para garantizar que no existan especialidades duplicadas.
+3. 🏕️ Desglose de Vida de Grupo y Ciclos Institucionales (CIP): Los campamentos, peregrinajes, proyectos de servicio y pernoctas ahora cuentan con contadores exactos y visualización de convalidación clara.
+4. 🧹 Reinicio Limpio de Progresión: Se reinició el avance de las etapas a Precursor para permitir un registro limpio y ordenado desde cero. Todas las cuentas de usuario, fotos de perfil, credenciales y certificados subidos a la biblioteca permanecen 100% seguros e intactos.
+
+¡Siempre Listos para Servir!`,
+    type: 'alert',
+    read: false,
+    created_at: new Date('2026-08-30T21:20:00Z').toISOString()
+  }
+];
+
 class NotificationService {
   private broadcastChannel: RealtimeChannel | null = null;
   private listeners: Set<(notification: AppNotification) => void> = new Set();
@@ -160,12 +181,13 @@ class NotificationService {
             const newNotif = payload as AppNotification;
             if (!newNotif || this.processedIds.has(newNotif.id)) return;
 
+            const isGlobal = !newNotif.receiver_id && !newNotif.receiver_role && !newNotif.group_name;
             const isDirectUser = Boolean(newNotif.receiver_id && newNotif.receiver_id === userId);
             const isRoleMatch = Boolean(newNotif.receiver_role && role && newNotif.receiver_role.toLowerCase() === role.toLowerCase());
             const isGroupMatch = !newNotif.receiver_id && Boolean(newNotif.group_name && groupName && newNotif.group_name.toLowerCase() === groupName.toLowerCase());
             const isUnitMatch = !newNotif.unit || Boolean(unit && newNotif.unit.toLowerCase() === unit.toLowerCase());
 
-            if (isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !newNotif.group_name))) {
+            if (isGlobal || isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !newNotif.group_name))) {
               this.processedIds.add(newNotif.id);
               this.saveLocalNotification(userId, newNotif);
               this.triggerSystemPushNotification(newNotif.title, newNotif.message);
@@ -182,12 +204,13 @@ class NotificationService {
               const newNotif = payload.new as AppNotification;
               if (!newNotif || this.processedIds.has(newNotif.id)) return;
 
+              const isGlobal = !newNotif.receiver_id && !newNotif.receiver_role && !newNotif.group_name;
               const isDirectUser = Boolean(newNotif.receiver_id && newNotif.receiver_id === userId);
               const isRoleMatch = Boolean(newNotif.receiver_role && role && newNotif.receiver_role.toLowerCase() === role.toLowerCase());
               const isGroupMatch = !newNotif.receiver_id && Boolean(newNotif.group_name && groupName && newNotif.group_name.toLowerCase() === groupName.toLowerCase());
               const isUnitMatch = !newNotif.unit || Boolean(unit && newNotif.unit.toLowerCase() === unit.toLowerCase());
 
-              if (isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !newNotif.group_name))) {
+              if (isGlobal || isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !newNotif.group_name))) {
                 this.processedIds.add(newNotif.id);
                 this.saveLocalNotification(userId, newNotif);
                 this.triggerSystemPushNotification(newNotif.title, newNotif.message);
@@ -343,6 +366,14 @@ class NotificationService {
       if (rawDeleted) deletedIdsSet = new Set(JSON.parse(rawDeleted));
     } catch (e) {}
 
+    // 0. Cargar comunicados oficiales del sistema
+    OFFICIAL_SYSTEM_ANNOUNCEMENTS.forEach(ann => {
+      if (!deletedIdsSet.has(ann.id)) {
+        const isRead = readIdsSet.has(ann.id);
+        combinedMap.set(ann.id, { ...ann, read: isRead });
+      }
+    });
+
     // 1. Cargar desde almacenamiento local
     try {
       const rawUser = await AsyncStorage.getItem(`@scout_notifications_storage_${userId}`);
@@ -363,12 +394,13 @@ class NotificationService {
         const list: AppNotification[] = JSON.parse(rawGlobal);
         list.forEach(item => {
           if (deletedIdsSet.has(item.id)) return;
+          const isGlobal = !item.receiver_id && !item.receiver_role && !item.group_name;
           const isDirectUser = item.receiver_id === userId;
           const isRoleMatch = Boolean(item.receiver_role && role && item.receiver_role.toLowerCase() === role.toLowerCase());
           const isGroupMatch = !item.receiver_id && Boolean(item.group_name && groupName && item.group_name.toLowerCase() === groupName.toLowerCase());
           const isUnitMatch = !item.unit || Boolean(unit && item.unit.toLowerCase() === unit.toLowerCase());
 
-          if (isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !item.group_name))) {
+          if (isGlobal || isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !item.group_name))) {
             const isRead = item.read || readIdsSet.has(item.id) || (combinedMap.has(item.id) && combinedMap.get(item.id)!.read);
             combinedMap.set(item.id, { ...item, read: Boolean(isRead) });
           }
@@ -387,12 +419,13 @@ class NotificationService {
       if (data && data.length > 0) {
         data.forEach((item: AppNotification) => {
           if (deletedIdsSet.has(item.id)) return;
+          const isGlobal = !item.receiver_id && !item.receiver_role && !item.group_name;
           const isDirectUser = item.receiver_id === userId;
           const isRoleMatch = Boolean(item.receiver_role && role && item.receiver_role.toLowerCase() === role.toLowerCase());
           const isGroupMatch = !item.receiver_id && Boolean(item.group_name && groupName && item.group_name.toLowerCase() === groupName.toLowerCase());
           const isUnitMatch = !item.unit || Boolean(unit && item.unit.toLowerCase() === unit.toLowerCase());
 
-          if (isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !item.group_name))) {
+          if (isGlobal || isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !item.group_name))) {
             const isRead = item.read || readIdsSet.has(item.id) || (combinedMap.has(item.id) && combinedMap.get(item.id)!.read);
             combinedMap.set(item.id, { ...item, read: Boolean(isRead) });
           }
