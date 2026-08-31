@@ -1352,11 +1352,10 @@ export const dataService = {
 
           result[rawCat] = certObj;
 
-          // Separar stageId y reqId para doble indexado
+          // Separar stageId y reqId para indexado exacto
           for (const stg of stagesData) {
             if (rawCat.startsWith(stg.id + '_')) {
               const reqId = rawCat.replace(stg.id + '_', '');
-              result[reqId] = certObj;
               result[`${stg.id}_${reqId}`] = certObj;
               AsyncStorage.setItem(`@scout_req_linked_${scoutId}_${stg.id}_${reqId}`, JSON.stringify(certObj)).catch(() => {});
             }
@@ -1372,13 +1371,12 @@ export const dataService = {
       for (const r of stg.requirements) {
         if (r.type === 'cursos' || r.type === 'especialidad') {
           const key = `@scout_req_linked_${scoutId}_${stg.id}_${r.id}`;
-          if (!result[`${stg.id}_${r.id}`] && !result[r.id]) {
+          if (!result[`${stg.id}_${r.id}`]) {
             try {
               const localStr = await AsyncStorage.getItem(key);
               if (localStr) {
                 const parsed = JSON.parse(localStr);
                 result[`${stg.id}_${r.id}`] = parsed;
-                result[r.id] = parsed;
               }
             } catch {}
           }

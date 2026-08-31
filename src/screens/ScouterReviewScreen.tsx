@@ -245,7 +245,9 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                     >
                       <Flag size={14} color={colors.primary} style={{ marginRight: 4 }} />
                       <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>
-                        {isExpanded ? 'Ocultar actividades CIP' : `Ver actividades seleccionadas/convalidadas (${reqCipSelections.length || cipList.length})`}
+                        {isExpanded
+                          ? 'Ocultar actividades CIP'
+                          : `Ver actividades CIP (${(reqCipSelections.length || cipList.length) > 0 ? `${reqCipSelections.length || cipList.length} seleccionadas` : isChecked ? 'convalidadas' : '0 seleccionadas'})`}
                       </Text>
                       {isExpanded ? <ChevronUp size={14} color={colors.primary} style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color={colors.primary} style={{ marginLeft: 2 }} />}
                     </TouchableOpacity>
@@ -261,7 +263,9 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                     >
                       <Compass size={14} color="#8b5cf6" style={{ marginRight: 4 }} />
                       <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#8b5cf6' }}>
-                        {isExpanded ? 'Ocultar desglose de Vida de Grupo' : `Ver desglose de registros (${reqVgEntries.length} de ${req.requiredCount || 1})`}
+                        {isExpanded
+                          ? 'Ocultar desglose de Vida de Grupo'
+                          : `Ver desglose de registros (${reqVgEntries.length > 0 ? `${reqVgEntries.length} de ${req.requiredCount || 1}` : isChecked ? 'convalidado' : `0 de ${req.requiredCount || 1}`})`}
                       </Text>
                       {isExpanded ? <ChevronUp size={14} color="#8b5cf6" style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color="#8b5cf6" style={{ marginLeft: 2 }} />}
                     </TouchableOpacity>
@@ -278,7 +282,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                     >
                       <Moon size={14} color="#0284c7" style={{ marginRight: 4 }} />
                       <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#0284c7' }}>
-                        🏕️ Ver registro de pernoctas ({totalNightsLogged} de {req.requiredCount || 10} noches registradas)
+                        🏕️ Ver registro de pernoctas ({totalNightsLogged > 0 ? `${totalNightsLogged} de ${req.requiredCount || 10} noches registradas` : isChecked ? `${req.requiredCount || 10} noches convalidadas` : '0 noches registradas'})
                       </Text>
                     </TouchableOpacity>
                   )}

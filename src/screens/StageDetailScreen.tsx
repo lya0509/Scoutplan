@@ -168,30 +168,10 @@ export default function StageDetailScreen({ route, navigation }: any) {
         }
 
         if (req.type === 'cursos' || req.type === 'especialidad') {
-          const directLink = allLinkedCerts[`${stageId}_${req.id}`] || allLinkedCerts[req.id];
+          const directLink = allLinkedCerts[`${stageId}_${req.id}`];
           if (directLink && directLink.certTitle) {
             links[req.id] = directLink;
             reqChecks[req.id] = true;
-          } else if (val && userCertsList && userCertsList.length > 0) {
-            const reqLower = req.text.toLowerCase();
-            const matchedCert = userCertsList.find(c => {
-              const cTitle = (c.title || '').toLowerCase();
-              if (reqLower.includes('horqueta') && cTitle.includes('horqueta')) return true;
-              if (reqLower.includes('remo') && cTitle.includes('remo')) return true;
-              if (reqLower.includes('canoa') && cTitle.includes('canoa')) return true;
-              if (req.level && (c.level || '').toLowerCase() === req.level.toLowerCase()) return true;
-              return false;
-            });
-            if (matchedCert) {
-              const recoveredLink = {
-                certId: matchedCert.id,
-                certTitle: matchedCert.title,
-                level: matchedCert.level,
-                date: matchedCert.date || matchedCert.created_at
-              };
-              links[req.id] = recoveredLink;
-              dataService.saveLinkedCertificate(user.id, stageId, req.id, recoveredLink).catch(() => {});
-            }
           }
         }
       }
@@ -556,6 +536,10 @@ export default function StageDetailScreen({ route, navigation }: any) {
                           Acreditado: {linkedCertMap[req.id].certTitle}
                         </Text>
                       </View>
+                    ) : isChecked ? (
+                      <Text style={[styles.reqBadge, { color: colors.primary, fontWeight: 'bold' }]}>
+                        ✓ Requisito convalidado en etapa aprobada (Toca para vincular certificado)
+                      </Text>
                     ) : (
                       <Text style={styles.reqBadge}>Toca para vincular especialidad / certificado</Text>
                     )}
@@ -565,7 +549,11 @@ export default function StageDetailScreen({ route, navigation }: any) {
                 {isCiclos && (
                   <View style={{ marginTop: 4 }}>
                     <Text style={[styles.reqBadge, { color: colors.primary, fontWeight: 'bold' }]}>
-                      🚩 {cipCountMap[req.id] || 0} / {req.requiredCount || 1} actividades seleccionadas (Toca para seleccionar o agregar)
+                      🚩 {(cipCountMap[req.id] || 0) > 0
+                        ? `${cipCountMap[req.id]} / ${req.requiredCount || 1} actividades seleccionadas`
+                        : isChecked
+                        ? `${req.requiredCount || 1} / ${req.requiredCount || 1} actividades convalidadas`
+                        : `0 / ${req.requiredCount || 1} actividades seleccionadas`} (Toca para seleccionar o agregar)
                     </Text>
                   </View>
                 )}
@@ -573,7 +561,11 @@ export default function StageDetailScreen({ route, navigation }: any) {
                 {isVidaGrupo && (
                   <View style={{ marginTop: 4 }}>
                     <Text style={[styles.reqBadge, { color: '#8b5cf6', fontWeight: 'bold' }]}>
-                      🏕️ {vidaGrupoCountMap[req.id] || 0} / {req.requiredCount || 1} registros guardados (Toca para ver o agregar)
+                      🏕️ {(vidaGrupoCountMap[req.id] || 0) > 0
+                        ? `${vidaGrupoCountMap[req.id]} / ${req.requiredCount || 1} registros guardados`
+                        : isChecked
+                        ? `${req.requiredCount || 1} / ${req.requiredCount || 1} convalidado en etapa aprobada`
+                        : `0 / ${req.requiredCount || 1} registros guardados`} (Toca para ver o agregar)
                     </Text>
                   </View>
                 )}
@@ -581,7 +573,11 @@ export default function StageDetailScreen({ route, navigation }: any) {
                 {(req.type === 'aire_libre' || req.text.toLowerCase().includes('noche')) && (
                   <View style={{ marginTop: 4 }}>
                     <Text style={[styles.reqBadge, { color: '#0ea5e9', fontWeight: 'bold' }]}>
-                      🏕️ {nochesCountMap[req.id] || 0} / {req.requiredCount || 10} noches registradas (Toca para ver o agregar fechas)
+                      🏕️ {(nochesCountMap[req.id] || 0) > 0
+                        ? `${nochesCountMap[req.id]} / ${req.requiredCount || 10} noches registradas`
+                        : isChecked
+                        ? `${req.requiredCount || 10} / ${req.requiredCount || 10} noches convalidadas`
+                        : `0 / ${req.requiredCount || 10} noches registradas`} (Toca para ver o agregar fechas)
                     </Text>
                   </View>
                 )}
@@ -915,8 +911,9 @@ export default function StageDetailScreen({ route, navigation }: any) {
                                 opacity: usedIn ? 0.75 : 1
                               }
                             ]}
-                            onPress={() => handleSelectCert(cert)}
-                            activeOpacity={0.8}
+                            onPress={() => !usedIn && handleSelectCert(cert)}
+                            disabled={!!usedIn || isReadOnly}
+                            activeOpacity={usedIn ? 1 : 0.8}
                           >
                             {certImg ? (
                               <Image source={{ uri: certImg }} style={modalStyles.gridCertImage} resizeMode="cover" />
@@ -985,7 +982,9 @@ export default function StageDetailScreen({ route, navigation }: any) {
                           opacity: usedIn ? 0.75 : 1
                         }
                       ]}
-                      onPress={() => handleSelectCert(cert)}
+                      onPress={() => !usedIn && handleSelectCert(cert)}
+                      disabled={!!usedIn || isReadOnly}
+                      activeOpacity={usedIn ? 1 : 0.8}
                     >
                       <View style={{ flex: 1 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
