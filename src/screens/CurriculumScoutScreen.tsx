@@ -20,6 +20,7 @@ import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 import { exportDocxInBrowser } from '../utils/docxExporter';
 import { navigateBackOrHome } from '../utils/navigationHelper';
+import { pickImageUniversal } from '../utils/filePicker';
 
 export default function CurriculumScoutScreen({ route, navigation }: any) {
   const { user } = useAuth();
@@ -202,62 +203,48 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
 
   const handlePickPhoto = () => {
     if (isViewOnlyForScouter) return;
-    if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.onchange = (e: any) => {
-        const file = e.target.files?.[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = async (event: any) => {
-            const dataUrl = event.target?.result as string;
-            setPhotoUrl(dataUrl);
+    pickImageUniversal(async (dataUrl) => {
+      setPhotoUrl(dataUrl);
 
-            try {
-              // 1. Subida inmediata a Supabase Storage CDN
-              const uploadedUrl = await storageService.uploadImage(
-                'scout-files',
-                'avatars',
-                `avatar_${user?.id || 'guest'}.png`,
-                dataUrl
-              );
+      try {
+        // 1. Subida inmediata a Supabase Storage CDN
+        const uploadedUrl = await storageService.uploadImage(
+          'scout-files',
+          'avatars',
+          `avatar_${user?.id || 'guest'}.png`,
+          dataUrl
+        );
 
-              const finalPhotoUrl = uploadedUrl || dataUrl;
-              setPhotoUrl(finalPhotoUrl);
+        const finalPhotoUrl = uploadedUrl || dataUrl;
+        setPhotoUrl(finalPhotoUrl);
 
-              if (user?.id) {
-                // 2. Actualizar avatar_url en Supabase
-                await supabase
-                  .from('profiles')
-                  .update({ avatar_url: finalPhotoUrl })
-                  .eq('id', user.id);
+        if (user?.id) {
+          // 2. Actualizar avatar_url en Supabase
+          await supabase
+            .from('profiles')
+            .update({ avatar_url: finalPhotoUrl })
+            .eq('id', user.id);
 
-                // 3. Actualizar curriculum_data en localStorage y Supabase
-                const localKey = `curriculum_data_${user.id}`;
-                const existingStr = window.localStorage.getItem(localKey);
-                const existingObj = existingStr ? JSON.parse(existingStr) : {};
-                existingObj.photoUrl = finalPhotoUrl;
-                window.localStorage.setItem(localKey, JSON.stringify(existingObj));
+          // 3. Actualizar curriculum_data en localStorage y Supabase
+          const localKey = `curriculum_data_${user.id}`;
+          const existingStr = typeof window !== 'undefined' ? window.localStorage?.getItem(localKey) : null;
+          const existingObj = existingStr ? JSON.parse(existingStr) : {};
+          existingObj.photoUrl = finalPhotoUrl;
+          if (typeof window !== 'undefined') {
+            window.localStorage?.setItem(localKey, JSON.stringify(existingObj));
+          }
 
-                await supabase
-                  .from('profiles')
-                  .update({ curriculum_data: existingObj })
-                  .eq('id', user.id);
-              }
-            } catch (err) {
-              console.error('Error auto-guardando foto:', err);
-            }
-
-            showAlert('¡Foto Guardada!', 'Tu foto de perfil se ha guardado exitosamente y se estampará en el documento Word.');
-          };
-          reader.readAsDataURL(file);
+          await supabase
+            .from('profiles')
+            .update({ curriculum_data: existingObj })
+            .eq('id', user.id);
         }
-      };
-      input.click();
-    } else {
-      showAlert('Cargar Foto', 'Toca para seleccionar tu foto de perfil.');
-    }
+      } catch (err) {
+        console.error('Error auto-guardando foto:', err);
+      }
+
+      showAlert('¡Foto Guardada!', 'Tu foto de perfil se ha guardado exitosamente y se estampará en el documento Word.');
+    });
   };
 
   const handleSyncCertificates = async () => {

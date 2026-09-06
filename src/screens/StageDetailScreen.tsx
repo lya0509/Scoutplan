@@ -187,6 +187,9 @@ export default function StageDetailScreen({ route, navigation }: any) {
     }
   };
 
+  const isBlocked = status === 'Bloqueada';
+  const isReadOnly = status === 'En Revision' || status === 'Aprobada' || status === 'Bloqueada';
+
   const openCipModal = async (req: any) => {
     setSelectedReqForCip(req);
     setShowCipModal(true);
@@ -335,12 +338,27 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const handleRequirementClick = async (req: any) => {
     if (!checkProfileCompletion(user, navigation)) return;
 
+    if (isBlocked) {
+      showAlert('🔒 Etapa Bloqueada', 'Debes completar y tener aprobada la etapa anterior para poder interactuar con los requisitos de esta etapa.');
+      return;
+    }
+
+    if (isReadOnly) {
+      if (status === 'En Revision') {
+        showAlert('⏳ En Revisión', 'Esta etapa se encuentra en revisión por tu dirigente y no puede modificarse.');
+      } else if (status === 'Aprobada') {
+        showAlert('✅ Etapa Aprobada', 'Esta etapa ya ha sido aprobada.');
+      }
+      return;
+    }
+
     if (req.type === 'basica' || req.type === 'opcional') {
       navigation.navigate('CatalogSelector', {
         stageId,
         reqId: req.id,
         reqType: req.reqType || req.type,
-        requiredCount: req.requiredCount || 12
+        requiredCount: req.requiredCount || 12,
+        stageStatus: status,
       });
       return;
     }
@@ -366,8 +384,6 @@ export default function StageDetailScreen({ route, navigation }: any) {
       setShowNochesModal(true);
       return;
     }
-
-    if (isReadOnly) return;
 
     const currentVal = !!checks[req.id];
     const newVal = !currentVal;
@@ -421,8 +437,6 @@ export default function StageDetailScreen({ route, navigation }: any) {
     );
   }
 
-  const isBlocked = status === 'Bloqueada';
-  const isReadOnly = status === 'En Revision' || status === 'Aprobada' || status === 'Bloqueada';
   const progress = isBlocked ? 0 : calculateProgress();
 
   return (

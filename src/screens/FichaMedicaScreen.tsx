@@ -20,6 +20,7 @@ import { autoSaveService } from '../services/autoSaveService';
 import { showAlert } from '../utils/alert';
 import { exportDocxInBrowser } from '../utils/docxExporter';
 import { navigateBackOrHome } from '../utils/navigationHelper';
+import { pickImageUniversal } from '../utils/filePicker';
 
 const BLOOD_TYPES = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'];
 
@@ -252,26 +253,10 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
 
   const handlePickSignature = () => {
     if (isViewOnlyForScouter) return;
-    if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.onchange = (e: any) => {
-        const file = e.target.files?.[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event: any) => {
-            const dataUrl = event.target?.result as string;
-            setSignatureUrl(dataUrl);
-            showAlert('¡Firma Cargada!', 'Se ha cargado tu imagen de firma digital sin fondo.');
-          };
-          reader.readAsDataURL(file);
-        }
-      };
-      input.click();
-    } else {
-      showAlert('Firma Digital', 'Toca para seleccionar tu imagen de firma.');
-    }
+    pickImageUniversal((dataUrl) => {
+      setSignatureUrl(dataUrl);
+      showAlert('¡Firma Cargada!', 'Se ha cargado tu imagen de firma digital sin fondo.');
+    });
   };
 
   const handleSaveMedicalData = async () => {

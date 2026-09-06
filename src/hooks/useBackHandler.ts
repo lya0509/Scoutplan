@@ -16,40 +16,29 @@ export function useModalBackHandler(isOpen: boolean, onClose: () => void) {
     if (!isOpen) return;
     isClosedByPopRef.current = false;
 
-    // 1. Gesto de atrás y botón físico en Android
+    // 1. Botón físico de atrás y gesto en Android nativo
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
       if (onCloseRef.current) {
         onCloseRef.current();
       }
-      return true; // Consume el evento para que no cierre la aplicación
+      return true; // Consume el evento para que no cierre la pantalla
     });
 
-    // 2. Gesto de retroceso / swipe en Web y PWA
+    // 2. En Web, cerrar modal suavemente con tecla Escape sin alterar el historial de rutas
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      try {
-        window.history.pushState({ modalOpen: true, timestamp: Date.now() }, '', window.location.href);
-      } catch (e) {}
-
-      const handlePopState = () => {
-        isClosedByPopRef.current = true;
-        if (onCloseRef.current) {
-          onCloseRef.current();
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          if (onCloseRef.current) {
+            onCloseRef.current();
+          }
         }
       };
 
-      window.addEventListener('popstate', handlePopState);
+      window.addEventListener('keydown', handleKeyDown);
 
       return () => {
         subscription.remove();
-        window.removeEventListener('popstate', handlePopState);
-
-        // Si el usuario cerró el modal manualmente (tocando la X o el fondo),
-        // revertimos el pushState para mantener el historial limpio y que el siguiente gesto funcione
-        if (!isClosedByPopRef.current && window.history.state?.modalOpen) {
-          try {
-            window.history.back();
-          } catch (e) {}
-        }
+        window.removeEventListener('keydown', handleKeyDown);
       };
     }
 

@@ -20,6 +20,7 @@ import { colors } from '../theme/colors';
 import { useModalBackHandler } from '../hooks/useBackHandler';
 import { showAlert } from '../utils/alert';
 import { checkProfileCompletion } from '../utils/profileGuard';
+import { pickFilesUniversal } from '../utils/filePicker';
 
 interface DrivePhoto {
   id: string;
@@ -123,19 +124,14 @@ export default function TemporalDriveScreen({ navigation }: any) {
     if (!checkProfileCompletion(user, navigation)) return;
     if (!selectedAlbum) return;
 
-    if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*,video/*';
-      input.multiple = true;
-      input.onchange = async (e: any) => {
-        const rawFiles: File[] = Array.from(e.target.files || []);
-        if (rawFiles.length === 0) return;
+    pickFilesUniversal(async (rawFiles) => {
+      if (!rawFiles || rawFiles.length === 0) return;
 
-        setUploading(true);
+      setUploading(true);
+      try {
         const newPhotos: DrivePhoto[] = [];
 
-        for (const file of rawFiles) {
+      for (const file of rawFiles) {
           const isVideo = file.type.startsWith('video');
           const dataUrl = await new Promise<string>((res) => {
             const r = new FileReader();
@@ -171,9 +167,11 @@ export default function TemporalDriveScreen({ navigation }: any) {
 
         setUploading(false);
         showAlert('¡Archivos Subidos!', `Se agregaron ${newPhotos.length} fotos/videos al álbum.`);
-      };
-      input.click();
-    }
+      } catch (err) {
+        setUploading(false);
+        showAlert('Error al subir', 'Ocurrió un inconveniente al procesar los archivos.');
+      }
+    }, { accept: 'image/*,video/*', multiple: true });
   };
 
   const handleDownloadPhoto = (url: string) => {

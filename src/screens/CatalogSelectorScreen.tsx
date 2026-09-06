@@ -16,6 +16,7 @@ import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
 import { dataService } from '../lib/dataService';
 import { activitiesCatalog } from '../data/activitiesCatalog';
+import { stagesData } from '../data/progressionTemplate';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 import { checkProfileCompletion } from '../utils/profileGuard';
@@ -42,7 +43,7 @@ const SUB_AREAS = [
 ];
 
 export default function CatalogSelectorScreen({ route, navigation }: any) {
-  const { stageId = 'expedicionario', reqId, reqType = 'basica', requiredCount = 12 } = route.params || {};
+  const { stageId = 'expedicionario', reqId, reqType = 'basica', requiredCount = 12, stageStatus: paramStageStatus } = route.params || {};
   const { user } = useAuth();
   const { isDarkMode, theme } = useTheme();
 
@@ -101,9 +102,32 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
     }
     setLoading(true);
     try {
-      // 1. Obtener estado de la etapa
-      const status = await dataService.getStageStatus(user.id, stageId);
-      setStageStatus(status || 'En Progreso');
+      // 1. Obtener estado de la etapa considerando la cadena de progresión completa
+      const { data: allStages } = await supabase
+        .from('stage_progress')
+        .select('stage_id, status')
+        .eq('scout_id', user.id);
+
+      const statusMap: Record<string, string> = {};
+      allStages?.forEach((r: any) => { statusMap[r.stage_id] = r.status; });
+
+      let prevApproved = true;
+      let computedStatus = 'En Progreso';
+      for (const stg of stagesData) {
+        const dbSt = statusMap[stg.id];
+        if (!prevApproved) {
+          if (stg.id === stageId) { computedStatus = 'Bloqueada'; break; }
+        } else if (dbSt === 'Aprobada') {
+          if (stg.id === stageId) { computedStatus = 'Aprobada'; break; }
+        } else if (dbSt === 'En Revision') {
+          if (stg.id === stageId) { computedStatus = 'En Revision'; break; }
+        } else {
+          if (stg.id === stageId) { computedStatus = 'En Progreso'; break; }
+        }
+        prevApproved = dbSt === 'Aprobada';
+      }
+
+      setStageStatus(paramStageStatus || computedStatus);
 
       // 2. Obtener requisitos del usuario
       const { data: userReqs, error } = await supabase
@@ -153,10 +177,17 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
     }
   };
 
-  const isReadOnly = stageStatus === 'En Revision' || stageStatus === 'Aprobada';
+  const isReadOnly = stageStatus === 'En Revision' || stageStatus === 'Aprobada' || stageStatus === 'Bloqueada';
 
   const handleToggleActivity = async (id: string) => {
-    if (isReadOnly || !user) return;
+    if (stageStatus === 'Bloqueada') {
+      showAlert('🔒 Etapa Bloqueada', 'No puedes seleccionar actividades para una etapa que se encuentra bloqueada. Completa y aprueba primero las etapas anteriores.');
+      return;
+    }
+    if (isReadOnly || !user) {
+      showAlert('⚠️ Modo Solo Lectura', 'No puedes modificar actividades de una etapa en revisión o ya aprobada.');
+      return;
+    }
     if (!checkProfileCompletion(user, navigation)) return;
 
     if (disabledIds.includes(id)) {
@@ -233,6 +264,15 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
             Catálogo de Actividades {isBasicType ? 'Básicas' : 'Opcionales'}
           </Text>
         </View>
+
+        {stageStatus === 'Bloqueada' && (
+          <View style={{ backgroundColor: isDarkMode ? '#450a0a' : '#fee2e2', borderColor: '#ef4444', borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Lock size={18} color="#ef4444" />
+            <Text style={{ color: isDarkMode ? '#fca5a5' : '#b91c1c', fontSize: 12, fontWeight: 'bold', flex: 1 }}>
+              🔒 Esta etapa está bloqueada. Debes completar y tener aprobadas las etapas anteriores antes de seleccionar actividades aquí.
+            </Text>
+          </View>
+        )}
         
         <View style={styles.counterBox}>
           <Text style={[styles.counterText, { color: subTextColor }]}>

@@ -39,6 +39,7 @@ import { storageService } from '../lib/storageService';
 import { showAlert } from '../utils/alert';
 import { checkProfileCompletion } from '../utils/profileGuard';
 import { OnboardingGuideModal } from './OnboardingGuideModal';
+import { pickImageUniversal } from '../utils/filePicker';
 
 interface FAQItem {
   id: string;
@@ -104,7 +105,6 @@ export default function HelpFloatingFAB() {
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [showSuggestionModal, setShowSuggestionModal] = useState(false);
 
-  useModalBackHandler(expanded, () => setExpanded(false));
   useModalBackHandler(showFaqModal, () => setShowFaqModal(false));
   useModalBackHandler(showReportModal, () => setShowReportModal(false));
   useModalBackHandler(showGuideModal, () => setShowGuideModal(false));
@@ -208,40 +208,27 @@ export default function HelpFloatingFAB() {
 
   // Seleccionar foto/video de evidencia para el reporte
   const handlePickBugMedia = async () => {
-    if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*,video/*';
-      input.onchange = async (e: any) => {
-        const file = e.target.files?.[0];
-        if (file) {
-          const isVideo = file.type.startsWith('video/');
-          setBugMediaType(isVideo ? 'video' : 'image');
-
-          const reader = new FileReader();
-          reader.onload = async (evt: any) => {
-            const dataUrl = evt.target?.result as string;
-            const publicUrl = await storageService.uploadImage(
-              'scout-files',
-              'bug_reports',
-              file.name,
-              dataUrl
-            );
-            // Solo establecer la URL si es una URL pública https válida de Supabase
-            if (publicUrl && publicUrl.startsWith('http')) {
-              setBugMediaUrl(publicUrl);
-            } else {
-              setBugMediaUrl(dataUrl);
-            }
-            showAlert('Evidencia Adjunta', `Se ha adjuntado el archivo (${isVideo ? 'Video' : 'Foto'}).`);
-          };
-          reader.readAsDataURL(file);
+    pickImageUniversal(async (dataUrl, file) => {
+      try {
+        const fileName = file?.name || `evidencia_${Date.now()}.jpg`;
+        const publicUrl = await storageService.uploadImage(
+          'scout-files',
+          'bug_reports',
+          fileName,
+          dataUrl
+        );
+        if (publicUrl && publicUrl.startsWith('http')) {
+          setBugMediaUrl(publicUrl);
+        } else {
+          setBugMediaUrl(dataUrl);
         }
-      };
-      input.click();
-    } else {
-      showAlert('Adjuntar Evidencia', 'Selecciona una captura o video del fallo.');
-    }
+        setBugMediaType('image');
+        showAlert('Evidencia Adjunta', 'Se ha adjuntado la captura del fallo correctamente.');
+      } catch (err: any) {
+        setBugMediaUrl(dataUrl);
+        showAlert('Evidencia Adjunta', 'Se ha adjuntado la captura de pantalla.');
+      }
+    });
   };
 
   // Enviar reporte de error a la base de datos Supabase

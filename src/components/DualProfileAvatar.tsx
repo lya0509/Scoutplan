@@ -10,10 +10,11 @@ import {
   Modal,
   Platform
 } from 'react-native';
-import { Camera, Sparkles, Maximize2, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Camera, Sparkles, Maximize2, Trash2, X, ChevronLeft, ChevronRight, Upload } from 'lucide-react-native';
 import { UserScoutAvatar } from './UserScoutAvatar';
 import { useTheme } from '../context/ThemeContext';
 import { showAlert } from '../utils/alert';
+import { pickImageUniversal } from '../utils/filePicker';
 
 interface Props {
   scoutAvatarUrl?: string | null;
@@ -41,135 +42,34 @@ export function DualProfileAvatar({
   const [uploading, setUploading] = useState(false);
   const [showZoomModal, setShowZoomModal] = useState(false);
 
-  // Soporte universal para gestos de arrastre / swipe (Tanto Web como Móvil)
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-  const isSwipeGesture = useRef(false);
-
-  // PanResponder nativo optimizado
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => false,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 10;
-      },
-      onMoveShouldSetPanResponderCapture: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 10;
-      },
-      onPanResponderGrant: () => {
-        isSwipeGesture.current = false;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        if (Math.abs(gestureState.dx) > 15) {
-          isSwipeGesture.current = true;
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dx < -25) {
-          // Deslizar izquierda -> Foto Personal
-          setActiveTab('custom');
-        } else if (gestureState.dx > 25) {
-          // Deslizar derecha -> Foto Scout Institucional
-          setActiveTab('scout');
-        } else if (!isSwipeGesture.current && Math.abs(gestureState.dx) < 10 && Math.abs(gestureState.dy) < 10) {
-          // Toque simple sin arrastre (Click / Tap)
-          if (activeTab === 'scout' ? scoutAvatarUrl : customAvatarUrl) {
-            setShowZoomModal(true);
-          } else if (editable) {
-            handlePickImage();
-          }
-        }
-      },
-    })
-  ).current;
-
-  // Web direct touch handlers fallback
-  const handleTouchStart = (e: any) => {
-    const x = e?.touches?.[0]?.clientX ?? e?.nativeEvent?.pageX ?? e?.clientX;
-    touchStartX.current = x;
-    isSwipeGesture.current = false;
-  };
-
-  const handleTouchEnd = (e: any) => {
-    if (touchStartX.current === null) return;
-    const x = e?.changedTouches?.[0]?.clientX ?? e?.nativeEvent?.pageX ?? e?.clientX;
-    if (x !== undefined && x !== null) {
-      const diff = x - touchStartX.current;
-      if (diff < -25) {
-        setActiveTab('custom');
-      } else if (diff > 25) {
-        setActiveTab('scout');
-      }
-    }
-    touchStartX.current = null;
-  };
-
-  const handlePickImage = () => {
+  const handlePickImage = (targetType: 'scout' | 'custom' = activeTab) => {
     if (!editable || !onPhotoChange) return;
 
-    if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.onchange = async (e: any) => {
-        const file = e.target?.files?.[0];
-        if (!file) return;
-
-        setUploading(true);
-        try {
-          const reader = new FileReader();
-          reader.onload = async (event) => {
-            const dataUrl = event.target?.result as string;
-            if (dataUrl) {
-              const img = new (window as any).Image();
-              img.onload = async () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                const maxDim = 800;
-
-                if (width > maxDim || height > maxDim) {
-                  if (width > height) {
-                    height = Math.round((height * maxDim) / width);
-                    width = maxDim;
-                  } else {
-                    width = Math.round((width * maxDim) / height);
-                    height = maxDim;
-                  }
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx?.drawImage(img, 0, 0, width, height);
-                const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-
-                await onPhotoChange(activeTab, compressedDataUrl);
-                setUploading(false);
-                showAlert(
-                  'Foto Actualizada',
-                  activeTab === 'scout'
-                    ? 'Se ha guardado tu Foto Institucional Scout.'
-                    : 'Se ha guardado tu Foto Personal.'
-                );
-              };
-              img.src = dataUrl;
-            }
-          };
-          reader.readAsDataURL(file);
-        } catch (err: any) {
-          setUploading(false);
-          showAlert('Error', err?.message || 'No se pudo procesar la imagen.');
-        }
-      };
-      input.click();
-    } else {
-      showAlert('Cambiar Foto', 'Selecciona una imagen desde la galería de tu dispositivo.');
-    }
+    setUploading(true);
+    pickImageUniversal(async (compressedDataUrl) => {
+      try {
+        await onPhotoChange(targetType, compressedDataUrl);
+        showAlert(
+          'Foto Actualizada',
+          targetType === 'scout'
+            ? 'Se ha guardado tu Foto Institucional Scout.'
+            : 'Se ha guardado tu Foto Personal.'
+        );
+      } catch (err: any) {
+        showAlert('Error', err?.message || 'No se pudo guardar la foto de perfil.');
+      } finally {
+        setUploading(false);
+      }
+    }, {
+      maxWidth: 800,
+      maxHeight: 800,
+      quality: 0.85
+    });
   };
 
-  const currentPhotoUrl = activeTab === 'scout' ? scoutAvatarUrl : customAvatarUrl;
+  const currentPhotoUrl = editable
+    ? (activeTab === 'scout' ? scoutAvatarUrl : customAvatarUrl)
+    : (customAvatarUrl || scoutAvatarUrl);
 
   const handleDeleteCurrentPhoto = async () => {
     if (!onDeletePhoto) return;
@@ -179,11 +79,55 @@ export function DualProfileAvatar({
 
   return (
     <View style={styles.wrapper}>
-      {/* Contenedor circular limpio con soporte de gestos */}
-      <View
-        {...panResponder.panHandlers}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+      {/* PESTAÑAS SELECTORAS EXPLÍCITAS (Solo cuando es editable en Mi Perfil) */}
+      {editable && (
+        <View style={[styles.tabsRow, { backgroundColor: isDarkMode ? '#1e1e24' : '#e2e8f0' }]}>
+        <TouchableOpacity
+          style={[
+            styles.tabPill,
+            activeTab === 'scout' && [styles.tabPillActive, { backgroundColor: primaryColor }]
+          ]}
+          onPress={() => setActiveTab('scout')}
+          activeOpacity={0.8}
+        >
+          <Text style={[
+            styles.tabPillText,
+            { color: activeTab === 'scout' ? '#ffffff' : (isDarkMode ? '#a1a1aa' : '#64748b') },
+            activeTab === 'scout' && styles.tabPillTextActive
+          ]}>
+            ⚜️ Foto Scout
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tabPill,
+            activeTab === 'custom' && [styles.tabPillActive, { backgroundColor: '#10b981' }]
+          ]}
+          onPress={() => setActiveTab('custom')}
+          activeOpacity={0.8}
+        >
+          <Text style={[
+            styles.tabPillText,
+            { color: activeTab === 'custom' ? '#ffffff' : (isDarkMode ? '#a1a1aa' : '#64748b') },
+            activeTab === 'custom' && styles.tabPillTextActive
+          ]}>
+            ✨ Foto Personal
+          </Text>
+        </TouchableOpacity>
+      </View>
+      )}
+
+      {/* CONTENEDOR CIRCULAR DEL AVATAR */}
+      <TouchableOpacity
+        onPress={() => {
+          if (currentPhotoUrl) {
+            setShowZoomModal(true);
+          } else if (editable) {
+            handlePickImage(activeTab);
+          }
+        }}
+        activeOpacity={0.85}
         style={[
           styles.avatarContainer,
           {
@@ -192,7 +136,6 @@ export function DualProfileAvatar({
             borderRadius: size / 2,
             borderColor: activeTab === 'scout' ? primaryColor : '#10b981',
             backgroundColor: isDarkMode ? '#18181b' : '#f4f4f5',
-            cursor: 'pointer' as any,
           },
         ]}
       >
@@ -215,9 +158,9 @@ export function DualProfileAvatar({
           </View>
         )}
 
-        {/* Botón flotante de cámara solo si es editable */}
+        {/* Badge de cámara */}
         {editable && (
-          <TouchableOpacity
+          <View
             style={[
               styles.cameraBadge,
               {
@@ -225,13 +168,50 @@ export function DualProfileAvatar({
                 borderColor: isDarkMode ? '#18181b' : '#ffffff',
               },
             ]}
-            onPress={handlePickImage}
-            activeOpacity={0.85}
           >
             <Camera size={14} color="#ffffff" />
-          </TouchableOpacity>
+          </View>
         )}
-      </View>
+      </TouchableOpacity>
+
+      {/* BOTONES DE ACCIÓN DIRECTOS Y ETIQUETA CLARA */}
+      {editable && (
+        <View style={styles.actionSection}>
+          <Text style={[styles.activeHint, { color: isDarkMode ? '#a1a1aa' : '#64748b' }]}>
+            {activeTab === 'scout'
+              ? 'Retrato oficial para Carnet y Registros'
+              : 'Foto o avatar libre para tu perfil'}
+          </Text>
+
+          <View style={styles.buttonsGroup}>
+            <TouchableOpacity
+              style={[
+                styles.uploadBtn,
+                { backgroundColor: activeTab === 'scout' ? primaryColor : '#10b981' }
+              ]}
+              onPress={() => handlePickImage(activeTab)}
+              activeOpacity={0.8}
+            >
+              <Upload size={13} color="#ffffff" style={{ marginRight: 6 }} />
+              <Text style={styles.uploadBtnText}>
+                {currentPhotoUrl
+                  ? (activeTab === 'scout' ? 'Cambiar Foto Scout' : 'Cambiar Foto Personal')
+                  : (activeTab === 'scout' ? 'Subir Foto Scout' : 'Subir Foto Personal')}
+              </Text>
+            </TouchableOpacity>
+
+            {currentPhotoUrl && onDeletePhoto && (
+              <TouchableOpacity
+                style={[styles.deleteMiniBtn, { backgroundColor: isDarkMode ? '#27272a' : '#fee2e2' }]}
+                onPress={handleDeleteCurrentPhoto}
+                activeOpacity={0.8}
+              >
+                <Trash2 size={13} color="#ef4444" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      )}
 
       {/* MODAL DE ZOOM / LIGHTBOX A PANTALLA COMPLETA */}
       <Modal
@@ -303,7 +283,7 @@ export function DualProfileAvatar({
                 style={[styles.zoomActionBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
                 onPress={() => {
                   setShowZoomModal(false);
-                  setTimeout(() => handlePickImage(), 300);
+                  setTimeout(() => handlePickImage(activeTab), 300);
                 }}
               >
                 <Camera size={16} color="white" />
@@ -338,6 +318,33 @@ const styles = StyleSheet.create({
   wrapper: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  tabsRow: {
+    flexDirection: 'row',
+    borderRadius: 20,
+    padding: 3,
+    marginBottom: 12,
+    alignSelf: 'center',
+  },
+  tabPill: {
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabPillActive: {
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  tabPillText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  tabPillTextActive: {
+    fontWeight: '700',
   },
   avatarContainer: {
     borderWidth: 3,
@@ -374,6 +381,45 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     marginTop: 4,
+  },
+  actionSection: {
+    alignItems: 'center',
+    marginTop: 8,
+    width: '100%',
+  },
+  activeHint: {
+    fontSize: 11,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  buttonsGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  uploadBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  uploadBtnText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  deleteMiniBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   zoomOverlay: {
     flex: 1,
