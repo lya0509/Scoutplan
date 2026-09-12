@@ -28,6 +28,7 @@ import {
 } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
+import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
@@ -99,18 +100,26 @@ function MembersPanel({ scouts, onReview, onViewProfile, isDarkMode, theme }: { 
                   onPress={() => onViewProfile(scout)}
                   activeOpacity={0.7}
                 >
-                  <View style={[panelStyles.avatar, hasReview && { backgroundColor: '#f59e0b' }, { position: 'relative' }]}>
-                    <Text style={panelStyles.avatarText}>{scout.name?.charAt(0)?.toUpperCase()}</Text>
+                  <View style={{ position: 'relative', marginRight: 12 }}>
+                    <DualProfileAvatar
+                      scoutAvatarUrl={scout.avatar_url}
+                      customAvatarUrl={scout.custom_avatar_url}
+                      unit={scout.unit || 'clan'}
+                      role="scout"
+                      size={46}
+                      editable={false}
+                    />
                     <View style={{
                       position: 'absolute',
-                      bottom: -2,
-                      right: -2,
-                      width: 10,
-                      height: 10,
-                      borderRadius: 5,
+                      bottom: 0,
+                      right: 0,
+                      width: 11,
+                      height: 11,
+                      borderRadius: 5.5,
                       backgroundColor: presenceService.isUserOnline(scout.id, scout.updated_at) ? '#22c55e' : '#9ca3af',
-                      borderWidth: 1.5,
-                      borderColor: 'white'
+                      borderWidth: 2,
+                      borderColor: isDarkMode ? '#18181b' : 'white',
+                      zIndex: 10
                     }} />
                   </View>
 
@@ -303,7 +312,7 @@ function ActivitiesPanel({ unitFilter, isDarkMode, theme, onAddCip }: { unitFilt
   );
 }
 
-function OnlineRosterPanel({ unit, groupName, isDarkMode, theme }: { unit: string; groupName: string; isDarkMode: boolean; theme: any }) {
+function OnlineRosterPanel({ unit, groupName, isDarkMode, theme, navigation }: { unit: string; groupName: string; isDarkMode: boolean; theme: any; navigation?: any }) {
   const [open, setOpen] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -342,8 +351,10 @@ function OnlineRosterPanel({ unit, groupName, isDarkMode, theme }: { unit: strin
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {members.map(member => (
-                <View
+                <TouchableOpacity
                   key={member.id}
+                  onPress={() => navigation?.navigate('ScoutFullProfile', { scoutId: member.id })}
+                  activeOpacity={0.7}
                   style={{
                     backgroundColor: isDarkMode ? '#27272a' : '#f9fafb',
                     borderColor: member.isOnline ? '#22c55e' : theme.border,
@@ -356,16 +367,20 @@ function OnlineRosterPanel({ unit, groupName, isDarkMode, theme }: { unit: strin
                   }}
                 >
                   <View style={{ position: 'relative', marginBottom: 4 }}>
-                    <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
-                      <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>
-                        {member.name?.charAt(0)?.toUpperCase() || '?'}
-                      </Text>
-                    </View>
+                    <DualProfileAvatar
+                      scoutAvatarUrl={member.avatar_url}
+                      customAvatarUrl={member.custom_avatar_url}
+                      unit={member.unit || unit}
+                      role={member.role || 'scout'}
+                      size={44}
+                      editable={false}
+                    />
                     <View style={{
                       position: 'absolute', bottom: 0, right: 0,
                       width: 10, height: 10, borderRadius: 5,
                       backgroundColor: member.isOnline ? '#22c55e' : '#9ca3af',
-                      borderWidth: 1.5, borderColor: 'white'
+                      borderWidth: 1.5, borderColor: isDarkMode ? '#27272a' : 'white',
+                      zIndex: 10
                     }} />
                   </View>
                   <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.text, textAlign: 'center' }} numberOfLines={1}>
@@ -374,7 +389,7 @@ function OnlineRosterPanel({ unit, groupName, isDarkMode, theme }: { unit: strin
                   <Text style={{ fontSize: 9, color: member.isOnline ? '#16a34a' : '#9ca3af', marginTop: 2 }}>
                     {member.isOnline ? '🟢 En línea' : '⚪ Desconectado'}
                   </Text>
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
           )}
@@ -697,6 +712,78 @@ export default function ScouterDashboardScreen({ navigation }: any) {
         <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
       ) : (
         <ScrollView style={styles.scroll} contentContainerStyle={{ padding: 16, paddingBottom: 30 }}>
+          {/* DIRECTORIO HORIZONTAL DE ROVERS (SI LA UNIDAD ES CLAN) */}
+          {user?.unit?.toLowerCase() === 'clan' && (
+            <View style={{ marginBottom: 20 }}>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.text, marginBottom: 10, paddingHorizontal: 4 }}>
+                ⚜️ Rovers del Clan ({scouts.length})
+              </Text>
+              {scouts.length === 0 ? (
+                <View style={[panelStyles.wrapper, { backgroundColor: theme.cardBg, borderColor: theme.border, padding: 16, alignItems: 'center' }]}>
+                  <Text style={{ color: theme.subText, fontSize: 13 }}>No hay Rovers registrados en el Clan aún.</Text>
+                </View>
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={{ flexDirection: 'row', gap: 10, paddingVertical: 4 }}>
+                    {scouts.map(rover => (
+                      <View
+                        key={`clan_rover_${rover.id}`}
+                        style={{
+                          backgroundColor: theme.cardBg,
+                          borderColor: theme.border,
+                          borderWidth: 1,
+                          borderRadius: 16,
+                          padding: 12,
+                          alignItems: 'center',
+                          minWidth: 115,
+                          elevation: 2,
+                        }}
+                      >
+                        <View style={{ position: 'relative', marginBottom: 6 }}>
+                          <DualProfileAvatar
+                            scoutAvatarUrl={rover.avatar_url}
+                            customAvatarUrl={rover.custom_avatar_url}
+                            unit={rover.unit || 'clan'}
+                            size={52}
+                            editable={false}
+                          />
+                          <View style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            right: 0,
+                            width: 12,
+                            height: 12,
+                            borderRadius: 6,
+                            backgroundColor: presenceService.isUserOnline(rover.id, rover.updated_at) ? '#22c55e' : '#9ca3af',
+                            borderWidth: 2,
+                            borderColor: isDarkMode ? '#18181b' : 'white',
+                            zIndex: 10
+                          }} />
+                        </View>
+
+                        <TouchableOpacity
+                          onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: rover.id })}
+                          style={{ alignItems: 'center' }}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text, textAlign: 'center' }} numberOfLines={1}>
+                            {rover.name || 'Rover'}
+                          </Text>
+                        </TouchableOpacity>
+
+                        <View style={{ backgroundColor: presenceService.isUserOnline(rover.id, rover.updated_at) ? 'rgba(34, 197, 94, 0.15)' : 'rgba(156, 163, 175, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginTop: 4 }}>
+                          <Text style={{ fontSize: 10, fontWeight: 'bold', color: presenceService.isUserOnline(rover.id, rover.updated_at) ? '#16a34a' : '#6b7280' }}>
+                            {presenceService.isUserOnline(rover.id, rover.updated_at) ? '🟢 En línea' : '⚪ Desconectado'}
+                          </Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                </ScrollView>
+              )}
+            </View>
+          )}
+
           <MembersPanel
             scouts={scouts}
             isDarkMode={isDarkMode}
@@ -714,6 +801,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
             groupName={user?.group_name || ''}
             isDarkMode={isDarkMode}
             theme={theme}
+            navigation={navigation}
           />
 
           <ActivitiesPanel 
@@ -746,8 +834,15 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                       flexDirection: 'row', alignItems: 'center', paddingVertical: 10,
                       borderBottomWidth: 1, borderBottomColor: theme.border
                     }}>
-                      <View style={[panelStyles.avatar, { backgroundColor: mStatus === 'approved' ? '#22c55e' : mStatus === 'pending_approval' ? '#f59e0b' : colors.primary }]}>
-                        <Text style={panelStyles.avatarText}>{scout.name?.charAt(0)?.toUpperCase()}</Text>
+                      <View style={{ marginRight: 10 }}>
+                        <DualProfileAvatar
+                          scoutAvatarUrl={scout.avatar_url}
+                          customAvatarUrl={scout.custom_avatar_url}
+                          unit={scout.unit || 'clan'}
+                          role="scout"
+                          size={40}
+                          editable={false}
+                        />
                       </View>
                       <View style={{ flex: 1, marginLeft: 10 }}>
                         <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>{scout.name}</Text>

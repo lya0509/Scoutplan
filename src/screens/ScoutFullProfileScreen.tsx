@@ -216,9 +216,10 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
             scoutAvatarUrl={profile?.avatar_url}
             customAvatarUrl={profile?.custom_avatar_url}
             unit={profile?.unit}
-            role="scout"
+            role={profile?.role || "scout"}
             size={80}
-            editable={isScouterOrAdmin}
+            editable={false}
+            showTabs={true}
             onDeletePhoto={isScouterOrAdmin ? handleDeleteScoutPhoto : undefined}
           />
           <View style={{ flex: 1, marginLeft: 16 }}>

@@ -131,7 +131,6 @@ export default function HelpFloatingFAB() {
   };
 
   const openReport = () => {
-    if (!checkProfileCompletion(user)) return;
     setExpanded(false);
     setShowReportModal(true);
   };
@@ -142,15 +141,12 @@ export default function HelpFloatingFAB() {
   };
 
   const openSuggestion = () => {
-    if (!checkProfileCompletion(user)) return;
     setExpanded(false);
     setShowSuggestionModal(true);
   };
 
   // Enviar Sugerencia / Comentarios a Telegram Bot
   const handleSubmitSuggestion = async () => {
-    if (!checkProfileCompletion(user)) return;
-
     if (!suggestionText.trim()) {
       showAlert('Sugerencia Vacía', 'Por favor escribe tus comentarios o las funciones que te gustaría ver en la app.');
       return;

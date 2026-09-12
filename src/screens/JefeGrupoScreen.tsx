@@ -17,6 +17,7 @@ import {
 } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
+import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import { useModalBackHandler } from '../hooks/useBackHandler';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import {
@@ -137,7 +138,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
         // 2. Contar insignias aprobadas
         const { count } = await supabase
-          .from('user_requirements')
+          .from('stage_progress')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'Aprobada');
 
@@ -405,8 +406,15 @@ export default function JefeGrupoScreen({ navigation }: any) {
     return (
       <View key={member.id} style={[styles.memberCard, { backgroundColor: isDarkMode ? '#1e1e24' : '#ffffff', borderColor: theme.border }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={[styles.avatarBox, isScouterRole && { backgroundColor: '#4f46e5' }]}>
-            <Text style={styles.avatarText}>{member.name?.charAt(0)?.toUpperCase() || 'S'}</Text>
+          <View style={{ marginRight: 12 }}>
+            <DualProfileAvatar
+              scoutAvatarUrl={member.avatar_url}
+              customAvatarUrl={member.custom_avatar_url}
+              unit={member.unit || 'clan'}
+              role={member.role || (isScouterRole ? 'scouter' : 'scout')}
+              size={46}
+              editable={false}
+            />
           </View>
 
           <View style={{ flex: 1, marginLeft: 12 }}>
