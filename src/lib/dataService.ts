@@ -4,6 +4,7 @@ import { RequirementProgress, StageStatus } from '../types/progression';
 import { stagesData } from '../data/progressionTemplate';
 import { notificationService } from '../services/notificationService';
 import { presenceService } from '../services/presenceService';
+import { storageService } from './storageService';
 
 const SYNC_QUEUE_KEY = '@scout_offline_sync_queue';
 
@@ -358,9 +359,21 @@ export const dataService = {
 
   async uploadCertificate(scoutId: string, title: string, category: string, level: string | null, fileUrl: string, date?: string) {
     let safeUrl = fileUrl;
-    // Si la imagen es un Data URL de base64 muy pesado, recortar si sobrepasa los límites de payload
-    if (safeUrl && safeUrl.startsWith('data:') && safeUrl.length > 500000) {
-      safeUrl = safeUrl.substring(0, 500000);
+    // Si la imagen es un Data URL de base64, subirla directamente a Supabase Storage bucket 'scout-files'
+    if (safeUrl && safeUrl.startsWith('data:image')) {
+      try {
+        const uploadedUrl = await storageService.uploadImage(
+          'scout-files',
+          'certificates',
+          `cert_${scoutId}_${Date.now()}.png`,
+          safeUrl
+        );
+        if (uploadedUrl && uploadedUrl.startsWith('http')) {
+          safeUrl = uploadedUrl;
+        }
+      } catch (uploadErr) {
+        console.warn('Aviso subiendo imagen a storage:', uploadErr);
+      }
     }
 
     const payload: any = {
@@ -400,9 +413,33 @@ export const dataService = {
     date?: string;
     file_url?: string;
   }) {
+    let safeUrl = updates.file_url;
+    if (safeUrl && safeUrl.startsWith('data:image')) {
+      try {
+        const uploadedUrl = await storageService.uploadImage(
+          'scout-files',
+          'certificates',
+          `cert_${scoutId}_${Date.now()}.png`,
+          safeUrl
+        );
+        if (uploadedUrl && uploadedUrl.startsWith('http')) {
+          safeUrl = uploadedUrl;
+        }
+      } catch (uploadErr) {
+        console.warn('Aviso subiendo imagen editada a storage:', uploadErr);
+      }
+    }
+
+    // Sanitizar updates para enviar únicamente columnas existentes en Supabase
+    const cleanUpdates: any = {};
+    if (updates.title !== undefined) cleanUpdates.title = updates.title;
+    if (updates.category !== undefined) cleanUpdates.category = updates.category;
+    if (updates.level !== undefined) cleanUpdates.level = updates.level;
+    if (safeUrl !== undefined) cleanUpdates.file_url = safeUrl;
+
     const { data, error } = await supabase
       .from('certificates')
-      .update(updates)
+      .update(cleanUpdates)
       .eq('id', certificateId)
       .select();
 
@@ -1082,19 +1119,34 @@ export const dataService = {
       const { data } = await supabase
         .from('certificates')
         .select('*')
-        .eq('user_id', scoutId)
+        .eq('scout_id', scoutId)
         .eq('category', `aire_libre_${stageId}_${reqId}`)
         .order('created_at', { ascending: false });
 
       if (data && data.length > 0) {
-        const entries = data.map(d => ({
-          id: d.id,
-          date: d.date || (d.created_at ? d.created_at.split('T')[0] : ''),
-          location: d.title || 'Campamento / Pernocta',
-          nightsCount: parseInt(d.level || '1', 10) || 1,
-          notes: '',
-          createdAt: d.created_at
-        }));
+        const entries = data.map(d => {
+          let dateVal = d.created_at ? d.created_at.split('T')[0] : '';
+          let notesVal = '';
+          if (d.file_url) {
+            if (d.file_url.startsWith('date:')) {
+              dateVal = d.file_url.replace('date:', '');
+            } else if (d.file_url.startsWith('{')) {
+              try {
+                const meta = JSON.parse(d.file_url);
+                if (meta.date) dateVal = meta.date;
+                if (meta.notes) notesVal = meta.notes;
+              } catch {}
+            }
+          }
+          return {
+            id: d.id,
+            date: dateVal,
+            location: d.title || 'Campamento / Pernocta',
+            nightsCount: parseInt(d.level || '1', 10) || 1,
+            notes: notesVal,
+            createdAt: d.created_at
+          };
+        });
         await AsyncStorage.setItem(key, JSON.stringify(entries)).catch(() => {});
         return entries;
       }
@@ -1114,16 +1166,15 @@ export const dataService = {
     const key = `@scout_noches_${scoutId}_${stageId}_${reqId}`;
     await AsyncStorage.setItem(key, JSON.stringify(updated));
 
-    // Guardar en Supabase
+    // Guardar en Supabase usando estrictamente columnas existentes en certificates
     try {
       await supabase.from('certificates').insert({
         id: newEntry.id,
-        user_id: scoutId,
+        scout_id: scoutId,
         category: `aire_libre_${stageId}_${reqId}`,
         title: entry.location || 'Campamento / Pernocta',
         level: String(entry.nightsCount || 1),
-        date: entry.date,
-        image_url: null
+        file_url: JSON.stringify({ date: entry.date, notes: entry.notes || '' })
       });
     } catch (e) {
       console.warn('Aviso guardando noche en Supabase:', e);
@@ -1157,21 +1208,27 @@ export const dataService = {
       const { data } = await supabase
         .from('certificates')
         .select('*')
-        .eq('user_id', scoutId)
+        .eq('scout_id', scoutId)
         .eq('category', `vida_grupo_${stageId}_${reqId}`)
         .order('created_at', { ascending: false });
 
       if (data && data.length > 0) {
-        const entries = data.map(d => ({
-          id: d.id,
-          type: (d.issuer || 'peregrinaje') as any,
-          subtype: d.level || undefined,
-          location: d.notes || '',
-          title: d.title || 'Evento de Vida de Grupo',
-          date: d.date || (d.created_at ? d.created_at.split('T')[0] : ''),
-          description: d.description || '',
-          createdAt: d.created_at
-        }));
+        const entries = data.map(d => {
+          let meta: any = {};
+          if (d.file_url && d.file_url.startsWith('{')) {
+            try { meta = JSON.parse(d.file_url); } catch {}
+          }
+          return {
+            id: d.id,
+            type: (meta.type || d.level || 'peregrinaje') as any,
+            subtype: meta.subtype || d.level || undefined,
+            location: meta.location || '',
+            title: d.title || 'Evento de Vida de Grupo',
+            date: meta.date || (d.created_at ? d.created_at.split('T')[0] : ''),
+            description: meta.description || '',
+            createdAt: d.created_at
+          };
+        });
         await AsyncStorage.setItem(key, JSON.stringify(entries)).catch(() => {});
         return entries;
       }
@@ -1199,15 +1256,17 @@ export const dataService = {
     try {
       await supabase.from('certificates').insert({
         id: newEntry.id,
-        user_id: scoutId,
+        scout_id: scoutId,
         category: `vida_grupo_${stageId}_${reqId}`,
-        title: entry.title,
-        issuer: entry.type,
-        level: entry.subtype || null,
-        notes: entry.location || null,
-        description: entry.description || null,
-        date: entry.date,
-        image_url: null
+        title: entry.title || 'Evento de Vida de Grupo',
+        level: entry.subtype || entry.type || null,
+        file_url: JSON.stringify({
+          type: entry.type,
+          subtype: entry.subtype || null,
+          location: entry.location || '',
+          date: entry.date || new Date().toISOString().split('T')[0],
+          description: entry.description || ''
+        })
       });
     } catch (e) {
       console.warn('Aviso guardando Vida de Grupo en Supabase:', e);
@@ -1241,19 +1300,25 @@ export const dataService = {
       const { data } = await supabase
         .from('certificates')
         .select('*')
-        .eq('user_id', scoutId)
+        .eq('scout_id', scoutId)
         .eq('category', `cip_sel_${stageId}_${reqId}`)
         .order('created_at', { ascending: false });
 
       if (data && data.length > 0) {
-        const events = data.map(d => ({
-          id: d.id,
-          title: d.title,
-          scope: d.level || 'distrital',
-          date: d.date || (d.created_at ? d.created_at.split('T')[0] : ''),
-          location: d.notes || '',
-          description: d.description || ''
-        }));
+        const events = data.map(d => {
+          let meta: any = {};
+          if (d.file_url && d.file_url.startsWith('{')) {
+            try { meta = JSON.parse(d.file_url); } catch {}
+          }
+          return {
+            id: d.id,
+            title: d.title,
+            scope: d.level || 'distrital',
+            date: meta.date || (d.created_at ? d.created_at.split('T')[0] : ''),
+            location: meta.location || '',
+            description: meta.description || ''
+          };
+        });
         await AsyncStorage.setItem(key, JSON.stringify(events)).catch(() => {});
         return events;
       }
@@ -1267,19 +1332,20 @@ export const dataService = {
     await AsyncStorage.setItem(key, JSON.stringify(events));
 
     try {
-      // Eliminar anteriores y re-insertar
-      await supabase.from('certificates').delete().eq('user_id', scoutId).eq('category', `cip_sel_${stageId}_${reqId}`);
+      // Eliminar anteriores y re-insertar usando scout_id
+      await supabase.from('certificates').delete().eq('scout_id', scoutId).eq('category', `cip_sel_${stageId}_${reqId}`);
       if (events.length > 0) {
         const rows = events.map(evt => ({
           id: evt.id || `cip_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-          user_id: scoutId,
+          scout_id: scoutId,
           category: `cip_sel_${stageId}_${reqId}`,
           title: evt.title,
           level: evt.scope || 'distrital',
-          notes: evt.location || null,
-          description: evt.description || null,
-          date: evt.date,
-          image_url: null
+          file_url: JSON.stringify({
+            location: evt.location || '',
+            description: evt.description || '',
+            date: evt.date || ''
+          })
         }));
         await supabase.from('certificates').insert(rows);
       }
@@ -1305,24 +1371,21 @@ export const dataService = {
     }
 
     try {
-      // Eliminar registro previo en Supabase
+      // Eliminar registro previo en Supabase usando scout_id
       await supabase
         .from('certificates')
         .delete()
-        .or(`scout_id.eq.${scoutId},user_id.eq.${scoutId}`)
+        .eq('scout_id', scoutId)
         .eq('category', `linked_cert_${stageId}_${reqId}`);
 
       if (certData) {
         await supabase.from('certificates').insert({
           id: `link_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
           scout_id: scoutId,
-          user_id: scoutId,
           title: certData.certTitle,
           category: `linked_cert_${stageId}_${reqId}`,
           level: certData.level || null,
-          notes: certData.certId || null,
-          date: certData.date || new Date().toISOString().split('T')[0],
-          description: JSON.stringify(certData)
+          file_url: JSON.stringify(certData)
         });
       }
     } catch (e) {
@@ -1338,20 +1401,22 @@ export const dataService = {
       const { data, error } = await supabase
         .from('certificates')
         .select('*')
-        .or(`scout_id.eq.${scoutId},user_id.eq.${scoutId}`)
+        .eq('scout_id', scoutId)
         .like('category', 'linked_cert_%');
 
       if (!error && data && data.length > 0) {
         for (const row of data) {
           const rawCat = row.category.replace('linked_cert_', '');
           let parsedDesc: any = null;
-          try { if (row.description) parsedDesc = JSON.parse(row.description); } catch {}
+          if (row.file_url && row.file_url.startsWith('{')) {
+            try { parsedDesc = JSON.parse(row.file_url); } catch {}
+          }
 
           const certObj = {
-            certId: parsedDesc?.certId || row.notes || row.id,
+            certId: parsedDesc?.certId || row.id,
             certTitle: parsedDesc?.certTitle || row.title,
             level: parsedDesc?.level || row.level,
-            date: parsedDesc?.date || row.date
+            date: parsedDesc?.date || (row.created_at ? row.created_at.split('T')[0] : '')
           };
 
           result[rawCat] = certObj;

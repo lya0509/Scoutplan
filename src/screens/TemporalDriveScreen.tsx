@@ -15,6 +15,8 @@ import {
 import { Camera, Image as ImageIcon, Clock, Plus, Trash2, Download, X, Share2, ShieldAlert, Sparkles, FolderPlus, Info, Eye, Lock, Globe } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../lib/supabaseClient';
 import { storageService } from '../lib/storageService';
 import { colors } from '../theme/colors';
 import { useModalBackHandler } from '../hooks/useBackHandler';
@@ -66,11 +68,67 @@ export default function TemporalDriveScreen({ navigation }: any) {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    loadMockAlbums();
+    loadAlbums();
   }, []);
 
-  const loadMockAlbums = () => {
-    setAlbums([]);
+  const loadAlbums = async () => {
+    try {
+      const cached = await AsyncStorage.getItem('@scout_temporal_drive_albums');
+      let localAlbums: PhotoAlbum[] = cached ? JSON.parse(cached) : [];
+      const now = Date.now();
+      localAlbums = localAlbums.filter(a => a.expiresAt > now);
+      if (localAlbums.length > 0) {
+        setAlbums(localAlbums);
+      }
+
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .select('*')
+        .eq('unit', 'drive_album')
+        .gte('end_date', new Date().toISOString());
+
+      if (!error && data) {
+        const remoteAlbums: PhotoAlbum[] = data.map((row: any) => {
+          let extra: any = {};
+          try {
+            extra = typeof row.description === 'string' ? JSON.parse(row.description) : (row.description || {});
+          } catch {}
+
+          return {
+            id: row.id,
+            title: row.title,
+            unit: row.location || 'clan',
+            visibility: extra.visibility || 'public',
+            expiresAt: extra.expiresAt || new Date(row.end_date).getTime(),
+            durationDays: extra.durationDays || 3,
+            createdBy: extra.createdBy || 'Scout',
+            photos: Array.isArray(extra.photos) ? extra.photos : []
+          };
+        }).filter((a: PhotoAlbum) => a.expiresAt > now);
+
+        const userUnit = user?.unit?.toLowerCase() || '';
+        const isStaff = user?.role === 'scouter' || user?.role === 'jefe_grupo' || user?.role === 'admin';
+        const filtered = remoteAlbums.filter((alb: PhotoAlbum) => {
+          if (alb.visibility === 'public') return true;
+          if (isStaff) return true;
+          return alb.unit.toLowerCase() === userUnit;
+        });
+
+        const mergedMap = new Map<string, PhotoAlbum>();
+        filtered.forEach((a: PhotoAlbum) => mergedMap.set(a.id, a));
+        localAlbums.forEach(a => {
+          if (!mergedMap.has(a.id)) {
+            mergedMap.set(a.id, a);
+          }
+        });
+
+        const mergedList = Array.from(mergedMap.values()).sort((a, b) => b.expiresAt - a.expiresAt);
+        setAlbums(mergedList);
+        await AsyncStorage.setItem('@scout_temporal_drive_albums', JSON.stringify(mergedList));
+      }
+    } catch (e) {
+      console.warn('Aviso cargando álbumes de Drive:', e);
+    }
   };
 
   const getTimeRemaining = (expiresAt: number) => {
@@ -110,7 +168,32 @@ export default function TemporalDriveScreen({ navigation }: any) {
       photos: []
     };
 
-    setAlbums(prev => [newAlb, ...prev]);
+    const updated = [newAlb, ...albums];
+    setAlbums(updated);
+    AsyncStorage.setItem('@scout_temporal_drive_albums', JSON.stringify(updated)).catch(() => {});
+
+    try {
+      supabase.from('calendar_events').insert({
+        id: newAlb.id,
+        title: newAlb.title,
+        unit: 'drive_album',
+        location: newAlb.unit,
+        start_date: new Date().toISOString(),
+        end_date: new Date(expiresAt).toISOString(),
+        description: JSON.stringify({
+          visibility: newAlb.visibility,
+          expiresAt: newAlb.expiresAt,
+          durationDays: newAlb.durationDays,
+          createdBy: newAlb.createdBy,
+          photos: []
+        }),
+        created_by: user?.id || user?.name || 'Scout',
+        is_cancelled: false
+      }).then(() => {});
+    } catch (e) {
+      console.warn('Aviso guardando álbum en Supabase:', e);
+    }
+
     setNewTitle('');
     setVisibility('public');
     setShowCreateModal(false);
@@ -156,14 +239,36 @@ export default function TemporalDriveScreen({ navigation }: any) {
           });
         }
 
-        setAlbums(prev => prev.map(alb => {
+        let targetAlbumUpdated: PhotoAlbum | null = null;
+        const updatedAlbums = albums.map(alb => {
           if (alb.id === selectedAlbum.id) {
             const updated = { ...alb, photos: [...alb.photos, ...newPhotos] };
+            targetAlbumUpdated = updated;
             setSelectedAlbum(updated);
             return updated;
           }
           return alb;
-        }));
+        });
+
+        setAlbums(updatedAlbums);
+        AsyncStorage.setItem('@scout_temporal_drive_albums', JSON.stringify(updatedAlbums)).catch(() => {});
+
+        if (targetAlbumUpdated) {
+          const toSave = targetAlbumUpdated as PhotoAlbum;
+          try {
+            supabase.from('calendar_events').update({
+              description: JSON.stringify({
+                visibility: toSave.visibility,
+                expiresAt: toSave.expiresAt,
+                durationDays: toSave.durationDays,
+                createdBy: toSave.createdBy,
+                photos: toSave.photos
+              })
+            }).eq('id', toSave.id).then(() => {});
+          } catch (e) {
+            console.warn('Aviso guardando fotos en Supabase:', e);
+          }
+        }
 
         setUploading(false);
         showAlert('¡Archivos Subidos!', `Se agregaron ${newPhotos.length} fotos/videos al álbum.`);
@@ -192,23 +297,26 @@ export default function TemporalDriveScreen({ navigation }: any) {
       
       {/* CABECERA DRIVE TEMPORAL */}
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderColor: theme.border }]}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View>
-            <Text style={styles.badgeBanner}>⚡ ALMACENAMIENTO A MÁXIMA CALIDAD ORIGINAL</Text>
-            <Text style={[styles.headerTitle, { color: theme.text }]}>Drive de Fotos</Text>
-            <Text style={[styles.headerSub, { color: theme.subText }]}>
-              Subida de recuerdos en alta resolución de actividades y campamentos.
-            </Text>
+        <View style={styles.headerInner}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View>
+              <Text style={styles.badgeBanner}>⚡ ALMACENAMIENTO A MÁXIMA CALIDAD ORIGINAL</Text>
+              <Text style={[styles.headerTitle, { color: theme.text }]}>Drive de Fotos</Text>
+              <Text style={[styles.headerSub, { color: theme.subText }]}>
+                Subida de recuerdos en alta resolución de actividades y campamentos.
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.createBtn} onPress={() => setShowCreateModal(true)}>
+              <FolderPlus size={16} color="white" style={{ marginRight: 6 }} />
+              <Text style={styles.createBtnText}>Nuevo Álbum</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.createBtn} onPress={() => setShowCreateModal(true)}>
-            <FolderPlus size={16} color="white" style={{ marginRight: 6 }} />
-            <Text style={styles.createBtnText}>Nuevo Álbum</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
       {/* VISTA PRINCIPAL: SI HAY ÁLBUM SELECCIONADO O LISTA DE ÁLBUMES */}
-      <ScrollView style={{ flex: 1, padding: 16 }}>
+      <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ alignItems: 'center' }}>
+        <View style={styles.contentWrapper}>
         {selectedAlbum ? (
           
           /* DETALLE DE UN ÁLBUM SELECCIONADO */
@@ -328,6 +436,7 @@ export default function TemporalDriveScreen({ navigation }: any) {
           </View>
 
         )}
+        </View>
       </ScrollView>
 
       {/* MODAL CREAR NUEVO ÁLBUM TEMPORAL */}
@@ -532,6 +641,8 @@ export default function TemporalDriveScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 18, borderBottomWidth: 1 },
+  headerInner: { maxWidth: 960, width: '100%', alignSelf: 'center' },
+  contentWrapper: { maxWidth: 960, width: '100%', alignSelf: 'center' },
   badgeBanner: { fontSize: 10, fontWeight: '900', color: colors.primary, letterSpacing: 0.5, marginBottom: 2 },
   headerTitle: { fontSize: 18, fontWeight: 'bold' },
   headerSub: { fontSize: 12, marginTop: 2, maxWidth: 280 },
@@ -559,16 +670,16 @@ const styles = StyleSheet.create({
   albumRowTitle: { fontSize: 14, fontWeight: 'bold' },
   albumRowSub: { fontSize: 12, marginTop: 2 },
 
-  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  photoCard: { width: '48%', height: 140, borderRadius: 14, borderWidth: 1, overflow: 'hidden', backgroundColor: '#000' },
+  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  photoCard: { flexBasis: 160, flexGrow: 1, maxWidth: 230, height: 160, borderRadius: 14, borderWidth: 1, overflow: 'hidden', backgroundColor: '#000' },
   photoThumb: { width: '100%', height: '100%' },
   photoInfoOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', padding: 6 },
   photoUploader: { color: 'white', fontSize: 11, fontWeight: 'bold' }
 });
 
 const modalStyles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 30 },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end', alignItems: 'center' },
+  sheet: { width: '100%', maxWidth: 520, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderRadius: Platform.OS === 'web' ? 24 : undefined, paddingBottom: 30, overflow: 'hidden' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1 },
   title: { fontSize: 16, fontWeight: 'bold' },
   label: { fontSize: 11, fontWeight: '800', marginBottom: 4 },
@@ -579,7 +690,7 @@ const modalStyles = StyleSheet.create({
 
   fullPhotoOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', justifyContent: 'center', alignItems: 'center' },
   closeFullPhotoBtn: { position: 'absolute', top: 40, right: 20, zIndex: 10 },
-  fullPhotoImage: { width: '90%', height: '70%' },
+  fullPhotoImage: { maxWidth: '90%', maxHeight: '70%', width: 700, height: 500 },
   fullPhotoFooter: { alignItems: 'center', marginTop: 14 },
   downloadBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, marginTop: 12 }
 });

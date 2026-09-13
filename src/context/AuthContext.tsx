@@ -154,7 +154,10 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
           cedula: resolvedCedula,
           phone: resolvedPhone,
           region: resolvedRegion,
-          district: resolvedDistrict
+          district: resolvedDistrict,
+          birth_date: resolvedBirthDate,
+          promise_date: resolvedPromiseDate,
+          join_date: resolvedJoinDate
         }).then(() => {});
       } else {
         const needsDbSync = 

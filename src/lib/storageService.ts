@@ -80,13 +80,13 @@ export const storageService = {
       let contentType = 'image/png';
 
       if (typeof fileOrBase64 === 'string') {
-        if (!fileOrBase64.startsWith('data:image')) {
+        if (!fileOrBase64.startsWith('data:')) {
           return fileOrBase64;
         }
 
-        // Si es foto de perfil o firma, comprimir a máx 800px (~100KB)
+        // Si es foto de perfil o firma de imagen, comprimir a máx 800px (~100KB)
         let processedBase64 = fileOrBase64;
-        if (bucketName === 'scout-files') {
+        if (bucketName === 'scout-files' && fileOrBase64.startsWith('data:image')) {
           processedBase64 = await compressImageIfNeeded(fileOrBase64, 800, 0.85);
         }
 

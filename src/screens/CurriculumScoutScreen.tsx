@@ -318,7 +318,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
       };
 
       const updateData: any = { curriculum_data: payload };
-      if (uploadedPhotoUrl) {
+      if (uploadedPhotoUrl && photoUrl && photoUrl.startsWith('data:image')) {
         updateData.avatar_url = uploadedPhotoUrl;
       }
 
@@ -463,45 +463,47 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
       
       {/* CABECERA */}
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderColor: theme.border }]}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <TouchableOpacity
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingVertical: 5,
-              paddingHorizontal: 10,
-              borderRadius: 8,
-              backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
-              gap: 6
-            }}
-            onPress={() => navigateBackOrHome(navigation, user?.role)}
-          >
-            <ArrowLeft size={16} color={theme.text} />
-            <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>
-          </TouchableOpacity>
-          {isViewOnlyForScouter && (
-            <View style={styles.scouterBadge}>
-              <Shield size={12} color="white" style={{ marginRight: 4 }} />
-              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 10 }}>Modo Scouter</Text>
+        <View style={styles.headerInner}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 5,
+                paddingHorizontal: 10,
+                borderRadius: 8,
+                backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
+                gap: 6
+              }}
+              onPress={() => navigateBackOrHome(navigation, user?.role)}
+            >
+              <ArrowLeft size={16} color={theme.text} />
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>
+            </TouchableOpacity>
+            {isViewOnlyForScouter && (
+              <View style={styles.scouterBadge}>
+                <Shield size={12} color="white" style={{ marginRight: 4 }} />
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 10 }}>Modo Scouter</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.asociacionBanner}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>
+              <Text style={[styles.title, { color: theme.text }]}>Currículum Scout Joven</Text>
+            </View>
+          </View>
+
+          {hasChanges && !isViewOnlyForScouter && (
+            <View style={styles.changesBanner}>
+              <AlertCircle size={14} color="#f59e0b" style={{ marginRight: 6 }} />
+              <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#f59e0b', flex: 1 }}>
+                Has realizado cambios en tu Currículum. Recuerda guardar los cambios.
+              </Text>
             </View>
           )}
         </View>
-
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.asociacionBanner}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>
-            <Text style={[styles.title, { color: theme.text }]}>Currículum Scout Joven</Text>
-          </View>
-        </View>
-
-        {hasChanges && !isViewOnlyForScouter && (
-          <View style={styles.changesBanner}>
-            <AlertCircle size={14} color="#f59e0b" style={{ marginRight: 6 }} />
-            <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#f59e0b', flex: 1 }}>
-              Has realizado cambios en tu Currículum. Recuerda guardar los cambios.
-            </Text>
-          </View>
-        )}
       </View>
 
       <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 60 }}>
@@ -1179,8 +1181,9 @@ const styles = StyleSheet.create({
   exportHeaderBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   exportHeaderBtnText: { color: 'white', fontWeight: 'bold', fontSize: 11 },
   changesBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.12)', padding: 8, borderRadius: 8, marginTop: 8 },
+  headerInner: { maxWidth: 850, width: '100%', alignSelf: 'center' },
 
-  sheet: { borderRadius: 18, padding: 18, borderWidth: 1 },
+  sheet: { borderRadius: 18, padding: 18, borderWidth: 1, maxWidth: 850, width: '100%', alignSelf: 'center' },
   photoUploadCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(99, 102, 241, 0.08)', padding: 12, borderRadius: 14, marginBottom: 10 },
   photoBox: { width: 64, height: 72, borderRadius: 8, borderWidth: 1, borderColor: colors.primary, backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
   photoImg: { width: '100%', height: '100%' },
