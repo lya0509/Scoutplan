@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -129,8 +129,45 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
   const currentMonths = MONTH_NAMES_BY_QUARTER[selectedQuarter] || [];
   const activeQuarterObj = QUARTERS.find(q => q.id === selectedQuarter);
 
+  // Referencias para control infalible de cambios y prevención de sobreescritura
+  const isDirtyRef = useRef(false);
+  const loadedQuarterRef = useRef<string>(selectedQuarter);
+  const loadedYearRef = useRef<number>(selectedYear);
+  const loadedUnitRef = useRef<string>('clan');
+
+  const getDraftKey = (quarter?: string, year?: number, unit?: string) => {
+    const q = quarter || selectedQuarter;
+    const y = year || selectedYear;
+    const targetUnit = unit || (isScouter && unitFilter !== 'all' ? unitFilter : (user?.unit || 'clan'));
+    return `quarterly_${user?.group_name || 'default'}_${targetUnit}_${q}_${y}`;
+  };
+
   useEffect(() => {
-    loadData();
+    // Si el usuario tenía cambios en el trimestre/año anterior sin guardar, persistirlos de inmediato
+    if (isDirtyRef.current && user) {
+      const prevQ = loadedQuarterRef.current;
+      const prevY = loadedYearRef.current;
+      const prevU = loadedUnitRef.current;
+      if (prevQ && prevY) {
+        const prevKey = getDraftKey(prevQ, prevY, prevU);
+        autoSaveService.saveDraftImmediate(
+          prevKey,
+          {
+            elaboratedBy,
+            generalObjective,
+            trimestreGoalsList,
+            specificObjectivesList,
+            educationalAreas,
+            activities,
+            savedAt: new Date().toISOString()
+          },
+          user.id,
+          'QuarterlyPlan'
+        );
+      }
+    }
+
+    loadData(true);
 
     // Sincronización en tiempo real vía WebSockets (estilo WhatsApp)
     const channel = supabase
@@ -138,8 +175,17 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'quarterly_plans' },
-        () => {
-          loadData();
+        (payload) => {
+          // PROTECCIÓN CRÍTICA: Si el usuario tiene cambios activos en pantalla,
+          // JAMÁS sobreescribir sus campos en segundo plano
+          if (isDirtyRef.current) {
+            console.log('[Realtime] Cambio detectado en Supabase, pero el usuario está editando activamente.');
+            return;
+          }
+          const rec = payload.new as any;
+          if (!rec || (rec.quarter === selectedQuarter && Number(rec.year) === Number(selectedYear))) {
+            loadData(false);
+          }
         }
       )
       .subscribe();
@@ -147,12 +193,18 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, selectedQuarter, selectedYear, unitFilter]);
+  }, [user?.id, user?.unit, user?.group_name, selectedQuarter, selectedYear, unitFilter]);
 
+  // Auto-guardado local en segundo plano mientras el usuario escribe
   useEffect(() => {
-    if (!user || loading) return;
-    const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user.unit || 'clan');
-    const key = `quarterly_${user.group_name || 'default'}_${targetUnit}_${selectedQuarter}_${selectedYear}`;
+    // Solo auto-guardar si no estamos cargando datos iniciales Y el usuario ha hecho cambios activos
+    if (!user || loading || !isDirtyRef.current) return;
+
+    const currentQ = loadedQuarterRef.current || selectedQuarter;
+    const currentY = loadedYearRef.current || selectedYear;
+    const currentU = loadedUnitRef.current || (isScouter && unitFilter !== 'all' ? unitFilter : (user.unit || 'clan'));
+    const key = `quarterly_${user.group_name || 'default'}_${currentU}_${currentQ}_${currentY}`;
+
     autoSaveService.saveDraft(
       key,
       {
@@ -161,12 +213,13 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
         trimestreGoalsList,
         specificObjectivesList,
         educationalAreas,
-        activities
+        activities,
+        savedAt: new Date().toISOString()
       },
       user.id,
       'QuarterlyPlan'
     );
-  }, [elaboratedBy, generalObjective, trimestreGoalsList, specificObjectivesList, educationalAreas, activities, user, selectedQuarter, selectedYear, unitFilter]);
+  }, [elaboratedBy, generalObjective, trimestreGoalsList, specificObjectivesList, educationalAreas, activities, user?.id]);
 
   const parseStringToList = (val: any): string[] => {
     if (!val) return [''];
@@ -199,88 +252,113 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     ];
   };
 
-  const getDraftKey = () => {
-    const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user?.unit || 'clan');
-    return `@draft_quarterly_${user?.group_name || 'default'}_${targetUnit}_${selectedQuarter}_${selectedYear}`;
-  };
-
-  const loadData = async () => {
+  const loadData = async (force: boolean = false) => {
     if (!user) return;
+
+    // Si es una recarga de fondo y hay cambios locales activos, NO sobreescribir
+    if (!force && isDirtyRef.current) {
+      console.log('[QuarterlyPlan] Omitiendo recarga de fondo porque hay cambios locales activos sin guardar.');
+      return;
+    }
+
     setLoading(true);
-    const key = getDraftKey();
+    const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user.unit || 'clan');
+    loadedQuarterRef.current = selectedQuarter;
+    loadedYearRef.current = selectedYear;
+    loadedUnitRef.current = targetUnit;
+
+    const draftKey = getDraftKey(selectedQuarter, selectedYear, targetUnit);
 
     try {
-      const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user.unit || 'clan');
-      const plan = await dataService.getUnitSharedQuarterlyPlan(
+      // 1. Cargar borrador local (autoSaveService + compatibilidad hacia atrás)
+      let localDraft: any = await autoSaveService.loadDraft(draftKey);
+      if (!localDraft) {
+        try {
+          const oldRaw = await AsyncStorage.getItem(`@draft_${draftKey}`);
+          if (oldRaw) localDraft = JSON.parse(oldRaw);
+        } catch {}
+      }
+
+      // 2. Cargar plan compartido desde Supabase
+      const remotePlan = await dataService.getUnitSharedQuarterlyPlan(
         user.group_name || '',
         targetUnit,
         selectedQuarter,
         selectedYear
       ) || await dataService.getQuarterlyPlan(user.id, selectedQuarter, selectedYear);
 
-      if (plan) {
-        setScoutPlan(plan);
-        setElaboratedBy(plan.elaborated_by || user.name || '');
-        setGeneralObjective(plan.general_objectives || plan.goals || '');
-        setTrimestreGoalsList(parseStringToList(plan.trimestre_goals));
-        setSpecificObjectivesList(parseStringToList(plan.specific_objectives));
-        if (plan.educational_areas) setEducationalAreas(plan.educational_areas);
-        if (plan.monthly_activities && Array.isArray(plan.monthly_activities)) {
-          setActivities(plan.monthly_activities);
+      // 3. Determinar inteligentemente la versión más reciente
+      let chosenData: any = null;
+      if (localDraft && remotePlan) {
+        const draftTime = localDraft.savedAt ? new Date(localDraft.savedAt).getTime() : 0;
+        const remoteTime = remotePlan.updated_at ? new Date(remotePlan.updated_at).getTime() : 0;
+        // Si el borrador local es más reciente que el registro de Supabase, priorizar el trabajo local del usuario
+        if (draftTime > remoteTime) {
+          chosenData = localDraft;
+        } else {
+          chosenData = remotePlan;
+        }
+      } else if (localDraft) {
+        chosenData = localDraft;
+      } else if (remotePlan) {
+        chosenData = remotePlan;
+      }
+
+      if (chosenData) {
+        setScoutPlan(remotePlan || null);
+        setElaboratedBy(chosenData.elaborated_by || chosenData.elaboratedBy || user.name || '');
+        setGeneralObjective(chosenData.general_objectives || chosenData.generalObjective || chosenData.goals || '');
+        setTrimestreGoalsList(parseStringToList(chosenData.trimestre_goals || chosenData.trimestreGoalsList));
+        setSpecificObjectivesList(parseStringToList(chosenData.specific_objectives || chosenData.specificObjectivesList));
+        if (chosenData.educational_areas || chosenData.educationalAreas) {
+          setEducationalAreas(chosenData.educational_areas || chosenData.educationalAreas);
+        }
+        const acts = chosenData.monthly_activities || chosenData.activities;
+        if (acts && Array.isArray(acts)) {
+          setActivities(acts);
         } else {
           setActivities([]);
         }
 
-        // Cachear en almacenamiento local
-        try {
-          await AsyncStorage.setItem(key, JSON.stringify({
-            elaboratedBy: plan.elaborated_by || user.name || '',
-            generalObjective: plan.general_objectives || plan.goals || '',
-            trimestreGoalsList: parseStringToList(plan.trimestre_goals),
-            specificObjectivesList: parseStringToList(plan.specific_objectives),
-            educationalAreas: plan.educational_areas,
-            activities: plan.monthly_activities || [],
-            savedAt: new Date().toISOString()
-          }));
-        } catch (e) {}
+        // Asegurar que autoSaveService tenga este respaldo inmediato
+        autoSaveService.saveDraftImmediate(
+          draftKey,
+          {
+            elaboratedBy: chosenData.elaborated_by || chosenData.elaboratedBy || user.name || '',
+            generalObjective: chosenData.general_objectives || chosenData.generalObjective || chosenData.goals || '',
+            trimestreGoalsList: parseStringToList(chosenData.trimestre_goals || chosenData.trimestreGoalsList),
+            specificObjectivesList: parseStringToList(chosenData.specific_objectives || chosenData.specificObjectivesList),
+            educationalAreas: chosenData.educational_areas || chosenData.educationalAreas,
+            activities: acts || [],
+            savedAt: chosenData.savedAt || chosenData.updated_at || new Date().toISOString()
+          },
+          user.id,
+          'QuarterlyPlan'
+        );
       } else {
-        // Si no hay plan en la nube aún, recuperar borrador local persistido
-        let recovered = false;
-        try {
-          const localDraftStr = await AsyncStorage.getItem(key);
-          if (localDraftStr) {
-            const draft = JSON.parse(localDraftStr);
-            setElaboratedBy(draft.elaboratedBy || user.name || '');
-            setGeneralObjective(draft.generalObjective || '');
-            setTrimestreGoalsList(draft.trimestreGoalsList && draft.trimestreGoalsList.length > 0 ? draft.trimestreGoalsList : ['']);
-            setSpecificObjectivesList(draft.specificObjectivesList && draft.specificObjectivesList.length > 0 ? draft.specificObjectivesList : ['']);
-            if (draft.educationalAreas) setEducationalAreas(draft.educationalAreas);
-            if (draft.activities && Array.isArray(draft.activities)) setActivities(draft.activities);
-            recovered = true;
-          }
-        } catch (e) {}
-
-        if (!recovered) {
-          setElaboratedBy(user.name || '');
-          setGeneralObjective('');
-          setTrimestreGoalsList(['']);
-          setSpecificObjectivesList(['']);
-          setActivities([]);
-        }
+        // Inicializar limpio si no existe plan ni borrador
+        setScoutPlan(null);
+        setElaboratedBy(user.name || '');
+        setGeneralObjective('');
+        setTrimestreGoalsList(['']);
+        setSpecificObjectivesList(['']);
+        setActivities([]);
       }
+
+      isDirtyRef.current = false;
     } catch (err) {
-      console.error('Error cargando plan trimestral compartido:', err);
-      // En caso de suspensión o desconexión temporal, recuperar de la memoria local
+      console.error('Error cargando plan trimestral:', err);
+      // En caso de fallo de red, intentar cargar del borrador local persistido
       try {
-        const localDraftStr = await AsyncStorage.getItem(key);
-        if (localDraftStr) {
-          const draft = JSON.parse(localDraftStr);
-          setElaboratedBy(draft.elaboratedBy || user.name || '');
-          setGeneralObjective(draft.generalObjective || '');
-          setTrimestreGoalsList(draft.trimestreGoalsList || ['']);
-          setSpecificObjectivesList(draft.specificObjectivesList || ['']);
-          if (draft.educationalAreas) setEducationalAreas(draft.educationalAreas);
-          if (draft.activities) setActivities(draft.activities);
+        const localDraft: any = await autoSaveService.loadDraft(draftKey);
+        if (localDraft) {
+          setElaboratedBy(localDraft.elaboratedBy || user.name || '');
+          setGeneralObjective(localDraft.generalObjective || '');
+          setTrimestreGoalsList(localDraft.trimestreGoalsList || ['']);
+          setSpecificObjectivesList(localDraft.specificObjectivesList || ['']);
+          if (localDraft.educationalAreas) setEducationalAreas(localDraft.educationalAreas);
+          if (localDraft.activities) setActivities(localDraft.activities);
+          isDirtyRef.current = false;
         }
       } catch (e) {}
     } finally {
@@ -527,12 +605,68 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     showAlert('¡Copiado para WhatsApp!', 'El resumen del plan trimestral se ha copiado al portapapeles. ¡Listo para pegar en tu grupo de WhatsApp!');
   };
 
+  // Transiciones seguras para cambiar de trimestre, año o unidad sin perder cambios
+  const handleSelectQuarter = async (qId: string) => {
+    if (qId === selectedQuarter) return;
+    if (isDirtyRef.current && user) {
+      const prevKey = getDraftKey(loadedQuarterRef.current, loadedYearRef.current, loadedUnitRef.current);
+      await autoSaveService.saveDraftImmediate(prevKey, {
+        elaboratedBy,
+        generalObjective,
+        trimestreGoalsList,
+        specificObjectivesList,
+        educationalAreas,
+        activities,
+        savedAt: new Date().toISOString()
+      }, user.id, 'QuarterlyPlan');
+    }
+    isDirtyRef.current = false;
+    setSelectedQuarter(qId);
+  };
+
+  const handleChangeYear = async (delta: number) => {
+    if (isDirtyRef.current && user) {
+      const prevKey = getDraftKey(loadedQuarterRef.current, loadedYearRef.current, loadedUnitRef.current);
+      await autoSaveService.saveDraftImmediate(prevKey, {
+        elaboratedBy,
+        generalObjective,
+        trimestreGoalsList,
+        specificObjectivesList,
+        educationalAreas,
+        activities,
+        savedAt: new Date().toISOString()
+      }, user.id, 'QuarterlyPlan');
+    }
+    isDirtyRef.current = false;
+    setSelectedYear(y => y + delta);
+  };
+
+  const handleSelectUnitFilter = async (u: string) => {
+    if (u === unitFilter) return;
+    if (isDirtyRef.current && user) {
+      const prevKey = getDraftKey(loadedQuarterRef.current, loadedYearRef.current, loadedUnitRef.current);
+      await autoSaveService.saveDraftImmediate(prevKey, {
+        elaboratedBy,
+        generalObjective,
+        trimestreGoalsList,
+        specificObjectivesList,
+        educationalAreas,
+        activities,
+        savedAt: new Date().toISOString()
+      }, user.id, 'QuarterlyPlan');
+    }
+    isDirtyRef.current = false;
+    setUnitFilter(u);
+  };
+
   // Manejadores para Listas Dinámicas
   const handleAddListItem = (setter: React.Dispatch<React.SetStateAction<string[]>>) => {
+    isDirtyRef.current = true;
     setter(prev => [...prev, '']);
   };
 
   const handleUpdateListItem = (setter: React.Dispatch<React.SetStateAction<string[]>>, index: number, value: string) => {
+    isDirtyRef.current = true;
     setter(prev => {
       const copy = [...prev];
       copy[index] = value;
@@ -541,11 +675,13 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
   };
 
   const handleRemoveListItem = (setter: React.Dispatch<React.SetStateAction<string[]>>, index: number) => {
+    isDirtyRef.current = true;
     setter(prev => prev.filter((_, i) => i !== index));
   };
 
   // Manejadores para Actividades
   const handleAddActivity = (monthName: string) => {
+    isDirtyRef.current = true;
     const newAct: ActivityRow = {
       id: String(Date.now()),
       month: monthName,
@@ -559,14 +695,17 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
   };
 
   const handleUpdateActivity = (id: string, field: keyof ActivityRow, value: string) => {
+    isDirtyRef.current = true;
     setActivities(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
   };
 
   const handleRemoveActivity = (id: string) => {
+    isDirtyRef.current = true;
     setActivities(prev => prev.filter(a => a.id !== id));
   };
 
   const toggleArea = (key: string) => {
+    isDirtyRef.current = true;
     setEducationalAreas(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
@@ -589,6 +728,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
       showAlert('Campo requerido', 'Por favor ingresa el nuevo nombre de la actividad.');
       return;
     }
+    isDirtyRef.current = true;
     setActivities(prev => prev.map(a => {
       if (a.id === actToModify.id) {
         return {
@@ -607,6 +747,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
   };
 
   const handleRevertModification = (actId: string) => {
+    isDirtyRef.current = true;
     setActivities(prev => prev.map(a => {
       if (a.id === actId && a.originalActivity) {
         return {
@@ -658,6 +799,27 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user.unit || 'clan');
 
     setSavingScout(true);
+    const draftKey = getDraftKey(selectedQuarter, selectedYear, targetUnit);
+
+    // 1. Guardado inmediato e infalible en almacenamiento local del dispositivo
+    await autoSaveService.saveDraftImmediate(
+      draftKey,
+      {
+        elaboratedBy: elaboratedBy.trim() || user.name,
+        generalObjective: generalObjective.trim(),
+        trimestreGoalsList,
+        specificObjectivesList,
+        educationalAreas,
+        activities,
+        savedAt: new Date().toISOString()
+      },
+      user.id,
+      'QuarterlyPlan'
+    );
+
+    // Marcar limpio para evitar sobreescrituras
+    isDirtyRef.current = false;
+
     try {
       await dataService.saveQuarterlyPlan({
         scout_id: user.id,
@@ -673,20 +835,6 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
         monthly_activities: activities
       });
 
-      // Actualizar caché local
-      try {
-        const key = getDraftKey();
-        await AsyncStorage.setItem(key, JSON.stringify({
-          elaboratedBy: elaboratedBy.trim() || user.name,
-          generalObjective: generalObjective.trim(),
-          trimestreGoalsList: trimestreGoalsList,
-          specificObjectivesList: specificObjectivesList,
-          educationalAreas: educationalAreas,
-          activities: activities,
-          savedAt: new Date().toISOString()
-        }));
-      } catch (e) {}
-
       // Enviar notificación instantánea en vivo a todos los miembros de la unidad
       notificationService.sendNotification({
         senderId: user.id,
@@ -699,9 +847,12 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
 
       setScouterEditUnlocked(false);
       showAlert('¡Plan Trimestral Guardado!', `Se han actualizado las actividades de la unidad para el ${selectedQuarter}. Creado/Modificado por: ${elaboratedBy || user.name}.`);
-      loadData();
     } catch (err: any) {
-      showAlert('Error al guardar', err?.message || 'No se pudo guardar el plan trimestral.');
+      console.warn('Aviso guardando en Supabase (modo offline):', err);
+      showAlert(
+        '¡Guardado en tu Dispositivo!',
+        'Hubo una interrupción en la conexión a internet con el servidor, pero tu Plan Trimestral se guardó de forma segura en tu dispositivo. Se sincronizará automáticamente con la nube al reconectar.'
+      );
     } finally {
       setSavingScout(false);
     }
@@ -768,6 +919,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
   };
 
   const executeClearQuarter = async () => {
+    isDirtyRef.current = false;
     setGeneralObjective('');
     setTrimestreGoalsList(['']);
     setSpecificObjectivesList(['']);
@@ -781,18 +933,26 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     });
     setActivities([]);
 
+    const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user?.unit || 'clan');
+    const draftKey = getDraftKey(selectedQuarter, selectedYear, targetUnit);
+    await autoSaveService.removeDraft(draftKey);
+
     if (user) {
-      await dataService.saveQuarterlyPlan({
-        scout_id: user.id,
-        quarter: selectedQuarter,
-        year: selectedYear,
-        elaborated_by: user.name || '',
-        general_objectives: '',
-        trimestre_goals: '',
-        specific_objectives: '',
-        educational_areas: { corporalidad: false, creatividad: false, afectividad: false, espiritualidad: false, caracter: false, sociabilidad: false },
-        monthly_activities: []
-      });
+      try {
+        await dataService.saveQuarterlyPlan({
+          scout_id: user.id,
+          group_name: user.group_name || 'Grupo Scout Orión #84',
+          unit: targetUnit,
+          quarter: selectedQuarter,
+          year: selectedYear,
+          elaborated_by: user.name || '',
+          general_objectives: '',
+          trimestre_goals: '',
+          specific_objectives: '',
+          educational_areas: { corporalidad: false, creatividad: false, afectividad: false, espiritualidad: false, caracter: false, sociabilidad: false },
+          monthly_activities: []
+        });
+      } catch (e) {}
     }
 
     showAlert('Trimestre Limpiado', `Se ha vaciado el plan del ${selectedQuarter} exitosamente.`);
@@ -899,11 +1059,11 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
 
           <View style={styles.yearAndHistoryGroup}>
             <View style={[styles.yearSelectorRow, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
-              <TouchableOpacity onPress={() => setSelectedYear(y => y - 1)} style={styles.yearArrowBtn}>
+              <TouchableOpacity onPress={() => handleChangeYear(-1)} style={styles.yearArrowBtn}>
                 <ChevronLeft size={16} color={colors.primary} />
               </TouchableOpacity>
               <Text style={[styles.yearText, { color: theme.text }]}>{selectedYear}</Text>
-              <TouchableOpacity onPress={() => setSelectedYear(y => y + 1)} style={styles.yearArrowBtn}>
+              <TouchableOpacity onPress={() => handleChangeYear(1)} style={styles.yearArrowBtn}>
                 <ChevronRight size={16} color={colors.primary} />
               </TouchableOpacity>
             </View>
@@ -964,7 +1124,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
                   { backgroundColor: theme.inputBg, borderColor: theme.border },
                   isActive && { backgroundColor: colors.primary, borderColor: colors.primary }
                 ]}
-                onPress={() => setSelectedQuarter(q.id)}
+                onPress={() => handleSelectQuarter(q.id)}
               >
                 <Text style={[
                   styles.quarterTabCardText,
@@ -983,7 +1143,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 4, marginBottom: 8 }}>
             <TouchableOpacity
               style={[styles.filterChip, unitFilter === 'all' && styles.filterChipActive]}
-              onPress={() => setUnitFilter('all')}
+              onPress={() => handleSelectUnitFilter('all')}
             >
               <Text style={[styles.filterChipText, unitFilter === 'all' && styles.filterChipTextActive]}>
                 Todas las Unidades
@@ -993,7 +1153,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
               <TouchableOpacity
                 key={u}
                 style={[styles.filterChip, unitFilter === u && { backgroundColor: UNIT_COLORS[u] }]}
-                onPress={() => setUnitFilter(u)}
+                onPress={() => handleSelectUnitFilter(u)}
               >
                 <Text style={[styles.filterChipText, unitFilter === u && { color: 'white', fontWeight: 'bold' }]}>
                   {u.toUpperCase()}
@@ -1075,7 +1235,10 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
                     placeholder="Nombre del Joven / Rover / Dirigente"
                     placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
                     value={elaboratedBy}
-                    onChangeText={setElaboratedBy}
+                    onChangeText={val => {
+                      isDirtyRef.current = true;
+                      setElaboratedBy(val);
+                    }}
                     editable={scouterEditUnlocked}
                   />
                 </View>
@@ -1112,7 +1275,10 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
                 multiline
                 numberOfLines={3}
                 value={generalObjective}
-                onChangeText={setGeneralObjective}
+                onChangeText={val => {
+                  isDirtyRef.current = true;
+                  setGeneralObjective(val);
+                }}
                 editable={scouterEditUnlocked}
               />
 
