@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -56,14 +56,22 @@ const getInitialDateForMonth = (monthName: string, year: number): string => {
   return `${year}-${mStr}-15`;
 };
 
-export default function QuarterlyPlanScreen({ navigation }: any) {
+export default function QuarterlyPlanScreen({ navigation, route }: any) {
   const { user } = useAuth();
   const { isDarkMode, theme } = useTheme();
 
-  const [selectedQuarter, setSelectedQuarter] = useState<string>('Q1');
+  const isScouter = user?.role === 'scouter' || user?.role === 'jefe_grupo';
+  const isJefeGrupo = user?.role === 'jefe_grupo';
+
+  // Unidad inicial calculada inteligentemente según rol y parámetros de ruta
+  const userUnitStr = (user?.unit as string) || '';
+  const isYouthUnit = userUnitStr === 'clan' || userUnitStr === 'tropa' || userUnitStr === 'manada' || userUnitStr === 'comunidad' || userUnitStr === 'caminantes';
+  const defaultUnit = route?.params?.unit || (isYouthUnit ? (userUnitStr === 'caminantes' ? 'comunidad' : userUnitStr) : 'clan');
+
+  const [selectedQuarter, setSelectedQuarter] = useState<string>(route?.params?.quarter || 'Q1');
   // Año actual en tiempo real en todo momento
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
-  const [unitFilter, setUnitFilter] = useState<string>('all');
+  const [selectedYear, setSelectedYear] = useState<number>(route?.params?.year || new Date().getFullYear());
+  const [unitFilter, setUnitFilter] = useState<string>(defaultUnit);
   const [loading, setLoading] = useState(true);
 
   // Selector de Vista: Edición (edit) o Previsualización Oficial (preview)
@@ -123,11 +131,20 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
   const [reviewing, setReviewing] = useState(false);
   const [scouterEditUnlocked, setScouterEditUnlocked] = useState(false);
 
-  const isScouter = user?.role === 'scouter' || user?.role === 'jefe_grupo';
-  const isJefeGrupo = user?.role === 'jefe_grupo';
-
   const currentMonths = MONTH_NAMES_BY_QUARTER[selectedQuarter] || [];
   const activeQuarterObj = QUARTERS.find(q => q.id === selectedQuarter);
+
+  // Obtener de forma infalible la unidad activa actual
+  const getActiveUnit = useCallback((): string => {
+    if (unitFilter && unitFilter !== 'all') {
+      return unitFilter;
+    }
+    const uStr = (user?.unit as string) || '';
+    if (uStr === 'clan' || uStr === 'tropa' || uStr === 'manada' || uStr === 'comunidad' || uStr === 'caminantes') {
+      return uStr === 'caminantes' ? 'comunidad' : uStr;
+    }
+    return 'clan';
+  }, [unitFilter, user?.unit]);
 
   // Referencias para control infalible de cambios y prevención de sobreescritura
   const isDirtyRef = useRef(false);
@@ -138,7 +155,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
   const getDraftKey = (quarter?: string, year?: number, unit?: string) => {
     const q = quarter || selectedQuarter;
     const y = year || selectedYear;
-    const targetUnit = unit || (isScouter && unitFilter !== 'all' ? unitFilter : (user?.unit || 'clan'));
+    const targetUnit = unit || getActiveUnit();
     return `quarterly_${user?.group_name || 'default'}_${targetUnit}_${q}_${y}`;
   };
 
@@ -202,7 +219,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
 
     const currentQ = loadedQuarterRef.current || selectedQuarter;
     const currentY = loadedYearRef.current || selectedYear;
-    const currentU = loadedUnitRef.current || (isScouter && unitFilter !== 'all' ? unitFilter : (user.unit || 'clan'));
+    const currentU = loadedUnitRef.current || getActiveUnit();
     const key = `quarterly_${user.group_name || 'default'}_${currentU}_${currentQ}_${currentY}`;
 
     autoSaveService.saveDraft(
@@ -262,7 +279,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     }
 
     setLoading(true);
-    const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user.unit || 'clan');
+    const targetUnit = getActiveUnit();
     loadedQuarterRef.current = selectedQuarter;
     loadedYearRef.current = selectedYear;
     loadedUnitRef.current = targetUnit;
@@ -372,7 +389,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     setHistoryModalVisible(true);
     setLoadingHistory(true);
     try {
-      const history = await dataService.getQuarterlyPlansHistory(user.id);
+      const history = await dataService.getQuarterlyPlansHistory(user.id, user.group_name || undefined, getActiveUnit());
       setHistoryPlans(history);
     } catch (e) {
       console.error('Error cargando historial:', e);
@@ -398,10 +415,10 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
 
   // EXPORTAR A EXCEL CON DISEÑO COMPLETO (COLORES, BORDES Y CELDAS COMBINADAS)
   const handleExportToExcel = () => {
-    const unitName = (user?.unit || 'CLAN').toUpperCase();
+    const unitName = getActiveUnit().toUpperCase();
     const monthAbbr = QUARTER_MONTH_ABBR[selectedQuarter] || 'ABR.MAY.JUN';
     const monthFullText = QUARTER_MONTH_FULL_TEXT[selectedQuarter] || 'ABRIL, MAYO Y JUNIO';
-    const fileName = `TRIMESTRE ${unitName} ${monthAbbr}.xls`;
+    const fileName = `TRIMESTRE_${unitName}_${selectedQuarter}_${selectedYear}.xls`;
 
     const e = educationalAreas;
     const cleanGenObj = (generalObjective || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -544,7 +561,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
 
   // COPIAR RESUMEN FORMATO WHATSAPP CON EMOJIS
   const handleCopyForWhatsApp = () => {
-    const unitName = (user?.unit || 'Clan').toUpperCase();
+    const unitName = getActiveUnit().toUpperCase();
     const qName = activeQuarterObj?.name || 'Primer Trimestre';
 
     let text = `*ASOCIACIÓN DE SCOUTS DE VENEZUELA*\n`;
@@ -773,7 +790,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     const mNum = monthMap[act.month.toLowerCase()] || '01';
     const dayStr = String(act.day || '15').padStart(2, '0');
     const targetDate = `${selectedYear}-${mNum}-${dayStr}`;
-    const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user?.unit || 'clan');
+    const targetUnit = getActiveUnit();
 
     navigation.navigate('ProgramaScoutEditor', {
       initialDate: targetDate,
@@ -796,7 +813,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
       return;
     }
 
-    const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user.unit || 'clan');
+    const targetUnit = getActiveUnit();
 
     setSavingScout(true);
     const draftKey = getDraftKey(selectedQuarter, selectedYear, targetUnit);
@@ -860,7 +877,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
 
   // CONFIRMACIÓN DOBLE PARA DESBLOQUEAR EDICIÓN DEL PLAN COMPARTIDO DE LA UNIDAD
   const handleConfirmUnlockEdit = () => {
-    const unitName = (user?.unit || 'CLAN').toUpperCase();
+    const unitName = getActiveUnit().toUpperCase();
     const confirmMsg = `¿Estás seguro de modificar el Plan Trimestral compartido de la Unidad (${unitName})?\n\nCualquier cambio que realices actualizará las actividades para todos los jóvenes y scouters de tu unidad.`;
     
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -933,7 +950,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
     });
     setActivities([]);
 
-    const targetUnit = isScouter && unitFilter !== 'all' ? unitFilter : (user?.unit || 'clan');
+    const targetUnit = getActiveUnit();
     const draftKey = getDraftKey(selectedQuarter, selectedYear, targetUnit);
     await autoSaveService.removeDraft(draftKey);
 
@@ -1054,7 +1071,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
         {/* TÍTULO Y SELECTOR DE AÑO / HISTÓRICO */}
         <View style={styles.headerMainRow}>
           <Text style={[styles.title, { color: theme.text }]}>
-            TRIMESTRE DE {(user?.unit || 'CLAN').toUpperCase()}
+            TRIMESTRE DE {getActiveUnit().toUpperCase()}
           </Text>
 
           <View style={styles.yearAndHistoryGroup}>
@@ -1076,41 +1093,39 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
         </View>
 
         {/* BARRA DE BOTONES DE ACCIÓN: WHATSAPP, EXCEL, LIMPIEZA Y MODO EDICIÓN/VISTA PREVIA */}
-        {!isScouter && (
-          <View style={styles.actionButtonsRow}>
-            <TouchableOpacity style={[styles.actionPillBtn, { backgroundColor: '#10b981' }]} onPress={handleCopyForWhatsApp}>
-              <Copy size={14} color="white" style={{ marginRight: 6 }} />
-              <Text style={styles.actionPillBtnText}>Copiar WhatsApp</Text>
-            </TouchableOpacity>
+        <View style={styles.actionButtonsRow}>
+          <TouchableOpacity style={[styles.actionPillBtn, { backgroundColor: '#10b981' }]} onPress={handleCopyForWhatsApp}>
+            <Copy size={14} color="white" style={{ marginRight: 6 }} />
+            <Text style={styles.actionPillBtnText}>Copiar WhatsApp</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.actionPillBtn, { backgroundColor: '#059669' }]} onPress={handleExportToExcel}>
-              <FileSpreadsheet size={14} color="white" style={{ marginRight: 6 }} />
-              <Text style={styles.actionPillBtnText}>Exportar Excel</Text>
-            </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionPillBtn, { backgroundColor: '#059669' }]} onPress={handleExportToExcel}>
+            <FileSpreadsheet size={14} color="white" style={{ marginRight: 6 }} />
+            <Text style={styles.actionPillBtnText}>Exportar Excel</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.actionPillBtn, { backgroundColor: '#ef4444' }]} onPress={handleClearQuarter}>
-              <Trash2 size={14} color="white" style={{ marginRight: 6 }} />
-              <Text style={styles.actionPillBtnText}>Limpiar Trimestre</Text>
-            </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionPillBtn, { backgroundColor: '#ef4444' }]} onPress={handleClearQuarter}>
+            <Trash2 size={14} color="white" style={{ marginRight: 6 }} />
+            <Text style={styles.actionPillBtnText}>Limpiar Trimestre</Text>
+          </TouchableOpacity>
 
-            <View style={[styles.modeToggleGroup, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
-              <TouchableOpacity
-                style={[styles.modeToggleBtn, viewMode === 'edit' && { backgroundColor: colors.primary }]}
-                onPress={() => setViewMode('edit')}
-              >
-                <Edit3 size={13} color={viewMode === 'edit' ? 'white' : theme.subText} style={{ marginRight: 4 }} />
-                <Text style={[styles.modeToggleText, { color: viewMode === 'edit' ? 'white' : theme.subText, fontWeight: viewMode === 'edit' ? 'bold' : 'normal' }]}>Edición</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modeToggleBtn, viewMode === 'preview' && { backgroundColor: colors.primary }]}
-                onPress={() => setViewMode('preview')}
-              >
-                <Eye size={13} color={viewMode === 'preview' ? 'white' : theme.subText} style={{ marginRight: 4 }} />
-                <Text style={[styles.modeToggleText, { color: viewMode === 'preview' ? 'white' : theme.subText, fontWeight: viewMode === 'preview' ? 'bold' : 'normal' }]}>Vista Previa</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={[styles.modeToggleGroup, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
+            <TouchableOpacity
+              style={[styles.modeToggleBtn, viewMode === 'edit' && { backgroundColor: colors.primary }]}
+              onPress={() => setViewMode('edit')}
+            >
+              <Edit3 size={13} color={viewMode === 'edit' ? 'white' : theme.subText} style={{ marginRight: 4 }} />
+              <Text style={[styles.modeToggleText, { color: viewMode === 'edit' ? 'white' : theme.subText, fontWeight: viewMode === 'edit' ? 'bold' : 'normal' }]}>Edición</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modeToggleBtn, viewMode === 'preview' && { backgroundColor: colors.primary }]}
+              onPress={() => setViewMode('preview')}
+            >
+              <Eye size={13} color={viewMode === 'preview' ? 'white' : theme.subText} style={{ marginRight: 4 }} />
+              <Text style={[styles.modeToggleText, { color: viewMode === 'preview' ? 'white' : theme.subText, fontWeight: viewMode === 'preview' ? 'bold' : 'normal' }]}>Vista Previa</Text>
+            </TouchableOpacity>
           </View>
-        )}
+        </View>
 
         {/* PESTAÑAS DE SELECCIÓN DE TRIMESTRES (TRIMESTRE 1, 2, 3, 4) */}
         <View style={styles.quarterTabsContainer}>
@@ -1138,29 +1153,38 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
           })}
         </View>
 
-        {/* FILTROS POR UNIDAD PARA JEFE DE GRUPO */}
-        {isJefeGrupo && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 4, marginBottom: 8 }}>
-            <TouchableOpacity
-              style={[styles.filterChip, unitFilter === 'all' && styles.filterChipActive]}
-              onPress={() => handleSelectUnitFilter('all')}
-            >
-              <Text style={[styles.filterChipText, unitFilter === 'all' && styles.filterChipTextActive]}>
-                Todas las Unidades
-              </Text>
-            </TouchableOpacity>
-            {Object.keys(UNIT_COLORS).map(u => (
-              <TouchableOpacity
-                key={u}
-                style={[styles.filterChip, unitFilter === u && { backgroundColor: UNIT_COLORS[u] }]}
-                onPress={() => handleSelectUnitFilter(u)}
-              >
-                <Text style={[styles.filterChipText, unitFilter === u && { color: 'white', fontWeight: 'bold' }]}>
-                  {u.toUpperCase()}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+        {/* FILTROS POR UNIDAD PARA SCOUTER Y JEFE DE GRUPO */}
+        {isScouter && (
+          <View style={{ marginTop: 4, marginBottom: 10 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
+              {[
+                { id: 'manada', label: '🐺 MANADA', color: UNIT_COLORS.manada || '#ffb300' },
+                { id: 'tropa', label: '⚜️ TROPA', color: UNIT_COLORS.tropa || '#43a047' },
+                { id: 'comunidad', label: '🧭 COMUNIDAD', color: UNIT_COLORS.comunidad || '#1e88e5' },
+                { id: 'clan', label: '🔴 CLAN', color: UNIT_COLORS.clan || '#e53935' }
+              ].map(u => {
+                const isActive = getActiveUnit() === u.id;
+                return (
+                  <TouchableOpacity
+                    key={u.id}
+                    style={[
+                      styles.filterChip,
+                      { borderColor: u.color, borderWidth: 1.5 },
+                      isActive ? { backgroundColor: u.color } : { backgroundColor: theme.inputBg }
+                    ]}
+                    onPress={() => handleSelectUnitFilter(u.id)}
+                  >
+                    <Text style={[
+                      styles.filterChipText,
+                      isActive ? { color: 'white', fontWeight: '900' } : { color: theme.text, fontWeight: 'bold' }
+                    ]}>
+                      {u.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
         )}
 
         <View style={[styles.quarterInfoCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
@@ -1184,7 +1208,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
               <View style={{ backgroundColor: isDarkMode ? '#1e1b4b' : 'rgba(99, 102, 241, 0.12)', borderLeftWidth: 4, borderLeftColor: colors.primary, padding: 14, borderRadius: 10, marginBottom: 16 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text style={{ fontWeight: 'bold', fontSize: 13, color: colors.primary }}>
-                    📌 Plan Trimestral Único de la Unidad ({(user?.unit || 'CLAN').toUpperCase()}) — {selectedQuarter}
+                    📌 Plan Trimestral Único de la Unidad ({getActiveUnit().toUpperCase()}) — {selectedQuarter}
                   </Text>
                   <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#10b981' }}>
                     <Text style={{ fontSize: 10, color: '#10b981', fontWeight: 'bold' }}>💾 Auto-guardado activo</Text>
@@ -1572,7 +1596,7 @@ export default function QuarterlyPlanScreen({ navigation }: any) {
                 <Text style={styles.asociacionText}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>
                 <Text style={styles.asociacionSub}>REGIÓN MIRANDA / DISTRITO GUARENAS-GUATIRE • GRUPO SCOUT ORIÓN #84</Text>
                 <Text style={[styles.previewTitle, { color: theme.text }]}>
-                  TRIMESTRE DE {(user?.unit || 'CLAN').toUpperCase()} — {activeQuarterObj?.name?.toUpperCase()} ({selectedYear})
+                  TRIMESTRE DE {getActiveUnit().toUpperCase()} — {activeQuarterObj?.name?.toUpperCase()} ({selectedYear})
                 </Text>
               </View>
 

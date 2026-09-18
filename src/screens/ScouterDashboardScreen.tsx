@@ -580,7 +580,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
 
             <TouchableOpacity
               style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('QuarterlyPlan')}
+              onPress={() => navigation.navigate('QuarterlyPlan', { unit: user?.unit || 'clan' })}
               activeOpacity={0.8}
             >
               <Compass size={18} color={primaryColor} />
@@ -645,7 +645,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
 
             <TouchableOpacity
               style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('QuarterlyPlan')}
+              onPress={() => navigation.navigate('QuarterlyPlan', { unit: user?.unit || 'clan' })}
               activeOpacity={0.8}
             >
               <Compass size={18} color={primaryColor} />

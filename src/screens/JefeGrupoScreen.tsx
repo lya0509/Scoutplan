@@ -541,7 +541,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
       <TouchableOpacity
         style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-        onPress={() => navigation.navigate('QuarterlyPlan')}
+        onPress={() => navigation.navigate('QuarterlyPlan', { unit: 'clan' })}
         activeOpacity={0.8}
       >
         <FileText size={18} color={primaryColor} />

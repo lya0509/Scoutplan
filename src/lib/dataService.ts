@@ -760,11 +760,17 @@ export const dataService = {
     return data || null;
   },
 
-  async getQuarterlyPlansHistory(scoutId: string) {
-    const { data, error } = await supabase
-      .from('quarterly_plans')
-      .select('*')
-      .eq('scout_id', scoutId)
+  async getQuarterlyPlansHistory(scoutId: string, groupName?: string, unit?: string) {
+    let query = supabase.from('quarterly_plans').select('*');
+    if (groupName && unit) {
+      let cleanUnit = (unit || 'clan').toLowerCase().trim();
+      if (cleanUnit === 'comunidad') cleanUnit = 'caminantes';
+      query = query.eq('group_name', groupName).eq('unit', cleanUnit);
+    } else {
+      query = query.eq('scout_id', scoutId);
+    }
+
+    const { data, error } = await query
       .order('year', { ascending: false })
       .order('quarter', { ascending: false });
 
