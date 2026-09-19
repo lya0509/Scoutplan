@@ -736,54 +736,72 @@ export const dataService = {
   // MÓDULO DE PLANES TRIMESTRALES (Q1 - Q4)
   // ----------------------------------------------------
   async getQuarterlyPlan(scoutId: string, quarter: string, year: number) {
-    const { data, error } = await supabase
-      .from('quarterly_plans')
-      .select('*')
-      .eq('scout_id', scoutId)
-      .eq('quarter', quarter)
-      .eq('year', year)
-      .maybeSingle();
+    try {
+      const fetchPromise = (async () => {
+        const { data, error } = await supabase
+          .from('quarterly_plans')
+          .select('*')
+          .eq('scout_id', scoutId)
+          .eq('quarter', quarter)
+          .eq('year', year)
+          .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching quarterly plan:', error);
-    }
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching quarterly plan:', error);
+        }
 
-    if (data) {
-      // Intentar recuperar de fallback JSON si se guardó en la columna 'goals'
-      if (typeof data.goals === 'string' && data.goals.startsWith('{')) {
-        try {
-          const parsed = JSON.parse(data.goals);
-          return { ...data, ...parsed };
-        } catch (e) {}
-      }
+        if (data) {
+          // Intentar recuperar de fallback JSON si se guardó en la columna 'goals'
+          if (typeof data.goals === 'string' && data.goals.startsWith('{')) {
+            try {
+              const parsed = JSON.parse(data.goals);
+              return { ...data, ...parsed };
+            } catch (e) {}
+          }
+        }
+        return data || null;
+      })();
+
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500));
+      return await Promise.race([fetchPromise, timeoutPromise]);
+    } catch (e) {
+      return null;
     }
-    return data || null;
   },
 
   async getQuarterlyPlansHistory(scoutId: string, groupName?: string, unit?: string) {
-    let query = supabase.from('quarterly_plans').select('*');
-    if (groupName && unit) {
-      let cleanUnit = (unit || 'clan').toLowerCase().trim();
-      if (cleanUnit === 'comunidad') cleanUnit = 'caminantes';
-      query = query.eq('group_name', groupName).eq('unit', cleanUnit);
-    } else {
-      query = query.eq('scout_id', scoutId);
+    try {
+      const fetchPromise = (async () => {
+        let query = supabase.from('quarterly_plans').select('*');
+        if (groupName && unit) {
+          let cleanUnit = (unit || 'clan').toLowerCase().trim();
+          if (cleanUnit === 'comunidad') cleanUnit = 'caminantes';
+          query = query.eq('group_name', groupName).eq('unit', cleanUnit);
+        } else {
+          query = query.eq('scout_id', scoutId);
+        }
+
+        const { data, error } = await query
+          .order('year', { ascending: false })
+          .order('quarter', { ascending: false });
+
+        if (error) return [];
+        return (data || []).map(item => {
+          if (typeof item.goals === 'string' && item.goals.startsWith('{')) {
+            try {
+              const parsed = JSON.parse(item.goals);
+              return { ...item, ...parsed };
+            } catch (e) {}
+          }
+          return item;
+        });
+      })();
+
+      const timeoutPromise = new Promise<any[]>((resolve) => setTimeout(() => resolve([]), 4000));
+      return await Promise.race([fetchPromise, timeoutPromise]);
+    } catch (e) {
+      return [];
     }
-
-    const { data, error } = await query
-      .order('year', { ascending: false })
-      .order('quarter', { ascending: false });
-
-    if (error) return [];
-    return (data || []).map(item => {
-      if (typeof item.goals === 'string' && item.goals.startsWith('{')) {
-        try {
-          const parsed = JSON.parse(item.goals);
-          return { ...item, ...parsed };
-        } catch (e) {}
-      }
-      return item;
-    });
   },
 
   async saveQuarterlyPlan(plan: {
@@ -923,45 +941,74 @@ export const dataService = {
     try {
       let cleanUnit = (unit || 'clan').toLowerCase().trim();
       if (cleanUnit === 'comunidad') cleanUnit = 'caminantes';
+      const unitAliases = [cleanUnit, cleanUnit === 'caminantes' ? 'comunidad' : cleanUnit];
 
-      // 1. Buscar directamente por group_name y unit en quarterly_plans
-      if (groupName) {
-        const { data: directData } = await supabase
+      const fetchPromise = (async () => {
+        // 1. Intento principal: buscar directamente en quarterly_plans por group_name y unit
+        if (groupName && groupName.trim().length > 0) {
+          const { data: directData, error: err1 } = await supabase
+            .from('quarterly_plans')
+            .select('*')
+            .eq('group_name', groupName.trim())
+            .in('unit', unitAliases)
+            .eq('quarter', quarter)
+            .eq('year', year)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (!err1 && directData) return directData;
+        }
+
+        // 2. Intento rápido: buscar directamente por unit, quarter, year sin depender de discrepancias en el texto de group_name
+        const { data: unitData, error: err2 } = await supabase
           .from('quarterly_plans')
           .select('*')
-          .eq('group_name', groupName)
-          .eq('unit', cleanUnit)
+          .in('unit', unitAliases)
           .eq('quarter', quarter)
           .eq('year', year)
           .order('updated_at', { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        if (directData) return directData;
+        if (!err2 && unitData) return unitData;
+
+        // 3. Fallback legacy: Buscar a través de los perfiles de la unidad
+        let query = supabase.from('profiles').select('id');
+        if (groupName && groupName.trim().length > 0) query = query.eq('group_name', groupName.trim());
+        query = query.in('unit', unitAliases);
+
+        const { data: scouts } = await query;
+        if (scouts && scouts.length > 0) {
+          const scoutIds = scouts.map(s => s.id);
+          const { data: fallbackData } = await supabase
+            .from('quarterly_plans')
+            .select('*')
+            .in('scout_id', scoutIds)
+            .eq('quarter', quarter)
+            .eq('year', year)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (fallbackData) return fallbackData;
+        }
+
+        return null;
+      })();
+
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500));
+      const result: any = await Promise.race([fetchPromise, timeoutPromise]);
+
+      if (result) {
+        if (typeof result.goals === 'string' && result.goals.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(result.goals);
+            return { ...result, ...parsed };
+          } catch (e) {}
+        }
+        return result;
       }
-
-      // 2. Buscar a través de los perfiles de la unidad en este grupo
-      let query = supabase.from('profiles').select('id');
-      if (groupName) query = query.eq('group_name', groupName);
-      query = query.in('unit', [cleanUnit, unit ? unit.toLowerCase() : cleanUnit]);
-
-      const { data: scouts } = await query;
-
-      if (scouts && scouts.length > 0) {
-        const scoutIds = scouts.map(s => s.id);
-        const { data } = await supabase
-          .from('quarterly_plans')
-          .select('*')
-          .in('scout_id', scoutIds)
-          .eq('quarter', quarter)
-          .eq('year', year)
-          .order('updated_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (data) return data;
-      }
-
       return null;
     } catch (e) {
       return null;

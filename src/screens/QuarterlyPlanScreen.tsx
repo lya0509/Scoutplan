@@ -147,10 +147,43 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
   }, [unitFilter, user?.unit]);
 
   // Referencias para control infalible de cambios y prevención de sobreescritura
+  const parseStringToList = (val: any): string[] => {
+    if (!val) return [''];
+    if (Array.isArray(val)) return val.length > 0 ? val : [''];
+    if (typeof val === 'string') {
+      const split = val.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+      return split.length > 0 ? split : [val];
+    }
+    return [''];
+  };
+
+  const getDefaultActivitiesForQuarter = (quarterId: string, userName: string): ActivityRow[] => {
+    const months = MONTH_NAMES_BY_QUARTER[quarterId] || ['Mes 1', 'Mes 2', 'Mes 3'];
+    const m1 = months[0];
+    const m2 = months[1];
+    const m3 = months[2];
+
+    return [
+      { id: String(Date.now() + 1), month: m1, day: '5', activity: 'Marea de plástico', place: 'Sede', responsible: userName || 'Rovers' },
+      { id: String(Date.now() + 2), month: m1, day: '12', activity: 'Marea de plástico', place: 'Sede', responsible: userName || 'Rovers' },
+      { id: String(Date.now() + 3), month: m1, day: '26', activity: 'Marea de plástico', place: 'Playa', responsible: 'Scter. Julio / Scter. Lizbeth' },
+
+      { id: String(Date.now() + 4), month: m2, day: '3', activity: 'Recolección de fondos', place: 'Parcela 25', responsible: 'Scter. Julio / Scter. Lizbeth' },
+      { id: String(Date.now() + 5), month: m2, day: '10', activity: 'Museo del Transporte / Scout', place: 'Caracas', responsible: 'Scter. Julio / Scter. Lizbeth' },
+      { id: String(Date.now() + 6), month: m2, day: '17', activity: 'Noche de Rover', place: 'Hoyo de la puerta', responsible: userName || 'Rovers' },
+
+      { id: String(Date.now() + 7), month: m3, day: '7', activity: 'Excursión con Tropa', place: 'Valle Arriba', responsible: 'Scter. Julio / Scter. Lizbeth' },
+      { id: String(Date.now() + 8), month: m3, day: '14', activity: 'Aniversario de Orión', place: 'Paramacay', responsible: 'Scter. Julio / Scter. Lizbeth' },
+      { id: String(Date.now() + 9), month: m3, day: '28', activity: 'Fuego y cocina', place: 'Playa', responsible: 'Scter. Julio / Scter. Lizbeth' },
+    ];
+  };
+
+  // Referencias para control infalible de cambios y prevención de sobreescritura
   const isDirtyRef = useRef(false);
   const loadedQuarterRef = useRef<string>(selectedQuarter);
   const loadedYearRef = useRef<number>(selectedYear);
   const loadedUnitRef = useRef<string>('clan');
+  const hasLoadedOnceRef = useRef(false);
 
   const getDraftKey = (quarter?: string, year?: number, unit?: string) => {
     const q = quarter || selectedQuarter;
@@ -158,6 +191,172 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
     const targetUnit = unit || getActiveUnit();
     return `quarterly_${user?.group_name || 'default'}_${targetUnit}_${q}_${y}`;
   };
+
+  const loadData = async (force: boolean = false) => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    // Si es una recarga de fondo y hay cambios locales activos, NO sobreescribir
+    if (!force && isDirtyRef.current) {
+      console.log('[QuarterlyPlan] Omitiendo recarga de fondo porque hay cambios locales activos sin guardar.');
+      return;
+    }
+
+    const targetUnit = getActiveUnit();
+    loadedQuarterRef.current = selectedQuarter;
+    loadedYearRef.current = selectedYear;
+    loadedUnitRef.current = targetUnit;
+
+    const draftKey = getDraftKey(selectedQuarter, selectedYear, targetUnit);
+
+    // 1. CARGA INMEDIATA LOCAL-FIRST (0ms de espera perceptiva)
+    let foundLocal = false;
+    try {
+      let localDraft: any = await autoSaveService.loadDraft(draftKey);
+      if (!localDraft) {
+        try {
+          const oldRaw = await AsyncStorage.getItem(`@draft_${draftKey}`);
+          if (oldRaw) localDraft = JSON.parse(oldRaw);
+        } catch {}
+      }
+
+      if (localDraft) {
+        foundLocal = true;
+        setElaboratedBy(localDraft.elaboratedBy || localDraft.elaborated_by || user.name || '');
+        setGeneralObjective(localDraft.generalObjective || localDraft.general_objectives || localDraft.goals || '');
+        setTrimestreGoalsList(parseStringToList(localDraft.trimestreGoalsList || localDraft.trimestre_goals));
+        setSpecificObjectivesList(parseStringToList(localDraft.specificObjectivesList || localDraft.specific_objectives));
+        if (localDraft.educationalAreas || localDraft.educational_areas) {
+          setEducationalAreas(localDraft.educationalAreas || localDraft.educational_areas);
+        }
+        const acts = localDraft.activities || localDraft.monthly_activities;
+        if (acts && Array.isArray(acts)) {
+          setActivities(acts);
+        }
+        // Desactivar spinner de inmediato para que el usuario nunca espere a la base de datos
+        setLoading(false);
+      }
+    } catch (localErr) {
+      console.warn('Aviso cargando borrador local:', localErr);
+    }
+
+    // Si no había borrador local y es primera carga, mostrar spinner mientras consulta red
+    if (force && !foundLocal && !hasLoadedOnceRef.current) {
+      setLoading(true);
+    }
+
+    try {
+      // 2. Cargar plan compartido desde Supabase con timeout de seguridad (3.5s)
+      const fetchPromise = (async () => {
+        const shared = await dataService.getUnitSharedQuarterlyPlan(
+          user.group_name || '',
+          targetUnit,
+          selectedQuarter,
+          selectedYear
+        );
+        if (shared) return shared;
+        return await dataService.getQuarterlyPlan(user.id, selectedQuarter, selectedYear);
+      })();
+
+      const timeoutPromise = new Promise<null>((res) => setTimeout(() => res(null), 3500));
+      const remotePlan: any = await Promise.race([fetchPromise, timeoutPromise]);
+
+      hasLoadedOnceRef.current = true;
+
+      // Si el usuario comenzó a escribir mientras la red respondía, NO pisar sus cambios
+      if (isDirtyRef.current) {
+        return;
+      }
+
+      // Re-verificar si hay borrador local
+      let currentLocal: any = await autoSaveService.loadDraft(draftKey);
+      let chosenData: any = null;
+
+      if (currentLocal && remotePlan) {
+        const draftTime = currentLocal.savedAt ? new Date(currentLocal.savedAt).getTime() : 0;
+        const remoteTime = remotePlan.updated_at ? new Date(remotePlan.updated_at).getTime() : 0;
+        if (draftTime > remoteTime) {
+          chosenData = currentLocal;
+        } else {
+          chosenData = remotePlan;
+        }
+      } else if (currentLocal) {
+        chosenData = currentLocal;
+      } else if (remotePlan) {
+        chosenData = remotePlan;
+      }
+
+      if (chosenData) {
+        setScoutPlan(remotePlan || null);
+        setElaboratedBy(chosenData.elaborated_by || chosenData.elaboratedBy || user.name || '');
+        setGeneralObjective(chosenData.general_objectives || chosenData.generalObjective || chosenData.goals || '');
+        setTrimestreGoalsList(parseStringToList(chosenData.trimestre_goals || chosenData.trimestreGoalsList));
+        setSpecificObjectivesList(parseStringToList(chosenData.specific_objectives || chosenData.specificObjectivesList));
+        if (chosenData.educational_areas || chosenData.educationalAreas) {
+          setEducationalAreas(chosenData.educational_areas || chosenData.educationalAreas);
+        }
+        const acts = chosenData.monthly_activities || chosenData.activities;
+        if (acts && Array.isArray(acts)) {
+          setActivities(acts);
+        } else {
+          setActivities([]);
+        }
+
+        autoSaveService.saveDraftImmediate(
+          draftKey,
+          {
+            elaboratedBy: chosenData.elaborated_by || chosenData.elaboratedBy || user.name || '',
+            generalObjective: chosenData.general_objectives || chosenData.generalObjective || chosenData.goals || '',
+            trimestreGoalsList: parseStringToList(chosenData.trimestre_goals || chosenData.trimestreGoalsList),
+            specificObjectivesList: parseStringToList(chosenData.specific_objectives || chosenData.specificObjectivesList),
+            educationalAreas: chosenData.educational_areas || chosenData.educationalAreas,
+            activities: acts || [],
+            savedAt: chosenData.savedAt || chosenData.updated_at || new Date().toISOString()
+          },
+          user.id,
+          'QuarterlyPlan'
+        );
+      } else if (!foundLocal) {
+        // Inicializar limpio si no existe plan ni borrador
+        setScoutPlan(null);
+        setElaboratedBy(user.name || '');
+        setGeneralObjective('');
+        setTrimestreGoalsList(['']);
+        setSpecificObjectivesList(['']);
+        setActivities([]);
+      }
+
+      isDirtyRef.current = false;
+    } catch (err) {
+      console.error('Error cargando plan trimestral:', err);
+      // Fallback ante fallo de red
+      try {
+        const localDraft: any = await autoSaveService.loadDraft(draftKey);
+        if (localDraft) {
+          setElaboratedBy(localDraft.elaboratedBy || user.name || '');
+          setGeneralObjective(localDraft.generalObjective || '');
+          setTrimestreGoalsList(localDraft.trimestreGoalsList || ['']);
+          setSpecificObjectivesList(localDraft.specificObjectivesList || ['']);
+          if (localDraft.educationalAreas) setEducationalAreas(localDraft.educationalAreas);
+          if (localDraft.activities) setActivities(localDraft.activities);
+          isDirtyRef.current = false;
+        }
+      } catch (e) {}
+    } finally {
+      setLoading(false);
+      hasLoadedOnceRef.current = true;
+    }
+  };
+
+  // Disyuntor de emergencia: garantizar que loading JAMÁS permanezca activo más de 2.5 segundos
+  useEffect(() => {
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+    }, 2500);
+    return () => clearTimeout(safetyTimer);
+  }, [selectedQuarter, selectedYear, unitFilter]);
 
   useEffect(() => {
     // Si el usuario tenía cambios en el trimestre/año anterior sin guardar, persistirlos de inmediato
@@ -237,151 +436,6 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
       'QuarterlyPlan'
     );
   }, [elaboratedBy, generalObjective, trimestreGoalsList, specificObjectivesList, educationalAreas, activities, user?.id]);
-
-  const parseStringToList = (val: any): string[] => {
-    if (!val) return [''];
-    if (Array.isArray(val)) return val.length > 0 ? val : [''];
-    if (typeof val === 'string') {
-      const split = val.split('\n').map(s => s.trim()).filter(s => s.length > 0);
-      return split.length > 0 ? split : [val];
-    }
-    return [''];
-  };
-
-  const getDefaultActivitiesForQuarter = (quarterId: string, userName: string): ActivityRow[] => {
-    const months = MONTH_NAMES_BY_QUARTER[quarterId] || ['Mes 1', 'Mes 2', 'Mes 3'];
-    const m1 = months[0];
-    const m2 = months[1];
-    const m3 = months[2];
-
-    return [
-      { id: String(Date.now() + 1), month: m1, day: '5', activity: 'Marea de plástico', place: 'Sede', responsible: userName || 'Rovers' },
-      { id: String(Date.now() + 2), month: m1, day: '12', activity: 'Marea de plástico', place: 'Sede', responsible: userName || 'Rovers' },
-      { id: String(Date.now() + 3), month: m1, day: '26', activity: 'Marea de plástico', place: 'Playa', responsible: 'Scter. Julio / Scter. Lizbeth' },
-
-      { id: String(Date.now() + 4), month: m2, day: '3', activity: 'Recolección de fondos', place: 'Parcela 25', responsible: 'Scter. Julio / Scter. Lizbeth' },
-      { id: String(Date.now() + 5), month: m2, day: '10', activity: 'Museo del Transporte / Scout', place: 'Caracas', responsible: 'Scter. Julio / Scter. Lizbeth' },
-      { id: String(Date.now() + 6), month: m2, day: '17', activity: 'Noche de Rover', place: 'Hoyo de la puerta', responsible: userName || 'Rovers' },
-
-      { id: String(Date.now() + 7), month: m3, day: '7', activity: 'Excursión con Tropa', place: 'Valle Arriba', responsible: 'Scter. Julio / Scter. Lizbeth' },
-      { id: String(Date.now() + 8), month: m3, day: '14', activity: 'Aniversario de Orión', place: 'Paramacay', responsible: 'Scter. Julio / Scter. Lizbeth' },
-      { id: String(Date.now() + 9), month: m3, day: '28', activity: 'Fuego y cocina', place: 'Playa', responsible: 'Scter. Julio / Scter. Lizbeth' },
-    ];
-  };
-
-  const loadData = async (force: boolean = false) => {
-    if (!user) return;
-
-    // Si es una recarga de fondo y hay cambios locales activos, NO sobreescribir
-    if (!force && isDirtyRef.current) {
-      console.log('[QuarterlyPlan] Omitiendo recarga de fondo porque hay cambios locales activos sin guardar.');
-      return;
-    }
-
-    setLoading(true);
-    const targetUnit = getActiveUnit();
-    loadedQuarterRef.current = selectedQuarter;
-    loadedYearRef.current = selectedYear;
-    loadedUnitRef.current = targetUnit;
-
-    const draftKey = getDraftKey(selectedQuarter, selectedYear, targetUnit);
-
-    try {
-      // 1. Cargar borrador local (autoSaveService + compatibilidad hacia atrás)
-      let localDraft: any = await autoSaveService.loadDraft(draftKey);
-      if (!localDraft) {
-        try {
-          const oldRaw = await AsyncStorage.getItem(`@draft_${draftKey}`);
-          if (oldRaw) localDraft = JSON.parse(oldRaw);
-        } catch {}
-      }
-
-      // 2. Cargar plan compartido desde Supabase
-      const remotePlan = await dataService.getUnitSharedQuarterlyPlan(
-        user.group_name || '',
-        targetUnit,
-        selectedQuarter,
-        selectedYear
-      ) || await dataService.getQuarterlyPlan(user.id, selectedQuarter, selectedYear);
-
-      // 3. Determinar inteligentemente la versión más reciente
-      let chosenData: any = null;
-      if (localDraft && remotePlan) {
-        const draftTime = localDraft.savedAt ? new Date(localDraft.savedAt).getTime() : 0;
-        const remoteTime = remotePlan.updated_at ? new Date(remotePlan.updated_at).getTime() : 0;
-        // Si el borrador local es más reciente que el registro de Supabase, priorizar el trabajo local del usuario
-        if (draftTime > remoteTime) {
-          chosenData = localDraft;
-        } else {
-          chosenData = remotePlan;
-        }
-      } else if (localDraft) {
-        chosenData = localDraft;
-      } else if (remotePlan) {
-        chosenData = remotePlan;
-      }
-
-      if (chosenData) {
-        setScoutPlan(remotePlan || null);
-        setElaboratedBy(chosenData.elaborated_by || chosenData.elaboratedBy || user.name || '');
-        setGeneralObjective(chosenData.general_objectives || chosenData.generalObjective || chosenData.goals || '');
-        setTrimestreGoalsList(parseStringToList(chosenData.trimestre_goals || chosenData.trimestreGoalsList));
-        setSpecificObjectivesList(parseStringToList(chosenData.specific_objectives || chosenData.specificObjectivesList));
-        if (chosenData.educational_areas || chosenData.educationalAreas) {
-          setEducationalAreas(chosenData.educational_areas || chosenData.educationalAreas);
-        }
-        const acts = chosenData.monthly_activities || chosenData.activities;
-        if (acts && Array.isArray(acts)) {
-          setActivities(acts);
-        } else {
-          setActivities([]);
-        }
-
-        // Asegurar que autoSaveService tenga este respaldo inmediato
-        autoSaveService.saveDraftImmediate(
-          draftKey,
-          {
-            elaboratedBy: chosenData.elaborated_by || chosenData.elaboratedBy || user.name || '',
-            generalObjective: chosenData.general_objectives || chosenData.generalObjective || chosenData.goals || '',
-            trimestreGoalsList: parseStringToList(chosenData.trimestre_goals || chosenData.trimestreGoalsList),
-            specificObjectivesList: parseStringToList(chosenData.specific_objectives || chosenData.specificObjectivesList),
-            educationalAreas: chosenData.educational_areas || chosenData.educationalAreas,
-            activities: acts || [],
-            savedAt: chosenData.savedAt || chosenData.updated_at || new Date().toISOString()
-          },
-          user.id,
-          'QuarterlyPlan'
-        );
-      } else {
-        // Inicializar limpio si no existe plan ni borrador
-        setScoutPlan(null);
-        setElaboratedBy(user.name || '');
-        setGeneralObjective('');
-        setTrimestreGoalsList(['']);
-        setSpecificObjectivesList(['']);
-        setActivities([]);
-      }
-
-      isDirtyRef.current = false;
-    } catch (err) {
-      console.error('Error cargando plan trimestral:', err);
-      // En caso de fallo de red, intentar cargar del borrador local persistido
-      try {
-        const localDraft: any = await autoSaveService.loadDraft(draftKey);
-        if (localDraft) {
-          setElaboratedBy(localDraft.elaboratedBy || user.name || '');
-          setGeneralObjective(localDraft.generalObjective || '');
-          setTrimestreGoalsList(localDraft.trimestreGoalsList || ['']);
-          setSpecificObjectivesList(localDraft.specificObjectivesList || ['']);
-          if (localDraft.educationalAreas) setEducationalAreas(localDraft.educationalAreas);
-          if (localDraft.activities) setActivities(localDraft.activities);
-          isDirtyRef.current = false;
-        }
-      } catch (e) {}
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // CARGAR HISTÓRICO ANUAL DE TRIMESTRES
   const openHistoryModal = async () => {
