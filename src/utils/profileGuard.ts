@@ -22,7 +22,11 @@ export function checkProfileCompletion(user: Profile | null, navigation?: any): 
           text: 'Ir a Mi Perfil 👤',
           onPress: () => {
             if (navigation && navigation.navigate) {
-              navigation.navigate('Profile');
+              try {
+                navigation.navigate('Perfil');
+              } catch {
+                navigation.navigate('Drawer', { screen: 'Perfil' });
+              }
             }
           }
         },
