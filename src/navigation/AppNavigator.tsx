@@ -150,7 +150,7 @@ export default function AppNavigator() {
             <Stack.Screen name="TemporalDrive" component={TemporalDriveScreen} options={{ headerShown: true, title: 'Drive de Fotos' }} />
             <Stack.Screen name="FichaMedica" component={FichaMedicaScreen} options={{ headerShown: true, title: 'Ficha Médica Scout' }} />
             <Stack.Screen name="CurriculumScout" component={CurriculumScoutScreen} options={{ headerShown: true, title: 'Currículum Scout Joven' }} />
-            <Stack.Screen name="NudosManual" component={NudosManualScreen} options={{ headerShown: true, title: 'Manual de Nudos (Offline)' }} />
+            <Stack.Screen name="NudosManual" component={NudosManualScreen} options={{ headerShown: true, title: 'Manuales y Técnicas Scout (Offline)' }} />
             <Stack.Screen name="Cancionero" component={CancioneroScreen} options={{ headerShown: true, title: 'Cancionero Scout (Offline)' }} />
             <Stack.Screen name="Documentos" component={DocumentosScreen} options={{ headerShown: true, title: 'Documentos y Guías Scout' }} />
             <Stack.Screen name="Especialidades" component={EspecialidadesScreen} options={{ headerShown: false }} />

@@ -619,8 +619,8 @@ export default function ScouterDashboardScreen({ navigation }: any) {
               onPress={() => navigation.navigate('NudosManual')}
               activeOpacity={0.8}
             >
-              <FileText size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Manual Nudos</Text>
+              <BookOpen size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Manuales</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -693,8 +693,8 @@ export default function ScouterDashboardScreen({ navigation }: any) {
               onPress={() => navigation.navigate('NudosManual')}
               activeOpacity={0.8}
             >
-              <FileText size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Manual Nudos</Text>
+              <BookOpen size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Manuales</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

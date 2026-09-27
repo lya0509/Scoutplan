@@ -177,7 +177,7 @@ export default function DrawerNavigator() {
         <Drawer.Screen name="TemporalDriveDrawer" component={TemporalDriveScreen} options={{ drawerLabel: 'Drive de Fotos', title: 'Drive de Fotos' }} />
         <Drawer.Screen name="FichaMedicaDrawer" component={FichaMedicaScreen} options={{ drawerLabel: 'Ficha Médica Scout', title: 'Ficha Médica Scout' }} />
         <Drawer.Screen name="CurriculumScoutDrawer" component={CurriculumScoutScreen} options={{ drawerLabel: 'Currículum Scout Joven', title: 'Currículum Scout Joven' }} />
-        <Drawer.Screen name="NudosManualDrawer" component={NudosManualScreen} options={{ drawerLabel: 'Manual de Nudos (Offline)', title: 'Manual de Nudos y Amarres' }} />
+        <Drawer.Screen name="NudosManualDrawer" component={NudosManualScreen} options={{ drawerLabel: '📖 Manuales Scout (Offline)', title: 'Manuales y Técnicas Scout' }} />
         <Drawer.Screen name="CancioneroDrawer" component={CancioneroScreen} options={{ drawerLabel: 'Cancionero y Oraciones (Offline)', title: 'Cancionero & Oraciones Scout' }} />
         <Drawer.Screen name="DocumentosDrawer" component={DocumentosScreen} options={{ drawerLabel: 'Documentos y Guías (PDF)', title: 'Documentos y Guías Scout' }} />
         <Drawer.Screen name="EspecialidadesDrawer" component={EspecialidadesScreen} options={{ drawerLabel: '🏅 Especialidades Scout', title: 'Especialidades Scout' }} />

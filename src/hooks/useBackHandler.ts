@@ -50,15 +50,6 @@ export function useModalBackHandler(isOpen: boolean, onClose: () => void) {
         subscription.remove();
         window.removeEventListener('popstate', handlePopState);
         window.removeEventListener('keydown', handleKeyDown);
-
-        // Si el modal se cerró por botón 'X' o backdrop y no por gesto popstate, quitamos el estado del historial
-        if (!isClosedByPopRef.current) {
-          try {
-            if (window.history.state && window.history.state.modalBackHandler) {
-              window.history.back();
-            }
-          } catch (_) {}
-        }
       };
     }
 

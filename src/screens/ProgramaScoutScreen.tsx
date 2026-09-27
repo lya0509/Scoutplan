@@ -137,11 +137,13 @@ export default function ProgramaScoutScreen({ navigation }: any) {
   const handleChooseExtraordinary = () => {
     setShowNewProgramChoiceModal(false);
     const targetUnit = selectedUnitFilter !== 'todas' ? selectedUnitFilter : userUnit;
-    navigation.navigate('ProgramaScoutEditor', {
-      isExtraordinary: true,
-      initialActivityType: 'Otros / Extraordinaria',
-      initialUnit: targetUnit
-    });
+    setTimeout(() => {
+      navigation.navigate('ProgramaScoutEditor', {
+        isExtraordinary: true,
+        initialActivityType: 'Otros / Extraordinaria',
+        initialUnit: targetUnit
+      });
+    }, 60);
   };
 
   const handleSelectQuarterlyActivity = (act: any) => {
@@ -157,16 +159,18 @@ export default function ProgramaScoutScreen({ navigation }: any) {
     const dayStr = String(act.day || '15').padStart(2, '0');
     const targetDate = `${cy}-${mNum}-${dayStr}`;
 
-    navigation.navigate('ProgramaScoutEditor', {
-      initialTitle: act.activity || act.title,
-      initialDate: targetDate,
-      initialPlace: act.place || 'Sede',
-      initialUnit: targetUnit,
-      initialQuarter: choiceQuarter,
-      initialYear: cy,
-      planActivityId: act.id,
-      isExtraordinary: false
-    });
+    setTimeout(() => {
+      navigation.navigate('ProgramaScoutEditor', {
+        initialTitle: act.activity || act.title,
+        initialDate: targetDate,
+        initialPlace: act.place || 'Sede',
+        initialUnit: targetUnit,
+        initialQuarter: choiceQuarter,
+        initialYear: cy,
+        planActivityId: act.id,
+        isExtraordinary: false
+      });
+    }, 60);
   };
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
