@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -30,13 +30,19 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useModalBackHandler } from '../hooks/useBackHandler';
 import { SCOUT_DOCUMENTS, ScoutDocument } from '../data/documentsData';
+import {
+  SCOUT_SPECIALTIES,
+  SPECIALTY_CATEGORIES,
+  ScoutSpecialty,
+  SpecialtyCategoryId
+} from '../data/specialtiesData';
 import { showAlert } from '../utils/alert';
 import { navigateBackOrHome } from '../utils/navigationHelper';
 import HelpFloatingFAB from '../components/HelpFloatingFAB';
 
 const CATEGORIES = [
   { id: 'todos', label: 'Todos los Documentos', icon: Layers },
-  { id: 'especialidades_shortcut', label: '🏅 Especialidades (39)', icon: Award },
+  { id: 'especialidades', label: '🏅 Especialidades (39)', icon: Award },
   { id: 'adelanto', label: '⚜️ Adelanto e Insignias', icon: BookOpen },
   { id: 'iniciativas', label: '🌍 Programas e Iniciativas', icon: Globe },
   { id: 'manuales', label: '🏕️ Manuales Técnicos', icon: FileText },
@@ -44,14 +50,21 @@ const CATEGORIES = [
   { id: 'formacion', label: '🎓 Formación de Adultos', icon: CheckCircle },
 ];
 
-export default function DocumentosScreen({ navigation }: any) {
+export default function DocumentosScreen({ navigation, route }: any) {
   const { isDarkMode, theme, primaryColor } = useTheme();
   const { user } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('todos');
+  const [selectedCategory, setSelectedCategory] = useState(route?.params?.category || 'todos');
+  const [specialtySubCategory, setSpecialtySubCategory] = useState<SpecialtyCategoryId>('todos');
   const [selectedDoc, setSelectedDoc] = useState<ScoutDocument | null>(null);
   const [viewModalVisible, setViewModalVisible] = useState(false);
+
+  useEffect(() => {
+    if (route?.params?.category) {
+      setSelectedCategory(route.params.category);
+    }
+  }, [route?.params?.category]);
 
   // Soporte universal para gestos de retroceso en Android, iOS y PWA
   useModalBackHandler(viewModalVisible, () => setViewModalVisible(false));
@@ -67,8 +80,35 @@ export default function DocumentosScreen({ navigation }: any) {
     });
   }, [searchQuery, selectedCategory]);
 
+  const filteredSpecialties = useMemo(() => {
+    return SCOUT_SPECIALTIES.filter(spec => {
+      const matchesSub =
+        specialtySubCategory === 'todos' || spec.category === specialtySubCategory;
+      const matchesSearch =
+        spec.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        spec.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        spec.categoryLabel.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesSub && matchesSearch;
+    });
+  }, [searchQuery, specialtySubCategory]);
+
   const handleOpenDoc = (doc: ScoutDocument) => {
     setSelectedDoc(doc);
+    setViewModalVisible(true);
+  };
+
+  const handleOpenSpecialty = (spec: ScoutSpecialty) => {
+    setSelectedDoc({
+      id: spec.id,
+      title: spec.title,
+      category: 'adelanto',
+      categoryLabel: spec.categoryLabel,
+      description: spec.description,
+      badgeIcon: spec.icon,
+      size: 'Guía Oficial ASV',
+      pdfUrl: spec.pdfUrl,
+      targetUnit: 'todos'
+    });
     setViewModalVisible(true);
   };
 
@@ -84,6 +124,22 @@ export default function DocumentosScreen({ navigation }: any) {
     } else {
       Linking.openURL(doc.pdfUrl).catch(() => {
         showAlert('Descarga', 'Abriendo documento en el navegador...');
+      });
+    }
+  };
+
+  const handleDownloadSpecialty = (spec: ScoutSpecialty) => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const a = document.createElement('a');
+      a.href = spec.pdfUrl;
+      a.download = `Especialidad_${spec.title.replace(/\s+/g, '_')}.pdf`;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else {
+      Linking.openURL(spec.pdfUrl).catch(() => {
+        showAlert('Descarga', 'Abriendo guía oficial en el navegador...');
       });
     }
   };
@@ -161,7 +217,7 @@ export default function DocumentosScreen({ navigation }: any) {
               shadowRadius: 4,
               elevation: 2
             }}
-            onPress={() => navigation.navigate('Especialidades')}
+            onPress={() => setSelectedCategory('especialidades')}
             activeOpacity={0.8}
           >
             <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#8b5cf6', justifyContent: 'center', alignItems: 'center' }}>
@@ -172,10 +228,12 @@ export default function DocumentosScreen({ navigation }: any) {
                 🏅 Especialidades Scout Oficiales (ASV)
               </Text>
               <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
-                Accede a las 39 guías curriculares oficiales descargables organizadas por las 8 áreas oficiales.
+                {selectedCategory === 'especialidades' 
+                  ? 'Catálogo curricular activo con 39 guías oficiales y 8 áreas de desarrollo.'
+                  : 'Toca aquí para ver las 39 guías de especialidades organizadas por áreas en esta sección.'}
               </Text>
             </View>
-            <ExternalLink size={18} color="#8b5cf6" />
+            <Award size={18} color="#8b5cf6" />
           </TouchableOpacity>
         </View>
 
@@ -201,13 +259,7 @@ export default function DocumentosScreen({ navigation }: any) {
                     borderColor: isSelected ? primaryColor : theme.border,
                   },
                 ]}
-                onPress={() => {
-                  if (cat.id === 'especialidades_shortcut') {
-                    navigation.navigate('Especialidades');
-                    return;
-                  }
-                  setSelectedCategory(cat.id);
-                }}
+                onPress={() => setSelectedCategory(cat.id)}
                 activeOpacity={0.8}
               >
                 <Text
@@ -226,9 +278,155 @@ export default function DocumentosScreen({ navigation }: any) {
           })}
         </ScrollView>
 
-        {/* Lista de Documentos */}
+        {/* SUBMENÚ DE ÁREAS DE ESPECIALIDADES */}
+        {selectedCategory === 'especialidades' && (
+          <View style={{ marginTop: 4, marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 8 }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: theme.subText, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Submenú de Áreas Oficiales (ASV):
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  const url = 'https://scouts.org.ve/especialidades/';
+                  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                    window.open(url, '_blank');
+                  } else {
+                    Linking.openURL(url);
+                  }
+                }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+              >
+                <Globe size={13} color={primaryColor} />
+                <Text style={{ fontSize: 11, fontWeight: '700', color: primaryColor }}>Sitio ASV</Text>
+                <ExternalLink size={11} color={primaryColor} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+            >
+              {SPECIALTY_CATEGORIES.map(subCat => {
+                const isSubSelected = specialtySubCategory === subCat.id;
+                const count = subCat.id === 'todos'
+                  ? SCOUT_SPECIALTIES.length
+                  : SCOUT_SPECIALTIES.filter(s => s.category === subCat.id).length;
+
+                return (
+                  <TouchableOpacity
+                    key={subCat.id}
+                    style={[
+                      styles.categoryPill,
+                      {
+                        backgroundColor: isSubSelected
+                          ? '#8b5cf6'
+                          : isDarkMode
+                          ? '#27272a'
+                          : '#ffffff',
+                        borderColor: isSubSelected ? '#8b5cf6' : theme.border,
+                        paddingVertical: 6,
+                        paddingHorizontal: 12,
+                      },
+                    ]}
+                    onPress={() => setSpecialtySubCategory(subCat.id)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ fontSize: 13, marginRight: 6 }}>{subCat.icon}</Text>
+                    <Text
+                      style={[
+                        styles.categoryPillText,
+                        {
+                          color: isSubSelected ? '#ffffff' : theme.text,
+                          fontWeight: isSubSelected ? '700' : '500',
+                          fontSize: 12,
+                        },
+                      ]}
+                    >
+                      {subCat.label} ({count})
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Lista de Documentos o Especialidades */}
         <View style={styles.docsList}>
-          {filteredDocs.length === 0 ? (
+          {selectedCategory === 'especialidades' ? (
+            filteredSpecialties.length === 0 ? (
+              <View style={[styles.emptyState, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+                <Filter size={36} color={theme.subText} style={{ marginBottom: 10 }} />
+                <Text style={[styles.emptyStateTitle, { color: theme.text }]}>No se encontraron especialidades</Text>
+                <Text style={[styles.emptyStateDesc, { color: theme.subText }]}>
+                  Intenta con otra palabra clave o selecciona otra área en el submenú superior.
+                </Text>
+              </View>
+            ) : (
+              filteredSpecialties.map(spec => (
+                <View
+                  key={spec.id}
+                  style={[styles.docCard, { backgroundColor: theme.cardBg, borderColor: theme.border, borderLeftWidth: 4, borderLeftColor: spec.color }]}
+                >
+                  <View style={styles.docCardHeader}>
+                    <View style={[styles.docIconBox, { backgroundColor: `${spec.color}18`, borderColor: `${spec.color}40`, borderWidth: 1 }]}>
+                      <Text style={{ fontSize: 26 }}>{spec.icon}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <View style={styles.badgeRow}>
+                        <View style={[styles.categoryBadge, { backgroundColor: `${spec.color}20` }]}>
+                          <Text style={[styles.categoryBadgeText, { color: spec.color }]}>
+                            {spec.categoryIcon} {spec.categoryLabel}
+                          </Text>
+                        </View>
+                        <View style={[styles.categoryBadge, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
+                          <Text style={[styles.categoryBadgeText, { color: isDarkMode ? '#94a3b8' : '#64748b' }]}>
+                            Oficial ASV
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={[styles.docTitle, { color: theme.text }]}>{spec.title}</Text>
+                    </View>
+                  </View>
+
+                  <Text style={[styles.docDescription, { color: theme.subText }]}>{spec.description}</Text>
+
+                  <View style={[styles.metaRow, { borderTopColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
+                    <View style={styles.metaItem}>
+                      <Text style={[styles.metaLabel, { color: theme.subText }]}>Área:</Text>
+                      <Text style={[styles.metaValue, { color: theme.text }]}>{spec.categoryLabel}</Text>
+                    </View>
+                    <View style={styles.metaDivider} />
+                    <View style={styles.metaItem}>
+                      <Text style={[styles.metaLabel, { color: theme.subText }]}>Formato:</Text>
+                      <Text style={[styles.metaValue, { color: '#16a34a', fontWeight: 'bold' }]}>Guía PDF</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.actionsRow}>
+                    <TouchableOpacity
+                      style={[styles.viewBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: theme.border }]}
+                      onPress={() => handleOpenSpecialty(spec)}
+                      activeOpacity={0.8}
+                    >
+                      <Eye size={16} color={primaryColor} style={{ marginRight: 6 }} />
+                      <Text style={[styles.viewBtnText, { color: primaryColor }]}>Visualizar Guía</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.downloadBtn, { backgroundColor: primaryColor }]}
+                      onPress={() => handleDownloadSpecialty(spec)}
+                      activeOpacity={0.8}
+                    >
+                      <Download size={16} color="#ffffff" style={{ marginRight: 6 }} />
+                      <Text style={styles.downloadBtnText}>Descargar PDF</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))
+            )
+          ) : filteredDocs.length === 0 ? (
             <View style={[styles.emptyState, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
               <Filter size={36} color={theme.subText} style={{ marginBottom: 10 }} />
               <Text style={[styles.emptyStateTitle, { color: theme.text }]}>

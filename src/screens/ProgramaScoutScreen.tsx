@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -58,7 +58,10 @@ export default function ProgramaScoutScreen({ navigation }: any) {
   const userUnit = (user?.unit || 'clan').toLowerCase();
   const defaultUnit = isJefe ? 'todas' : userUnit;
   const [selectedUnitFilter, setSelectedUnitFilter] = useState<string>(defaultUnit);
+  const [statusFilter, setStatusFilter] = useState<'proximos' | 'realizados' | 'todos'>('proximos');
   const [previewPrograma, setPreviewPrograma] = useState<ProgramaScout | null>(null);
+
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   const loadProgramas = async () => {
     try {
@@ -153,29 +156,47 @@ export default function ProgramaScoutScreen({ navigation }: any) {
     }
   };
 
-  // Filtrar programas
-  const filteredProgramas = programas.filter(p => {
-    const q = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !q ||
-      (p.title && p.title.toLowerCase().includes(q)) ||
-      (p.location && p.location.toLowerCase().includes(q)) ||
-      (p.activityType && p.activityType.toLowerCase().includes(q)) ||
-      (p.creatorName && p.creatorName.toLowerCase().includes(q));
-
-    let matchesUnit = false;
-    if (isScout) {
-      // Un joven Scout sólo ve los programas de su unidad o sinodales que incluyan su unidad
-      matchesUnit = p.unit === userUnit || Boolean(p.isSinodal && p.selectedUnits && p.selectedUnits.includes(userUnit as any));
-    } else {
-      matchesUnit =
-        selectedUnitFilter === 'todas' ||
+  const unitFilteredProgramas = useMemo(() => {
+    return programas.filter((p: ProgramaScout) => {
+      if (isScout) {
+        return p.unit === userUnit || Boolean(p.isSinodal && p.selectedUnits && p.selectedUnits.includes(userUnit as any));
+      }
+      return selectedUnitFilter === 'todas' ||
         p.unit === selectedUnitFilter ||
         Boolean(p.isSinodal && p.selectedUnits && p.selectedUnits.includes(selectedUnitFilter as any));
-    }
+    });
+  }, [programas, isScout, userUnit, selectedUnitFilter]);
 
-    return matchesSearch && matchesUnit;
-  });
+  const countProximos = useMemo(() => {
+    return unitFilteredProgramas.filter((p: ProgramaScout) => !p.date || p.date >= todayStr).length;
+  }, [unitFilteredProgramas, todayStr]);
+
+  const countRealizados = useMemo(() => {
+    return unitFilteredProgramas.filter((p: ProgramaScout) => Boolean(p.date && p.date < todayStr)).length;
+  }, [unitFilteredProgramas, todayStr]);
+
+  // Filtrar programas por búsqueda y estado (próximos / realizados / todos)
+  const filteredProgramas = useMemo(() => {
+    return unitFilteredProgramas.filter((p: ProgramaScout) => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        (p.title && p.title.toLowerCase().includes(q)) ||
+        (p.location && p.location.toLowerCase().includes(q)) ||
+        (p.activityType && p.activityType.toLowerCase().includes(q)) ||
+        (p.creatorName && p.creatorName.toLowerCase().includes(q));
+
+      const isPast = p.date ? p.date < todayStr : false;
+      const matchesStatus =
+        statusFilter === 'todos'
+          ? true
+          : statusFilter === 'proximos'
+          ? !isPast
+          : isPast;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [unitFilteredProgramas, searchQuery, statusFilter, todayStr]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
@@ -271,6 +292,69 @@ export default function ProgramaScoutScreen({ navigation }: any) {
               ))}
             </ScrollView>
           )}
+
+          {/* Pestañas de Estado (Próximos / Realizados / Todos) */}
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+            <TouchableOpacity
+              style={[
+                styles.unitTabChip,
+                statusFilter === 'proximos'
+                  ? { backgroundColor: '#16a34a', borderColor: '#16a34a' }
+                  : { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }
+              ]}
+              onPress={() => setStatusFilter('proximos')}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[
+                  styles.unitTabChipText,
+                  statusFilter === 'proximos' ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }
+                ]}
+              >
+                ⚡ Próximos ({countProximos})
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.unitTabChip,
+                statusFilter === 'realizados'
+                  ? { backgroundColor: '#64748b', borderColor: '#64748b' }
+                  : { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }
+              ]}
+              onPress={() => setStatusFilter('realizados')}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[
+                  styles.unitTabChipText,
+                  statusFilter === 'realizados' ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }
+                ]}
+              >
+                ✅ Realizados ({countRealizados})
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.unitTabChip,
+                statusFilter === 'todos'
+                  ? { backgroundColor: primaryColor, borderColor: primaryColor }
+                  : { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }
+              ]}
+              onPress={() => setStatusFilter('todos')}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[
+                  styles.unitTabChipText,
+                  statusFilter === 'todos' ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }
+                ]}
+              >
+                📂 Todos ({unitFilteredProgramas.length})
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* LISTA DE PROGRAMAS */}
@@ -282,9 +366,19 @@ export default function ProgramaScoutScreen({ navigation }: any) {
         ) : filteredProgramas.length === 0 ? (
           <View style={styles.emptyContainer}>
             <FileText size={48} color={theme.subText} style={{ marginBottom: 12, opacity: 0.6 }} />
-            <Text style={[styles.emptyTitle, { color: theme.text }]}>No hay programas registrados</Text>
+            <Text style={[styles.emptyTitle, { color: theme.text }]}>
+              {statusFilter === 'proximos'
+                ? 'No hay actividades próximas'
+                : statusFilter === 'realizados'
+                ? 'No hay actividades realizadas archivadas'
+                : 'No hay programas registrados'}
+            </Text>
             <Text style={[styles.emptySubtitle, { color: theme.subText }]}>
-              {canCreate
+              {statusFilter === 'proximos'
+                ? 'Todas tus actividades programadas ya han pasado su fecha de realización o no has creado un nuevo programa.'
+                : statusFilter === 'realizados'
+                ? 'Las actividades cuya fecha ya haya pasado se mostrarán automáticamente en este apartado histórico.'
+                : canCreate
                 ? 'Crea tu primer programa de actividades scout con la plantilla oficial de la ASV.'
                 : 'Los dirigentes de tu unidad publicarán aquí los programas de las próximas actividades.'}
             </Text>
@@ -314,6 +408,8 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                   ? '#2563eb'
                   : '#dc2626';
 
+              const isPastAct = item.date ? item.date < todayStr : false;
+
               return (
                 <View style={[styles.programCard, { backgroundColor: theme.cardBg, borderColor: theme.border, borderLeftColor: unitBadgeColor, borderLeftWidth: 4 }]}>
                   {/* Cabecera de la tarjeta */}
@@ -330,9 +426,28 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                         </View>
                       )}
                     </View>
-                    <View style={[styles.dateBadge, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
-                      <Calendar size={12} color={theme.subText} style={{ marginRight: 4 }} />
-                      <Text style={{ fontSize: 11, color: theme.text, fontWeight: '600' }}>{item.date || 'Sin fecha'}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <View style={[styles.dateBadge, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
+                        <Calendar size={12} color={theme.subText} style={{ marginRight: 4 }} />
+                        <Text style={{ fontSize: 11, color: theme.text, fontWeight: '600' }}>{item.date || 'Sin fecha'}</Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.unitPill,
+                          isPastAct
+                            ? { backgroundColor: isDarkMode ? '#334155' : '#e2e8f0', borderColor: isDarkMode ? '#475569' : '#cbd5e1' }
+                            : { backgroundColor: isDarkMode ? '#064e3b' : '#dcfce7', borderColor: '#16a34a' }
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.unitPillText,
+                            { color: isPastAct ? (isDarkMode ? '#cbd5e1' : '#475569') : (isDarkMode ? '#86efac' : '#15803d'), fontSize: 10 }
+                          ]}
+                        >
+                          {isPastAct ? '✓ Realizada' : '⚡ Próxima'}
+                        </Text>
+                      </View>
                     </View>
                   </View>
 
