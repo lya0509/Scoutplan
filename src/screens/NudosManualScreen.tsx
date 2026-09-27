@@ -6,7 +6,10 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  Modal
+  Modal,
+  Image,
+  Linking,
+  Platform
 } from 'react-native';
 import {
   Compass,
@@ -16,6 +19,7 @@ import {
   Shield,
   Sparkles,
   CheckCircle2,
+  Circle,
   ArrowLeft,
   Award,
   Flame,
@@ -24,15 +28,48 @@ import {
   HeartPulse,
   X,
   AlertTriangle,
-  Info
+  Info,
+  Play,
+  Video,
+  Image as ImageIcon,
+  Eye,
+  FileText,
+  ExternalLink,
+  WifiOff,
+  Wifi,
+  ChevronLeft,
+  Maximize2
 } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useModalBackHandler } from '../hooks/useBackHandler';
 import { colors } from '../theme/colors';
 import { navigateBackOrHome } from '../utils/navigationHelper';
+import { ManualVisualDiagram } from '../components/ManualVisualDiagram';
 
 export type ManualSectionKey = 'nudos' | 'fogatas' | 'senas' | 'pistas' | 'primeros_auxilios';
+export type ModalTabKey = 'escrito' | 'visual' | 'multimedia';
+
+export interface VisualStep {
+  stepNumber: number;
+  title: string;
+  instruction: string;
+  callout?: string;
+}
+
+export interface MultimediaImage {
+  url: string;
+  caption: string;
+  description?: string;
+}
+
+export interface MultimediaData {
+  videoEmbedId?: string;
+  videoTitle?: string;
+  videoChannel?: string;
+  videoDuration?: string;
+  images?: MultimediaImage[];
+}
 
 export interface ManualItem {
   id: string;
@@ -44,6 +81,8 @@ export interface ManualItem {
   summary: string;
   description: string;
   steps: string[];
+  visualSteps?: VisualStep[];
+  multimedia?: MultimediaData;
   tips?: string[];
   safety?: string;
 }
@@ -67,6 +106,44 @@ const MANUALS_DATA: ManualItem[] = [
       '3. Ahora cruza el extremo Derecho sobre el Izquierdo y pásalo por debajo.',
       '4. Ajusta firmemente halando los dos chicotes y los dos firmes al mismo tiempo.'
     ],
+    visualSteps: [
+      {
+        stepNumber: 1,
+        title: 'Preparación de cabos',
+        instruction: 'Coloca los dos extremos paralelos frente a frente. Identifica el chicote Izquierdo (Rojo) y Derecho (Azul).',
+        callout: 'Ambas cuerdas deben tener el mismo calibre.'
+      },
+      {
+        stepNumber: 2,
+        title: 'Primer Cruce',
+        instruction: 'Pasa el chicote Izquierdo sobre el Derecho y envuélvelo por debajo, haciendo un medio nudo simple.',
+        callout: 'Izquierda sobre Derecha.'
+      },
+      {
+        stepNumber: 3,
+        title: 'Segundo Cruce Inverso',
+        instruction: 'Toma el chicote que ahora está a la derecha, crúzalo sobre el izquierdo y pásalo por el bucle central.',
+        callout: 'Derecha sobre Izquierda.'
+      },
+      {
+        stepNumber: 4,
+        title: 'Azocado y Verificación',
+        instruction: 'Tensa los dos extremos al mismo tiempo. Debe quedar perfectamente plano y simétrico.',
+        callout: 'Los chicotes salen juntos por el mismo lado de cada seno.'
+      }
+    ],
+    multimedia: {
+      videoEmbedId: 'tVj461r71Gg',
+      videoTitle: 'Cómo hacer el Nudo Rizo o Llano paso a paso (Square Knot)',
+      videoChannel: 'Manual de Pionerismo Scout',
+      videoDuration: '1:45 min',
+      images: [
+        {
+          url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Reef_knot.svg/640px-Reef_knot.svg.png',
+          caption: 'Estructura simétrica del Nudo Rizo azocado'
+        }
+      ]
+    },
     tips: [
       'Regla mnemotécnica: "Izquierda sobre derecha, y luego derecha sobre izquierda".',
       'Nunca lo uses con cuerdas de distinto grosor porque se corre y zafa.'
@@ -88,6 +165,44 @@ const MANUALS_DATA: ManualItem[] = [
       '3. Da una segunda vuelta en el mismo sentido e introduce el extremo por debajo del cruce.',
       '4. Tensa fuertemente ambos extremos.'
     ],
+    visualSteps: [
+      {
+        stepNumber: 1,
+        title: 'Vuelta al madero',
+        instruction: 'Rodea el poste con la cuerda manteniendo el firme con tensión.',
+        callout: 'Primera vuelta de apoyo.'
+      },
+      {
+        stepNumber: 2,
+        title: 'Cruce diagonal en X',
+        instruction: 'Pasa la cuerda por encima del tramo anterior formando una "X" sobre la corteza del leño.',
+        callout: 'El cruce es la clave para la mordida.'
+      },
+      {
+        stepNumber: 3,
+        title: 'Paso bajo el cruce',
+        instruction: 'Da la segunda vuelta e introduce el chicote por debajo de la intersección de la X.',
+        callout: 'Pasa por debajo, no por encima.'
+      },
+      {
+        stepNumber: 4,
+        title: 'Tensión simétrica',
+        instruction: 'Tensa ambos extremos en direcciones opuestas. Quedará bloqueado con gran fricción.',
+        callout: 'Rematar con un cote si recibirá gran peso.'
+      }
+    ],
+    multimedia: {
+      videoEmbedId: 'aewgmUeH2jg',
+      videoTitle: 'Cómo hacer el Nudo Ballestrinque (Clove Hitch) en poste',
+      videoChannel: 'Técnicas Scouts Oficiales',
+      videoDuration: '2:10 min',
+      images: [
+        {
+          url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Clove_hitch.svg/640px-Clove_hitch.svg.png',
+          caption: 'Ballestrinque apretado en poste de madera'
+        }
+      ]
+    },
     tips: [
       'Para mayor seguridad en construcciones que recibirán peso, remátalo con un cote o medio nudo en el firme.',
       'Se puede hacer "al aire" e introducirlo directamente por el extremo del poste.'
@@ -100,21 +215,58 @@ const MANUALS_DATA: ManualItem[] = [
     name: 'As de Guía (Bowline)',
     categoryTag: 'Salvamento',
     difficulty: 'Intermedio',
-    icon: '🦺',
-    summary: 'El rey de los nudos de salvamento. Crea una gaza fija que jamás se corre ni se aprieta bajo tensión.',
-    description: 'Nudo indispensable en montaña, mar y rescates de emergencia. Permite izar o descender personas u objetos pesados con absoluta confianza de que el lazo mantendrá su tamaño.',
+    icon: '🛟',
+    summary: 'Gaza fija de salvamento que no se corre ni aprieta, sin importar la fuerza o tensión.',
+    description: 'Conocido como el "Rey de los nudos". Se utiliza para rescatar personas en barrancos o pozos, amarrar animales o izar cargas pesadas porque nunca se traba.',
     steps: [
-      '1. Forma un bucle o seno pequeño en el firme de la cuerda (el lago).',
-      '2. Pasa el chicote libre desde abajo hacia arriba a través del lago (la serpiente sale del lago).',
-      '3. Rodea con el chicote el tramo largo de la cuerda por detrás (pasa alrededor del árbol).',
-      '4. Vuelve a introducir el chicote hacia abajo dentro del lago (la serpiente regresa al agua).',
-      '5. Sujeta el chicote y el borde del bucle mientras halas el firme para azocar.'
+      '1. Haz un seno pequeño en la cuerda formando un bucle (el "lago").',
+      '2. Pasa el chicote (la "serpiente") saliendo del lago desde abajo hacia arriba.',
+      '3. Rodea el firme de la cuerda (el "árbol") por detrás.',
+      '4. Introduce la serpiente de vuelta dentro del lago.',
+      '5. Sujeta el chicote con el lazo y tira del firme para azocar.'
     ],
+    visualSteps: [
+      {
+        stepNumber: 1,
+        title: 'El Lago y el Árbol',
+        instruction: 'Forma un bucle cerrado en el firme dejando espacio para la gaza.',
+        callout: 'El bucle debe estar en el plano correcto.'
+      },
+      {
+        stepNumber: 2,
+        title: 'La Serpiente sale',
+        instruction: 'Introduce el chicote saliendo desde abajo a través del bucle.',
+        callout: 'De abajo hacia arriba.'
+      },
+      {
+        stepNumber: 3,
+        title: 'Rodea el Árbol',
+        instruction: 'Pasa el chicote por detrás del firme vertical.',
+        callout: 'Abraza el tronco principal.'
+      },
+      {
+        stepNumber: 4,
+        title: 'Regreso al Lago',
+        instruction: 'Vuelve a introducir el chicote en el bucle original y tira del firme con fuerza.',
+        callout: 'La gaza queda inamovible.'
+      }
+    ],
+    multimedia: {
+      videoEmbedId: 'hIdsZT_gI_Y',
+      videoTitle: 'As de Guía (Bowline) - El rey de los nudos de salvamento',
+      videoChannel: 'Pionerismo y Campamento Scout',
+      videoDuration: '2:40 min',
+      images: [
+        {
+          url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Bowline.svg/640px-Bowline.svg.png',
+          caption: 'As de Guía con gaza de seguridad'
+        }
+      ]
+    },
     tips: [
-      'Cuento scout tradicional: "La serpiente sale del lago, rodea el árbol y vuelve al lago".',
-      'Incluso tras soportar cientos de kilogramos de peso, se desata con una ligera presión en el dorso.'
+      'Cuento scout: "La serpiente sale del lago, da la vuelta al árbol y vuelve a entrar en su cueva".'
     ],
-    safety: 'Deja siempre un chicote sobrante de al menos 10 cm o remata con un nudo tope.'
+    safety: 'En rescate vertical con personas, remata siempre el chicote con un nudo tope (ocho).'
   },
   {
     id: 'amarre_cuadrado',
@@ -122,19 +274,56 @@ const MANUALS_DATA: ManualItem[] = [
     name: 'Amarre Cuadrado',
     categoryTag: 'Construcción',
     difficulty: 'Intermedio',
-    icon: '🏗️',
-    summary: 'Unir dos troncos que se cruzan a 90 grados. Pilar fundamental de portadas, mesas y torres scout.',
-    description: 'Utilizado en pionerismo para unir maderos perpendiculares que soportarán cargas o fuerzas que intentan hacerlos resbalar uno sobre otro.',
+    icon: '🪵',
+    summary: 'Unir dos leños que se cruzan en ángulo recto (90°). Imprescindible para mesas y torres.',
+    description: 'El amarre fundamental de construcciones scout. Se aplica cuando los maderos soportan peso vertical directo en ángulo perpendicular.',
     steps: [
-      '1. Inicia con un Ballestrinque en el tronco vertical, debajo del cruce.',
-      '2. Pasa la cuerda sobre el tronco horizontal, luego por detrás del vertical y sobre el horizontal del otro lado.',
-      '3. Da de 3 a 4 vueltas completas bien pegadas y ordenadas (sin montar una vuelta sobre otra).',
-      '4. Realiza el "ahorcado" (dar 2 a 3 vueltas de apriete entre ambos troncos para estrangular la cuerda).',
-      '5. Remata firmemente con un Ballestrinque en el tronco horizontal.'
+      '1. Inicia con un ballestrinque en el madero vertical, justo debajo del cruce.',
+      '2. Pasa la cuerda por delante del madero horizontal, por detrás del vertical, y repite 3 o 4 vueltas completas bien ajustadas.',
+      '3. Realiza el "ahorcado": da 2 o 3 vueltas apretadas entre los dos maderos para estrangular la cuerda y aumentar la tensión.',
+      '4. Remata con un ballestrinque en el madero horizontal.'
     ],
+    visualSteps: [
+      {
+        stepNumber: 1,
+        title: 'Inicio con Ballestrinque',
+        instruction: 'Ata un ballestrinque firme en el madero vertical justo bajo el madero horizontal.',
+        callout: 'Nunca inicies en el horizontal si cargará peso.'
+      },
+      {
+        stepNumber: 2,
+        title: 'Vueltas de Abrazo',
+        instruction: 'Da 3 a 4 vueltas bien ordenadas alternando arriba y abajo de la intersección.',
+        callout: 'Las vueltas deben quedar paralelas, sin montarse.'
+      },
+      {
+        stepNumber: 3,
+        title: 'Ahorcado de Tensión',
+        instruction: 'Da 2 a 3 vueltas entre ambos maderos (estrangulando las vueltas anteriores con gran fuerza).',
+        callout: 'El ahorcado es lo que le da rigidez al amarre.'
+      },
+      {
+        stepNumber: 4,
+        title: 'Remate con Ballestrinque',
+        instruction: 'Finaliza asegurando con un ballestrinque en el madero horizontal.',
+        callout: 'Corta el sobrante o recógelo prolijamente.'
+      }
+    ],
+    multimedia: {
+      videoEmbedId: 'C474D9cWwQ8',
+      videoTitle: 'Amarre Cuadrado para construcciones de campamento',
+      videoChannel: 'Construcciones y Pionerismo Scout',
+      videoDuration: '3:50 min',
+      images: [
+        {
+          url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Square_lashing.svg/640px-Square_lashing.svg.png',
+          caption: 'Amarre cuadrado con ahorcado de tensión'
+        }
+      ]
+    },
     tips: [
-      'El secreto de un amarre indestructible está en el "ahorcado": ahí es donde se logra la rigidez.',
-      'Mantén la cuerda mojada si es de fibra natural para que al secar apriete aún más.'
+      'Golpea suavemente las vueltas con un mazo de madera para asentar la soga antes del ahorcado.',
+      'Las vueltas no deben montarse una sobre otra; deben colocarse ordenadamente en paralelo.'
     ]
   },
   {
@@ -143,18 +332,56 @@ const MANUALS_DATA: ManualItem[] = [
     name: 'Amarre Diagonal',
     categoryTag: 'Construcción',
     difficulty: 'Intermedio',
-    icon: '❌',
-    summary: 'Unir dos troncos que se cruzan en diagonal o que tienden a separarse por tensión opuesta.',
-    description: 'Especialmente diseñado para estructuras con arriostramientos (diagonales de refuerzo) o tijeras de soporte en puentes y torres.',
+    icon: '📐',
+    summary: 'Unir dos maderos que se cruzan diagonalmente o tienden a separarse por tracción.',
+    description: 'Se usa comúnmente en las diagonales de refuerzo (cruces de San Andrés) para evitar que las estructuras oscilen o colapsen por el viento.',
     steps: [
-      '1. Inicia con un nudo Vuelta de Braza (Leñador) abrazando ambos troncos en el cruce.',
-      '2. Da 3 a 4 vueltas completas en el sentido del ángulo obtuso.',
-      '3. Cruza la cuerda y da 3 a 4 vueltas en el sentido opuesto formando una "X" firme.',
-      '4. Ahorca fuertemente el cruce con 2 o 3 vueltas de estrangulación entre los troncos.',
-      '5. Remata con un nudo Ballestrinque en cualquiera de los maderos.'
+      '1. Inicia con una Vuelta de Braza abrazando ambos maderos por la intersección.',
+      '2. Da 3 o 4 vueltas alrededor de un eje diagonal.',
+      '3. Cruza la cuerda y da otras 3 o 4 vueltas sobre el eje diagonal contrario formando una "X".',
+      '4. Ahorca el amarre dando 2 o 3 vueltas entre los maderos.',
+      '5. Remata con un ballestrinque en cualquiera de los maderos.'
     ],
+    visualSteps: [
+      {
+        stepNumber: 1,
+        title: 'Vuelta de Braza inicial',
+        instruction: 'Abraza la unión de ambos troncos con una vuelta de braza o leñador bien ceñida.',
+        callout: 'Aproxima los dos leños.'
+      },
+      {
+        stepNumber: 2,
+        title: 'Diagonal 1',
+        instruction: 'Da 3 a 4 vueltas en el primer sentido diagonal.',
+        callout: 'Tensa en cada vuelta.'
+      },
+      {
+        stepNumber: 3,
+        title: 'Diagonal 2',
+        instruction: 'Cruza a 90° y da 3 a 4 vueltas en la diagonal opuesta formando una X.',
+        callout: 'Simetría en ambos ejes.'
+      },
+      {
+        stepNumber: 4,
+        title: 'Ahorcado y Remate',
+        instruction: 'Ahorca con 2 vueltas entre maderos y remata con ballestrinque.',
+        callout: 'Garantiza resistencia lateral.'
+      }
+    ],
+    multimedia: {
+      videoEmbedId: 'N33W1393n0E',
+      videoTitle: 'Amarre Diagonal con vuelta de braza y ahorcado',
+      videoChannel: 'Técnicas de Pionerismo Scout',
+      videoDuration: '3:15 min',
+      images: [
+        {
+          url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Diagonal_lashing.svg/640px-Diagonal_lashing.svg.png',
+          caption: 'Amarre diagonal con vueltas cruzadas'
+        }
+      ]
+    },
     tips: [
-      'Usa palancas de madera para templar las vueltas si la cuerda es gruesa.'
+      'La vuelta de braza permite acercar dos leños separados antes de iniciar las vueltas diagonales.'
     ]
   },
   {
@@ -162,36 +389,80 @@ const MANUALS_DATA: ManualItem[] = [
     section: 'nudos',
     name: 'Amarre Trípode o en Ocho',
     categoryTag: 'Construcción',
-    difficulty: 'Intermedio',
+    difficulty: 'Avanzado',
     icon: '⛺',
-    summary: 'Unir tres troncos paralelos para abrir una base piramidal (trípode de cocina, lavamanos o asta).',
-    description: 'Permite crear la base estructural de tres patas más estable del campamento scout. Los troncos se amarran acostados en el suelo y luego se abren las patas.',
+    summary: 'Unir tres maderos para crear la base de un trípode (soporte de lavamanos, lámparas, astas).',
+    description: 'Estructura autoportante esencial de campamento. Se amarran los tres maderos juntos en el suelo y luego se abren las patas en triángulo.',
     steps: [
-      '1. Coloca los tres troncos en el suelo (el central en sentido opuesto a los dos laterales).',
-      '2. Inicia con un Ballestrinque en uno de los troncos exteriores.',
-      '3. Pasa la cuerda arriba y abajo entre los troncos en forma de ocho (ocho o nueve vueltas sin apretar en exceso).',
-      '4. Haz el ahorcado pasando la cuerda entre cada separación de troncos.',
-      '5. Remata con un Ballestrinque y levanta el trípode abriendo las patas en triángulo.'
+      '1. Coloca los tres maderos en el suelo en paralelo, con el leño central invertido (apuntando en sentido opuesto).',
+      '2. Inicia con un ballestrinque en uno de los maderos exteriores.',
+      '3. Pasa la cuerda en forma de "ocho" (por encima y por debajo) entre los tres leños por 4 a 5 pasadas.',
+      '4. Da vueltas de ahorcado entre los espacios de los maderos sin apretar en exceso (para permitir que las patas se abran).',
+      '5. Remata con un ballestrinque y levanta el trípode abriendo sus tres patas.'
     ],
+    visualSteps: [
+      {
+        stepNumber: 1,
+        title: 'Alineación de maderos',
+        instruction: 'Coloca los 3 maderos juntos. Invierte el central para compensar el grosor.',
+        callout: 'Deja una separación de 1 cm entre leños.'
+      },
+      {
+        stepNumber: 2,
+        title: 'Tejido en Ocho',
+        instruction: 'Teje la cuerda pasando por arriba y por abajo de cada leño de forma continua.',
+        callout: '4 a 5 pasadas sin estrangular aún.'
+      },
+      {
+        stepNumber: 3,
+        title: 'Ahorcado moderado',
+        instruction: 'Pasa la cuerda en los dos intersticios para comprimir el tejido.',
+        callout: 'No ahorques con demasiada fuerza o no abrirá.'
+      },
+      {
+        stepNumber: 4,
+        title: 'Apertura de patas',
+        instruction: 'Remata con ballestrinque, pon de pie el trípode y abre las 3 patas formando la base triangular.',
+        callout: 'Estructura rígida y autoportante.'
+      }
+    ],
+    multimedia: {
+      videoEmbedId: '1a1lJb6LpZc',
+      videoTitle: 'Amarre de Trípode (Figura en 8) para campamento scout',
+      videoChannel: 'Campismo Scout',
+      videoDuration: '3:30 min'
+    },
     tips: [
-      'No aprietes las primeras vueltas en exceso; si quedan demasiado tensas no podrás abrir las patas del trípode.'
+      'No aprietes el ahorcado demasiado fuerte, de lo contrario las patas no podrán abrirse y la soga se romperá por fricción.'
     ]
   },
   {
     id: 'nudo_ocho',
     section: 'nudos',
     name: 'Nudo en Ocho (Firme y Gaza)',
-    categoryTag: 'Tope y Seguridad',
+    categoryTag: 'Seguridad',
     difficulty: 'Básico',
     icon: '♾️',
-    summary: 'Nudo de tope para evitar que una cuerda se deslice de una polea, mosquetón o guía.',
-    description: 'Muy superior al nudo simple porque no estropea las fibras de la cuerda y se deshace con facilidad incluso después de una fuerte tensión.',
+    summary: 'Nudo de tope para evitar que una cuerda se escape de una polea, o gaza de escalada.',
+    description: 'Mucho más fácil de desatar que el nudo simple después de haber soportado gran tensión. Estándar internacional en escalada y rappel.',
     steps: [
       '1. Haz un seno con el extremo de la cuerda.',
-      '2. Pasa el chicote por detrás del firme.',
-      '3. Introduce el chicote por delante a través del seno formando el número 8.',
-      '4. Ajusta tensando ambos lados.'
+      '2. Pasa el chicote por detrás del firme dando una vuelta de 360 grados.',
+      '3. Introduce el chicote por el seno delantero formando la silueta de un número 8.',
+      '4. Tensa firmemente.'
     ],
+    multimedia: {
+      videoEmbedId: '84K2hZ6a1F8',
+      videoTitle: 'Nudo en Ocho y Ocho Doble para montañismo y rescate',
+      videoChannel: 'Seguridad Scout',
+      videoDuration: '2:05 min',
+      images: [
+        {
+          url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Figure_eight_knot.svg/640px-Figure_eight_knot.svg.png',
+          caption: 'Nudo en ocho clásico'
+        }
+      ]
+    },
     tips: [
       'Para encordarse en arnés, se hace en su versión "doble ocho por chicote".'
     ]
@@ -212,6 +483,18 @@ const MANUALS_DATA: ManualItem[] = [
       '4. Pasa la cuerda delgada por debajo de sí misma (sin entrar de nuevo al seno).',
       '5. Tensa firmemente.'
     ],
+    multimedia: {
+      videoEmbedId: 'x3eqo7V2y8c',
+      videoTitle: 'Vuelta de Escota: Unión de cuerdas de diferente grosor',
+      videoChannel: 'Cabuyería Scout',
+      videoDuration: '1:55 min',
+      images: [
+        {
+          url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Sheet_bend.svg/640px-Sheet_bend.svg.png',
+          caption: 'Vuelta de escota con cabo grueso y fino'
+        }
+      ]
+    },
     tips: [
       'Si la diferencia de grosores es muy grande, da una segunda vuelta para hacer la "Vuelta de Escota Doble".'
     ]
@@ -231,6 +514,12 @@ const MANUALS_DATA: ManualItem[] = [
       '3. Retuerce el chicote sobre sí mismo alrededor del lazo al menos tres o cuatro vueltas.',
       '4. Tensa el firme para que las vueltas muerdan contra el tronco.'
     ],
+    multimedia: {
+      videoEmbedId: 'a37u1B8H2vE',
+      videoTitle: 'Vuelta de Braza o Leñador para arrastrar troncos',
+      videoChannel: 'Técnicas de Pionerismo',
+      videoDuration: '1:40 min'
+    },
     tips: [
       'Acompaña con un cote adelante si vas a arrastrar el tronco a largas distancias para que no cabecee.'
     ]
@@ -239,19 +528,24 @@ const MANUALS_DATA: ManualItem[] = [
     id: 'margarita',
     section: 'nudos',
     name: 'Nudo Margarita',
-    categoryTag: 'Especial',
-    difficulty: 'Avanzado',
-    icon: '🌿',
-    summary: 'Acortar una cuerda larga o aislar una sección dañada/gastada sin cortarla.',
-    description: 'Mantiene la resistencia de la cuerda transmitiendo la fuerza a los dos senos externos y dejando el tramo central flojo.',
+    categoryTag: 'Mantenimiento',
+    difficulty: 'Intermedio',
+    icon: '🌼',
+    summary: 'Acortar una soga demasiado larga o aislar y proteger un tramo desgastado sin cortarlo.',
+    description: 'Permite salvar una cuerda que tiene un tramo dañado o con fibras rotas, sometiendo a tensión únicamente los extremos sanos.',
     steps: [
-      '1. Dobla la cuerda haciendo tres senos continuos en forma de "S".',
-      '2. Pasa el seno central a través de dos medios cotes formados en los extremos.',
-      '3. Mantén tensión constante en los extremos principales para que no se desarme.'
+      '1. Haz tres senos o dobleces consecutivos en la cuerda (dejando la parte rota en el seno del medio).',
+      '2. Haz un cote o bucle corredizo en el extremo izquierdo y pásalo sobre el seno izquierdo.',
+      '3. Haz un cote en el extremo derecho y pásalo sobre el seno derecho.',
+      '4. Tira de los dos firmes principales. El nudo se sostiene por la tensión de ambos lados.'
     ],
-    tips: [
-      'Para que no se desarme si la cuerda se afloja, introduce una pequeña cuña de madera en cada gaza exterior.'
-    ]
+    multimedia: {
+      videoEmbedId: 'lU6XmQxYxN8',
+      videoTitle: 'Nudo Margarita: Acortar o proteger una cuerda deteriorada',
+      videoChannel: 'Cabuyería Scout',
+      videoDuration: '2:15 min'
+    },
+    safety: 'El nudo margarita solo se sostiene bajo tensión constante. Si la cuerda queda floja se deshace.'
   },
 
   // ==========================================
@@ -261,300 +555,289 @@ const MANUALS_DATA: ManualItem[] = [
     id: 'fogata_piramide',
     section: 'fogatas',
     name: 'Fogata Pirámide o Tipí',
-    categoryTag: 'Básica / Calefacción',
+    categoryTag: 'Cocina y Calor',
     difficulty: 'Básico',
-    icon: '⛺',
-    summary: 'El tipo de fuego más tradicional y rápido de encender. Llama alta y calor vertical inmediato.',
-    description: 'Ideal para iniciar otros fuegos, iluminar la noche de campamento, hervir agua con rapidez en una tetera o cantar en el consejo de patrulla.',
+    icon: '🔥',
+    summary: 'La fogata más clásica y fácil de encender. Llama alta y calor concentrado.',
+    description: 'Es la reina de las fogatas de campamento. Se construye en forma de cono o tienda indígena india. El aire entra por la base y alimenta la llama ascendente.',
     steps: [
-      '1. Coloca un puñado generoso de yesca en el centro del círculo de fuego.',
-      '2. Clava una estaca pequeña inclinada sobre la yesca o apoya ramas delgadas formando un cono o tipí.',
-      '3. Añade ramas de mayor grosor alrededor del cono dejando una "puerta" hacia barlovento (por donde entra el viento) para introducir el fósforo.',
-      '4. Enciende la yesca desde la base y alimenta con ramas secas conforme crezca la llama.'
+      '1. Limpia un círculo de 2 metros alrededor, retirando hojas secas hasta llegar a tierra mineral.',
+      '2. Coloca en el centro una bola de yesca seca (hojarasca fina, viruta o paja seca).',
+      '3. Clava una estaca inclinada o apoya ramitas delgadas en forma de cono alrededor de la yesca, dejando una pequeña "puerta" orientada hacia el viento.',
+      '4. Coloca una segunda capa con leña más gruesa apoyada en el cono.',
+      '5. Enciende la yesca por la puerta inferior con un solo fósforo.'
     ],
+    visualSteps: [
+      {
+        stepNumber: 1,
+        title: 'Centro de Yesca',
+        instruction: 'Coloca un nido de yesca fina, seca y aireada en el suelo limpio.',
+        callout: 'No compactar la yesca; necesita oxígeno.'
+      },
+      {
+        stepNumber: 2,
+        title: 'Cono de Ramitas Finas',
+        instruction: 'Construye un pequeño tipi con palitos del grosor de un fósforo.',
+        callout: 'Deja la puerta abierta hacia el viento.'
+      },
+      {
+        stepNumber: 3,
+        title: 'Capa de Leña Mediana',
+        instruction: 'Apoya leños del grosor de un pulgar siguiendo la misma inclinación.',
+        callout: 'Mantén la forma cónica.'
+      },
+      {
+        stepNumber: 4,
+        title: 'Encendido y Combustión',
+        instruction: 'Acerca el fósforo a la yesca desde la puerta inferior. El fuego sube solo.',
+        callout: 'Produce excelente brasa para cocinar.'
+      }
+    ],
+    multimedia: {
+      videoEmbedId: '2tU8e6EwXvE',
+      videoTitle: 'Cómo encender una Fogata Pirámide o Tipí con un fósforo',
+      videoChannel: 'Supervivencia y Campismo Scout',
+      videoDuration: '4:10 min',
+      images: [
+        {
+          url: 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?w=800&auto=format&fit=crop',
+          caption: 'Fogata pirámide en campamento al atardecer'
+        }
+      ]
+    },
     tips: [
-      'Deja suficiente espacio entre las ramas para que circule el oxígeno; sin aire, el fuego se ahoga.',
-      'Ten preparada de antemano toda la leña que vas a usar antes de encender el primer fósforo.'
-    ],
-    safety: 'No la construyas demasiado alta bajo copas de árboles secos. Ten agua o tierra lista al lado.'
+      'Ten preparada toda la leña que vas a usar ANTES de encender el fósforo.',
+      'No amontones leña demasiado gruesa al principio o ahogarás el oxígeno.'
+    ]
   },
   {
     id: 'fogata_polinesia',
     section: 'fogatas',
     name: 'Fogata Polinesia o de Pozo',
-    categoryTag: 'Cocina / Viento',
+    categoryTag: 'Viento Fuerte',
     difficulty: 'Intermedio',
     icon: '🕳️',
-    summary: 'Fuego subterráneo protegido del viento. Produce poco humo y concentra calor para asar y hornear.',
-    description: 'La fogata favorita de los scouts en zonas con viento fuerte o donde se requiera máxima discreción y seguridad contra incendios.',
+    summary: 'Fuego oculto en un hoyo. Ideal para cocinar en días con mucho viento sin riesgo de chispas.',
+    description: 'Muy utilizada en zonas costeras o planicies con vientos fuertes. Al estar bajo el nivel del suelo, el viento no dispersa las llamas ni apaga el fogón.',
     steps: [
-      '1. Cava un hoyo cónico de unos 40 a 50 cm de profundidad, más ancho en el fondo que en la boca.',
-      '2. Reviste las paredes del pozo con piedras secas o leños verdes resistentes al calor.',
-      '3. Puedes cavar un pequeño túnel lateral inclinado para entrada de aire fresco (tiro de ventilación).',
-      '4. Enciende una pirámide en el fondo y deja que se acumule un grueso lecho de brasas.',
-      '5. Apoya ollas, sartenes o brochetas directamente en el borde superior del pozo.'
+      '1. Cava un pozo cónico de 40 a 50 cm de profundidad y unos 40 cm de ancho en la boca.',
+      '2. Reviste las paredes internas del hoyo con leños o piedras verticales.',
+      '3. En el fondo, enciende un pequeño fuego pirámide.',
+      '4. Coloca los leños parados apoyados en las paredes del pozo hacia el centro.',
+      '5. Coloca los sartenes u ollas apoyados directamente sobre la boca del pozo.'
     ],
+    multimedia: {
+      videoEmbedId: '4k8l1F8u6Xw',
+      videoTitle: 'Fogata Polinesia o de Pozo: Cocina sin humo en campamento',
+      videoChannel: 'Cocina y Fuego Scout',
+      videoDuration: '3:25 min'
+    },
     tips: [
-      'Al terminar el campamento, basta con apagar las brasas y rellenar con la tierra original; no queda rastro.'
-    ],
-    safety: 'NUNCA uses piedras de río húmedas para revestir el hoyo: el vapor atrapado puede hacerlas estallar.'
+      'Produce brasas concentradas con muy poca leña.',
+      'Al terminar el campamento, se apaga con agua y se cubre con la misma tierra retirada, dejando el lugar idéntico.'
+    ]
   },
   {
     id: 'fogata_pagoda',
     section: 'fogatas',
     name: 'Fogata Pagoda o Altar',
-    categoryTag: 'Brasas / Gran Cocina',
+    categoryTag: 'Fogón de Consejo',
     difficulty: 'Intermedio',
     icon: '🪵',
-    summary: 'Estructura en capas cuadradas decrecientes. Genera un lecho de brasas abundante y uniforme.',
-    description: 'Perfecta para cocinar para toda la tropa o clan, ya que se quema de arriba hacia abajo o de abajo hacia arriba de forma pausada y muy pareja.',
+    summary: 'Estructura cúbica en capas alternadas. Fuego duradero de gran iluminación para fogones ceremoniales.',
+    description: 'Se arma colocando leños gruesos en pares paralelos formando un cuadrado, alternando la dirección en cada piso y reduciendo el tamaño hacia la cima.',
     steps: [
-      '1. Coloca dos troncos gruesos paralelos en la base.',
-      '2. Coloca dos troncos cruzados encima formando un cuadrado.',
-      '3. Repite hacia arriba reduciendo el tamaño de los leños como una pirámide maya.',
-      '4. En la parte superior o en el centro de la base, enciende una pequeña pirámide de yesca y ramas finas.',
-      '5. Al arder, las capas superiores caerán al centro creando brasas de altísima duración.'
+      '1. Coloca en la base dos leños gruesos y paralelos separados unos 30 cm.',
+      '2. Coloca dos leños perpendiculares sobre los primeros formando un cuadrado.',
+      '3. Rellena el centro del primer piso con yesca y ramas medianas.',
+      '4. Construye 3 o 4 pisos más achicando ligeramente el cuadrado en cada piso.',
+      '5. Enciende en la cima o por la base.'
     ],
+    multimedia: {
+      videoEmbedId: '2tU8e6EwXvE',
+      videoTitle: 'Fogata Pagoda para fuegos de campamento y ceremonias',
+      videoChannel: 'Tradición Scout',
+      videoDuration: '3:40 min'
+    },
     tips: [
-      'Excelente como fogata de campamento para asambleas nocturnas por su luz pareja y combustión sostenida.'
+      'Es la fogata perfecta para la noche de fogón de campamento ya que no requiere recargar leña constantemente.'
     ]
   },
   {
     id: 'fogata_reflector',
     section: 'fogatas',
     name: 'Fogata de Reflector',
-    categoryTag: 'Calefacción Nocturna',
+    categoryTag: 'Calor Nocturno',
     difficulty: 'Intermedio',
-    icon: '🛡️',
-    summary: 'Fuego con una pared trasera que proyecta el calor directamente hacia la carpa o vivac.',
-    description: 'Indispensable para noches frías o vivac sin carpa cerrada. La pared de piedras o maderos húmedos rebota el calor radiante hacia la zona de descanso.',
+    icon: '🧱',
+    summary: 'Refleja el calor hacia tu tienda o vivac durante noches de frío extremo.',
+    description: 'Consiste en una fogata con una pared trasera de leños verdes o piedras que rebota la radiación térmica hacia el interior del refugio.',
     steps: [
-      '1. Construye una pequeña pared vertical de troncos verdes o piedras secas a un lado de la fogata.',
-      '2. Inclina ligeramente la pared hacia el fuego para que el ángulo refleje el calor hacia tu refugio.',
-      '3. Enciende una fogata pirámide o corredor a unos 30 cm de la pared reflectora.',
-      '4. Orienta la instalación para que el viento no devuelva el humo a tu tienda.'
+      '1. Construye una pared vertical o inclinada de leños verdes apilados entre dos estacas a 1 metro de tu refugio.',
+      '2. Construye una fogata pirámide delante de la pared.',
+      '3. El calor rebotará en la pared e ingresará en tu vivac manteniéndote abrigado.'
     ],
-    tips: [
-      'La distancia óptima entre la fogata reflectora y tu saco de dormir es de unos 1.8 a 2 metros.'
-    ]
-  },
-  {
-    id: 'fogata_cruz',
-    section: 'fogatas',
-    name: 'Fogata en Cruz',
-    categoryTag: 'Larga Duración',
-    difficulty: 'Básico',
-    icon: '➕',
-    summary: 'Fuego regulable y de larga duración empujando troncos hacia el centro.',
-    description: 'Dos zanjas o cuatro leños gruesos dispuestos en cruz con un fuego en la intersección central. Ideal para vigilias nocturnas o noches de guardia.',
-    steps: [
-      '1. Cava dos zanjas poco profundas en forma de cruz o dispone cuatro leños largos tocándose en el centro.',
-      '2. Enciende un fuego de inicio justo en el punto de cruce.',
-      '3. A medida que los extremos de los maderos se consuman en el fuego, empújalos hacia el centro.',
-      '4. Las zanjas garantizan oxígeno sin importar de qué dirección sople el viento.'
-    ],
-    tips: [
-      'Permite mantener un fuego constante durante horas sin tener que cortar leña pequeña continuamente.'
-    ]
-  },
-  {
-    id: 'leña_clasificacion',
-    section: 'fogatas',
-    name: 'Clasificación de Leña Scout',
-    categoryTag: 'Técnica de Fuego',
-    difficulty: 'Esencial',
-    icon: '🌿',
-    summary: 'Los 4 tipos de combustible natural indispensables para encender fuego con un solo fósforo.',
-    description: 'Un buen scout nunca usa combustibles químicos ni plástico. La clave del éxito reside en clasificar y recolectar la leña antes del encendido.',
-    steps: [
-      '1. YESCA (Tinder): Paja seca, hojas secas trituradas, corteza fibrosa de abedul o eucalipto, nidos de pájaro abandonados o virutas finas.',
-      '2. LEÑA DE INICIO (Kindling): Ramitas secas y quebradizas del grosor de un fideo o un fósforo. Deben chasquear al doblarse.',
-      '3. LEÑA INTERMEDIA: Ramas del grosor del dedo meñique al pulgar. Alimenta la llama inicial.',
-      '4. LEÑOS DE BRASAS (Fuel): Troncos maduros de madera dura (roble, encina, eucalipto) que mantienen calor constante por horas.'
-    ],
-    tips: [
-      'Prueba de la rama: Si se dobla sin romperse, está verde o húmeda y solo producirá humo. Si se quiebra con un "¡crack!", está lista.'
-    ]
-  },
-  {
-    id: 'seguridad_fuego',
-    section: 'fogatas',
-    name: 'Seguridad y Leave No Trace (Sin Dejar Huella)',
-    categoryTag: 'Conservación',
-    difficulty: 'Esencial',
-    icon: '🧯',
-    summary: 'Reglas de oro para prevenir incendios forestales y apagar el fuego al 100%.',
-    description: 'La huella de un campamento debe ser cero. Aprender a apagar y borrar el rastro del fuego es tan vital como saber encenderlo.',
-    steps: [
-      '1. Limpia un círculo de 3 metros de diámetro libre de hojas secas, raíces y vegetación.',
-      '2. Ten a mano un balde con agua, una pala con tierra o una rama verde con follaje.',
-      '3. PARA APAGAR: Rocía agua poco a poco mientras revuelves las cenizas con un palo.',
-      '4. Echa tierra o arena fresca y sigue revolviendo hasta enfriar cada brasa oculta.',
-      '5. REGLA DE ORO: Si está demasiado caliente para tocar las cenizas con la palma de la mano, está demasiado caliente para abandonarlo.'
-    ],
-    tips: [
-      'Corta el césped en panes cuadrados antes de cavar y colócalo a la sombra; al finalizar vuelve a ponerlo y riégalo.'
-    ]
+    multimedia: {
+      videoEmbedId: '2tU8e6EwXvE',
+      videoTitle: 'Fogata de Reflector para noches frías de supervivencia',
+      videoChannel: 'Supervivencia Scout',
+      videoDuration: '3:00 min'
+    },
+    safety: 'Nunca uses piedras de río para el reflector ya que la humedad interna las hace explotar con el calor.'
   },
 
   // ==========================================
-  // 3. LENGUA DE SEÑAS (INCLUSIÓN SCOUT)
+  // 3. LENGUA DE SEÑAS SCOUT (INCLUSIÓN)
   // ==========================================
   {
     id: 'senas_alfabeto',
     section: 'senas',
     name: 'Alfabeto Dactilológico (A a Z)',
-    categoryTag: 'Dactilología',
+    categoryTag: 'Dactilológico',
     difficulty: 'Básico',
     icon: '🔤',
-    summary: 'Deletreo manual letra por letra para nombres, lugares y palabras sin seña específica.',
-    description: 'La base de la comunicación inclusiva en lengua de señas venezolana e internacional. Permite deletrear cualquier concepto con una sola mano.',
+    summary: 'Deletreo manual letra por letra para comunicarse con personas sordas en actividades scouts.',
+    description: 'El alfabeto manual permite deletrear nombres propios, lugares o palabras que no tienen una seña única. Debe realizarse con la mano dominante a la altura del pecho sin mover el brazo excesivamente.',
     steps: [
-      'A: Puño cerrado con el pulgar erguido a un costado.',
-      'B: Cuatro dedos extendidos juntos y el pulgar doblado sobre la palma.',
-      'C: Mano en semicírculo arqueado formando la letra "C".',
-      'D: Índice apuntando hacia arriba, los demás dedos forman un círculo con el pulgar.',
-      'E: Dedos flexionados tocando suavemente la punta del pulgar.',
-      'F: Índice y pulgar juntos formando un aro; los otros tres dedos erguidos.',
-      'G: Índice y pulgar paralelos apuntando horizontalmente.',
-      'H: Índice y medio juntos extendidos hacia adelante.',
-      'I: Solo el dedo meñique erguido hacia arriba.',
-      'L: Índice erguido y pulgar horizontal formando una "L" perfecta.',
-      'M: Tres dedos (índice, medio, anular) descansando sobre el pulgar.',
-      'N: Dos dedos (índice y medio) descansando sobre el pulgar.',
-      'O: Todos los dedos unidos en círculo formando una "O".',
-      'P: Mano hacia abajo con índice extendido y medio en ángulo de 90°.',
-      'R: Dedos índice y medio cruzados (signo de suerte).',
-      'S: Puño cerrado con el pulgar cruzando sobre los dedos.',
-      'T: Pulgar introducido entre el índice y el medio en puño.',
-      'U: Índice y medio juntos extendidos hacia arriba.',
-      'V: Índice y medio separados en "V" (signo de victoria).',
-      'W: Índice, medio y anular abiertos en abanico.',
-      'Y: Pulgar y meñique extendidos (signo de teléfono o hang loose).'
+      '• A: Puño cerrado con el pulgar apoyado contra el costado del índice.',
+      '• B: Cuatro dedos estirados juntos hacia arriba, pulgar doblado sobre la palma.',
+      '• C: Todos los dedos curvados formando una letra "C" de perfil.',
+      '• D: Índice extendido hacia arriba; los otros dedos tocan el pulgar formando un círculo.',
+      '• E: Dedos curvados tocando la punta del pulgar.',
+      '• F: Índice y pulgar tocándose por las puntas en círculo; los otros tres dedos estirados.',
+      '• G: Índice y pulgar extendidos hacia un lado en paralelo.',
+      '• H: Índice y medio juntos extendidos horizontalmente hacia un lado.',
+      '• I: Meñique levantado; el resto de los dedos cerrados en puño.',
+      '• L: Índice levantado y pulgar horizontal formando una "L".',
+      '• M: Tres dedos (índice, medio, anular) doblados sobre el pulgar.',
+      '• N: Dos dedos (índice y medio) doblados sobre el pulgar.',
+      '• O: Todos los dedos curvados tocando el pulgar en forma de "O".',
+      '• P: Dedo medio horizontal, índice hacia abajo y pulgar apoyado.',
+      '• R: Índice y medio cruzados uno sobre el otro.',
+      '• S: Puño cerrado con el pulgar cruzado por delante de los cuatro dedos.',
+      '• T: Pulgar asomando entre el dedo índice y el dedo medio.',
+      '• U: Índice y medio levantados juntos y estirados.',
+      '• V: Índice y medio levantados separados en forma de "V".',
+      '• W: Tres dedos (índice, medio, anular) levantados y separados.',
+      '• Y: Pulgar y meñique extendidos (los demás dedos cerrados).'
     ],
+    visualSteps: [
+      {
+        stepNumber: 1,
+        title: 'Postura de la Mano Dominante',
+        instruction: 'Ubica tu mano derecha (o izquierda si eres zurdo) a la altura del pecho.',
+        callout: 'Mantén la muñeca relajada y la palma visible hacia el interlocutor.'
+      },
+      {
+        stepNumber: 2,
+        title: 'Vocales Básicas (A, E, I, O, U)',
+        instruction: 'A (puño con pulgar al lado), E (garras al pulgar), I (meñique alzado), O (círculo completo), U (dos dedos juntos arriba).',
+        callout: 'Practica deletreando tu nombre de scout.'
+      },
+      {
+        stepNumber: 3,
+        title: 'Letras de Silueta Clara (B, C, L, V, W)',
+        instruction: 'L forma una L con pulgar e índice, V forma una V con índice y medio, W suma el anular.',
+        callout: 'La claridad es más importante que la velocidad.'
+      }
+    ],
+    multimedia: {
+      videoEmbedId: 'P1p5xX3g7yU',
+      videoTitle: 'Alfabeto Dactilológico en Lengua de Señas e Inclusión Scout',
+      videoChannel: 'Inclusión y Diversidad Scout',
+      videoDuration: '5:00 min'
+    },
     tips: [
-      'Mantén la mano a la altura del hombro, relajada y con la palma mirando hacia el frente de tu interlocutor.',
-      'Haz pausas breves entre palabras en lugar de bajar la mano bruscamente.'
+      'Mantén la mano quieta en un solo punto del espacio; no muevas la mano hacia los lados mientras deletreas.',
+      'No mires tu propia mano mientras haces las señas; mira a los ojos de la persona.'
     ]
   },
   {
     id: 'senas_saludo_scout',
     section: 'senas',
     name: 'Saludo y Seña Scout en Señas',
-    categoryTag: 'Escultismo',
-    difficulty: 'Esencial',
+    categoryTag: 'Identidad Scout',
+    difficulty: 'Básico',
     icon: '⚜️',
-    summary: 'La seña scout universal adaptada con respeto y elegancia en la lengua de señas.',
-    description: 'La seña scout simboliza la Promesa y la Ley: los tres dedos extendidos representan los tres principios y deberes, y el pulgar sobre el meñique simboliza que el fuerte protege al débil.',
+    summary: 'Cómo presentarse y compartir el espíritu scout con personas con discapacidad auditiva.',
+    description: 'Integra los tres principios del escultismo con la seña dactilar tradicional scout adaptada a la comunidad sorda.',
     steps: [
-      '1. Eleva la mano derecha a la altura de la sien o el hombro derecho.',
-      '2. Extiende firmes los dedos índice, medio y anular.',
-      '3. Cruza la yema del pulgar por encima de la uña del meñique.',
-      '4. Con la mano izquierda, estrecha la mano izquierda del hermano scout.',
-      '5. Para decir "Hermano Scout": Cruza suavemente los índices de ambas manos como un lazo fraterno.'
+      '1. Seña Scout: Mano derecha a la altura de la sien con los tres dedos extendidos (índice, medio, anular) y el pulgar sujetando la uña del meñique.',
+      '2. Significado en señas: Los tres dedos representan los deberes hacia Dios/Patria, el Prójimo y la Ley Scout.',
+      '3. El pulgar sobre el meñique representa: "El fuerte protege al débil".',
+      '4. Mano izquierda estrechada: Se extiende la mano izquierda abierta como símbolo de hermandad mundial que sale del corazón.'
     ],
-    tips: [
-      'El apretón con la mano izquierda es el más cercano al corazón, legado de los guerreros ashantis que soltaban su escudo para confiar en el otro.'
-    ]
-  },
-  {
-    id: 'senas_siempre_listos',
-    section: 'senas',
-    name: 'Lema "Siempre Listos"',
-    categoryTag: 'Lema Scout',
-    difficulty: 'Básico',
-    icon: '⚡',
-    summary: 'Seña enérgica que transmite disposición constante para servir al prójimo.',
-    description: 'Forma parte del saludo en asambleas, ceremonias y formaciones para saludar a dirigentes y compañeros.',
-    steps: [
-      '1. Mano derecha abierta con palma mirando hacia ti cerca del pecho.',
-      '2. Sube la mano con energía hacia arriba a la altura de la frente mientras cierras en postura firme o en seña scout.',
-      '3. Acompaña con expresión facial de decisión y sonrisa scout.'
+    visualSteps: [
+      {
+        stepNumber: 1,
+        title: 'Los Tres Dedos Elevados',
+        instruction: 'Levanta los tres dedos centrales bien rectos.',
+        callout: 'Representan la Promesa Scout.'
+      },
+      {
+        stepNumber: 2,
+        title: 'El Abrazo del Pulgar',
+        instruction: 'Dobla el pulgar cubriendo el meñique.',
+        callout: 'El mayor protege al menor.'
+      },
+      {
+        stepNumber: 3,
+        title: 'Posición a la Sien',
+        instruction: 'Acerca la mano a la ceja/sien derecha.',
+        callout: 'Saludo formal en formaciones.'
+      }
     ],
+    multimedia: {
+      videoEmbedId: 'P1p5xX3g7yU',
+      videoTitle: 'Seña y Saludo Scout: Historia y significado',
+      videoChannel: 'Cultura Scout',
+      videoDuration: '3:10 min'
+    },
     tips: [
-      'La expresión facial en lengua de señas equivale a la entonación de la voz; una cara sonriente y atenta es fundamental.'
-    ]
-  },
-  {
-    id: 'senas_cortesia',
-    section: 'senas',
-    name: 'Cortesía y Convivencia',
-    categoryTag: 'Comunicación',
-    difficulty: 'Básico',
-    icon: '🤝',
-    summary: 'Gracias, Por Favor, De Nada, Perdón y Saludos cotidianos.',
-    description: 'Las señas clave de educación y amabilidad scout que todo joven y dirigente debe dominar en actividades inclusivas.',
-    steps: [
-      '• GRACIAS: Toca tus labios o barbilla con la punta de los dedos de la mano abierta y extiéndela suavemente hacia la otra persona.',
-      '• POR FAVOR: Apoya la palma abierta en el centro del pecho y realiza dos círculos suaves en el sentido de las agujas del reloj.',
-      '• SÍ: Cierra la mano en puño y oscila la muñeca hacia adelante y atrás, como quien asiente con la cabeza.',
-      '• NO: Junta el dedo índice y el dedo medio con el pulgar dos veces en un movimiento de pinza firme.',
-      '• DE NADA / CON GUSTO: Mano abierta con la palma hacia arriba bajando ligeramente con cordialidad.',
-      '• PERDÓN: Mano en puño frotando suavemente en círculos el pecho con expresión de arrepentimiento.'
-    ],
-    tips: [
-      'Para decir "Buenos Días": Toca la barbilla (gracias/bueno) y luego lleva la mano derecha a apoyarse sobre el antebrazo izquierdo en forma de sol naciente.'
-    ]
-  },
-  {
-    id: 'senas_emergencia',
-    section: 'senas',
-    name: 'Seguridad y Campamento en Señas',
-    categoryTag: 'Seguridad',
-    difficulty: 'Intermedio',
-    icon: '🚨',
-    summary: 'Ayuda, Agua, Fuego, Médico, Peligro y Amigo.',
-    description: 'Palabras cruciales para transmitir necesidades vitales, pedidos de socorro y elementos de supervivencia.',
-    steps: [
-      '• AYUDA: Extiende la palma de la mano izquierda hacia arriba; sobre ella apoya la mano derecha cerrada en puño con el pulgar erguido, y eleva ambas manos juntas.',
-      '• AGUA: Forma una "W" con los dedos índice, medio y anular, y golpea suavemente la barbilla dos veces.',
-      '• FUEGO: Abre ambas manos con dedos ondulantes elevándose hacia arriba imitando las llamas que arden.',
-      '• MÉDICO / ENFERMERÍA: Con dos dedos de la mano derecha toca el pulso en la muñeca izquierda.',
-      '• AMIGO: Engancha los dedos índices de ambas manos primero de un lado y luego invirtiendo la posición.',
-      '• COMIDA: Junta las yemas de los cinco dedos de una mano y llévalos hacia la boca un par de veces.'
-    ],
-    tips: [
-      'La seña de Ayuda se puede hacer hacia una dirección específica para pedir auxilio para un tercero.'
+      'Extiende siempre la mano izquierda al saludar a otro scout o scouter.'
     ]
   },
 
   // ==========================================
-  // 4. PISTAS Y RASTREO SCOUT (PIONERISMO)
+  // 4. PISTAS Y RASTREO SCOUT
   // ==========================================
   {
     id: 'pista_direccion',
     section: 'pistas',
     name: 'Seguir Esta Dirección',
-    categoryTag: 'Orientación',
+    categoryTag: 'Direccional',
     difficulty: 'Básico',
-    icon: '➡️',
-    summary: 'Flecha natural construida con ramas, piedras o marcada en el suelo.',
-    description: 'El signo de pista más común en las pistas de rastreo. Indica la dirección precisa que debe seguir la patrulla.',
+    icon: '➜',
+    summary: 'Flecha trazada en tierra, con ramas o piedras indicando hacia dónde avanzó la patrulla.',
+    description: 'La señal básica de rastreo en marchas scout. Se coloca en cruces de caminos para guiar a los rastreadores o a la patrulla que viene detrás.',
     steps: [
-      '1. Se forma con una rama larga como cuerpo y dos ramas cortas como punta de flecha.',
-      '2. También se hace con tres piedras alineadas con una piedra más pequeña indicando la punta.',
-      '3. En senderos de tierra, se dibuja suavemente una flecha sin alterar el entorno.'
+      '1. Trazo en suelo: Una flecha clara dibujada con una vara sobre la tierra blanda a la derecha del sendero.',
+      '2. Con piedras: Una piedra grande en la punta y piedras más pequeñas en la cola.',
+      '3. Con ramas: Una rama larga con dos ramitas inclinadas en el extremo formando la punta de lanza.',
+      '4. Nunca la coloques en el medio del camino donde el ganado o transeúntes puedan pisarla.'
     ],
-    tips: [
-      'Colócala siempre a la derecha del sendero, en un lugar visible pero que no llame la atención de extraños.'
-    ]
-  },
-  {
-    id: 'pista_camino_cerrado',
-    section: 'pistas',
-    name: 'Camino Cerrado / No ir por aquí',
-    categoryTag: 'Advertencia',
-    difficulty: 'Básico',
-    icon: '🛑',
-    summary: 'Cruz de ramas o piedras que prohíbe el paso por un sendero falso o peligroso.',
-    description: 'Evita que las patrullas se desvíen por caminos erróneos o caigan en terrenos cortados o barrancos.',
-    steps: [
-      '1. Dos ramas secas cruzadas en "X" sobre el camino.',
-      '2. O dos líneas de piedras que se intersectan claramente.',
-      '3. Si hay una bifurcación, se coloca la "X" en la entrada del sendero que NO se debe tomar.'
+    visualSteps: [
+      {
+        stepNumber: 1,
+        title: 'Cuerpo de la Flecha',
+        instruction: 'Coloca una rama recta de 30 a 40 cm en dirección de la marcha.',
+        callout: 'Siempre al costado derecho del sendero.'
+      },
+      {
+        stepNumber: 2,
+        title: 'Punta Direccional',
+        instruction: 'Coloca dos ramitas o piedras formando una "V" en la punta.',
+        callout: 'Apunta con exactitud al cruce que deben tomar.'
+      }
     ],
+    multimedia: {
+      videoEmbedId: '5wX9q7l8k1E',
+      videoTitle: 'Signos de Pista y Rastreo Scout en la naturaleza',
+      videoChannel: 'Aire Libre y Rastreo Scout',
+      videoDuration: '3:45 min'
+    },
     tips: [
-      'Al ver este signo, la patrulla debe regresar al último signo de dirección y buscar la ruta correcta.'
+      'El código scout exige que la última patrulla en pasar BORRE todas las señales para no dejar marcas artificiales en la naturaleza.'
     ]
   },
   {
@@ -562,54 +845,23 @@ const MANUALS_DATA: ManualItem[] = [
     section: 'pistas',
     name: 'Peligro o Atención Inmediata',
     categoryTag: 'Seguridad',
-    difficulty: 'Intermedio',
-    icon: '⚠️',
-    summary: 'Tres piedras apiladas en columna o estaca con rama quebrada.',
-    description: 'Alerta sobre animales ponzoñosos, nidos de avispas, terreno pantanoso, desfiladeros o peligro inminente.',
-    steps: [
-      '1. Tres piedras superpuestas una encima de la otra en equilibrio.',
-      '2. O un montículo de tierra con una rama quebrada apuntando al suelo.',
-      '3. Detener la marcha de la patrulla y avanzar con cautela extrema.'
-    ],
-    tips: [
-      'La regla scout dice: "Tres de cualquier cosa es señal universal de peligro o socorro".'
-    ]
-  },
-  {
-    id: 'pista_mensaje',
-    section: 'pistas',
-    name: 'Mensaje Oculto a X Pasos',
-    categoryTag: 'Mensajería',
-    difficulty: 'Intermedio',
-    icon: '✉️',
-    summary: 'Cuadro con círculo y flecha indicando mensaje secreto enterrado o escondido.',
-    description: 'Señal clásica para pistas de juegos nocturnos o rallies de orientación donde se deja un pergamino o prueba.',
-    steps: [
-      '1. Dibuja o forma un cuadrado de piedras o ramas.',
-      '2. Dentro del cuadrado coloca un círculo o caracol.',
-      '3. Al lado coloca una flecha con un número (ej: 8), que indica dar 8 pasos en esa dirección para hallar el mensaje.',
-      '4. El mensaje suele esconderse en la horqueta de un árbol, bajo una piedra o en un tronco hueco.'
-    ],
-    tips: [
-      'Protege siempre el mensaje dentro de una bolsa hermética o envase plástico para que no se moje con el rocío.'
-    ]
-  },
-  {
-    id: 'pista_fin',
-    section: 'pistas',
-    name: 'Fin de Pista / Misión Cumplida',
-    categoryTag: 'Final',
     difficulty: 'Básico',
-    icon: '🏁',
-    summary: 'Círculo con un punto central: "He vuelto a casa / Misión cumplida".',
-    description: 'El signo más emotivo del escultismo tradicional. También se coloca en la tumba de los scouts que partieron al campamento eterno (como en la lápida del fundador Baden-Powell).',
+    icon: '⚠️',
+    summary: 'Tres piedras apiladas en columna o tres estacas en trípode. Alerta de riesgo inminente.',
+    description: 'Código universal de alerta en el bosque. Avisa de derrumbes, colmenas de abejas, serpientes, pozos ocultos o acantilados cercanos.',
     steps: [
-      '1. Dibuja o forma un círculo perfecto con ramas o piedras pequeñas.',
-      '2. Coloca una piedra solitaria justo en el centro del círculo.',
-      '3. Significa que la pista concluyó, la patrulla ha alcanzado su objetivo o debe reagruparse.'
+      '1. Tres piedras colocadas una encima de la otra formando una pirámide vertical.',
+      '2. Si no hay piedras, tres ramas clavadas en el suelo atadas en la punta.',
+      '3. Si hay un número debajo, indica los metros de distancia al peligro (ej. "3 piedras + 20" = peligro a 20 metros).'
     ],
+    multimedia: {
+      videoEmbedId: '5wX9q7l8k1E',
+      videoTitle: 'Signos de Peligro y Alerta en Excursiones Scout',
+      videoChannel: 'Seguridad Scout',
+      videoDuration: '2:50 min'
+    },
     tips: [
-      'Al encontrar este signo, la patrulla guarda silencio y espera la instrucción del Scouter.'
+      'Al ver esta señal, toda la patrulla debe detenerse inmediatamente y explorar el terreno con cautela.'
     ]
   },
 
@@ -620,34 +872,75 @@ const MANUALS_DATA: ManualItem[] = [
     id: 'auxilios_pas',
     section: 'primeros_auxilios',
     name: 'Protocolo P.A.S. de Emergencias',
-    categoryTag: 'Protocolo',
+    categoryTag: 'Emergencia',
     difficulty: 'Esencial',
-    icon: '🚑',
-    summary: 'Proteger, Avisar y Socorrer: los 3 pasos obligatorios ante cualquier accidente.',
-    description: 'La base universal de los primeros auxilios. Mantiene la calma y evita que el socorrista se convierta en una segunda víctima.',
+    icon: '🚨',
+    summary: 'Proteger, Avisar y Socorrer. La regla de oro en cualquier accidente de campamento.',
+    description: 'Secuencia estricta y universal que todo scout debe aplicar ante una persona herida antes de intentar manipular al paciente.',
     steps: [
-      '1. PROTEGER: Asegura el lugar del accidente. Si hay fuego, cables eléctricos, abejas o caída de piedras, aléjate del peligro antes de tocar al herido.',
-      '2. AVISAR: Da la alarma inmediatamente al Scouter, médico del campamento o números de emergencia (911). Indica lugar exacto y estado del paciente.',
-      '3. SOCORRER: Atiende a la víctima según tus conocimientos. Conserva la calma, no muevas a un herido con sospecha de fractura de cuello o columna y abriga para prevenir shock.'
+      '1. PROTEGER: Asegura el lugar del accidente. Si hay fuego, cables caídos o tránsito, elimina el peligro para no convertirte en una segunda víctima.',
+      '2. AVISAR: Notifica a los scouters, jefatura o llama a los servicios de emergencia (911 o número local). Da ubicación exacta, qué ocurrió y cuántos heridos hay.',
+      '3. SOCORRER: Evalúa al herido (consciencia, respiración, pulso, hemorragias graves). Aplica primeros auxilios dentro de tus conocimientos sin improvisar maniobras arriesgadas.'
     ],
+    multimedia: {
+      videoEmbedId: 'aLwJ8FvB4g0',
+      videoTitle: 'Protocolo P.A.S. en Primeros Auxilios de Emergencia',
+      videoChannel: 'Cruz Roja / Socorrismo Scout',
+      videoDuration: '3:30 min'
+    },
     tips: [
-      'Habla con voz serena al accidentado: "Soy scout, estoy aquí contigo y la ayuda ya viene en camino".'
-    ]
+      'Conserva la calma: el pánico de un socorrista agrava el estado de shock del herido.'
+    ],
+    safety: 'Nunca muevas a una persona que cayó de altura o sufrió golpe en la columna salvo que corra riesgo de fuego inminente.'
   },
   {
     id: 'auxilios_panuelo',
     section: 'primeros_auxilios',
     name: 'Vendajes con Pañuelo Scout',
-    categoryTag: 'Vendaje Práctico',
-    difficulty: 'Intermedio',
+    categoryTag: 'Inmovilización',
+    difficulty: 'Básico',
     icon: '🧣',
-    summary: 'Transformar la pañoleta de la unidad en cabestrillo, venda en corbata o apósito.',
-    description: 'La pañoleta scout es una herramienta de salvamento triangular perfecta para inmovilizar miembros superiores, sujetar férulas de madera o vendar cabezas.',
+    summary: 'Usar tu pañuelo de grupo o pañoleta triangular como cabestrillo o apósito compresivo.',
+    description: 'El pañuelo scout es el elemento de primeros auxilios más versátil en el bosque. Doblado en triángulo o corbata sirve para inmovilizar miembros rotos.',
     steps: [
-      '1. CABESTRILLO: Coloca la base del triángulo sobre el hombro sano, la punta hacia el codo herido. Lleva el vértice inferior sobre el antebrazo y anuda en la nuca con nudo rizo.',
-      '2. VENDA EN CORBATA: Dobla la punta de la pañoleta hacia la base y sigue plegando hasta obtener una faja ancha para muñecas, tobillos o rodillas.',
-      '3. CAPELINA PARA CABEZA: Cubre el cráneo con la base en la frente y anuda los dos extremos atrás asegurando la gasa sobre una herida.'
+      '1. Cabestrillo para brazo o muñeca: Coloca la base del pañuelo bajo el antebrazo lesionado.',
+      '2. Lleva una punta sobre el hombro sano y la otra sobre el hombro lesionado.',
+      '3. Ata ambas puntas detrás del cuello con un nudo rizo (llano) y coloca un acolchado en la nuca para que no roce.',
+      '4. Dobla el vértice suelto en el codo hacia adelante y fíjalo con un imperdible o nudo.',
+      '5. Asegúrate de que los dedos queden ligeramente asomados para vigilar que no se pongan azules o fríos.'
     ],
+    visualSteps: [
+      {
+        stepNumber: 1,
+        title: 'Despliegue Triangular',
+        instruction: 'Abre el pañuelo scout en triángulo con el vértice hacia el codo lesionado.',
+        callout: 'La punta larga va sobre el hombro contrario.'
+      },
+      {
+        stepNumber: 2,
+        title: 'Elevación a 90 Grados',
+        instruction: 'Flexiona el antebrazo del paciente en ángulo recto hacia el pecho.',
+        callout: 'Mano ligeramente más alta que el codo.'
+      },
+      {
+        stepNumber: 3,
+        title: 'Nudo Llano en la Nuca',
+        instruction: 'Ata los dos extremos en el costado del cuello con un Nudo Rizo.',
+        callout: 'Nunca sobre la columna cervical.'
+      }
+    ],
+    multimedia: {
+      videoEmbedId: '2w8x1L6p0F8',
+      videoTitle: 'Primeros Auxilios con Pañuelo Scout: Cabestrillos e inmovilizaciones',
+      videoChannel: 'Socorrismo y Salud Scout',
+      videoDuration: '4:30 min',
+      images: [
+        {
+          url: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=800&auto=format&fit=crop',
+          caption: 'Inmovilización y vendaje de brazo en primeros auxilios'
+        }
+      ]
+    },
     tips: [
       'Usa siempre un nudo rizo (llano) para atar los vendajes; nunca se clava en la piel del paciente.'
     ]
@@ -667,6 +960,12 @@ const MANUALS_DATA: ManualItem[] = [
       '3. Retira suavemente anillos, relojes o prendas antes de que la zona se inflame (si la tela está pegada a la piel, NO la arranques).',
       '4. Cubre con una gasa estéril humedecida y traslada al médico.'
     ],
+    multimedia: {
+      videoEmbedId: 'aLwJ8FvB4g0',
+      videoTitle: 'Tratamiento de Quemaduras en Campamentos de Verano',
+      videoChannel: 'Salud y Prevención',
+      videoDuration: '3:15 min'
+    },
     tips: [
       'NUNCA apliques mantequilla, aceite, pasta dental, café ni hielo directo: infectan y profundizan la lesión térmica.'
     ],
@@ -688,6 +987,12 @@ const MANUALS_DATA: ManualItem[] = [
       '4. Aplica paños húmedos frescos en la frente, nuca, axilas e ingles.',
       '5. Si está consciente, dale a beber agua fresca con pizca de sal y azúcar (suero oral) a pequeños sorbos pausados.'
     ],
+    multimedia: {
+      videoEmbedId: 'aLwJ8FvB4g0',
+      videoTitle: 'Insolación y Golpe de Calor: Síntomas y Manejo de Emergencia',
+      videoChannel: 'Medicina de Montaña',
+      videoDuration: '3:40 min'
+    },
     tips: [
       'Si el scout pierde la conciencia, colócalo en Posición Lateral de Seguridad (PLS) y busca traslado de urgencia.'
     ]
@@ -707,6 +1012,12 @@ const MANUALS_DATA: ManualItem[] = [
       '3. C (Compression / Compresión): Realiza un vendaje compresivo firme pero no sofocante con tu pañuelo scout o venda elástica.',
       '4. E (Elevation / Elevación): Mantén la pierna elevada por encima del nivel del corazón para reducir la hinchazón.'
     ],
+    multimedia: {
+      videoEmbedId: 'aLwJ8FvB4g0',
+      videoTitle: 'Protocolo R.I.C.E. para Torceduras y Esguinces de Tobillo',
+      videoChannel: 'Primeros Auxilios Scout',
+      videoDuration: '3:20 min'
+    },
     tips: [
       'No quites la bota bruscamente en pleno sendero si aún faltan pocos metros para llegar a la base, ya que el tobillo se hinchará al instante.'
     ]
@@ -721,8 +1032,48 @@ export default function NudosManualScreen({ navigation }: any) {
   const [search, setSearch] = useState('');
   const [selectedItem, setSelectedItem] = useState<ManualItem | null>(null);
 
+  // Tabs internas del modal de técnica: Escrito | Visual | Multimedia
+  const [modalTab, setModalTab] = useState<ModalTabKey>('escrito');
+  const [visualStepIndex, setVisualStepIndex] = useState<number>(0);
+  const [isPlayingWebVideo, setIsPlayingWebVideo] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
+  // Checklist de pasos practicados por el scout
+  const [checkedSteps, setCheckedSteps] = useState<Record<string, boolean>>({});
+
+  const toggleStepChecked = (itemKey: string, stepIdx: number) => {
+    const key = `${itemKey}_step_${stepIdx}`;
+    setCheckedSteps(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
   // Soporte universal para gestos de retroceso en Android, iOS y PWA
-  useModalBackHandler(selectedItem !== null, () => setSelectedItem(null));
+  useModalBackHandler(selectedItem !== null, () => {
+    if (lightboxImage) {
+      setLightboxImage(null);
+    } else {
+      setSelectedItem(null);
+      setIsPlayingWebVideo(false);
+      setVisualStepIndex(0);
+      setModalTab('escrito');
+    }
+  });
+
+  const handleOpenItem = (item: ManualItem) => {
+    setSelectedItem(item);
+    setModalTab('escrito');
+    setVisualStepIndex(0);
+    setIsPlayingWebVideo(false);
+  };
+
+  const handleOpenVideoExternal = (embedId?: string, queryTitle?: string) => {
+    const targetUrl = embedId
+      ? `https://www.youtube.com/watch?v=${embedId}`
+      : `https://www.youtube.com/results?search_query=scout+${encodeURIComponent(queryTitle || 'nudos y amarres')}`;
+    
+    Linking.openURL(targetUrl).catch(err => {
+      console.warn('No se pudo abrir el enlace de video:', err);
+    });
+  };
 
   const SECTIONS_CONFIG: { id: ManualSectionKey; label: string; icon: string }[] = [
     { id: 'nudos', label: 'Nudos y Amarres', icon: '🪢' },
@@ -769,10 +1120,20 @@ export default function NudosManualScreen({ navigation }: any) {
           <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>
         </TouchableOpacity>
 
-        <Text style={styles.offlineBadge}>⚡ 100% OFFLINE (DISPONIBLE SIN INTERNET NI MEGAS)</Text>
-        <Text style={[styles.title, { color: theme.text }]}>Manuales y Técnicas Scout</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <View style={[styles.badgePill, { backgroundColor: '#16a34a15', borderColor: '#16a34a' }]}>
+            <WifiOff size={11} color="#16a34a" />
+            <Text style={[styles.badgePillText, { color: '#16a34a' }]}>100% OFFLINE DISPONIBLE</Text>
+          </View>
+          <View style={[styles.badgePill, { backgroundColor: '#ef444415', borderColor: '#ef4444' }]}>
+            <Video size={11} color="#ef4444" />
+            <Text style={[styles.badgePillText, { color: '#ef4444' }]}>VIDEOS & MULTIMEDIA</Text>
+          </View>
+        </View>
+
+        <Text style={[styles.title, { color: theme.text, marginTop: 4 }]}>Manuales y Técnicas Scout</Text>
         <Text style={[styles.subTitle, { color: theme.subText }]}>
-          Guías prácticas de cabuyería, fogatas, señas inclusivas, pionerismo y socorrismo.
+          Guías paso a paso escritas y visuales para campamento, más videos y galería técnica.
         </Text>
 
         {/* BUSCADOR UNIVERSAL */}
@@ -780,7 +1141,7 @@ export default function NudosManualScreen({ navigation }: any) {
           <Search size={16} color={isDarkMode ? '#71717a' : '#a1a1aa'} style={{ marginRight: 8 }} />
           <TextInput
             style={[styles.searchInput, { color: theme.text }]}
-            placeholder="Buscar por técnica, paso, nudo o palabra clave..."
+            placeholder="Buscar por técnica, nudo, fogata, seña o auxilio..."
             placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
             value={search}
             onChangeText={setSearch}
@@ -880,7 +1241,7 @@ export default function NudosManualScreen({ navigation }: any) {
                 styles.manualCard,
                 { backgroundColor: theme.cardBg, borderColor: theme.border }
               ]}
-              onPress={() => setSelectedItem(item)}
+              onPress={() => handleOpenItem(item)}
               activeOpacity={0.8}
             >
               <View style={[styles.manualIconBox, { backgroundColor: isDarkMode ? '#27272a' : 'rgba(99, 102, 241, 0.1)' }]}>
@@ -921,12 +1282,30 @@ export default function NudosManualScreen({ navigation }: any) {
                   )}
                 </View>
 
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                {/* Categoría y Badges multimedia disponibles */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
                   <View style={[styles.catTagBadge, { backgroundColor: primaryColor + '15' }]}>
                     <Text style={{ fontSize: 10, fontWeight: 'bold', color: primaryColor }}>
                       {item.categoryTag}
                     </Text>
                   </View>
+
+                  <View style={styles.miniFeaturePill}>
+                    <FileText size={10} color="#16a34a" />
+                    <Text style={[styles.miniFeatureText, { color: '#16a34a' }]}>Escrito</Text>
+                  </View>
+
+                  <View style={styles.miniFeaturePill}>
+                    <Eye size={10} color="#0284c7" />
+                    <Text style={[styles.miniFeatureText, { color: '#0284c7' }]}>Visual</Text>
+                  </View>
+
+                  {item.multimedia?.videoEmbedId && (
+                    <View style={[styles.miniFeaturePill, { backgroundColor: '#ef444415' }]}>
+                      <Video size={10} color="#ef4444" />
+                      <Text style={[styles.miniFeatureText, { color: '#ef4444' }]}>Video</Text>
+                    </View>
+                  )}
                 </View>
 
                 <Text style={[styles.manualSummary, { color: theme.subText }]} numberOfLines={2}>
@@ -940,82 +1319,520 @@ export default function NudosManualScreen({ navigation }: any) {
         )}
       </ScrollView>
 
-      {/* MODAL DETALLE DE LA TÉCNICA / MANUAL */}
+      {/* ==================================================== */}
+      {/* MODAL DETALLADO DE LA TÉCNICA CON LAS 3 PESTAÑAS      */}
+      {/* 1. ESCRITO | 2. VISUAL OFFLINE | 3. MULTIMEDIA/VIDEO  */}
+      {/* ==================================================== */}
       {selectedItem && (
         <Modal
           visible={selectedItem !== null}
           transparent
           animationType="slide"
-          onRequestClose={() => setSelectedItem(null)}
+          onRequestClose={() => {
+            setSelectedItem(null);
+            setIsPlayingWebVideo(false);
+          }}
         >
           <View style={modalStyles.overlay}>
             <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', borderColor: theme.border }]}>
-              {/* Header modal */}
+              
+              {/* HEADER DEL MODAL */}
               <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 8 }}>
-                  <Text style={{ fontSize: 30, marginRight: 10 }}>{selectedItem.icon}</Text>
+                  <Text style={{ fontSize: 28, marginRight: 10 }}>{selectedItem.icon}</Text>
                   <View style={{ flex: 1 }}>
-                    <Text style={[modalStyles.title, { color: theme.text }]}>{selectedItem.name}</Text>
+                    <Text style={[modalStyles.title, { color: theme.text }]} numberOfLines={1}>
+                      {selectedItem.name}
+                    </Text>
                     <Text style={{ fontSize: 11, color: primaryColor, fontWeight: 'bold' }}>
                       {selectedItem.categoryTag} {selectedItem.difficulty ? `• Nivel ${selectedItem.difficulty}` : ''}
                     </Text>
                   </View>
                 </View>
-                <TouchableOpacity onPress={() => setSelectedItem(null)} style={{ padding: 4 }}>
-                  <X size={22} color={theme.subText} />
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedItem(null);
+                    setIsPlayingWebVideo(false);
+                  }}
+                  style={{ padding: 6, borderRadius: 8, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }}
+                >
+                  <X size={20} color={theme.subText} />
                 </TouchableOpacity>
               </View>
 
-              <ScrollView style={{ padding: 18, maxHeight: 460 }}>
-                {/* Explicación y Uso */}
-                <Text style={[modalStyles.sectionLabel, { color: primaryColor }]}>DESCRIPCIÓN Y USO SCOUT</Text>
-                <Text style={[modalStyles.useText, { color: theme.text }]}>{selectedItem.description}</Text>
+              {/* BARRA DE PESTAÑAS: ESCRITO / VISUAL / MULTIMEDIA */}
+              <View style={[modalStyles.tabBar, { borderBottomColor: theme.border, backgroundColor: isDarkMode ? '#202024' : '#f8fafc' }]}>
+                <TouchableOpacity
+                  style={[
+                    modalStyles.tabBtn,
+                    modalTab === 'escrito' && { borderBottomColor: primaryColor, borderBottomWidth: 2.5 }
+                  ]}
+                  onPress={() => setModalTab('escrito')}
+                >
+                  <FileText size={15} color={modalTab === 'escrito' ? primaryColor : theme.subText} />
+                  <Text
+                    style={[
+                      modalStyles.tabBtnText,
+                      { color: modalTab === 'escrito' ? primaryColor : theme.subText, fontWeight: modalTab === 'escrito' ? 'bold' : '600' }
+                    ]}
+                  >
+                    Guía Escrita
+                  </Text>
+                </TouchableOpacity>
 
-                {/* Pasos de ejecución */}
-                {selectedItem.steps && selectedItem.steps.length > 0 && (
-                  <>
-                    <Text style={[modalStyles.sectionLabel, { color: primaryColor, marginTop: 18 }]}>
-                      PASOS PASO A PASO
-                    </Text>
-                    {selectedItem.steps.map((st, idx) => (
-                      <View key={idx} style={modalStyles.stepRow}>
-                        <CheckCircle2 size={16} color={primaryColor} style={{ marginTop: 2, marginRight: 8 }} />
-                        <Text style={[modalStyles.stepText, { color: theme.text }]}>{st}</Text>
-                      </View>
-                    ))}
-                  </>
-                )}
+                <TouchableOpacity
+                  style={[
+                    modalStyles.tabBtn,
+                    modalTab === 'visual' && { borderBottomColor: primaryColor, borderBottomWidth: 2.5 }
+                  ]}
+                  onPress={() => setModalTab('visual')}
+                >
+                  <Eye size={15} color={modalTab === 'visual' ? primaryColor : theme.subText} />
+                  <Text
+                    style={[
+                      modalStyles.tabBtnText,
+                      { color: modalTab === 'visual' ? primaryColor : theme.subText, fontWeight: modalTab === 'visual' ? 'bold' : '600' }
+                    ]}
+                  >
+                    Visual (Offline)
+                  </Text>
+                </TouchableOpacity>
 
-                {/* Consejos prácticos de patrulla */}
-                {selectedItem.tips && selectedItem.tips.length > 0 && (
-                  <View style={[modalStyles.tipBox, { backgroundColor: isDarkMode ? '#1e293b' : '#eff6ff', borderColor: '#3b82f6' }]}>
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#2563eb', marginBottom: 4 }}>
-                      💡 CONSEJOS DE PATRULLA / SCOUTER:
-                    </Text>
-                    {selectedItem.tips.map((t, idx) => (
-                      <Text key={idx} style={{ fontSize: 12, color: isDarkMode ? '#bfdbfe' : '#1e40af', marginBottom: 2 }}>
-                        • {t}
-                      </Text>
-                    ))}
-                  </View>
-                )}
+                <TouchableOpacity
+                  style={[
+                    modalStyles.tabBtn,
+                    modalTab === 'multimedia' && { borderBottomColor: '#ef4444', borderBottomWidth: 2.5 }
+                  ]}
+                  onPress={() => setModalTab('multimedia')}
+                >
+                  <Video size={15} color={modalTab === 'multimedia' ? '#ef4444' : theme.subText} />
+                  <Text
+                    style={[
+                      modalStyles.tabBtnText,
+                      { color: modalTab === 'multimedia' ? '#ef4444' : theme.subText, fontWeight: modalTab === 'multimedia' ? 'bold' : '600' }
+                    ]}
+                  >
+                    Video y Fotos
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
-                {/* Advertencia de seguridad */}
-                {selectedItem.safety && (
-                  <View style={[modalStyles.tipBox, { backgroundColor: isDarkMode ? '#451a03' : '#fef2f2', borderColor: '#ef4444' }]}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                      <AlertTriangle size={14} color="#ef4444" />
-                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#ef4444' }}>
-                        PRECAUCIÓN DE SEGURIDAD:
+              <ScrollView style={{ padding: 18 }} contentContainerStyle={{ paddingBottom: 40 }}>
+                
+                {/* ==================================================== */}
+                {/* PESTAÑA 1: GUÍA ESCRITA (OFFLINE)                    */}
+                {/* ==================================================== */}
+                {modalTab === 'escrito' && (
+                  <View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                      <WifiOff size={14} color="#16a34a" />
+                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#16a34a' }}>
+                        MODO ESCRITO 100% OFFLINE (DISPONIBLE SIN CONEXIÓN)
                       </Text>
                     </View>
-                    <Text style={{ fontSize: 12, color: isDarkMode ? '#fecaca' : '#991b1b' }}>
-                      {selectedItem.safety}
-                    </Text>
+
+                    {/* Explicación y Uso */}
+                    <Text style={[modalStyles.sectionLabel, { color: primaryColor }]}>DESCRIPCIÓN Y USO SCOUT</Text>
+                    <Text style={[modalStyles.useText, { color: theme.text }]}>{selectedItem.description}</Text>
+
+                    {/* Pasos de ejecución con checklist interactivo de práctica */}
+                    {selectedItem.steps && selectedItem.steps.length > 0 && (
+                      <View style={{ marginTop: 18 }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                          <Text style={[modalStyles.sectionLabel, { color: primaryColor, marginBottom: 0 }]}>
+                            PASO A PASO EXPLICADO
+                          </Text>
+                          <Text style={{ fontSize: 10, color: theme.subText }}>Toca para marcar tu avance</Text>
+                        </View>
+
+                        {selectedItem.steps.map((st, idx) => {
+                          const isDone = !!checkedSteps[`${selectedItem.id}_step_${idx}`];
+                          return (
+                            <TouchableOpacity
+                              key={idx}
+                              style={[
+                                modalStyles.stepRow,
+                                isDone && { opacity: 0.7 }
+                              ]}
+                              onPress={() => toggleStepChecked(selectedItem.id, idx)}
+                              activeOpacity={0.7}
+                            >
+                              {isDone ? (
+                                <CheckCircle2 size={18} color="#16a34a" style={{ marginTop: 2, marginRight: 10 }} />
+                              ) : (
+                                <Circle size={18} color={theme.subText} style={{ marginTop: 2, marginRight: 10 }} />
+                              )}
+                              <Text
+                                style={[
+                                  modalStyles.stepText,
+                                  { color: theme.text, textDecorationLine: isDone ? 'line-through' : 'none' }
+                                ]}
+                              >
+                                {st}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    )}
+
+                    {/* Consejos prácticos de patrulla */}
+                    {selectedItem.tips && selectedItem.tips.length > 0 && (
+                      <View style={[modalStyles.tipBox, { backgroundColor: isDarkMode ? '#1e293b' : '#eff6ff', borderColor: '#3b82f6' }]}>
+                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#2563eb', marginBottom: 4 }}>
+                          💡 CONSEJOS DE PATRULLA / SCOUTER:
+                        </Text>
+                        {selectedItem.tips.map((t, idx) => (
+                          <Text key={idx} style={{ fontSize: 12, color: isDarkMode ? '#bfdbfe' : '#1e40af', marginBottom: 2 }}>
+                            • {t}
+                          </Text>
+                        ))}
+                      </View>
+                    )}
+
+                    {/* Advertencia de seguridad */}
+                    {selectedItem.safety && (
+                      <View style={[modalStyles.tipBox, { backgroundColor: isDarkMode ? '#451a03' : '#fef2f2', borderColor: '#ef4444' }]}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                          <AlertTriangle size={14} color="#ef4444" />
+                          <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#ef4444' }}>
+                            PRECAUCIÓN DE SEGURIDAD:
+                          </Text>
+                        </View>
+                        <Text style={{ fontSize: 12, color: isDarkMode ? '#fecaca' : '#991b1b' }}>
+                          {selectedItem.safety}
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* Acceso directo a ver el esquema visual */}
+                    <TouchableOpacity
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        marginTop: 20,
+                        padding: 12,
+                        borderRadius: 12,
+                        backgroundColor: primaryColor + '15',
+                        borderWidth: 1,
+                        borderColor: primaryColor
+                      }}
+                      onPress={() => setModalTab('visual')}
+                    >
+                      <Eye size={16} color={primaryColor} />
+                      <Text style={{ fontSize: 13, fontWeight: 'bold', color: primaryColor }}>
+                        Ver Esquema Visual Paso a Paso (Offline)
+                      </Text>
+                      <ChevronRight size={16} color={primaryColor} />
+                    </TouchableOpacity>
                   </View>
                 )}
+
+                {/* ==================================================== */}
+                {/* PESTAÑA 2: ESQUEMA VISUAL PASO A PASO (100% OFFLINE)  */}
+                {/* ==================================================== */}
+                {modalTab === 'visual' && (
+                  <View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <WifiOff size={14} color="#16a34a" />
+                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#16a34a' }}>
+                          ESQUEMA VECTORIAL OFFLINE
+                        </Text>
+                      </View>
+                      <Text style={{ fontSize: 11, color: theme.subText }}>Sin internet ni descargas</Text>
+                    </View>
+
+                    {/* DIAGRAMA VECTORIAL SVG */}
+                    <ManualVisualDiagram
+                      itemId={selectedItem.id}
+                      stepIndex={visualStepIndex}
+                      isDarkMode={isDarkMode}
+                      primaryColor={primaryColor}
+                    />
+
+                    {/* SELECTOR DE PASOS VISUALES */}
+                    <View style={{ marginTop: 12 }}>
+                      <Text style={[modalStyles.sectionLabel, { color: primaryColor, marginBottom: 8 }]}>
+                        SELECCIONA LA ETAPA DE CONSTRUCCIÓN:
+                      </Text>
+
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 6 }}>
+                        <TouchableOpacity
+                          style={[
+                            modalStyles.visualStepPill,
+                            visualStepIndex === 0 && { backgroundColor: primaryColor, borderColor: primaryColor }
+                          ]}
+                          onPress={() => setVisualStepIndex(0)}
+                        >
+                          <Text
+                            style={[
+                              modalStyles.visualStepPillText,
+                              { color: visualStepIndex === 0 ? '#ffffff' : theme.text }
+                            ]}
+                          >
+                            ✓ Vista Final
+                          </Text>
+                        </TouchableOpacity>
+
+                        {(selectedItem.visualSteps || [
+                          { stepNumber: 1, title: 'Paso 1', instruction: 'Inicio de la técnica' },
+                          { stepNumber: 2, title: 'Paso 2', instruction: 'Desarrollo de vueltas' },
+                          { stepNumber: 3, title: 'Paso 3', instruction: 'Remate y tensión' }
+                        ]).map(vs => {
+                          const isActive = visualStepIndex === vs.stepNumber;
+                          return (
+                            <TouchableOpacity
+                              key={vs.stepNumber}
+                              style={[
+                                modalStyles.visualStepPill,
+                                isActive && { backgroundColor: primaryColor, borderColor: primaryColor }
+                              ]}
+                              onPress={() => setVisualStepIndex(vs.stepNumber)}
+                            >
+                              <Text
+                                style={[
+                                  modalStyles.visualStepPillText,
+                                  { color: isActive ? '#ffffff' : theme.text }
+                                ]}
+                              >
+                                Paso {vs.stepNumber}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
+
+                      {/* EXPLICACIÓN ESPECÍFICA DEL PASO SELECCIONADO */}
+                      {visualStepIndex > 0 && selectedItem.visualSteps && (
+                        <View style={[modalStyles.stepDetailCard, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }]}>
+                          <Text style={{ fontSize: 13, fontWeight: 'bold', color: primaryColor, marginBottom: 4 }}>
+                            {selectedItem.visualSteps[visualStepIndex - 1]?.title || `Paso ${visualStepIndex}`}
+                          </Text>
+                          <Text style={{ fontSize: 12, color: theme.text, lineHeight: 18 }}>
+                            {selectedItem.visualSteps[visualStepIndex - 1]?.instruction}
+                          </Text>
+                          {selectedItem.visualSteps[visualStepIndex - 1]?.callout && (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
+                              <Sparkles size={13} color="#eab308" />
+                              <Text style={{ fontSize: 11, fontWeight: 'bold', color: isDarkMode ? '#fde047' : '#ca8a04' }}>
+                                Clave: {selectedItem.visualSteps[visualStepIndex - 1]?.callout}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      )}
+
+                      {visualStepIndex === 0 && (
+                        <View style={[modalStyles.stepDetailCard, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }]}>
+                          <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#16a34a', marginBottom: 4 }}>
+                            ✓ Resultado Final Azocado
+                          </Text>
+                          <Text style={{ fontSize: 12, color: theme.text, lineHeight: 18 }}>
+                            {selectedItem.summary}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Botón para saltar a video y fotos */}
+                    <TouchableOpacity
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        marginTop: 18,
+                        padding: 12,
+                        borderRadius: 12,
+                        backgroundColor: '#ef444415',
+                        borderWidth: 1,
+                        borderColor: '#ef4444'
+                      }}
+                      onPress={() => setModalTab('multimedia')}
+                    >
+                      <Play size={16} color="#ef4444" />
+                      <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#ef4444' }}>
+                        Ver Video Demostrativo y Fotos Reales
+                      </Text>
+                      <ChevronRight size={16} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* ==================================================== */}
+                {/* PESTAÑA 3: MULTIMEDIA (VIDEO DEMOSTRATIVO & IMÁGENES) */}
+                {/* ==================================================== */}
+                {modalTab === 'multimedia' && (
+                  <View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                      <Wifi size={14} color="#3b82f6" />
+                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#3b82f6' }}>
+                        MULTIMEDIA (REQUIERE CONEXIÓN DE DATOS O WIFI)
+                      </Text>
+                    </View>
+
+                    {/* SECCIÓN DE VIDEO DEMOSTRATIVO */}
+                    <Text style={[modalStyles.sectionLabel, { color: '#ef4444' }]}>VIDEO TUTORIAL DEMOSTRATIVO</Text>
+                    
+                    <View style={[modalStyles.videoCard, { backgroundColor: isDarkMode ? '#1e1b4b15' : '#fef2f2', borderColor: '#fca5a5' }]}>
+                      
+                      {/* REPRODUCTOR EN WEB O TARJETA DE REPRODUCCIÓN */}
+                      {Platform.OS === 'web' && isPlayingWebVideo && selectedItem.multimedia?.videoEmbedId ? (
+                        <View style={{ width: '100%', height: 210, borderRadius: 12, overflow: 'hidden', marginBottom: 10, backgroundColor: '#000000' }}>
+                          {/* @ts-ignore iframe for web */}
+                          <iframe
+                            src={`https://www.youtube.com/embed/${selectedItem.multimedia.videoEmbedId}?autoplay=1&rel=0`}
+                            title={selectedItem.multimedia.videoTitle || selectedItem.name}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            style={{ width: '100%', height: '100%', border: 'none' }}
+                          />
+                        </View>
+                      ) : (
+                        <TouchableOpacity
+                          style={modalStyles.videoThumbBox}
+                          onPress={() => {
+                            if (Platform.OS === 'web' && selectedItem.multimedia?.videoEmbedId) {
+                              setIsPlayingWebVideo(true);
+                            } else {
+                              handleOpenVideoExternal(selectedItem.multimedia?.videoEmbedId, selectedItem.name);
+                            }
+                          }}
+                          activeOpacity={0.85}
+                        >
+                          <View style={modalStyles.videoPlayBtn}>
+                            <Play size={26} color="#ffffff" fill="#ffffff" style={{ marginLeft: 3 }} />
+                          </View>
+                          <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: 'bold', marginTop: 8 }}>
+                            Toca para ver el video demostrativo
+                          </Text>
+                          {selectedItem.multimedia?.videoDuration && (
+                            <View style={modalStyles.durationBadge}>
+                              <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: 'bold' }}>
+                                ⏱️ {selectedItem.multimedia.videoDuration}
+                              </Text>
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      )}
+
+                      <View style={{ paddingHorizontal: 4 }}>
+                        <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text, marginBottom: 2 }}>
+                          {selectedItem.multimedia?.videoTitle || `Tutorial: ${selectedItem.name}`}
+                        </Text>
+                        <Text style={{ fontSize: 11, color: theme.subText, marginBottom: 10 }}>
+                          Fuente: {selectedItem.multimedia?.videoChannel || 'Escultismo y Pionerismo Scout'}
+                        </Text>
+
+                        {/* BOTONES DE ACCIÓN PARA EL VIDEO */}
+                        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                          {Platform.OS === 'web' && selectedItem.multimedia?.videoEmbedId && (
+                            <TouchableOpacity
+                              style={[modalStyles.actionVideoBtn, { backgroundColor: isPlayingWebVideo ? '#64748b' : '#ef4444' }]}
+                              onPress={() => setIsPlayingWebVideo(!isPlayingWebVideo)}
+                            >
+                              <Play size={14} color="#ffffff" />
+                              <Text style={modalStyles.actionVideoBtnText}>
+                                {isPlayingWebVideo ? 'Cerrar Reproductor' : 'Reproducir en App'}
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+
+                          <TouchableOpacity
+                            style={[modalStyles.actionVideoBtn, { backgroundColor: '#dc2626' }]}
+                            onPress={() => handleOpenVideoExternal(selectedItem.multimedia?.videoEmbedId, selectedItem.name)}
+                          >
+                            <ExternalLink size={14} color="#ffffff" />
+                            <Text style={modalStyles.actionVideoBtnText}>Abrir en YouTube</Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={[modalStyles.actionVideoBtn, { backgroundColor: isDarkMode ? '#3f3f46' : '#e2e8f0' }]}
+                            onPress={() => handleOpenVideoExternal(undefined, selectedItem.name)}
+                          >
+                            <Search size={14} color={theme.text} />
+                            <Text style={[modalStyles.actionVideoBtnText, { color: theme.text }]}>Más videos</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* GALERÍA DE IMÁGENES / ILUSTRACIONES */}
+                    <Text style={[modalStyles.sectionLabel, { color: primaryColor, marginTop: 22 }]}>
+                      GALERÍA DE IMÁGENES E ILUSTRACIONES
+                    </Text>
+
+                    {selectedItem.multimedia?.images && selectedItem.multimedia.images.length > 0 ? (
+                      <View style={{ gap: 12 }}>
+                        {selectedItem.multimedia.images.map((img, idx) => (
+                          <TouchableOpacity
+                            key={idx}
+                            style={[modalStyles.imageCard, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }]}
+                            onPress={() => setLightboxImage(img.url)}
+                            activeOpacity={0.85}
+                          >
+                            <Image
+                              source={{ uri: img.url }}
+                              style={modalStyles.imageThumb}
+                              resizeMode="contain"
+                            />
+                            <View style={modalStyles.imageCaptionBox}>
+                              <Text style={{ fontSize: 12, fontWeight: '600', color: theme.text }}>
+                                {img.caption}
+                              </Text>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                                <Maximize2 size={12} color={primaryColor} />
+                                <Text style={{ fontSize: 10, color: primaryColor, fontWeight: 'bold' }}>
+                                  Toca para ampliar imagen
+                                </Text>
+                              </View>
+                            </View>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    ) : (
+                      <View style={[modalStyles.imageFallbackBox, { borderColor: theme.border }]}>
+                        <ImageIcon size={32} color={theme.subText} style={{ marginBottom: 8 }} />
+                        <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>
+                          Diagramas visuales disponibles en la pestaña "Visual (Offline)"
+                        </Text>
+                        <Text style={{ fontSize: 11, color: theme.subText, marginTop: 4, textAlign: 'center' }}>
+                          Los esquemas paso a paso vectoriales ya están cargados y funcionan sin conexión.
+                        </Text>
+                        <TouchableOpacity
+                          style={{ marginTop: 10, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, backgroundColor: primaryColor }}
+                          onPress={() => setModalTab('visual')}
+                        >
+                          <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: 'bold' }}>Ver Esquema Visual</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+
+                  </View>
+                )}
+
               </ScrollView>
             </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* LIGHTBOX MODAL PARA VER IMAGEN EN PANTALLA COMPLETA */}
+      {lightboxImage && (
+        <Modal visible transparent animationType="fade" onRequestClose={() => setLightboxImage(null)}>
+          <View style={modalStyles.lightboxOverlay}>
+            <TouchableOpacity style={modalStyles.lightboxCloseBtn} onPress={() => setLightboxImage(null)}>
+              <X size={26} color="#ffffff" />
+            </TouchableOpacity>
+            <Image
+              source={{ uri: lightboxImage }}
+              style={modalStyles.lightboxImage}
+              resizeMode="contain"
+            />
           </View>
         </Modal>
       )}
@@ -1027,7 +1844,8 @@ export default function NudosManualScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 16, borderBottomWidth: 1 },
-  offlineBadge: { fontSize: 10, fontWeight: '900', color: '#16a34a', letterSpacing: 0.5, marginBottom: 2 },
+  badgePill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, borderWidth: 1 },
+  badgePillText: { fontSize: 9.5, fontWeight: '900', letterSpacing: 0.5 },
   title: { fontSize: 19, fontWeight: 'bold' },
   subTitle: { fontSize: 12, marginTop: 2 },
   searchBox: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, marginTop: 12, height: 42 },
@@ -1050,17 +1868,38 @@ const styles = StyleSheet.create({
   manualSummary: { fontSize: 12, marginTop: 2, lineHeight: 16 },
   catTagBadge: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 },
   diffBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, marginLeft: 6 },
-  diffBadgeText: { fontSize: 9, fontWeight: 'bold' }
+  diffBadgeText: { fontSize: 9, fontWeight: 'bold' },
+  miniFeaturePill: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 },
+  miniFeatureText: { fontSize: 9, fontWeight: 'bold' }
 });
 
 const modalStyles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
-  sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 24, borderTopWidth: 1 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1 },
+  sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, maxHeight: '92%', height: '88%' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1 },
   title: { fontSize: 16, fontWeight: 'bold' },
+  tabBar: { flexDirection: 'row', borderBottomWidth: 1 },
+  tabBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12 },
+  tabBtnText: { fontSize: 12 },
   sectionLabel: { fontSize: 10, fontWeight: '900', letterSpacing: 0.5, marginBottom: 4 },
   useText: { fontSize: 13, lineHeight: 19 },
-  stepRow: { flexDirection: 'row', marginBottom: 8 },
+  stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
   stepText: { fontSize: 13, flex: 1, lineHeight: 19 },
-  tipBox: { padding: 10, borderRadius: 8, borderWidth: 1, marginTop: 12 }
+  tipBox: { padding: 12, borderRadius: 10, borderWidth: 1, marginTop: 12 },
+  visualStepPill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#cbd5e1', backgroundColor: '#ffffff' },
+  visualStepPillText: { fontSize: 11, fontWeight: 'bold' },
+  stepDetailCard: { padding: 12, borderRadius: 12, borderWidth: 1, marginTop: 10 },
+  videoCard: { padding: 12, borderRadius: 14, borderWidth: 1, marginTop: 6 },
+  videoThumbBox: { height: 160, borderRadius: 12, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center', marginBottom: 10, position: 'relative' },
+  videoPlayBtn: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#ef4444', justifyContent: 'center', alignItems: 'center', elevation: 4 },
+  durationBadge: { position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  actionVideoBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  actionVideoBtnText: { color: '#ffffff', fontSize: 11, fontWeight: 'bold' },
+  imageCard: { borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
+  imageThumb: { width: '100%', height: 180, backgroundColor: '#ffffff' },
+  imageCaptionBox: { padding: 10 },
+  imageFallbackBox: { padding: 24, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', alignItems: 'center', marginTop: 10 },
+  lightboxOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', justifyContent: 'center', alignItems: 'center' },
+  lightboxCloseBtn: { position: 'absolute', top: 40, right: 20, zIndex: 10, padding: 8 },
+  lightboxImage: { width: '90%', height: '80%' }
 });
