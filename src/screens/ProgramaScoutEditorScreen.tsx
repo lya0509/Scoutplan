@@ -65,6 +65,10 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
   const passedInitialTitle = route.params?.initialTitle;
   const passedInitialPlace = route.params?.initialPlace;
   const passedInitialUnit = route.params?.initialUnit;
+  const passedPlanActivityId = route.params?.planActivityId;
+  const passedIsExtraordinary = route.params?.isExtraordinary;
+  const passedInitialActivityType = route.params?.initialActivityType;
+  const passedInitialQuarter = route.params?.initialQuarter;
 
   const userUnit = (passedInitialUnit || user?.unit || existingPrograma?.unit || 'clan').toLowerCase() as 'manada' | 'tropa' | 'caminantes' | 'clan';
 
@@ -76,10 +80,18 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
   // Estados principales del programa
   const [id, setId] = useState(existingPrograma?.id || `prog_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`);
+  const [planActivityId, setPlanActivityId] = useState<string | undefined>(
+    existingPrograma?.planActivityId || passedPlanActivityId
+  );
+  const [isExtraordinary, setIsExtraordinary] = useState<boolean>(
+    existingPrograma?.isExtraordinary ?? (passedIsExtraordinary || false)
+  );
   const [title, setTitle] = useState(existingPrograma?.title || passedInitialTitle || '');
   const [date, setDate] = useState(existingPrograma?.date || passedInitialDate || new Date().toISOString().split('T')[0]);
   const [location, setLocation] = useState(existingPrograma?.location || passedInitialPlace || '');
-  const [activityType, setActivityType] = useState(existingPrograma?.activityType || '');
+  const [activityType, setActivityType] = useState(
+    existingPrograma?.activityType || passedInitialActivityType || (passedIsExtraordinary ? 'Otros / Extraordinaria' : '')
+  );
   const [unit] = useState<'manada' | 'tropa' | 'caminantes' | 'clan'>(userUnit);
   const [isSinodal, setIsSinodal] = useState<boolean>(existingPrograma?.isSinodal || false);
   const [selectedUnits, setSelectedUnits] = useState<('manada' | 'tropa' | 'caminantes' | 'clan')[]>(
@@ -328,12 +340,14 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
       setTitle(item.title || item.name || item.activity);
     }
     if (item.date) setDate(item.date);
-    if (item.location) setLocation(item.location);
+    if (item.location || item.place) setLocation(item.location || item.place);
     if (item.type || item.activity_type) setActivityType(item.type || item.activity_type);
     if (item.objective || item.description) setGeneralObjective(item.objective || item.description);
     if (item.responsible) setParticipantProjection(`Responsable: ${item.responsible}`);
+    if (item.id) setPlanActivityId(item.id);
+    setIsExtraordinary(false);
     setShowTrimestreModal(false);
-    showAlert('Importado con Éxito', `Se importó "${item.title || item.name || 'la actividad'}" desde el Plan Trimestral.`);
+    showAlert('Importado con Éxito', `Se importó "${item.title || item.name || item.activity || 'la actividad'}" desde el Plan Trimestral.`);
   };
 
   // Manejadores de Objetivos Específicos
@@ -460,6 +474,8 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         createdBy: user?.id || 'anonymous',
         creatorName: user?.name || 'Scouter / Rover',
         groupName: user?.group_name || 'Grupo Scout Orión #84',
+        planActivityId,
+        isExtraordinary,
         createdAt: existingPrograma?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -520,6 +536,8 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
     createdBy: user?.id || '',
     creatorName: user?.name || 'Scout',
     groupName: user?.group_name || 'Grupo Scout Orión #84',
+    planActivityId,
+    isExtraordinary,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -559,6 +577,33 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
       </View>
 
       <ScrollView style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
+        {/* BADGES INFORMATIVOS DE VINCULACIÓN AL PLAN TRIMESTRAL O EXTRAORDINARIA */}
+        {planActivityId ? (
+          <View style={{ backgroundColor: isDarkMode ? '#064e3b' : '#dcfce7', borderWidth: 1, borderColor: '#16a34a', padding: 12, borderRadius: 12, marginBottom: 14, flexDirection: 'row', alignItems: 'center' }}>
+            <Calendar size={18} color="#16a34a" style={{ marginRight: 8 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 13, fontWeight: 'bold', color: isDarkMode ? '#86efac' : '#15803d' }}>
+                📅 Actividad Vinculada al Plan Trimestral {passedInitialQuarter ? `(${passedInitialQuarter})` : ''}
+              </Text>
+              <Text style={{ fontSize: 11, color: isDarkMode ? '#bbf7d0' : '#166534', marginTop: 1 }}>
+                Esta ficha técnica corresponde al cronograma oficial de la unidad.
+              </Text>
+            </View>
+          </View>
+        ) : isExtraordinary ? (
+          <View style={{ backgroundColor: isDarkMode ? '#3b0764' : '#faf5ff', borderWidth: 1, borderColor: '#9333ea', padding: 12, borderRadius: 12, marginBottom: 14, flexDirection: 'row', alignItems: 'center' }}>
+            <Sparkles size={18} color="#9333ea" style={{ marginRight: 8 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 13, fontWeight: 'bold', color: isDarkMode ? '#d8b4fe' : '#7e22ce' }}>
+                🏕️ Actividad Extraordinaria / Otros
+              </Text>
+              <Text style={{ fontSize: 11, color: isDarkMode ? '#e9d5ff' : '#6b21a8', marginTop: 1 }}>
+                Programa independiente fuera del Plan Trimestral regular.
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
         {/* BOTÓN PARA IMPORTAR DESDE PLAN TRIMESTRAL */}
         <TouchableOpacity
           style={[styles.importTrimestreBanner, { backgroundColor: isDarkMode ? '#27272a' : '#f0fdf4', borderColor: '#16a34a' }]}

@@ -30,6 +30,8 @@ export interface ProgramaScout {
   createdBy: string;
   creatorName: string;
   groupName?: string;
+  planActivityId?: string;
+  isExtraordinary?: boolean;
   createdAt: string;
   updatedAt: string;
 }

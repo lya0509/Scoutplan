@@ -6,38 +6,47 @@ import { ProgramaScout } from '../types/programa';
 const STORAGE_KEY = '@scout_programas_list';
 
 function mapDbRowToPrograma(d: any): ProgramaScout {
-  return {
-    id: d.id,
-    title: d.title || 'Sin título',
-    date: d.date || '',
-    location: d.location || '',
-    activityType: d.activity_type || d.activityType || '',
-    unit: (d.unit || 'clan').toLowerCase(),
-    isSinodal: d.is_sinodal ?? d.isSinodal ?? false,
-    selectedUnits: d.selected_units || d.selectedUnits || [d.unit || 'clan'],
-    participantProjection: d.participant_projection || d.participantProjection || '',
-    generalObjective: d.general_objective || d.generalObjective || '',
-    specificObjectives: d.specific_objectives || d.specificObjectives || [],
-    specificMetas: d.specific_metas || d.specificMetas || [],
-    selectedSDGs: d.selected_sdgs || d.selectedSDGs || [],
-    indicators: d.indicators || {
-      corporalidad: [],
-      creatividad: [],
-      caracter: [],
-      afectividad: [],
-      sociabilidad: [],
-      espiritualidad: []
-    },
-    schedule: d.schedule || [],
-    importantNotes: d.important_notes || d.importantNotes || '',
-    registrationBadgeId: d.registration_badge_id || d.registrationBadgeId || 'reg_2026',
-    createdBy: d.created_by || d.createdBy,
-    creatorName: d.creator_name || d.creatorName || '',
-    groupName: d.group_name || d.groupName || 'Grupo Scout Orión #84',
-    createdAt: d.created_at || d.createdAt || new Date().toISOString(),
-    updatedAt: d.updated_at || d.updatedAt || new Date().toISOString(),
-  };
-}
+  let extractedPlanActId = d.plan_activity_id || d.planActivityId;
+    if (!extractedPlanActId && typeof (d.important_notes || d.importantNotes) === 'string') {
+      const match = (d.important_notes || d.importantNotes).match(/\[PLAN_ACT_ID:([^\]]+)\]/);
+      if (match) extractedPlanActId = match[1];
+    }
+    const isExtraordinary = d.is_extraordinary ?? d.isExtraordinary ?? ((d.activity_type || d.activityType || '').toLowerCase().includes('extraordinaria') || false);
+
+    return {
+      id: d.id,
+      title: d.title || 'Sin título',
+      date: d.date || '',
+      location: d.location || '',
+      activityType: d.activity_type || d.activityType || '',
+      unit: (d.unit || 'clan').toLowerCase(),
+      isSinodal: d.is_sinodal ?? d.isSinodal ?? false,
+      selectedUnits: d.selected_units || d.selectedUnits || [d.unit || 'clan'],
+      participantProjection: d.participant_projection || d.participantProjection || '',
+      generalObjective: d.general_objective || d.generalObjective || '',
+      specificObjectives: d.specific_objectives || d.specificObjectives || [],
+      specificMetas: d.specific_metas || d.specificMetas || [],
+      selectedSDGs: d.selected_sdgs || d.selectedSDGs || [],
+      indicators: d.indicators || {
+        corporalidad: [],
+        creatividad: [],
+        caracter: [],
+        afectividad: [],
+        sociabilidad: [],
+        espiritualidad: []
+      },
+      schedule: d.schedule || [],
+      importantNotes: d.important_notes || d.importantNotes || '',
+      registrationBadgeId: d.registration_badge_id || d.registrationBadgeId || 'reg_2026',
+      createdBy: d.created_by || d.createdBy,
+      creatorName: d.creator_name || d.creatorName || '',
+      groupName: d.group_name || d.groupName || 'Grupo Scout Orión #84',
+      planActivityId: extractedPlanActId,
+      isExtraordinary: isExtraordinary,
+      createdAt: d.created_at || d.createdAt || new Date().toISOString(),
+      updatedAt: d.updated_at || d.updatedAt || new Date().toISOString(),
+    };
+  }
 
 class ProgramaService {
   private subscribers: Set<(programas: ProgramaScout[]) => void> = new Set();
@@ -191,8 +200,14 @@ class ProgramaService {
   async savePrograma(programa: ProgramaScout): Promise<ProgramaScout> {
     try {
       const now = new Date().toISOString();
+      let finalNotes = programa.importantNotes || '';
+      if (programa.planActivityId && !finalNotes.includes(`[PLAN_ACT_ID:${programa.planActivityId}]`)) {
+        finalNotes = finalNotes ? `${finalNotes}\n[PLAN_ACT_ID:${programa.planActivityId}]` : `[PLAN_ACT_ID:${programa.planActivityId}]`;
+      }
+
       const updatedPrograma: ProgramaScout = {
         ...programa,
+        importantNotes: finalNotes,
         updatedAt: now,
         createdAt: programa.createdAt || now,
       };

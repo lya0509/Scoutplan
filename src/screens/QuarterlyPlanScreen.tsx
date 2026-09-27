@@ -21,6 +21,7 @@ import { dataService } from '../lib/dataService';
 import { supabase } from '../lib/supabaseClient';
 import { notificationService } from '../services/notificationService';
 import { autoSaveService } from '../services/autoSaveService';
+import { programaService } from '../lib/programaService';
 import { QUARTERS } from '../data/trimestresData';
 import { colors, UNIT_COLORS } from '../theme/colors';
 import { showAlert } from '../utils/alert';
@@ -131,6 +132,8 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
   const [reviewing, setReviewing] = useState(false);
   const [scouterEditUnlocked, setScouterEditUnlocked] = useState(false);
 
+  useModalBackHandler(selectedScoutItem !== null, () => setSelectedScoutItem(null));
+
   const currentMonths = MONTH_NAMES_BY_QUARTER[selectedQuarter] || [];
   const activeQuarterObj = QUARTERS.find(q => q.id === selectedQuarter);
 
@@ -224,7 +227,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
 
       if (localDraft) {
         foundLocal = true;
-        setElaboratedBy(localDraft.elaboratedBy || localDraft.elaborated_by || user.name || '');
+        setElaboratedBy(localDraft.elaboratedBy || localDraft.elaborated_by || '');
         setGeneralObjective(localDraft.generalObjective || localDraft.general_objectives || localDraft.goals || '');
         setTrimestreGoalsList(parseStringToList(localDraft.trimestreGoalsList || localDraft.trimestre_goals));
         setSpecificObjectivesList(parseStringToList(localDraft.specificObjectivesList || localDraft.specific_objectives));
@@ -274,23 +277,23 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
       let currentLocal: any = await autoSaveService.loadDraft(draftKey);
       let chosenData: any = null;
 
-      if (currentLocal && remotePlan) {
-        const draftTime = currentLocal.savedAt ? new Date(currentLocal.savedAt).getTime() : 0;
-        const remoteTime = remotePlan.updated_at ? new Date(remotePlan.updated_at).getTime() : 0;
-        if (draftTime > remoteTime) {
-          chosenData = currentLocal;
-        } else {
-          chosenData = remotePlan;
-        }
+      // AUTORIDAD DE DATOS COMPARTIDOS:
+      // Si existe un remotePlan en Supabase, ese es el plan oficial y colaborativo de la unidad.
+      // Un borrador local no guardado solo se prioriza si el usuario estaba editando activamente.
+      if (remotePlan) {
+        chosenData = remotePlan;
+        setScoutPlan(remotePlan);
       } else if (currentLocal) {
         chosenData = currentLocal;
-      } else if (remotePlan) {
-        chosenData = remotePlan;
+        setScoutPlan(null);
       }
 
       if (chosenData) {
-        setScoutPlan(remotePlan || null);
-        setElaboratedBy(chosenData.elaborated_by || chosenData.elaboratedBy || user.name || '');
+        // PRESERVAR EL AUTOR / SCOUTER OFICIAL:
+        // Si el plan compartido en la nube tiene elaborado_by, ESE es el autor legítimo del Scouter.
+        // JAMÁS reemplazarlo por user.name si otro usuario simplemente está visualizando o editando.
+        const officialElaboratedBy = remotePlan?.elaborated_by || chosenData.elaborated_by || chosenData.elaboratedBy || '';
+        setElaboratedBy(officialElaboratedBy || (isScouter ? (user.name || '') : 'Jefatura de Unidad'));
         setGeneralObjective(chosenData.general_objectives || chosenData.generalObjective || chosenData.goals || '');
         setTrimestreGoalsList(parseStringToList(chosenData.trimestre_goals || chosenData.trimestreGoalsList));
         setSpecificObjectivesList(parseStringToList(chosenData.specific_objectives || chosenData.specificObjectivesList));
@@ -304,16 +307,17 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
           setActivities([]);
         }
 
+        // Mantener la fecha original de actualización para no sobrepasar la nube artificialmente
         autoSaveService.saveDraftImmediate(
           draftKey,
           {
-            elaboratedBy: chosenData.elaborated_by || chosenData.elaboratedBy || user.name || '',
+            elaboratedBy: officialElaboratedBy || chosenData.elaborated_by || chosenData.elaboratedBy || '',
             generalObjective: chosenData.general_objectives || chosenData.generalObjective || chosenData.goals || '',
             trimestreGoalsList: parseStringToList(chosenData.trimestre_goals || chosenData.trimestreGoalsList),
             specificObjectivesList: parseStringToList(chosenData.specific_objectives || chosenData.specificObjectivesList),
             educationalAreas: chosenData.educational_areas || chosenData.educationalAreas,
             activities: acts || [],
-            savedAt: chosenData.savedAt || chosenData.updated_at || new Date().toISOString()
+            savedAt: remotePlan?.updated_at || chosenData.savedAt || new Date().toISOString()
           },
           user.id,
           'QuarterlyPlan'
@@ -321,7 +325,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
       } else if (!foundLocal) {
         // Inicializar limpio si no existe plan ni borrador
         setScoutPlan(null);
-        setElaboratedBy(user.name || '');
+        setElaboratedBy(isScouter ? (user.name || '') : '');
         setGeneralObjective('');
         setTrimestreGoalsList(['']);
         setSpecificObjectivesList(['']);
@@ -835,7 +839,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
     showAlert('Restaurado', 'La actividad ha sido restaurada a su versión original.');
   };
 
-  const handleNavigateToPrograma = (act: ActivityRow) => {
+  const handleNavigateToPrograma = async (act: ActivityRow) => {
     const monthMap: Record<string, string> = {
       enero: '01', febrero: '02', marzo: '03', abril: '04',
       mayo: '05', junio: '06', julio: '07', agosto: '08',
@@ -845,6 +849,19 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
     const dayStr = String(act.day || '15').padStart(2, '0');
     const targetDate = `${selectedYear}-${mNum}-${dayStr}`;
     const targetUnit = getActiveUnit();
+
+    try {
+      const allPrograms = await programaService.getProgramas();
+      const existing = allPrograms.find(p => 
+        (p.planActivityId && p.planActivityId === act.id) ||
+        (p.importantNotes && p.importantNotes.includes(`[PLAN_ACT_ID:${act.id}]`)) ||
+        (p.title && p.title.trim().toLowerCase() === act.activity.trim().toLowerCase() && p.unit === targetUnit)
+      );
+      if (existing) {
+        navigation.navigate('ProgramaScoutEditor', { programa: existing });
+        return;
+      }
+    } catch (e) {}
 
     navigation.navigate('ProgramaScoutEditor', {
       initialDate: targetDate,
@@ -868,6 +885,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
     }
 
     const targetUnit = getActiveUnit();
+    const finalAuthor = elaboratedBy.trim() || scoutPlan?.elaborated_by || user.name || 'Jefatura Scout';
 
     setSavingScout(true);
     const draftKey = getDraftKey(selectedQuarter, selectedYear, targetUnit);
@@ -876,7 +894,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
     await autoSaveService.saveDraftImmediate(
       draftKey,
       {
-        elaboratedBy: elaboratedBy.trim() || user.name,
+        elaboratedBy: finalAuthor,
         generalObjective: generalObjective.trim(),
         trimestreGoalsList,
         specificObjectivesList,
@@ -898,7 +916,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
         unit: targetUnit,
         quarter: selectedQuarter,
         year: selectedYear,
-        elaborated_by: elaboratedBy.trim() || user.name,
+        elaborated_by: finalAuthor,
         general_objectives: generalObjective.trim(),
         trimestre_goals: goalsStr,
         specific_objectives: specificStr,
@@ -912,12 +930,12 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
         groupName: user.group_name || undefined,
         unit: targetUnit,
         title: `📑 Plan Trimestral (${selectedQuarter}) Actualizado`,
-        message: `${elaboratedBy.trim() || user.name} ha actualizado las metas y actividades del Plan Trimestral de ${targetUnit.toUpperCase()}.`,
+        message: `${finalAuthor} ha actualizado las metas y actividades del Plan Trimestral de ${targetUnit.toUpperCase()}.`,
         type: 'plan'
       }).catch(() => {});
 
       setScouterEditUnlocked(false);
-      showAlert('¡Plan Trimestral Guardado!', `Se han actualizado las actividades de la unidad para el ${selectedQuarter}. Creado/Modificado por: ${elaboratedBy || user.name}.`);
+      showAlert('¡Plan Trimestral Guardado!', `Se han actualizado las actividades de la unidad para el ${selectedQuarter}. Elaborado por: ${finalAuthor}.`);
     } catch (err: any) {
       console.warn('Aviso guardando en Supabase (modo offline):', err);
       showAlert(
@@ -936,6 +954,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
     
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       if (window.confirm(confirmMsg)) {
+        isDirtyRef.current = true;
         setScouterEditUnlocked(true);
       }
     } else {
@@ -944,7 +963,13 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
         confirmMsg,
         [
           { text: 'Cancelar', style: 'cancel' },
-          { text: 'Sí, deseo editar', onPress: () => setScouterEditUnlocked(true) }
+          { 
+            text: 'Sí, deseo editar', 
+            onPress: () => {
+              isDirtyRef.current = true;
+              setScouterEditUnlocked(true);
+            } 
+          }
         ]
       );
     }
@@ -1744,15 +1769,40 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                         <Text style={{ color: theme.subText, fontSize: 11, fontStyle: 'italic' }}>No hay actividades registradas.</Text>
                       ) : (
                         mActs.map((act, i) => (
-                          <View key={i} style={[styles.previewTableActRow, { borderColor: theme.border }]}>
+                          <TouchableOpacity
+                            key={act.id || i}
+                            style={[
+                              styles.previewTableActRow,
+                              {
+                                borderColor: theme.border,
+                                backgroundColor: isDarkMode ? '#1f2937' : '#f8fafc'
+                              }
+                            ]}
+                            onPress={() => handleNavigateToPrograma(act)}
+                            activeOpacity={0.7}
+                          >
                             <Text style={[styles.previewTableDay, { color: colors.primary }]}>Día {act.day || '-'}</Text>
-                            <View style={{ flex: 1 }}>
+                            <View style={{ flex: 1, paddingRight: 6 }}>
                               <Text style={[styles.previewTableActTitle, { color: theme.text }]}>{act.activity || 'Sin título'}</Text>
                               <Text style={[styles.previewTableActSub, { color: theme.subText }]}>
                                 Lugar: {act.place || 'Sede'} • Responsable: {act.responsible || 'Rovers'}
                               </Text>
                             </View>
-                          </View>
+                            <TouchableOpacity
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                backgroundColor: '#9333ea',
+                                paddingHorizontal: 10,
+                                paddingVertical: 6,
+                                borderRadius: 8,
+                                gap: 4
+                              }}
+                              onPress={() => handleNavigateToPrograma(act)}
+                            >
+                              <Text style={{ fontSize: 11, color: 'white', fontWeight: 'bold' }}>📝 Ficha de Programa</Text>
+                            </TouchableOpacity>
+                          </TouchableOpacity>
                         ))
                       )}
                     </View>

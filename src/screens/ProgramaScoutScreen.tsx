@@ -9,7 +9,8 @@ import {
   TextInput,
   ActivityIndicator,
   RefreshControl,
-  Platform
+  Platform,
+  Modal
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -27,12 +28,16 @@ import {
   Sparkles,
   BookOpen,
   Filter,
-  ArrowLeft
+  ArrowLeft,
+  X,
+  CheckCircle
 } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useModalBackHandler } from '../hooks/useBackHandler';
 import { ProgramaScout } from '../types/programa';
 import { programaService } from '../lib/programaService';
+import { dataService } from '../lib/dataService';
 import { docxProgramaGenerator } from '../lib/docxProgramaGenerator';
 import { ProgramaPdfPreviewModal } from '../components/ProgramaPdfPreviewModal';
 import { showAlert } from '../utils/alert';
@@ -60,6 +65,109 @@ export default function ProgramaScoutScreen({ navigation }: any) {
   const [selectedUnitFilter, setSelectedUnitFilter] = useState<string>(defaultUnit);
   const [statusFilter, setStatusFilter] = useState<'proximos' | 'realizados' | 'todos'>('proximos');
   const [previewPrograma, setPreviewPrograma] = useState<ProgramaScout | null>(null);
+
+  // Estados y navegación para la creación interactiva de programa (Trimestre vs Extraordinaria)
+  const [showNewProgramChoiceModal, setShowNewProgramChoiceModal] = useState(false);
+  const [choiceStep, setChoiceStep] = useState<'choice' | 'select_activity'>('choice');
+  const [quarterlyActivities, setQuarterlyActivities] = useState<any[]>([]);
+  const [loadingQuarterlyActivities, setLoadingQuarterlyActivities] = useState(false);
+  const [choiceQuarter, setChoiceQuarter] = useState<'Q1' | 'Q2' | 'Q3' | 'Q4'>(() => {
+    const m = new Date().getMonth() + 1;
+    return ('Q' + Math.ceil(m / 3)) as any;
+  });
+
+  useModalBackHandler(showNewProgramChoiceModal, () => {
+    if (choiceStep === 'select_activity') {
+      setChoiceStep('choice');
+    } else {
+      setShowNewProgramChoiceModal(false);
+    }
+  });
+
+  const fetchQuarterlyActivities = async (q: string) => {
+    setLoadingQuarterlyActivities(true);
+    try {
+      const cy = new Date().getFullYear();
+      const targetUnit = selectedUnitFilter !== 'todas' ? selectedUnitFilter : userUnit;
+      const plan = await dataService.getUnitSharedQuarterlyPlan(user?.group_name || '', targetUnit, q, cy);
+      if (plan && plan.monthly_activities && Array.isArray(plan.monthly_activities)) {
+        setQuarterlyActivities(plan.monthly_activities);
+      } else {
+        setQuarterlyActivities([]);
+      }
+    } catch (e) {
+      console.warn('Error fetching quarterly activities:', e);
+      setQuarterlyActivities([]);
+    } finally {
+      setLoadingQuarterlyActivities(false);
+    }
+  };
+
+  const isActivityAlreadyCreated = (act: any, targetUnit: string) => {
+    const actTitle = (act.activity || act.title || '').trim().toLowerCase();
+    if (!actTitle) return false;
+
+    return programas.some(p => {
+      if (p.planActivityId && p.planActivityId === act.id) return true;
+      if (p.importantNotes && p.importantNotes.includes(`[PLAN_ACT_ID:${act.id}]`)) return true;
+      const pTitle = (p.title || '').trim().toLowerCase();
+      const sameUnit = p.unit?.toLowerCase() === targetUnit.toLowerCase();
+      if (sameUnit && (pTitle === actTitle || pTitle.includes(actTitle) || actTitle.includes(pTitle))) {
+        return true;
+      }
+      return false;
+    });
+  };
+
+  const handleOpenNewProgramModal = () => {
+    setChoiceStep('choice');
+    setShowNewProgramChoiceModal(true);
+  };
+
+  const handleChooseQuarterly = () => {
+    setChoiceStep('select_activity');
+    fetchQuarterlyActivities(choiceQuarter);
+  };
+
+  const handleSelectQuarter = (q: 'Q1' | 'Q2' | 'Q3' | 'Q4') => {
+    setChoiceQuarter(q);
+    fetchQuarterlyActivities(q);
+  };
+
+  const handleChooseExtraordinary = () => {
+    setShowNewProgramChoiceModal(false);
+    const targetUnit = selectedUnitFilter !== 'todas' ? selectedUnitFilter : userUnit;
+    navigation.navigate('ProgramaScoutEditor', {
+      isExtraordinary: true,
+      initialActivityType: 'Otros / Extraordinaria',
+      initialUnit: targetUnit
+    });
+  };
+
+  const handleSelectQuarterlyActivity = (act: any) => {
+    setShowNewProgramChoiceModal(false);
+    const targetUnit = selectedUnitFilter !== 'todas' ? selectedUnitFilter : userUnit;
+    const monthMap: Record<string, string> = {
+      enero: '01', febrero: '02', marzo: '03', abril: '04',
+      mayo: '05', junio: '06', julio: '07', agosto: '08',
+      septiembre: '09', octubre: '10', noviembre: '11', diciembre: '12'
+    };
+    const cy = new Date().getFullYear();
+    const mNum = monthMap[act.month?.toLowerCase()] || '01';
+    const dayStr = String(act.day || '15').padStart(2, '0');
+    const targetDate = `${cy}-${mNum}-${dayStr}`;
+
+    navigation.navigate('ProgramaScoutEditor', {
+      initialTitle: act.activity || act.title,
+      initialDate: targetDate,
+      initialPlace: act.place || 'Sede',
+      initialUnit: targetUnit,
+      initialQuarter: choiceQuarter,
+      initialYear: cy,
+      planActivityId: act.id,
+      isExtraordinary: false
+    });
+  };
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
 
@@ -239,7 +347,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
           {canCreate && (
             <TouchableOpacity
               style={[styles.createBtn, { backgroundColor: primaryColor }]}
-              onPress={() => navigation.navigate('ProgramaScoutEditor')}
+              onPress={handleOpenNewProgramModal}
             >
               <Plus size={16} color="#ffffff" style={{ marginRight: 4 }} />
               <Text style={styles.createBtnText}>Nuevo Programa</Text>
@@ -539,6 +647,266 @@ export default function ProgramaScoutScreen({ navigation }: any) {
         programa={previewPrograma}
         onClose={() => setPreviewPrograma(null)}
       />
+
+      {/* MODAL INTERACTIVO: NUEVO PROGRAMA (TRIMESTRE VS EXTRAORDINARIA) */}
+      <Modal
+        visible={showNewProgramChoiceModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          if (choiceStep === 'select_activity') {
+            setChoiceStep('choice');
+          } else {
+            setShowNewProgramChoiceModal(false);
+          }
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.choiceModalContent, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', borderColor: theme.border }]}>
+            {/* Cabecera del modal */}
+            <View style={[styles.modalHeaderRow, { borderBottomColor: theme.border }]}>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <Text style={[styles.modalTitle, { color: theme.text }]}>
+                  {choiceStep === 'choice' ? 'Nuevo Programa de Actividades' : 'Seleccionar del Plan Trimestral'}
+                </Text>
+                <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                  {choiceStep === 'choice'
+                    ? '¿Deseas elaborar una actividad que ya esté en el trimestre?'
+                    : `Rama: ${(selectedUnitFilter !== 'todas' ? selectedUnitFilter : userUnit).toUpperCase()} • Trimestre: ${choiceQuarter}`}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  if (choiceStep === 'select_activity') {
+                    setChoiceStep('choice');
+                  } else {
+                    setShowNewProgramChoiceModal(false);
+                  }
+                }}
+                style={{ padding: 6 }}
+              >
+                <X size={20} color={theme.subText} />
+              </TouchableOpacity>
+            </View>
+
+            {/* PASO 1: ELECCIÓN (Sí / No) */}
+            {choiceStep === 'choice' ? (
+              <View style={{ padding: 18, gap: 14 }}>
+                {/* Opción A: Actividad del Plan Trimestral */}
+                <TouchableOpacity
+                  style={[
+                    styles.choiceCard,
+                    {
+                      backgroundColor: isDarkMode ? '#1e293b' : '#f0fdf4',
+                      borderColor: '#16a34a'
+                    }
+                  ]}
+                  onPress={handleChooseQuarterly}
+                  activeOpacity={0.8}
+                >
+                  <View style={[styles.choiceIconBadge, { backgroundColor: '#16a34a' }]}>
+                    <Calendar size={22} color="#ffffff" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <Text style={[styles.choiceCardTitle, { color: isDarkMode ? '#86efac' : '#15803d' }]}>
+                        Sí, actividad del Plan Trimestral
+                      </Text>
+                      <View style={{ backgroundColor: '#16a34a', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
+                        <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>Recomendado</Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.choiceCardDesc, { color: isDarkMode ? '#cbd5e1' : '#475569' }]}>
+                      Selecciona una actividad planificada del trimestre de tu unidad. Se precargarán título, fecha, lugar y vínculos automáticamente.
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+
+                {/* Opción B: Extraordinaria / Otros */}
+                <TouchableOpacity
+                  style={[
+                    styles.choiceCard,
+                    {
+                      backgroundColor: isDarkMode ? '#27272a' : '#faf5ff',
+                      borderColor: '#9333ea'
+                    }
+                  ]}
+                  onPress={handleChooseExtraordinary}
+                  activeOpacity={0.8}
+                >
+                  <View style={[styles.choiceIconBadge, { backgroundColor: '#9333ea' }]}>
+                    <Sparkles size={22} color="#ffffff" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.choiceCardTitle, { color: isDarkMode ? '#d8b4fe' : '#7e22ce' }]}>
+                      No, actividad Extraordinaria / Otros
+                    </Text>
+                    <Text style={[styles.choiceCardDesc, { color: isDarkMode ? '#cbd5e1' : '#475569' }]}>
+                      Campamentos invitados, salidas imprevistas, eventos distritales o actividades extraordinarias no programadas en el trimestre.
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              /* PASO 2: SELECTOR DE ACTIVIDAD DEL TRIMESTRE */
+              <View style={{ padding: 16 }}>
+                {/* Selector de Trimestre (Q1, Q2, Q3, Q4) */}
+                <View style={{ flexDirection: 'row', gap: 6, marginBottom: 14 }}>
+                  {(['Q1', 'Q2', 'Q3', 'Q4'] as const).map(q => {
+                    const isSelected = choiceQuarter === q;
+                    const labels: Record<string, string> = {
+                      Q1: 'T1 (Ene-Mar)',
+                      Q2: 'T2 (Abr-Jun)',
+                      Q3: 'T3 (Jul-Sep)',
+                      Q4: 'T4 (Oct-Dic)'
+                    };
+                    return (
+                      <TouchableOpacity
+                        key={q}
+                        style={[
+                          styles.quarterChoiceBtn,
+                          isSelected
+                            ? { backgroundColor: primaryColor, borderColor: primaryColor }
+                            : { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: theme.border }
+                        ]}
+                        onPress={() => handleSelectQuarter(q)}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 'bold',
+                            color: isSelected ? '#ffffff' : theme.text
+                          }}
+                        >
+                          {labels[q]}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                {/* Lista de actividades filtrando las ya elaboradas */}
+                {loadingQuarterlyActivities ? (
+                  <View style={{ paddingVertical: 36, alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color={primaryColor} />
+                    <Text style={{ marginTop: 10, color: theme.subText, fontSize: 12 }}>
+                      Consultando actividades del trimestre...
+                    </Text>
+                  </View>
+                ) : (() => {
+                  const targetUnit = selectedUnitFilter !== 'todas' ? selectedUnitFilter : userUnit;
+                  const availableActivities = quarterlyActivities.filter(act => !isActivityAlreadyCreated(act, targetUnit));
+                  const completedCount = quarterlyActivities.length - availableActivities.length;
+
+                  if (availableActivities.length === 0) {
+                    return (
+                      <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+                        {quarterlyActivities.length === 0 ? (
+                          <>
+                            <Calendar size={36} color={theme.subText} style={{ marginBottom: 10 }} />
+                            <Text style={{ fontWeight: 'bold', fontSize: 14, color: theme.text, textAlign: 'center' }}>
+                              No hay actividades en el Plan Trimestral ({choiceQuarter})
+                            </Text>
+                            <Text style={{ color: theme.subText, fontSize: 12, marginTop: 4, textAlign: 'center', paddingHorizontal: 20 }}>
+                              Aún no se han formulado actividades para este trimestre o están pendientes de sincronizar.
+                            </Text>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle size={40} color="#16a34a" style={{ marginBottom: 10 }} />
+                            <Text style={{ fontWeight: 'bold', fontSize: 14, color: theme.text, textAlign: 'center' }}>
+                              ¡Todas las actividades ({quarterlyActivities.length}) ya fueron elaboradas!
+                            </Text>
+                            <Text style={{ color: theme.subText, fontSize: 12, marginTop: 4, textAlign: 'center', paddingHorizontal: 20 }}>
+                              Cada una de las actividades del cronograma ya cuenta con su programa de actividades individual elaborado.
+                            </Text>
+                          </>
+                        )}
+
+                        <TouchableOpacity
+                          style={[styles.createBtn, { backgroundColor: '#9333ea', marginTop: 18 }]}
+                          onPress={handleChooseExtraordinary}
+                        >
+                          <Sparkles size={16} color="#ffffff" style={{ marginRight: 6 }} />
+                          <Text style={styles.createBtnText}>Crear Actividad Extraordinaria</Text>
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  }
+
+                  return (
+                    <View>
+                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.subText, marginBottom: 8 }}>
+                        ACTIVIDADES PENDIENTES POR ELABORAR ({availableActivities.length}):
+                      </Text>
+                      <ScrollView style={{ maxHeight: 290 }} showsVerticalScrollIndicator={false}>
+                        {availableActivities.map(act => (
+                          <TouchableOpacity
+                            key={act.id}
+                            style={[
+                              styles.quarterlyActCard,
+                              {
+                                backgroundColor: isDarkMode ? '#27272a' : '#f8fafc',
+                                borderColor: theme.border
+                              }
+                            ]}
+                            onPress={() => handleSelectQuarterlyActivity(act)}
+                            activeOpacity={0.7}
+                          >
+                            <View style={{ flex: 1 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                <View style={[styles.dayBadgeMini, { backgroundColor: primaryColor + '20' }]}>
+                                  <Text style={{ fontSize: 10, fontWeight: 'bold', color: primaryColor }}>
+                                    {act.month ? `${act.month.toUpperCase()} ` : ''}Día {act.day || '-'}
+                                  </Text>
+                                </View>
+                                {act.isModified && (
+                                  <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
+                                    <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#b45309' }}>Modificada</Text>
+                                  </View>
+                                )}
+                              </View>
+                              <Text style={[styles.quarterlyActTitle, { color: theme.text }]}>
+                                {act.activity || act.title || 'Actividad sin nombre'}
+                              </Text>
+                              <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                                📍 {act.place || 'Sede'} • 👤 {act.responsible || 'Scouters'}
+                              </Text>
+                            </View>
+                            <View style={[styles.selectActBtn, { backgroundColor: primaryColor }]}>
+                              <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 11 }}>Elaborar →</Text>
+                            </View>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+
+                      {completedCount > 0 && (
+                        <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                          <CheckCircle size={13} color="#16a34a" />
+                          <Text style={{ fontSize: 11, color: '#16a34a', fontWeight: '600' }}>
+                            {completedCount} actividad(es) ya elaboradas (ocultas para no duplicar)
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })()}
+
+                {/* Botón Volver a Elección */}
+                <TouchableOpacity
+                  style={[styles.backToChoiceBtn, { borderTopColor: theme.border }]}
+                  onPress={() => setChoiceStep('choice')}
+                >
+                  <ArrowLeft size={14} color={theme.subText} style={{ marginRight: 6 }} />
+                  <Text style={{ fontSize: 12, color: theme.subText, fontWeight: 'bold' }}>
+                    Volver a opciones
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -665,5 +1033,98 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  choiceModalContent: {
+    width: '100%',
+    maxWidth: 520,
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  choiceCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    gap: 14,
+  },
+  choiceIconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  choiceCardTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 3,
+  },
+  choiceCardDesc: {
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  quarterChoiceBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  quarterlyActCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 8,
+    gap: 10,
+  },
+  dayBadgeMini: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  quarterlyActTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  selectActBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  backToChoiceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 14,
+    marginTop: 10,
+    borderTopWidth: 1,
   },
 });
