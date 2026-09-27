@@ -559,6 +559,15 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
       <TouchableOpacity
         style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+        onPress={() => navigation.navigate('Especialidades')}
+        activeOpacity={0.8}
+      >
+        <Award size={18} color={primaryColor} />
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>🏅 Especialidades Scout</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
         onPress={() => navigation.navigate('TemporalDrive')}
         activeOpacity={0.8}
       >

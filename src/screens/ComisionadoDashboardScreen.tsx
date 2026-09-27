@@ -319,6 +319,15 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
               <BookOpen size={16} color={primaryColor} />
               <Text style={[styles.toolBtnText, { color: theme.text }]}>Guías ASV</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.toolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border, borderWidth: 1 }]}
+              onPress={() => navigation.navigate('Especialidades')}
+              activeOpacity={0.8}
+            >
+              <Award size={16} color={primaryColor} />
+              <Text style={[styles.toolBtnText, { color: theme.text }]}>🏅 Especialidades</Text>
+            </TouchableOpacity>
           </ScrollView>
         </View>
 

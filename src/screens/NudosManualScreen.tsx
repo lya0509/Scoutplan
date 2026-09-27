@@ -8,7 +8,7 @@ import {
   TextInput,
   Platform
 } from 'react-native';
-import { Compass, Search, ChevronRight, BookOpen, Shield, Sparkles, CheckCircle2, ArrowLeft } from 'lucide-react-native';
+import { Compass, Search, ChevronRight, BookOpen, Shield, Sparkles, CheckCircle2, ArrowLeft, Award } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
@@ -191,6 +191,42 @@ export default function NudosManualScreen({ navigation }: any) {
             </Text>
           </TouchableOpacity>
         ))}
+      </View>
+
+      {/* BANNER GUÍA OFICIAL ESPECIALIDAD MANIOBRA CON CUERDAS */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 4 }}>
+        <TouchableOpacity
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: isDarkMode ? '#1e1b4b' : '#ede9fe',
+            borderColor: '#8b5cf6',
+            borderWidth: 1.5,
+            borderRadius: 14,
+            padding: 12,
+            gap: 12,
+            shadowColor: '#8b5cf6',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 2
+          }}
+          onPress={() => navigation.navigate('Especialidades')}
+          activeOpacity={0.8}
+        >
+          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#8b5cf6', justifyContent: 'center', alignItems: 'center' }}>
+            <Award size={22} color="#ffffff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: isDarkMode ? '#c4b5fd' : '#6d28d9' }}>
+              🪢 Especialidad Oficial: Maniobra con Cuerdas
+            </Text>
+            <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+              Revisa la guía ASV y el catálogo de las 39 especialidades reconocidas.
+            </Text>
+          </View>
+          <ChevronRight size={18} color="#8b5cf6" />
+        </TouchableOpacity>
       </View>
 
       {/* LISTADO DE NUDOS */}

@@ -24,7 +24,7 @@ import { colors } from '../theme/colors';
 import { Calendar as RNCalendar, DateData } from 'react-native-calendars';
 import {
   Users, ChevronDown, ChevronUp,
-  Calendar, Calendar as CalendarIcon, LogOut, Trash2, Plus, Flag, X, Moon, Sun, Compass, Camera, ShieldCheck, Ban, CheckCircle, ImageOff, BookOpen, Palette, FileText, Music, Sparkles
+  Calendar, Calendar as CalendarIcon, LogOut, Trash2, Plus, Flag, X, Moon, Sun, Compass, Camera, ShieldCheck, Ban, CheckCircle, ImageOff, BookOpen, Palette, FileText, Music, Sparkles, Award
 } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
@@ -580,6 +580,15 @@ export default function ScouterDashboardScreen({ navigation }: any) {
 
             <TouchableOpacity
               style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('Especialidades')}
+              activeOpacity={0.8}
+            >
+              <Award size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>🏅 Especialidades</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
               onPress={() => navigation.navigate('QuarterlyPlan', { unit: user?.unit || 'clan' })}
               activeOpacity={0.8}
             >
@@ -641,6 +650,15 @@ export default function ScouterDashboardScreen({ navigation }: any) {
             >
               <BookOpen size={18} color={primaryColor} />
               <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Documentos & PDFs</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+              onPress={() => navigation.navigate('Especialidades')}
+              activeOpacity={0.8}
+            >
+              <Award size={18} color={primaryColor} />
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>🏅 Especialidades</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

@@ -13,7 +13,7 @@ import {
   Linking
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { CheckSquare, Square, Lock, Send, Flag, X, CheckCircle, Award, Sparkles, Plus, Trash2, LayoutGrid, List, ArrowLeft } from 'lucide-react-native';
+import { CheckSquare, Square, Lock, Send, Flag, X, CheckCircle, Award, Sparkles, Plus, Trash2, LayoutGrid, List, ArrowLeft, ExternalLink } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -803,6 +803,35 @@ export default function StageDetailScreen({ route, navigation }: any) {
                     </TouchableOpacity>
                   ))}
                 </View>
+              )}
+
+              {selectedReqForCert?.type === 'especialidad' && (
+                <TouchableOpacity
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: isDarkMode ? '#1e1b4b' : '#ede9fe',
+                    borderColor: '#8b5cf6',
+                    borderWidth: 1,
+                    borderRadius: 10,
+                    paddingVertical: 8,
+                    paddingHorizontal: 12,
+                    marginBottom: 12,
+                    gap: 8,
+                    justifyContent: 'center'
+                  }}
+                  onPress={() => {
+                    setShowCertModal(false);
+                    navigation.navigate('Especialidades');
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Award size={16} color="#8b5cf6" />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: isDarkMode ? '#c4b5fd' : '#6d28d9' }}>
+                    Ver Catálogo y Guías Oficiales de Especialidades (ASV)
+                  </Text>
+                  <ExternalLink size={14} color="#8b5cf6" />
+                </TouchableOpacity>
               )}
 
               {/* SELECTOR DE VISTA: LISTA VS CUADRÍCULA */}

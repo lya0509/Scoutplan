@@ -23,7 +23,8 @@ import {
   Layers,
   FileCode,
   ArrowLeft,
-  Globe
+  Globe,
+  Award
 } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -35,6 +36,7 @@ import HelpFloatingFAB from '../components/HelpFloatingFAB';
 
 const CATEGORIES = [
   { id: 'todos', label: 'Todos los Documentos', icon: Layers },
+  { id: 'especialidades_shortcut', label: '🏅 Especialidades (39)', icon: Award },
   { id: 'adelanto', label: '⚜️ Adelanto e Insignias', icon: BookOpen },
   { id: 'iniciativas', label: '🌍 Programas e Iniciativas', icon: Globe },
   { id: 'manuales', label: '🏕️ Manuales Técnicos', icon: FileText },
@@ -141,6 +143,42 @@ export default function DocumentosScreen({ navigation }: any) {
           </View>
         </View>
 
+        {/* Banner Acceso a Especialidades Oficiales */}
+        <View style={{ paddingHorizontal: 16, marginBottom: 14 }}>
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: isDarkMode ? '#1e1b4b' : '#ede9fe',
+              borderColor: '#8b5cf6',
+              borderWidth: 1.5,
+              borderRadius: 14,
+              padding: 14,
+              gap: 12,
+              shadowColor: '#8b5cf6',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 2
+            }}
+            onPress={() => navigation.navigate('Especialidades')}
+            activeOpacity={0.8}
+          >
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#8b5cf6', justifyContent: 'center', alignItems: 'center' }}>
+              <Award size={24} color="#ffffff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: isDarkMode ? '#c4b5fd' : '#6d28d9' }}>
+                🏅 Especialidades Scout Oficiales (ASV)
+              </Text>
+              <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
+                Accede a las 39 guías curriculares oficiales descargables organizadas por las 8 áreas oficiales.
+              </Text>
+            </View>
+            <ExternalLink size={18} color="#8b5cf6" />
+          </TouchableOpacity>
+        </View>
+
         {/* Categorías / Pestañas de Filtro */}
         <ScrollView
           horizontal
@@ -163,7 +201,13 @@ export default function DocumentosScreen({ navigation }: any) {
                     borderColor: isSelected ? primaryColor : theme.border,
                   },
                 ]}
-                onPress={() => setSelectedCategory(cat.id)}
+                onPress={() => {
+                  if (cat.id === 'especialidades_shortcut') {
+                    navigation.navigate('Especialidades');
+                    return;
+                  }
+                  setSelectedCategory(cat.id);
+                }}
                 activeOpacity={0.8}
               >
                 <Text

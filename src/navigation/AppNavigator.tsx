@@ -26,6 +26,7 @@ import CancioneroScreen from '../screens/CancioneroScreen';
 import DocumentosScreen from '../screens/DocumentosScreen';
 import ProgramaScoutScreen from '../screens/ProgramaScoutScreen';
 import ProgramaScoutEditorScreen from '../screens/ProgramaScoutEditorScreen';
+import EspecialidadesScreen from '../screens/EspecialidadesScreen';
 
 import DrawerNavigator from './DrawerNavigator';
 
@@ -56,6 +57,7 @@ const linking: any = {
           NudosManualDrawer: 'nudos',
           CancioneroDrawer: 'cancionero',
           DocumentosDrawer: 'documentos',
+          EspecialidadesDrawer: 'especialidades',
           CertificadosDrawer: 'certificados',
           CentroActividades: 'actividades',
           Calendario: 'calendario',
@@ -75,6 +77,7 @@ const linking: any = {
       NudosManual: 'manual-nudos',
       Cancionero: 'cancionero-scout',
       Documentos: 'documentos-scout',
+      Especialidades: 'especialidades-catalogo',
       ProgramaScout: 'programas-actividades',
       ProgramaScoutEditor: 'programa-editor',
     }
@@ -150,6 +153,7 @@ export default function AppNavigator() {
             <Stack.Screen name="NudosManual" component={NudosManualScreen} options={{ headerShown: true, title: 'Manual de Nudos (Offline)' }} />
             <Stack.Screen name="Cancionero" component={CancioneroScreen} options={{ headerShown: true, title: 'Cancionero Scout (Offline)' }} />
             <Stack.Screen name="Documentos" component={DocumentosScreen} options={{ headerShown: true, title: 'Documentos y Guías Scout' }} />
+            <Stack.Screen name="Especialidades" component={EspecialidadesScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ProgramaScout" component={ProgramaScoutScreen} options={{ headerShown: true, title: 'Programas de Actividades' }} />
             <Stack.Screen name="ProgramaScoutEditor" component={ProgramaScoutEditorScreen} options={{ headerShown: false }} />
           </Stack.Group>
