@@ -11,17 +11,26 @@ import { dataService } from './src/lib/dataService';
 
 export default function App() {
   useEffect(() => {
-    // 1. Registro de Service Worker para PWA (Instalación y soporte offline)
+    // 1. Registro de Service Worker para PWA (Instalación y soporte offline inmediato)
     if (Platform.OS === 'web' && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+      const registerSW = () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
           .then((registration) => {
             console.log('✅ Service Worker PWA registrado con éxito:', registration.scope);
+            if (registration.waiting) {
+              registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
           })
           .catch((error) => {
             console.warn('⚠️ Error registrando Service Worker:', error);
           });
-      });
+      };
+
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        registerSW();
+      } else {
+        window.addEventListener('load', registerSW);
+      }
 
       // 2. Escuchar reconexión a Internet para sincronizar requisitos pendientes
       const handleOnline = async () => {

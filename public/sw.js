@@ -1,9 +1,8 @@
 // Service Worker para Plan Progresivo Scout (PWA 100% Offline & Standalone)
-const CACHE_NAME = 'scoutplan-pwa-v8';
+const CACHE_NAME = 'scoutplan-pwa-v9';
 
 const CORE_STATIC_ASSETS = [
   '/',
-  '/index.html',
   '/manifest.json',
   '/favicon.png',
   '/favicon.ico',
@@ -21,24 +20,58 @@ const CORE_STATIC_ASSETS = [
   '/programa_assets/registro_2026.png'
 ];
 
-// 1. Instalación: Precarga todos los recursos esenciales
+// 1. Instalación: Precarga HTML, bundles de JavaScript de Expo y assets esenciales
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      console.log('[SW] Precargando assets esenciales offline...');
+    (async () => {
+      console.log('[SW] Instalando Service Worker PWA v9...');
+      const cache = await caches.open(CACHE_NAME);
+
+      // A. Pre-cachear página principal y descubrir dinámicamente el bundle JS activo de Expo
+      try {
+        const rootResponse = await fetch('/', { cache: 'no-cache' });
+        if (rootResponse && rootResponse.status === 200) {
+          const htmlText = await rootResponse.clone().text();
+          // Guardar el HTML bajo / y bajo /index.html
+          await cache.put('/', rootResponse.clone());
+          await cache.put('/index.html', rootResponse.clone());
+
+          // Extraer los scripts <script src="..."> del HTML para pre-cachear el bundle JS de Expo
+          const scriptMatches = [...htmlText.matchAll(/src=["'](\/_expo\/static\/js\/[^"']+\.js)["']/g)];
+          for (const match of scriptMatches) {
+            const scriptUrl = match[1];
+            try {
+              console.log('[SW] Pre-cacheando bundle JS de Expo:', scriptUrl);
+              const scriptRes = await fetch(scriptUrl);
+              if (scriptRes && scriptRes.status === 200) {
+                await cache.put(scriptUrl, scriptRes);
+              }
+            } catch (scriptErr) {
+              console.warn('[SW] No se pudo pre-cachear script:', scriptUrl, scriptErr);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[SW] Error obteniendo root HTML durante install:', e);
+      }
+
+      // B. Pre-cachear assets estáticos conocidos
       for (const asset of CORE_STATIC_ASSETS) {
         try {
-          await cache.add(asset);
+          const res = await fetch(asset);
+          if (res && res.status === 200) {
+            await cache.put(asset, res);
+          }
         } catch (err) {
-          console.warn('[SW] Aviso precargando:', asset, err);
+          console.warn('[SW] Error pre-cacheando asset:', asset, err);
         }
       }
-    })
+    })()
   );
   self.skipWaiting();
 });
 
-// 2. Activación: Limpia cachés antiguas
+// 2. Activación: Limpia cachés antiguas y toma el control de todos los clientes
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -55,11 +88,9 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 3. Interceptor de Peticiones (Estrategia Offline Robusta)
+// 3. Interceptor de Peticiones (Estrategia 100% Offline Garantizada)
 self.addEventListener('fetch', (event) => {
   const request = event.request;
-  
-  // Solo manejar peticiones GET
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
@@ -77,51 +108,88 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // B. Navegación de páginas (SPA): Si no hay internet, entregar siempre index.html
+  // B. Navegación de páginas (SPA): Network con timeout y fallback garantizado al HTML en caché
   if (request.mode === 'navigate' || request.destination === 'document') {
     event.respondWith(
-      fetch(request)
-        .then((networkResponse) => {
+      (async () => {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+          const networkResponse = await fetch(request, { signal: controller.signal });
+          clearTimeout(timeoutId);
+
           if (networkResponse && networkResponse.status === 200) {
-            const copy = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            const cache = await caches.open(CACHE_NAME);
+            cache.put('/', networkResponse.clone());
+            cache.put('/index.html', networkResponse.clone());
+            cache.put(request, networkResponse.clone());
+            return networkResponse;
           }
-          return networkResponse;
-        })
-        .catch(async () => {
-          console.log('[SW] Modo offline: entregando index.html para navegación');
-          const cache = await caches.open(CACHE_NAME);
-          const cachedIndex = await cache.match('/index.html');
-          if (cachedIndex) return cachedIndex;
-          const cachedRoot = await cache.match('/');
-          if (cachedRoot) return cachedRoot;
-          return new Response('Offline - Plan Progresivo Scout', { status: 200, headers: { 'Content-Type': 'text/html' } });
-        })
+        } catch (err) {
+          console.log('[SW] Sin conexión a internet. Entregando aplicación desde caché offline.');
+        }
+
+        // Recuperar HTML de la aplicación desde caché
+        const cache = await caches.open(CACHE_NAME);
+        const cachedMatch =
+          (await cache.match('/index.html')) ||
+          (await cache.match('/', { ignoreSearch: true })) ||
+          (await cache.match(request, { ignoreSearch: true }));
+
+        if (cachedMatch) return cachedMatch;
+
+        return new Response('<!DOCTYPE html><html><body><p>Plan Progresivo Offline</p></body></html>', {
+          headers: { 'Content-Type': 'text/html' }
+        });
+      })()
     );
     return;
   }
 
-  // C. Bundles de JavaScript, CSS, Fuentes e Imágenes (Stale-While-Revalidate & Cache-First)
+  // C. Bundles de JavaScript, CSS, Fuentes e Imágenes (Cache-First con Stale-While-Revalidate)
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      // Si está en caché, devolver de inmediato (0ms de carga)
-      const fetchPromise = fetch(request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const copy = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          }
-          return networkResponse;
-        })
-        .catch(() => {
-          // Si falla la red y no estaba en caché, fallback a placeholder si es imagen
-          if (request.destination === 'image') {
-            return caches.match('/favicon.png');
-          }
-        });
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const cachedResponse = await cache.match(request, { ignoreSearch: true });
 
-      return cachedResponse || fetchPromise;
-    })
+      // Si está en caché, devolver de inmediato (0ms de carga en modo avión / offline)
+      if (cachedResponse) {
+        // Si hay internet, refrescar silenciosamente en segundo plano
+        fetch(request)
+          .then((networkRes) => {
+            if (networkRes && networkRes.status === 200) {
+              cache.put(request, networkRes);
+            }
+          })
+          .catch(() => {});
+        return cachedResponse;
+      }
+
+      // Si no estaba en caché, buscar en la red y guardar copia
+      try {
+        const networkResponse = await fetch(request);
+        if (networkResponse && networkResponse.status === 200) {
+          cache.put(request, networkResponse.clone());
+        }
+        return networkResponse;
+      } catch (networkError) {
+        // Fallback para scripts si el hash varió
+        if (request.destination === 'script' || url.pathname.endsWith('.js')) {
+          const keys = await cache.keys();
+          const jsKey = keys.find((k) => k.url.includes('/_expo/static/js/') || k.url.endsWith('.js'));
+          if (jsKey) {
+            const fallbackJs = await cache.match(jsKey);
+            if (fallbackJs) return fallbackJs;
+          }
+        }
+        if (request.destination === 'image') {
+          const fallbackImg = await cache.match('/favicon.png');
+          if (fallbackImg) return fallbackImg;
+        }
+        return new Response('', { status: 408, statusText: 'Offline' });
+      }
+    })()
   );
 });
 
@@ -172,7 +240,6 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Si ya hay una pestaña o ventana abierta de la app, enfocarla y navegar
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           if ('navigate' in client && targetUrl !== '/') {
@@ -181,11 +248,9 @@ self.addEventListener('notificationclick', (event) => {
           return client.focus();
         }
       }
-      // Si la app estaba cerrada por completo, abrirla directamente
       if (clients.openWindow) {
         return clients.openWindow(targetUrl);
       }
     })
   );
 });
-
