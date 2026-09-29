@@ -301,7 +301,7 @@ export const SCOUT_SPECIALTIES: ScoutSpecialty[] = [
     categoryLabel: 'Artes y Hobbies',
     categoryIcon: '🎨',
     icon: '📜',
-    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/HISTORIADOR-A.pdf',
+    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/HISTORIADOR.pdf',
     description: 'Investigación documental, fuentes primarias, preservación de la memoria histórica local, nacional y del movimiento scout.',
     color: '#ec4899'
   },
@@ -334,7 +334,7 @@ export const SCOUT_SPECIALTIES: ScoutSpecialty[] = [
     categoryLabel: 'Artes y Hobbies',
     categoryIcon: '🎨',
     icon: '🖌️',
-    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/PINTOR-A.pdf',
+    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/PINTOR.pdf',
     description: 'Técnicas de pintura artística (óleo, acuarela, acrílico, gouache), teoría del color, perspectiva y creación de murales.',
     color: '#ec4899'
   },
@@ -437,7 +437,7 @@ export const SCOUT_SPECIALTIES: ScoutSpecialty[] = [
     categoryLabel: 'Cultura Física',
     categoryIcon: '🏃',
     icon: '🏋️',
-    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/ATLETA-FISICOCULTURISMO-BODYFITNESS.pdf',
+    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/ATLETA-FISICOCULTURISMO-Y-BODYFITNESS.pdf',
     description: 'Entrenamiento físico planificado, biomecánica del ejercicio, acondicionamiento cardiovascular y nutrición equilibrada.',
     color: '#ef4444'
   },
@@ -470,7 +470,7 @@ export const SCOUT_SPECIALTIES: ScoutSpecialty[] = [
     categoryLabel: 'Cultura Física',
     categoryIcon: '🏃',
     icon: '🏊',
-    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/NADADOR-A.pdf',
+    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/NADADOR.pdf',
     description: 'Dominio de los cuatro estilos de natación, apnea controlada, flotabilidad y técnicas de desplazamiento en aguas abiertas y piscinas.',
     color: '#ef4444'
   },
@@ -553,7 +553,7 @@ export const SCOUT_SPECIALTIES: ScoutSpecialty[] = [
     categoryLabel: 'Preparación Profesional',
     categoryIcon: '💼',
     icon: '🎙️',
-    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/COMUNICADOR-A-SOCIAL.pdf',
+    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/COMUNICADOR-SOCIAL.pdf',
     description: 'Redacción periodística, locución radial, coberturas de campamentos y eventos scouts, y manejo ético de medios de información.',
     color: '#8b5cf6'
   },
@@ -564,7 +564,7 @@ export const SCOUT_SPECIALTIES: ScoutSpecialty[] = [
     categoryLabel: 'Preparación Profesional',
     categoryIcon: '💼',
     icon: '🦷',
-    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/ODONTOLOGO-A.pdf',
+    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/ODONTOLOGO.pdf',
     description: 'Anatomía dental, técnicas de higiene bucal, prevención de enfermedades periodontales y promoción de la salud bucodental comunitaria.',
     color: '#8b5cf6'
   },
@@ -667,7 +667,7 @@ export const SCOUT_SPECIALTIES: ScoutSpecialty[] = [
     categoryLabel: 'Vida al Aire Libre',
     categoryIcon: '🏕️',
     icon: '🐍',
-    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/OFIDOLOGIA.pdf',
+    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/OFIDIOLOGIA.pdf',
     description: 'Diferenciación de serpientes venenosas (mapanares, cascabeles, corales) y no venenosas, hábitats, prevención y primeros auxilios ante mordeduras.',
     color: '#059669'
   }

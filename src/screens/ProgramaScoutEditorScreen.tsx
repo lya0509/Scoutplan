@@ -123,6 +123,17 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
   // Permisos de previsualización para el boceto
   const [previewGuias, setPreviewGuias] = useState(false);
 
+  // Estados para el Selector Interactivo de Horario (Reloj / Rueda)
+  const [showTimePickerModal, setShowTimePickerModal] = useState(false);
+  const [timePickerTargetItemId, setTimePickerTargetItemId] = useState<string | null>(null);
+  const [timePickerTab, setTimePickerTab] = useState<'start' | 'end'>('start');
+  const [startHour, setStartHour] = useState(8);
+  const [startMinute, setStartMinute] = useState(30);
+  const [startAmPm, setStartAmPm] = useState<'am' | 'pm'>('am');
+  const [endHour, setEndHour] = useState(9);
+  const [endMinute, setEndMinute] = useState(15);
+  const [endAmPm, setEndAmPm] = useState<'am' | 'pm'>('am');
+
   const pendingNavigationActionRef = React.useRef<any>(null);
   const isSavingSuccessRef = React.useRef(false);
 
@@ -132,6 +143,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
   useModalBackHandler(showDatePickerModal, () => setShowDatePickerModal(false));
   useModalBackHandler(showDiscardConfirmModal, () => setShowDiscardConfirmModal(false));
   useModalBackHandler(showSaveOptionsModal, () => setShowSaveOptionsModal(false));
+  useModalBackHandler(showTimePickerModal, () => setShowTimePickerModal(false));
 
   // Intercepción con React Navigation (botón físico de Android, swipe gesture y goBack)
   useEffect(() => {
@@ -511,6 +523,92 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
     newSchedule[targetIndex] = temp;
     setSchedule(newSchedule);
     setHasUnsavedChanges(true);
+  };
+
+  // Manejadores del Selector de Horario (Reloj y Rueda)
+  const parseTimeStr = (str: string, defaultH: number, defaultM: number, defaultAmPm: 'am' | 'pm') => {
+    if (!str) return { h: defaultH, m: defaultM, ap: defaultAmPm };
+    const clean = str.trim().toLowerCase();
+    const match = clean.match(/(\d{1,2}):(\d{2})\s*(am|pm)?/i);
+    if (!match) return { h: defaultH, m: defaultM, ap: defaultAmPm };
+    let h = parseInt(match[1], 10);
+    if (isNaN(h) || h < 1 || h > 12) h = defaultH;
+    let m = parseInt(match[2], 10);
+    if (isNaN(m) || m < 0 || m > 59) m = defaultM;
+    const ap: 'am' | 'pm' = match[3] ? (match[3].toLowerCase() as any) : defaultAmPm;
+    return { h, m, ap };
+  };
+
+  const openTimePickerForItem = (item: ActivityScheduleItem) => {
+    setTimePickerTargetItemId(item.id);
+    setTimePickerTab('start');
+    if (item.timeRange && item.timeRange.includes('-')) {
+      const parts = item.timeRange.split('-');
+      const startParsed = parseTimeStr(parts[0], 8, 30, 'am');
+      const endParsed = parseTimeStr(parts[1], 9, 15, 'am');
+      setStartHour(startParsed.h);
+      setStartMinute(startParsed.m);
+      setStartAmPm(startParsed.ap);
+      setEndHour(endParsed.h);
+      setEndMinute(endParsed.m);
+      setEndAmPm(endParsed.ap);
+    } else {
+      setStartHour(8);
+      setStartMinute(30);
+      setStartAmPm('am');
+      setEndHour(9);
+      setEndMinute(15);
+      setEndAmPm('am');
+    }
+    setShowTimePickerModal(true);
+  };
+
+  const applyPresetDuration = (minsToAdd: number) => {
+    let h24 = startHour % 12;
+    if (startAmPm === 'pm') h24 += 12;
+    const totalStartMins = h24 * 60 + startMinute;
+    const totalEndMins = (totalStartMins + minsToAdd) % (24 * 60);
+
+    const endH24 = Math.floor(totalEndMins / 60);
+    const endM = totalEndMins % 60;
+    const endAp: 'am' | 'pm' = endH24 >= 12 ? 'pm' : 'am';
+    let endH12 = endH24 % 12;
+    if (endH12 === 0) endH12 = 12;
+
+    setEndHour(endH12);
+    setEndMinute(endM);
+    setEndAmPm(endAp);
+  };
+
+  const calculateEstimatedDuration = () => {
+    let start24 = startHour % 12;
+    if (startAmPm === 'pm') start24 += 12;
+    const startMins = start24 * 60 + startMinute;
+
+    let end24 = endHour % 12;
+    if (endAmPm === 'pm') end24 += 12;
+    let endMins = end24 * 60 + endMinute;
+
+    if (endMins < startMins) {
+      endMins += 24 * 60;
+    }
+
+    const diff = endMins - startMins;
+    const hours = Math.floor(diff / 60);
+    const mins = diff % 60;
+    if (hours > 0 && mins > 0) return `${hours} h ${mins} min`;
+    if (hours > 0) return `${hours} hora${hours > 1 ? 's' : ''}`;
+    return `${mins} min`;
+  };
+
+  const handleSaveSelectedTime = () => {
+    if (!timePickerTargetItemId) return;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const startStr = `${pad(startHour)}:${pad(startMinute)} ${startAmPm}`;
+    const endStr = `${pad(endHour)}:${pad(endMinute)} ${endAmPm}`;
+    const finalRange = `${startStr} - ${endStr}`;
+    handleUpdateScheduleRow(timePickerTargetItemId, 'timeRange', finalRange);
+    setShowTimePickerModal(false);
   };
 
   // Confirmación al descartar cambios
@@ -1237,14 +1335,42 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
                 <View style={styles.rowTwo}>
                   <View style={[styles.fieldGroup, { flex: 1, marginRight: 6 }]}>
-                    <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Horario (AM/PM)</Text>
-                    <TextInput
-                      style={[styles.textInputSmall, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }]}
-                      placeholder="Ej: 10:20 am - 10:40 am"
-                      placeholderTextColor={theme.subText}
-                      value={item.timeRange}
-                      onChangeText={txt => handleUpdateScheduleRow(item.id, 'timeRange', txt)}
-                    />
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Horario (AM/PM)</Text>
+                      <TouchableOpacity
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingVertical: 1, paddingHorizontal: 4 }}
+                        onPress={() => openTimePickerForItem(item)}
+                      >
+                        <Clock size={11} color={primaryColor} />
+                        <Text style={{ fontSize: 10, color: primaryColor, fontWeight: 'bold' }}>Reloj</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => openTimePickerForItem(item)}
+                      style={[
+                        styles.textInputSmall,
+                        {
+                          backgroundColor: isDarkMode ? '#18181b' : '#ffffff',
+                          borderColor: theme.border,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between'
+                        }
+                      ]}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          color: item.timeRange ? theme.text : theme.subText,
+                          fontWeight: item.timeRange ? '600' : 'normal'
+                        }}
+                        numberOfLines={1}
+                      >
+                        {item.timeRange || 'Seleccionar horario...'}
+                      </Text>
+                      <Clock size={13} color={primaryColor} />
+                    </TouchableOpacity>
                   </View>
                   <View style={[styles.fieldGroup, { flex: 1, marginLeft: 6 }]}>
                     <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Responsable(s)</Text>
@@ -1669,18 +1795,18 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                     ¿Quiénes pueden previsualizar este boceto?
                   </Text>
                   
-                  {/* Rol Scouters y Jefatura (Siempre activo y bloqueado con candado) */}
+                  {/* Rol Scouters y Jefe de Grupo (Siempre activo y bloqueado con candado) */}
                   <View style={styles.previewRoleRow}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
                       <Lock size={13} color="#16a34a" />
-                      <Text style={{ fontSize: 12, fontWeight: '600', color: theme.text }}>Scouters y Jefatura de Grupo</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: theme.text }}>Scouter y jefe de grupo</Text>
                     </View>
                     <View style={{ backgroundColor: '#dcfce7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
                       <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#15803d' }}>✓ Siempre Activo</Text>
                     </View>
                   </View>
 
-                  {/* Rol Guías de Patrulla (Opcional) */}
+                  {/* Rol Jóvenes autorizados */}
                   <TouchableOpacity
                     style={[styles.previewRoleRow, { marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: theme.border }]}
                     onPress={() => setPreviewGuias(!previewGuias)}
@@ -1688,7 +1814,10 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
                       <Users size={13} color={primaryColor} />
-                      <Text style={{ fontSize: 12, color: theme.text }}>Guías de Patrulla / Jóvenes autorizados</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 12, fontWeight: '600', color: theme.text }}>Jóvenes autorizados</Text>
+                        <Text style={{ fontSize: 10, color: theme.subText }}>Permitir a otros jóvenes de la unidad revisar el boceto</Text>
+                      </View>
                     </View>
                     <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: previewGuias ? primaryColor : theme.subText, backgroundColor: previewGuias ? primaryColor : 'transparent', justifyContent: 'center', alignItems: 'center' }}>
                       {previewGuias && <Check size={13} color="#ffffff" />}
@@ -1726,6 +1855,242 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                 </TouchableOpacity>
               </View>
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL DE SELECTOR DE HORARIO INTERACTIVO (RELOJ Y RUEDA) */}
+      <Modal visible={showTimePickerModal} animationType="slide" transparent onRequestClose={() => setShowTimePickerModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.timePickerModalCard, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', borderColor: theme.border }]}>
+            <View style={styles.modalHeaderRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Clock size={20} color={primaryColor} />
+                <Text style={[styles.modalHeaderTitle, { color: theme.text }]}>Horario de Actividad</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowTimePickerModal(false)} style={{ padding: 4 }}>
+                <X size={20} color={theme.subText} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Pestañas: Hora de Inicio y Hora de Fin */}
+            <View style={[styles.timePickerTabRow, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
+              <TouchableOpacity
+                style={[
+                  styles.timePickerTabBtn,
+                  timePickerTab === 'start' && { backgroundColor: primaryColor }
+                ]}
+                onPress={() => setTimePickerTab('start')}
+              >
+                <Text style={[styles.timePickerTabSub, timePickerTab === 'start' ? { color: '#ffffffcc' } : { color: theme.subText }]}>
+                  Inicio
+                </Text>
+                <Text style={[styles.timePickerTabMain, timePickerTab === 'start' ? { color: '#ffffff' } : { color: theme.text }]}>
+                  {String(startHour).padStart(2, '0')}:{String(startMinute).padStart(2, '0')} {startAmPm.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.timePickerTabBtn,
+                  timePickerTab === 'end' && { backgroundColor: primaryColor }
+                ]}
+                onPress={() => setTimePickerTab('end')}
+              >
+                <Text style={[styles.timePickerTabSub, timePickerTab === 'end' ? { color: '#ffffffcc' } : { color: theme.subText }]}>
+                  Fin
+                </Text>
+                <Text style={[styles.timePickerTabMain, timePickerTab === 'end' ? { color: '#ffffff' } : { color: theme.text }]}>
+                  {String(endHour).padStart(2, '0')}:{String(endMinute).padStart(2, '0')} {endAmPm.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={false}>
+              {/* Display grande de la hora activa con selector AM / PM */}
+              <View style={[styles.activeTimeDisplayCard, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }]}>
+                <View style={{ alignItems: 'flex-start' }}>
+                  <Text style={{ fontSize: 11, color: theme.subText, textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 'bold' }}>
+                    {timePickerTab === 'start' ? 'Hora de Inicio' : 'Hora de Fin'}
+                  </Text>
+                  <Text style={[styles.largeClockDigits, { color: primaryColor }]}>
+                    {String(timePickerTab === 'start' ? startHour : endHour).padStart(2, '0')}:{String(timePickerTab === 'start' ? startMinute : endMinute).padStart(2, '0')}
+                  </Text>
+                </View>
+
+                {/* Selector AM / PM */}
+                <View style={[styles.amPmSelector, { borderColor: theme.border }]}>
+                  <TouchableOpacity
+                    style={[
+                      styles.amPmBtn,
+                      (timePickerTab === 'start' ? startAmPm : endAmPm) === 'am' && { backgroundColor: primaryColor }
+                    ]}
+                    onPress={() => {
+                      if (timePickerTab === 'start') setStartAmPm('am');
+                      else setEndAmPm('am');
+                    }}
+                  >
+                    <Text style={[
+                      styles.amPmBtnText,
+                      (timePickerTab === 'start' ? startAmPm : endAmPm) === 'am' ? { color: '#ffffff' } : { color: theme.text }
+                    ]}>AM</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.amPmBtn,
+                      (timePickerTab === 'start' ? startAmPm : endAmPm) === 'pm' && { backgroundColor: primaryColor }
+                    ]}
+                    onPress={() => {
+                      if (timePickerTab === 'start') setStartAmPm('pm');
+                      else setEndAmPm('pm');
+                    }}
+                  >
+                    <Text style={[
+                      styles.amPmBtnText,
+                      (timePickerTab === 'start' ? startAmPm : endAmPm) === 'pm' ? { color: '#ffffff' } : { color: theme.text }
+                    ]}>PM</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Rueda de Horas (1 a 12) */}
+              <View style={styles.timeSectionBlock}>
+                <Text style={[styles.timeSectionTitle, { color: theme.text }]}>🕐 Horas (1 a 12)</Text>
+                <View style={styles.hoursGrid}>
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(h => {
+                    const isSelected = (timePickerTab === 'start' ? startHour : endHour) === h;
+                    return (
+                      <TouchableOpacity
+                        key={h}
+                        style={[
+                          styles.hourCircleBtn,
+                          isSelected
+                            ? { backgroundColor: primaryColor, borderColor: primaryColor }
+                            : { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: theme.border }
+                        ]}
+                        onPress={() => {
+                          if (timePickerTab === 'start') setStartHour(h);
+                          else setEndHour(h);
+                        }}
+                      >
+                        <Text style={[styles.hourCircleText, isSelected ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }]}>
+                          {h}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Rueda de Minutos (00 a 55 en saltos de 5, y ajuste fino +-1 min) */}
+              <View style={styles.timeSectionBlock}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <Text style={[styles.timeSectionTitle, { color: theme.text }]}>⏱️ Minutos</Text>
+                  <View style={{ flexDirection: 'row', gap: 6 }}>
+                    <TouchableOpacity
+                      style={[styles.minuteAdjustBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: theme.border }]}
+                      onPress={() => {
+                        if (timePickerTab === 'start') {
+                          setStartMinute(prev => (prev === 0 ? 59 : prev - 1));
+                        } else {
+                          setEndMinute(prev => (prev === 0 ? 59 : prev - 1));
+                        }
+                      }}
+                    >
+                      <Text style={{ color: theme.text, fontSize: 11, fontWeight: 'bold' }}>-1 min</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.minuteAdjustBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: theme.border }]}
+                      onPress={() => {
+                        if (timePickerTab === 'start') {
+                          setStartMinute(prev => (prev === 59 ? 0 : prev + 1));
+                        } else {
+                          setEndMinute(prev => (prev === 59 ? 0 : prev + 1));
+                        }
+                      }}
+                    >
+                      <Text style={{ color: theme.text, fontSize: 11, fontWeight: 'bold' }}>+1 min</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.minutesGrid}>
+                  {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map(m => {
+                    const isSelected = (timePickerTab === 'start' ? startMinute : endMinute) === m;
+                    return (
+                      <TouchableOpacity
+                        key={m}
+                        style={[
+                          styles.minuteChipBtn,
+                          isSelected
+                            ? { backgroundColor: primaryColor, borderColor: primaryColor }
+                            : { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: theme.border }
+                        ]}
+                        onPress={() => {
+                          if (timePickerTab === 'start') setStartMinute(m);
+                          else setEndMinute(m);
+                        }}
+                      >
+                        <Text style={[styles.minuteChipText, isSelected ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }]}>
+                          :{String(m).padStart(2, '0')}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Botones de Duración Rápida (Presets scouts automáticos para Hora Fin) */}
+              <View style={[styles.timeSectionBlock, { borderTopWidth: 1, borderTopColor: theme.border, paddingTop: 10 }]}>
+                <Text style={[styles.timeSectionTitle, { color: theme.text }]}>⚡ Duración Rápida (Calcula Hora Fin)</Text>
+                <View style={styles.presetsRow}>
+                  {[
+                    { label: '+15 min', mins: 15 },
+                    { label: '+30 min', mins: 30 },
+                    { label: '+45 min', mins: 45 },
+                    { label: '+1 hora', mins: 60 },
+                    { label: '+1h 30m', mins: 90 },
+                    { label: '+2 horas', mins: 120 }
+                  ].map(preset => (
+                    <TouchableOpacity
+                      key={preset.label}
+                      style={[styles.presetChip, { backgroundColor: primaryColor + '15', borderColor: primaryColor }]}
+                      onPress={() => applyPresetDuration(preset.mins)}
+                    >
+                      <Text style={[styles.presetChipText, { color: primaryColor }]}>{preset.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Resumen de Duración */}
+              <View style={[styles.durationSummaryBox, { backgroundColor: isDarkMode ? '#27272a' : '#f0fdf4', borderColor: '#16a34a' }]}>
+                <Clock size={14} color="#16a34a" />
+                <Text style={{ fontSize: 12, color: theme.text, flex: 1 }}>
+                  Horario: <Text style={{ fontWeight: 'bold', color: primaryColor }}>
+                    {String(startHour).padStart(2, '0')}:{String(startMinute).padStart(2, '0')} {startAmPm} - {String(endHour).padStart(2, '0')}:{String(endMinute).padStart(2, '0')} {endAmPm}
+                  </Text> • Duración: <Text style={{ fontWeight: 'bold', color: '#16a34a' }}>{calculateEstimatedDuration()}</Text>
+                </Text>
+              </View>
+            </ScrollView>
+
+            {/* Botones de Acción */}
+            <View style={styles.timePickerActionRow}>
+              <TouchableOpacity
+                style={[styles.timePickerCancelBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}
+                onPress={() => setShowTimePickerModal(false)}
+              >
+                <Text style={{ color: theme.subText, fontWeight: 'bold' }}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.timePickerApplyBtn, { backgroundColor: primaryColor }]}
+                onPress={handleSaveSelectedTime}
+              >
+                <Check size={16} color="#ffffff" style={{ marginRight: 6 }} />
+                <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 13 }}>Aplicar Horario</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -2253,5 +2618,161 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 13,
     fontWeight: 'bold',
+  },
+
+  // Estilos del Selector de Horario (Reloj / Rueda interactiva)
+  timePickerModalCard: {
+    width: '94%',
+    maxWidth: 420,
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 18,
+    maxHeight: '92%',
+  },
+  timePickerTabRow: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 14,
+    gap: 6,
+  },
+  timePickerTabBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timePickerTabSub: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  timePickerTabMain: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 2,
+  },
+  activeTimeDisplayCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 14,
+  },
+  largeClockDigits: {
+    fontSize: 30,
+    fontWeight: '900',
+    letterSpacing: 1,
+    marginTop: 2,
+  },
+  amPmSelector: {
+    flexDirection: 'row',
+    borderRadius: 10,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  amPmBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  amPmBtnText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  timeSectionBlock: {
+    marginBottom: 14,
+  },
+  timeSectionTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  hoursGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  hourCircleBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hourCircleText: {
+    fontSize: 14,
+  },
+  minuteAdjustBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  minutesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    justifyContent: 'center',
+  },
+  minuteChipBtn: {
+    width: 44,
+    height: 36,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  minuteChipText: {
+    fontSize: 12,
+  },
+  presetsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  presetChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  presetChipText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  durationSummaryBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  timePickerActionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  timePickerCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timePickerApplyBtn: {
+    flex: 2,
+    flexDirection: 'row',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
