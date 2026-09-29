@@ -34,7 +34,11 @@ import {
   Search,
   Eye,
   Download,
-  Lock
+  Lock,
+  Unlock,
+  GripVertical,
+  Check,
+  Send
 } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -110,10 +114,56 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
   // Estado para el selector interactivo de Fecha (Calendario)
   const [showDatePickerModal, setShowDatePickerModal] = useState(false);
 
+  // Control de cambios sin guardar y modales de confirmación / guardado
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showDiscardConfirmModal, setShowDiscardConfirmModal] = useState(false);
+  const [showSaveOptionsModal, setShowSaveOptionsModal] = useState(false);
+  const [activeReorderItemId, setActiveReorderItemId] = useState<string | null>(null);
+
+  // Permisos de previsualización para el boceto
+  const [previewGuias, setPreviewGuias] = useState(false);
+
+  const pendingNavigationActionRef = React.useRef<any>(null);
+  const isSavingSuccessRef = React.useRef(false);
+
   // Soporte universal para gestos de retroceso en Android, iOS y PWA
   useModalBackHandler(showPreviewModal, () => setShowPreviewModal(false));
   useModalBackHandler(showTrimestreModal, () => setShowTrimestreModal(false));
   useModalBackHandler(showDatePickerModal, () => setShowDatePickerModal(false));
+  useModalBackHandler(showDiscardConfirmModal, () => setShowDiscardConfirmModal(false));
+  useModalBackHandler(showSaveOptionsModal, () => setShowSaveOptionsModal(false));
+
+  // Intercepción con React Navigation (botón físico de Android, swipe gesture y goBack)
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      if (!hasUnsavedChanges || isSavingSuccessRef.current) {
+        return;
+      }
+      e.preventDefault();
+      pendingNavigationActionRef.current = e.data.action;
+      setShowDiscardConfirmModal(true);
+    });
+
+    return unsubscribe;
+  }, [navigation, hasUnsavedChanges]);
+
+  // Intercepción en Web para gesto swipe del navegador / popstate
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+
+    const handlePopState = () => {
+      if (hasUnsavedChanges && !isSavingSuccessRef.current) {
+        window.history.pushState(null, '', window.location.href);
+        setShowDiscardConfirmModal(true);
+      }
+    };
+
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [hasUnsavedChanges]);
 
   const initialDateObj = date ? new Date(date + 'T12:00:00') : new Date();
   const [calendarYear, setCalendarYear] = useState(isNaN(initialDateObj.getFullYear()) ? new Date().getFullYear() : initialDateObj.getFullYear());
@@ -146,6 +196,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
     const mm = String(month + 1).padStart(2, '0');
     const dd = String(day).padStart(2, '0');
     setDate(`${year}-${mm}-${dd}`);
+    setHasUnsavedChanges(true);
     setShowDatePickerModal(false);
   };
 
@@ -175,6 +226,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
       const dd = String(d.getDate()).padStart(2, '0');
       setDate(`${yyyy}-${mm}-${dd}`);
     }
+    setHasUnsavedChanges(true);
     setShowDatePickerModal(false);
   };
 
@@ -225,6 +277,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
     } else {
       setSelectedUnits([...selectedUnits, u]);
     }
+    setHasUnsavedChanges(true);
   };
 
   // Auto-recuperación de borrador local al abrir
@@ -286,6 +339,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
     } else {
       setIsSinodal(true);
     }
+    setHasUnsavedChanges(true);
   };
 
   // Cargar actividades del Plan Trimestral para importar
@@ -346,30 +400,41 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
     if (item.responsible) setParticipantProjection(`Responsable: ${item.responsible}`);
     if (item.id) setPlanActivityId(item.id);
     setIsExtraordinary(false);
+    setHasUnsavedChanges(true);
     setShowTrimestreModal(false);
     showAlert('Importado con Éxito', `Se importó "${item.title || item.name || item.activity || 'la actividad'}" desde el Plan Trimestral.`);
   };
 
   // Manejadores de Objetivos Específicos
-  const handleAddObjective = () => setSpecificObjectives([...specificObjectives, '']);
+  const handleAddObjective = () => {
+    setSpecificObjectives([...specificObjectives, '']);
+    setHasUnsavedChanges(true);
+  };
   const handleUpdateObjective = (text: string, index: number) => {
     const updated = [...specificObjectives];
     updated[index] = text;
     setSpecificObjectives(updated);
+    setHasUnsavedChanges(true);
   };
   const handleRemoveObjective = (index: number) => {
     setSpecificObjectives(specificObjectives.filter((_, i) => i !== index));
+    setHasUnsavedChanges(true);
   };
 
   // Manejadores de Metas Específicas
-  const handleAddMeta = () => setSpecificMetas([...specificMetas, '']);
+  const handleAddMeta = () => {
+    setSpecificMetas([...specificMetas, '']);
+    setHasUnsavedChanges(true);
+  };
   const handleUpdateMeta = (text: string, index: number) => {
     const updated = [...specificMetas];
     updated[index] = text;
     setSpecificMetas(updated);
+    setHasUnsavedChanges(true);
   };
   const handleRemoveMeta = (index: number) => {
     setSpecificMetas(specificMetas.filter((_, i) => i !== index));
+    setHasUnsavedChanges(true);
   };
 
   // Manejador de ODS (Toggle selección)
@@ -379,6 +444,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
     } else {
       setSelectedSDGs([...selectedSDGs, number]);
     }
+    setHasUnsavedChanges(true);
   };
 
   // Manejadores de Indicadores
@@ -390,6 +456,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         ...indicators,
         [area]: [...currentList, text.trim()]
       });
+      setHasUnsavedChanges(true);
     }
   };
 
@@ -399,6 +466,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
       ...indicators,
       [area]: currentList.filter((_, i) => i !== index)
     });
+    setHasUnsavedChanges(true);
   };
 
   // Manejadores de Cronograma
@@ -414,12 +482,14 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         materials: ''
       }
     ]);
+    setHasUnsavedChanges(true);
   };
 
   const handleUpdateScheduleRow = (id: string, field: keyof ActivityScheduleItem, value: string) => {
     setSchedule(
       schedule.map(item => (item.id === id ? { ...item, [field]: value } : item))
     );
+    setHasUnsavedChanges(true);
   };
 
   const handleRemoveScheduleRow = (id: string) => {
@@ -428,6 +498,42 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
       return;
     }
     setSchedule(schedule.filter(item => item.id !== id));
+    setHasUnsavedChanges(true);
+  };
+
+  // Reordenar actividades del cronograma (Subir / Bajar / Desplazar)
+  const handleMoveScheduleItem = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= schedule.length) return;
+    const newSchedule = [...schedule];
+    const temp = newSchedule[index];
+    newSchedule[index] = newSchedule[targetIndex];
+    newSchedule[targetIndex] = temp;
+    setSchedule(newSchedule);
+    setHasUnsavedChanges(true);
+  };
+
+  // Confirmación al descartar cambios
+  const handleConfirmDiscard = () => {
+    setShowDiscardConfirmModal(false);
+    setHasUnsavedChanges(false);
+    isSavingSuccessRef.current = true;
+    if (!existingPrograma) {
+      autoSaveService.removeDraft('active_programa_draft').catch(() => {});
+    }
+    if (pendingNavigationActionRef.current) {
+      navigation.dispatch(pendingNavigationActionRef.current);
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  const handleBackPress = () => {
+    if (hasUnsavedChanges) {
+      setShowDiscardConfirmModal(true);
+    } else {
+      navigation.goBack();
+    }
   };
 
   // Validaciones
@@ -435,12 +541,22 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
     k => (indicators[k as GrowthAreaKey] || []).length > 0
   ).length;
 
-  const handleSave = async () => {
+  const handleSave = () => {
+    setShowSaveOptionsModal(true);
+  };
+
+  const executeSaveWithStatus = async (targetStatus: 'draft' | 'published') => {
+    setShowSaveOptionsModal(false);
     const finalTitle = title.trim() || 'Programa de Actividades Scout';
     const finalDate = date.trim() || new Date().toISOString().split('T')[0];
     const finalLocation = location.trim() || 'Lugar por definir';
     const finalActivityType = activityType.trim() || 'Actividad Scout';
     const finalProjection = participantProjection.trim() || '4 Jóvenes';
+
+    // Permisos de previsualización para el boceto
+    const previewRolesList = targetStatus === 'draft'
+      ? ['scouter', 'jefatura', ...(previewGuias ? ['guias'] : [])]
+      : ['all', 'scouter', 'jefatura', 'scout'];
 
     setSaving(true);
     try {
@@ -476,6 +592,8 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         groupName: user?.group_name || 'Grupo Scout Orión #84',
         planActivityId,
         isExtraordinary,
+        status: targetStatus,
+        previewRoles: previewRolesList,
         createdAt: existingPrograma?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -483,23 +601,30 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
       await programaService.savePrograma(programaToSave);
       await autoSaveService.removeDraft('active_programa_draft');
 
-      // Notificación automática instantánea en tiempo real
-      notificationService.sendNotification({
-        senderId: user?.id,
-        groupName: user?.group_name || undefined,
-        unit: unit,
-        title: `📋 ¡Nuevo Programa Scout Publicado!`,
-        message: `${title || 'Actividad Scout'} para el ${date} (${unit.toUpperCase()}). Ya puedes ver la ficha técnica, horarios y materiales.`,
-        type: 'program'
-      }).catch(() => {});
+      // Notificación automática solo si se publica oficialmente
+      if (targetStatus === 'published') {
+        notificationService.sendNotification({
+          senderId: user?.id,
+          groupName: user?.group_name || undefined,
+          unit: unit,
+          title: `📋 ¡Nuevo Programa Scout Publicado!`,
+          message: `${title || 'Actividad Scout'} para el ${date} (${unit.toUpperCase()}). Ya puedes ver la ficha técnica, horarios y materiales.`,
+          type: 'program'
+        }).catch(() => {});
+      }
 
       setSaving(false);
+      setHasUnsavedChanges(false);
+      isSavingSuccessRef.current = true;
       
-      const statusMsg = completedAreasCount >= 6
-        ? '🎉 Programa guardado y validado oficialmente con las 6 áreas de crecimiento.'
-        : `💾 Programa guardado exitosamente (${completedAreasCount}/6 áreas completadas).`;
+      const titleMsg = targetStatus === 'draft' ? 'Boceto Guardado' : 'Programa Publicado';
+      const statusMsg = targetStatus === 'draft'
+        ? '📝 El programa se guardó como boceto preliminar. Está disponible para Scouters y Jefatura (y roles autorizados).'
+        : (completedAreasCount >= 6
+            ? '🎉 Programa publicado y validado oficialmente con las 6 áreas de crecimiento.'
+            : `🚀 Programa publicado exitosamente (${completedAreasCount}/6 áreas completadas).`);
 
-      showAlert('Programa Guardado', statusMsg, [
+      showAlert(titleMsg, statusMsg, [
         {
           text: 'Aceptar',
           onPress: () => {
@@ -511,6 +636,8 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
       setSaving(false);
       console.error('Error al guardar programa:', err);
       showAlert('Aviso', 'El programa se ha guardado localmente en tu dispositivo.');
+      setHasUnsavedChanges(false);
+      isSavingSuccessRef.current = true;
       navigation.goBack();
     }
   };
@@ -546,7 +673,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       {/* HEADER DE LA PANTALLA */}
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', borderBottomColor: theme.border }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.backBtn} onPress={handleBackPress}>
           <ArrowLeft size={22} color={theme.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.text }]} numberOfLines={1}>
@@ -635,7 +762,10 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
               placeholder="Ej: Hermandad Scout / Presentación de Proyectos"
               placeholderTextColor={theme.subText}
               value={title}
-              onChangeText={setTitle}
+              onChangeText={txt => {
+                setTitle(txt);
+                setHasUnsavedChanges(true);
+              }}
             />
           </View>
 
@@ -666,7 +796,10 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                 placeholder="Ej: Caracas / Terreno 25"
                 placeholderTextColor={theme.subText}
                 value={location}
-                onChangeText={setLocation}
+                onChangeText={txt => {
+                  setLocation(txt);
+                  setHasUnsavedChanges(true);
+                }}
               />
             </View>
           </View>
@@ -679,7 +812,10 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                 placeholder="Ej: Recorrido Museos"
                 placeholderTextColor={theme.subText}
                 value={activityType}
-                onChangeText={setActivityType}
+                onChangeText={txt => {
+                  setActivityType(txt);
+                  setHasUnsavedChanges(true);
+                }}
               />
             </View>
             <View style={[styles.fieldGroup, { flex: 1, marginLeft: 8 }]}>
@@ -689,7 +825,10 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                 placeholder="Ej: 4 Jóvenes"
                 placeholderTextColor={theme.subText}
                 value={participantProjection}
-                onChangeText={setParticipantProjection}
+                onChangeText={txt => {
+                  setParticipantProjection(txt);
+                  setHasUnsavedChanges(true);
+                }}
               />
             </View>
           </View>
@@ -788,7 +927,10 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
               multiline
               numberOfLines={3}
               value={generalObjective}
-              onChangeText={setGeneralObjective}
+              onChangeText={txt => {
+                setGeneralObjective(txt);
+                setHasUnsavedChanges(true);
+              }}
             />
           </View>
 
@@ -984,74 +1126,175 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
             </TouchableOpacity>
           </View>
 
-          {schedule.map((item, index) => (
-            <View key={item.id} style={[styles.scheduleCardItem, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }]}>
-              <View style={styles.scheduleItemHeader}>
-                <Text style={[styles.scheduleItemIndex, { color: primaryColor }]}>#{index + 1}</Text>
-                <TouchableOpacity onPress={() => handleRemoveScheduleRow(item.id)} style={{ padding: 4 }}>
-                  <Trash2 size={16} color="#ef4444" />
-                </TouchableOpacity>
-              </View>
+          {schedule.map((item, index) => {
+            const isBeingReordered = activeReorderItemId === item.id;
+            return (
+              <View
+                key={item.id}
+                style={[
+                  styles.scheduleCardItem,
+                  { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: isBeingReordered ? primaryColor : theme.border },
+                  isBeingReordered && {
+                    transform: [{ scale: 1.025 }],
+                    shadowColor: primaryColor,
+                    shadowOffset: { width: 0, height: 6 },
+                    shadowOpacity: 0.35,
+                    shadowRadius: 10,
+                    elevation: 10,
+                    borderWidth: 2,
+                    zIndex: 99
+                  }
+                ]}
+              >
+                {/* Cabecera del item con Reordenamiento */}
+                <View style={styles.scheduleItemHeader}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <TouchableOpacity
+                      style={[styles.dragGripBtn, { backgroundColor: isBeingReordered ? primaryColor : (primaryColor + '18') }]}
+                      onLongPress={() => setActiveReorderItemId(isBeingReordered ? null : item.id)}
+                      onPress={() => setActiveReorderItemId(isBeingReordered ? null : item.id)}
+                      activeOpacity={0.7}
+                    >
+                      <GripVertical size={16} color={isBeingReordered ? '#ffffff' : primaryColor} />
+                      <Text style={[styles.scheduleItemIndex, { color: isBeingReordered ? '#ffffff' : primaryColor }]}>#{index + 1}</Text>
+                    </TouchableOpacity>
 
-              <View style={styles.rowTwo}>
-                <View style={[styles.fieldGroup, { flex: 1, marginRight: 6 }]}>
-                  <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Horario (AM/PM)</Text>
+                    {/* Botones de subida y bajada rápida */}
+                    <View style={styles.reorderButtonsRow}>
+                      <TouchableOpacity
+                        style={[
+                          styles.reorderArrowBtn,
+                          { opacity: index === 0 ? 0.3 : 1, backgroundColor: isDarkMode ? '#3f3f46' : '#e2e8f0' }
+                        ]}
+                        disabled={index === 0}
+                        onPress={() => handleMoveScheduleItem(index, 'up')}
+                      >
+                        <ChevronUp size={16} color={theme.text} />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.reorderArrowBtn,
+                          { opacity: index === schedule.length - 1 ? 0.3 : 1, backgroundColor: isDarkMode ? '#3f3f46' : '#e2e8f0' }
+                        ]}
+                        disabled={index === schedule.length - 1}
+                        onPress={() => handleMoveScheduleItem(index, 'down')}
+                      >
+                        <ChevronDown size={16} color={theme.text} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    {isBeingReordered ? (
+                      <View style={[styles.reorderingBanner, { backgroundColor: primaryColor }]}>
+                        <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: 'bold' }}>En movimiento</Text>
+                      </View>
+                    ) : (
+                      <Text style={{ fontSize: 10, color: theme.subText }}>Mantén presionado para mover</Text>
+                    )}
+                    <TouchableOpacity onPress={() => handleRemoveScheduleRow(item.id)} style={{ padding: 4 }}>
+                      <Trash2 size={16} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Si está en modo activo de reordenamiento por Long Press: barra de ayuda visual */}
+                {isBeingReordered && (
+                  <View style={[styles.reorderActiveBar, { backgroundColor: primaryColor + '15', borderColor: primaryColor }]}>
+                    <Text style={{ fontSize: 11, color: primaryColor, fontWeight: 'bold' }}>
+                      ✨ Moviendo actividad #{index + 1}
+                    </Text>
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                      {index > 0 && (
+                        <TouchableOpacity
+                          style={[styles.movePositionBtn, { backgroundColor: primaryColor }]}
+                          onPress={() => handleMoveScheduleItem(index, 'up')}
+                        >
+                          <ChevronUp size={14} color="#ffffff" />
+                          <Text style={styles.movePositionBtnText}>Mover arriba (#{index})</Text>
+                        </TouchableOpacity>
+                      )}
+                      {index < schedule.length - 1 && (
+                        <TouchableOpacity
+                          style={[styles.movePositionBtn, { backgroundColor: primaryColor }]}
+                          onPress={() => handleMoveScheduleItem(index, 'down')}
+                        >
+                          <ChevronDown size={14} color="#ffffff" />
+                          <Text style={styles.movePositionBtnText}>Mover abajo (#{index + 2})</Text>
+                        </TouchableOpacity>
+                      )}
+                      <TouchableOpacity
+                        style={[styles.movePositionBtn, { backgroundColor: '#16a34a' }]}
+                        onPress={() => setActiveReorderItemId(null)}
+                      >
+                        <Check size={14} color="#ffffff" />
+                        <Text style={styles.movePositionBtnText}>Listo</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+
+                <View style={styles.rowTwo}>
+                  <View style={[styles.fieldGroup, { flex: 1, marginRight: 6 }]}>
+                    <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Horario (AM/PM)</Text>
+                    <TextInput
+                      style={[styles.textInputSmall, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }]}
+                      placeholder="Ej: 10:20 am - 10:40 am"
+                      placeholderTextColor={theme.subText}
+                      value={item.timeRange}
+                      onChangeText={txt => handleUpdateScheduleRow(item.id, 'timeRange', txt)}
+                    />
+                  </View>
+                  <View style={[styles.fieldGroup, { flex: 1, marginLeft: 6 }]}>
+                    <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Responsable(s)</Text>
+                    <TextInput
+                      style={[styles.textInputSmall, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }]}
+                      placeholder="Ej: AP Lisbeth / Rover Juan"
+                      placeholderTextColor={theme.subText}
+                      value={item.responsible}
+                      onChangeText={txt => handleUpdateScheduleRow(item.id, 'responsible', txt)}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Nombre de la Dinámica / Actividad</Text>
                   <TextInput
                     style={[styles.textInputSmall, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }]}
-                    placeholder="Ej: 10:20 am - 10:40 am"
+                    placeholder="Ej: Rompehielo 'Descubre las Palabras'"
                     placeholderTextColor={theme.subText}
-                    value={item.timeRange}
-                    onChangeText={txt => handleUpdateScheduleRow(item.id, 'timeRange', txt)}
+                    value={item.title}
+                    onChangeText={txt => handleUpdateScheduleRow(item.id, 'title', txt)}
                   />
                 </View>
-                <View style={[styles.fieldGroup, { flex: 1, marginLeft: 6 }]}>
-                  <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Responsable(s)</Text>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Descripción y Explicación de la Dinámica</Text>
+                  <TextInput
+                    style={[styles.textAreaSmall, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }]}
+                    placeholder="Explica las reglas, la dinámica, el juego o el recorrido paso a paso..."
+                    placeholderTextColor={theme.subText}
+                    multiline
+                    numberOfLines={2}
+                    value={item.description}
+                    onChangeText={txt => handleUpdateScheduleRow(item.id, 'description', txt)}
+                  />
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Materiales Necesarios</Text>
                   <TextInput
                     style={[styles.textInputSmall, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }]}
-                    placeholder="Ej: AP Lisbeth / Rover Juan"
+                    placeholder="Ej: Lápices, Hojas, Banderas, Mecatillo, Carpas (o N/A)"
                     placeholderTextColor={theme.subText}
-                    value={item.responsible}
-                    onChangeText={txt => handleUpdateScheduleRow(item.id, 'responsible', txt)}
+                    value={item.materials}
+                    onChangeText={txt => handleUpdateScheduleRow(item.id, 'materials', txt)}
                   />
                 </View>
               </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Nombre de la Dinámica / Actividad</Text>
-                <TextInput
-                  style={[styles.textInputSmall, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }]}
-                  placeholder="Ej: Rompehielo 'Descubre las Palabras'"
-                  placeholderTextColor={theme.subText}
-                  value={item.title}
-                  onChangeText={txt => handleUpdateScheduleRow(item.id, 'title', txt)}
-                />
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Descripción y Explicación de la Dinámica</Text>
-                <TextInput
-                  style={[styles.textAreaSmall, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }]}
-                  placeholder="Explica las reglas, la dinámica, el juego o el recorrido paso a paso..."
-                  placeholderTextColor={theme.subText}
-                  multiline
-                  numberOfLines={2}
-                  value={item.description}
-                  onChangeText={txt => handleUpdateScheduleRow(item.id, 'description', txt)}
-                />
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Materiales Necesarios</Text>
-                <TextInput
-                  style={[styles.textInputSmall, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }]}
-                  placeholder="Ej: Lápices, Hojas, Banderas, Mecatillo, Carpas (o N/A)"
-                  placeholderTextColor={theme.subText}
-                  value={item.materials}
-                  onChangeText={txt => handleUpdateScheduleRow(item.id, 'materials', txt)}
-                />
-              </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
 
         {/* 6. SECCIÓN: NOTAS IMPORTANTES */}
@@ -1064,7 +1307,10 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
             multiline
             numberOfLines={3}
             value={importantNotes}
-            onChangeText={setImportantNotes}
+            onChangeText={txt => {
+              setImportantNotes(txt);
+              setHasUnsavedChanges(true);
+            }}
           />
         </View>
 
@@ -1351,6 +1597,138 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         programa={currentProgramaData}
         onClose={() => setShowPreviewModal(false)}
       />
+
+      {/* MODAL DE CONFIRMACIÓN AL DESCARTAR CAMBIOS (Gesto Atrás / Botón Volver) */}
+      <Modal visible={showDiscardConfirmModal} animationType="fade" transparent onRequestClose={() => setShowDiscardConfirmModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.discardModalCard, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', borderColor: theme.border }]}>
+            <View style={{ alignItems: 'center', marginBottom: 12 }}>
+              <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: isDarkMode ? '#451a03' : '#fef3c7', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                <AlertTriangle size={28} color="#d97706" />
+              </View>
+              <Text style={[styles.discardTitle, { color: theme.text }]}>¿Salir sin guardar cambios?</Text>
+            </View>
+
+            <Text style={[styles.discardText, { color: theme.subText, textAlign: 'center' }]}>
+              Tienes modificaciones en este programa de actividades. Si sales ahora, los cambios no guardados se perderán.
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.discardBtn, { backgroundColor: primaryColor }]}
+              onPress={() => setShowDiscardConfirmModal(false)}
+            >
+              <Text style={[styles.discardBtnText, { color: '#ffffff' }]}>Seguir editando</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.discardBtn, { backgroundColor: isDarkMode ? '#332211' : '#fef3c7', borderWidth: 1, borderColor: '#f59e0b' }]}
+              onPress={() => executeSaveWithStatus('draft')}
+            >
+              <Text style={[styles.discardBtnText, { color: '#d97706' }]}>Guardar como boceto y salir</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.discardBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}
+              onPress={handleConfirmDiscard}
+            >
+              <Text style={[styles.discardBtnText, { color: '#ef4444' }]}>Descartar cambios y salir</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL DE OPCIONES DE GUARDADO (Boceto vs Publicación Final) */}
+      <Modal visible={showSaveOptionsModal} animationType="slide" transparent onRequestClose={() => setShowSaveOptionsModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.saveOptionsModalSheet, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', borderColor: theme.border }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <Text style={[styles.saveOptionsModalTitle, { color: theme.text }]}>Guardar Programa de Actividades</Text>
+              <TouchableOpacity onPress={() => setShowSaveOptionsModal(false)} style={{ padding: 4 }}>
+                <X size={20} color={theme.subText} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={{ fontSize: 12, color: theme.subText, marginBottom: 16 }}>
+              Selecciona si deseas guardar un boceto preliminar de trabajo o publicar el programa oficial para la unidad:
+            </Text>
+
+            <ScrollView style={{ maxHeight: 440 }}>
+              {/* OPCIÓN 1: GUARDAR COMO BOCETO */}
+              <View style={[styles.saveOptionCard, { backgroundColor: isDarkMode ? '#27272a' : '#fefce8', borderColor: '#f59e0b' }]}>
+                <View style={[styles.saveOptionBadge, { backgroundColor: '#f59e0b25' }]}>
+                  <Text style={[styles.saveOptionBadgeText, { color: '#d97706' }]}>📝 BOCETO / BORRADOR</Text>
+                </View>
+                <Text style={[styles.saveOptionTitle, { color: theme.text }]}>Guardar como Boceto</Text>
+                <Text style={[styles.saveOptionDesc, { color: theme.subText }]}>
+                  No se publicará para toda la unidad aún. Quedará guardado de forma privada para que puedas seguir editándolo.
+                </Text>
+
+                {/* Apartado de Previsualización y Permisos */}
+                <View style={[styles.previewRoleBox, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', borderColor: theme.border }]}>
+                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.text, marginBottom: 8 }}>
+                    ¿Quiénes pueden previsualizar este boceto?
+                  </Text>
+                  
+                  {/* Rol Scouters y Jefatura (Siempre activo y bloqueado con candado) */}
+                  <View style={styles.previewRoleRow}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                      <Lock size={13} color="#16a34a" />
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: theme.text }}>Scouters y Jefatura de Grupo</Text>
+                    </View>
+                    <View style={{ backgroundColor: '#dcfce7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                      <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#15803d' }}>✓ Siempre Activo</Text>
+                    </View>
+                  </View>
+
+                  {/* Rol Guías de Patrulla (Opcional) */}
+                  <TouchableOpacity
+                    style={[styles.previewRoleRow, { marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: theme.border }]}
+                    onPress={() => setPreviewGuias(!previewGuias)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                      <Users size={13} color={primaryColor} />
+                      <Text style={{ fontSize: 12, color: theme.text }}>Guías de Patrulla / Jóvenes autorizados</Text>
+                    </View>
+                    <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: previewGuias ? primaryColor : theme.subText, backgroundColor: previewGuias ? primaryColor : 'transparent', justifyContent: 'center', alignItems: 'center' }}>
+                      {previewGuias && <Check size={13} color="#ffffff" />}
+                    </View>
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.btnOptionExecute, { backgroundColor: '#d97706' }]}
+                  onPress={() => executeSaveWithStatus('draft')}
+                  disabled={saving}
+                >
+                  <Save size={15} color="#ffffff" style={{ marginRight: 6 }} />
+                  <Text style={styles.btnOptionExecuteText}>Guardar Boceto</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* OPCIÓN 2: GUARDAR Y PUBLICAR OFICIALMENTE */}
+              <View style={[styles.saveOptionCard, { backgroundColor: isDarkMode ? '#27272a' : '#f0fdf4', borderColor: '#16a34a' }]}>
+                <View style={[styles.saveOptionBadge, { backgroundColor: '#16a34a25' }]}>
+                  <Text style={[styles.saveOptionBadgeText, { color: '#16a34a' }]}>🚀 PUBLICACIÓN OFICIAL</Text>
+                </View>
+                <Text style={[styles.saveOptionTitle, { color: theme.text }]}>Guardar y Publicar Final</Text>
+                <Text style={[styles.saveOptionDesc, { color: theme.subText }]}>
+                  El programa quedará disponible de inmediato para todos los integrantes de la unidad, scouters y jefatura, y se enviará la notificación oficial.
+                </Text>
+
+                <TouchableOpacity
+                  style={[styles.btnOptionExecute, { backgroundColor: '#16a34a' }]}
+                  onPress={() => executeSaveWithStatus('published')}
+                  disabled={saving}
+                >
+                  <Send size={15} color="#ffffff" style={{ marginRight: 6 }} />
+                  <Text style={styles.btnOptionExecuteText}>Publicar Programa Final</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1733,5 +2111,147 @@ const styles = StyleSheet.create({
   },
   calDayText: {
     fontSize: 13,
+  },
+  // Reordenar actividades del cronograma
+  dragGripBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  reorderButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  reorderArrowBtn: {
+    padding: 4,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reorderingBanner: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  reorderActiveBar: {
+    borderWidth: 1.5,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+  },
+  movePositionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  movePositionBtnText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+
+  // Modales de confirmación y opciones de guardado
+  discardModalCard: {
+    width: '90%',
+    maxWidth: 420,
+    borderRadius: 20,
+    padding: 22,
+    borderWidth: 1,
+    elevation: 8,
+  },
+  discardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  discardText: {
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 18,
+  },
+  discardBtn: {
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  discardBtnText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+
+  // Modal de Opciones de Guardado
+  saveOptionsModalSheet: {
+    width: '94%',
+    maxWidth: 520,
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    elevation: 10,
+  },
+  saveOptionsModalTitle: {
+    fontSize: 17,
+    fontWeight: 'bold',
+  },
+  saveOptionCard: {
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    marginBottom: 14,
+  },
+  saveOptionBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginBottom: 8,
+  },
+  saveOptionBadgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  saveOptionTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  saveOptionDesc: {
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: 12,
+  },
+  previewRoleBox: {
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 10,
+    marginBottom: 12,
+  },
+  previewRoleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  btnOptionExecute: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+  },
+  btnOptionExecuteText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: 'bold',
   },
 });

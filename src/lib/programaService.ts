@@ -13,6 +13,17 @@ function mapDbRowToPrograma(d: any): ProgramaScout {
     }
     const isExtraordinary = d.is_extraordinary ?? d.isExtraordinary ?? ((d.activity_type || d.activityType || '').toLowerCase().includes('extraordinaria') || false);
 
+    let extractedStatus: 'draft' | 'published' = d.status || 'published';
+    let extractedPreviewRoles: string[] = d.preview_roles || d.previewRoles || ['scouter', 'jefatura'];
+
+    if (typeof (d.important_notes || d.importantNotes) === 'string') {
+      const statusMatch = (d.important_notes || d.importantNotes).match(/\[PROGRAMA_STATUS:([^\]]+)\]/);
+      if (statusMatch) extractedStatus = statusMatch[1] as any;
+
+      const rolesMatch = (d.important_notes || d.importantNotes).match(/\[PREVIEW_ROLES:([^\]]+)\]/);
+      if (rolesMatch) extractedPreviewRoles = rolesMatch[1].split(',');
+    }
+
     return {
       id: d.id,
       title: d.title || 'Sin título',
@@ -43,6 +54,8 @@ function mapDbRowToPrograma(d: any): ProgramaScout {
       groupName: d.group_name || d.groupName || 'Grupo Scout Orión #84',
       planActivityId: extractedPlanActId,
       isExtraordinary: isExtraordinary,
+      status: extractedStatus,
+      previewRoles: extractedPreviewRoles,
       createdAt: d.created_at || d.createdAt || new Date().toISOString(),
       updatedAt: d.updated_at || d.updatedAt || new Date().toISOString(),
     };
@@ -204,10 +217,20 @@ class ProgramaService {
       if (programa.planActivityId && !finalNotes.includes(`[PLAN_ACT_ID:${programa.planActivityId}]`)) {
         finalNotes = finalNotes ? `${finalNotes}\n[PLAN_ACT_ID:${programa.planActivityId}]` : `[PLAN_ACT_ID:${programa.planActivityId}]`;
       }
+      if (programa.status) {
+        finalNotes = finalNotes.replace(/\[PROGRAMA_STATUS:[^\]]+\]/g, '').trim();
+        finalNotes = `${finalNotes}\n[PROGRAMA_STATUS:${programa.status}]`.trim();
+      }
+      if (programa.previewRoles && programa.previewRoles.length > 0) {
+        finalNotes = finalNotes.replace(/\[PREVIEW_ROLES:[^\]]+\]/g, '').trim();
+        finalNotes = `${finalNotes}\n[PREVIEW_ROLES:${programa.previewRoles.join(',')}]`.trim();
+      }
 
       const updatedPrograma: ProgramaScout = {
         ...programa,
         importantNotes: finalNotes,
+        status: programa.status || 'published',
+        previewRoles: programa.previewRoles || ['scouter', 'jefatura'],
         updatedAt: now,
         createdAt: programa.createdAt || now,
       };
@@ -250,6 +273,8 @@ class ProgramaService {
           created_by: isValidUUID ? updatedPrograma.createdBy : null,
           creator_name: updatedPrograma.creatorName,
           group_name: updatedPrograma.groupName,
+          status: updatedPrograma.status || 'published',
+          preview_roles: updatedPrograma.previewRoles || ['scouter', 'jefatura'],
           updated_at: updatedPrograma.updatedAt,
         });
         if (saveError) {

@@ -32,6 +32,8 @@ export interface ProgramaScout {
   groupName?: string;
   planActivityId?: string;
   isExtraordinary?: boolean;
+  status?: 'draft' | 'published';
+  previewRoles?: string[];
   createdAt: string;
   updatedAt: string;
 }

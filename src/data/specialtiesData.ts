@@ -494,7 +494,7 @@ export const SCOUT_SPECIALTIES: ScoutSpecialty[] = [
     categoryLabel: 'Habilidades y Destrezas',
     categoryIcon: '🛠️',
     icon: '🍳',
-    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/COCINERO-A.pdf',
+    pdfUrl: 'https://scouts.org.ve/wp-content/uploads/2026/09/COCINERO.pdf',
     description: 'Cocina de patrulla, cocción de alimentos sin utensilios (a la brasa/horno de tierra), menús nutritivos e higiene estricta en campamento.',
     color: '#f59e0b'
   },

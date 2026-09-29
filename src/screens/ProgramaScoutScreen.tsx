@@ -30,7 +30,8 @@ import {
   Filter,
   ArrowLeft,
   X,
-  CheckCircle
+  CheckCircle,
+  Lock
 } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -270,6 +271,20 @@ export default function ProgramaScoutScreen({ navigation }: any) {
 
   const unitFilteredProgramas = useMemo(() => {
     return programas.filter((p: ProgramaScout) => {
+      // Si es un boceto, validar que el usuario tenga permiso de previsualización
+      if (p.status === 'draft') {
+        const canPreview =
+          !isScout ||
+          isScouter ||
+          isJefe ||
+          (user?.role as string) === 'jefatura' ||
+          user?.role === 'admin' ||
+          p.createdBy === user?.id ||
+          (p.previewRoles && p.previewRoles.includes(user?.role || ''));
+
+        if (!canPreview) return false;
+      }
+
       if (isScout) {
         return p.unit === userUnit || Boolean(p.isSinodal && p.selectedUnits && p.selectedUnits.includes(userUnit as any));
       }
@@ -277,7 +292,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
         p.unit === selectedUnitFilter ||
         Boolean(p.isSinodal && p.selectedUnits && p.selectedUnits.includes(selectedUnitFilter as any));
     });
-  }, [programas, isScout, userUnit, selectedUnitFilter]);
+  }, [programas, isScout, userUnit, selectedUnitFilter, user]);
 
   const countProximos = useMemo(() => {
     return unitFilteredProgramas.filter((p: ProgramaScout) => !p.date || p.date >= todayStr).length;
@@ -535,6 +550,12 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                       {item.isSinodal && (
                         <View style={[styles.unitPill, { backgroundColor: '#7c3aed20', borderColor: '#7c3aed' }]}>
                           <Text style={[styles.unitPillText, { color: '#7c3aed' }]}>SINODAL</Text>
+                        </View>
+                      )}
+                      {item.status === 'draft' && (
+                        <View style={[styles.unitPill, { backgroundColor: isDarkMode ? '#451a03' : '#fef3c7', borderColor: '#f59e0b', flexDirection: 'row', alignItems: 'center', gap: 3 }]}>
+                          <Lock size={10} color="#d97706" />
+                          <Text style={[styles.unitPillText, { color: '#d97706', fontSize: 10, fontWeight: 'bold' }]}>BOCETO</Text>
                         </View>
                       )}
                     </View>
