@@ -95,12 +95,16 @@ class ProgramaService {
           { event: '*', schema: 'public', table: 'scout_programas' },
           async (payload) => {
             console.log('[Realtime] Evento recibido en scout_programas:', payload.eventType);
-            
-            // Recargar lista completa de forma autoritativa
-            const freshList = await this.fetchFromSupabase();
-            this.memoryCache = freshList;
-            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(freshList));
-            this.notifySubscribers(freshList);
+            try {
+              const freshList = await this.fetchFromSupabase();
+              const currentLocal = this.memoryCache || [];
+              const merged = this.mergePrograms(freshList, currentLocal);
+              this.memoryCache = merged;
+              await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+              this.notifySubscribers(merged);
+            } catch (e) {
+              console.warn('[Realtime] Error procesando evento en tiempo real:', e);
+            }
           }
         )
         .subscribe((status) => {
@@ -108,6 +112,67 @@ class ProgramaService {
         });
     } catch (e) {
       console.warn('[Realtime] Error inicializando canal:', e);
+    }
+  }
+
+  /**
+   * Fusión inteligente entre datos remotos de Supabase y locales de AsyncStorage
+   */
+  private mergePrograms(remotePrograms: ProgramaScout[], localPrograms: ProgramaScout[]): ProgramaScout[] {
+    const mergedMap = new Map<string, ProgramaScout>();
+    remotePrograms.forEach(p => mergedMap.set(p.id, p));
+    localPrograms.forEach(p => {
+      if (!mergedMap.has(p.id)) {
+        mergedMap.set(p.id, p);
+      } else {
+        const remote = mergedMap.get(p.id)!;
+        const localTime = new Date(p.updatedAt || p.createdAt || 0).getTime();
+        const remoteTime = new Date(remote.updatedAt || remote.createdAt || 0).getTime();
+        if (localTime > remoteTime) {
+          mergedMap.set(p.id, p);
+        }
+      }
+    });
+
+    return Array.from(mergedMap.values()).sort((a, b) => 
+      new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime()
+    );
+  }
+
+  /**
+   * Sincronización en segundo plano de programas locales no guardados aún en la nube
+   */
+  private async syncPendingToSupabase(pendingList: ProgramaScout[]): Promise<void> {
+    for (const prog of pendingList) {
+      try {
+        const isValidUUID = prog.createdBy && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(prog.createdBy);
+        const safePayload: any = {
+          id: prog.id,
+          title: prog.title,
+          date: prog.date,
+          location: prog.location,
+          activity_type: prog.activityType,
+          unit: prog.unit,
+          is_sinodal: prog.isSinodal || false,
+          selected_units: prog.selectedUnits || [prog.unit],
+          participant_projection: prog.participantProjection,
+          general_objective: prog.generalObjective,
+          specific_objectives: prog.specificObjectives,
+          specific_metas: prog.specificMetas,
+          selected_sdgs: prog.selectedSDGs,
+          indicators: prog.indicators,
+          schedule: prog.schedule,
+          important_notes: prog.importantNotes,
+          registration_badge_id: prog.registrationBadgeId,
+          created_by: isValidUUID ? prog.createdBy : null,
+          creator_name: prog.creatorName,
+          group_name: prog.groupName,
+          updated_at: prog.updatedAt,
+        };
+        await supabase.from('scout_programas').upsert(safePayload);
+      } catch (e) {
+        console.warn('Aviso sincronizando programa pendiente:', e);
+      }
     }
   }
 
@@ -184,29 +249,20 @@ class ProgramaService {
         
         // FUSIÓN INTELIGENTE: Nunca descartar programas locales no sincronizados
         if (remoteProgramas && Array.isArray(remoteProgramas)) {
-          const mergedMap = new Map<string, ProgramaScout>();
-          // 1. Agregar programas remotos
-          remoteProgramas.forEach(p => mergedMap.set(p.id, p));
-          // 2. Preservar programas locales más nuevos o que aún no están en la nube
-          localProgramas.forEach(p => {
-            if (!mergedMap.has(p.id)) {
-              mergedMap.set(p.id, p);
-            } else {
-              const remote = mergedMap.get(p.id)!;
-              const localTime = new Date(p.updatedAt || p.createdAt || 0).getTime();
-              const remoteTime = new Date(remote.updatedAt || remote.createdAt || 0).getTime();
-              if (localTime > remoteTime) {
-                mergedMap.set(p.id, p);
-              }
-            }
-          });
-
-          const mergedList = Array.from(mergedMap.values()).sort((a, b) => 
-            new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime()
-          );
+          const mergedList = this.mergePrograms(remoteProgramas, localProgramas);
 
           this.memoryCache = mergedList;
           await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(mergedList));
+
+          // Sincronizar en segundo plano programas locales que no estén en la nube
+          const pendingToSync = localProgramas.filter(lp => {
+            const remote = remoteProgramas.find(rp => rp.id === lp.id);
+            if (!remote) return true;
+            return new Date(lp.updatedAt || 0).getTime() > new Date(remote.updatedAt || 0).getTime();
+          });
+          if (pendingToSync.length > 0) {
+            this.syncPendingToSupabase(pendingToSync).catch(() => {});
+          }
           
           if (unitFilter && unitFilter !== 'todas') {
             return mergedList.filter(p => p.unit === unitFilter || (p.isSinodal && p.selectedUnits?.includes(unitFilter as any)));

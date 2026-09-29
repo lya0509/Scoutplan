@@ -96,7 +96,11 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
   const [activityType, setActivityType] = useState(
     existingPrograma?.activityType || passedInitialActivityType || (passedIsExtraordinary ? 'Otros / Extraordinaria' : '')
   );
-  const [unit] = useState<'manada' | 'tropa' | 'caminantes' | 'clan'>(userUnit);
+  const isJefe = user?.role === 'jefe_grupo' || (user?.role as string) === 'jefatura' || user?.role === 'admin';
+  const isScouter = user?.role === 'scouter';
+  const canSwitchBaseUnit = isJefe || isScouter;
+
+  const [unit, setUnit] = useState<'manada' | 'tropa' | 'caminantes' | 'clan'>(userUnit);
   const [isSinodal, setIsSinodal] = useState<boolean>(existingPrograma?.isSinodal || false);
   const [selectedUnits, setSelectedUnits] = useState<('manada' | 'tropa' | 'caminantes' | 'clan')[]>(
     existingPrograma?.selectedUnits && existingPrograma.selectedUnits.length > 0
@@ -158,24 +162,6 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
     return unsubscribe;
   }, [navigation, hasUnsavedChanges]);
-
-  // Intercepción en Web para gesto swipe del navegador / popstate
-  useEffect(() => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-
-    const handlePopState = () => {
-      if (hasUnsavedChanges && !isSavingSuccessRef.current) {
-        window.history.pushState(null, '', window.location.href);
-        setShowDiscardConfirmModal(true);
-      }
-    };
-
-    window.history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [hasUnsavedChanges]);
 
   const initialDateObj = date ? new Date(date + 'T12:00:00') : new Date();
   const [calendarYear, setCalendarYear] = useState(isNaN(initialDateObj.getFullYear()) ? new Date().getFullYear() : initialDateObj.getFullYear());
@@ -531,11 +517,24 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
     const clean = str.trim().toLowerCase();
     const match = clean.match(/(\d{1,2}):(\d{2})\s*(am|pm)?/i);
     if (!match) return { h: defaultH, m: defaultM, ap: defaultAmPm };
-    let h = parseInt(match[1], 10);
-    if (isNaN(h) || h < 1 || h > 12) h = defaultH;
+    const rawH = parseInt(match[1], 10);
     let m = parseInt(match[2], 10);
     if (isNaN(m) || m < 0 || m > 59) m = defaultM;
-    const ap: 'am' | 'pm' = match[3] ? (match[3].toLowerCase() as any) : defaultAmPm;
+    let ap: 'am' | 'pm' = match[3] ? (match[3].toLowerCase() as any) : defaultAmPm;
+
+    let h = rawH;
+    if (rawH === 0) {
+      h = 12;
+      ap = 'am';
+    } else if (rawH >= 13 && rawH <= 23) {
+      h = rawH - 12;
+      ap = 'pm';
+    } else if (rawH === 12) {
+      h = 12;
+      if (!match[3]) ap = 'pm';
+    } else if (isNaN(rawH) || rawH < 1 || rawH > 12) {
+      h = defaultH;
+    }
     return { h, m, ap };
   };
 
@@ -973,15 +972,52 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
             </View>
 
             {!isSinodal ? (
-              /* MODO NORMAL: Tu unidad fijada */
-              <View style={[styles.fixedUnitBox, { backgroundColor: primaryColor + '15', borderColor: primaryColor }]}>
-                <Text style={[styles.fixedUnitText, { color: primaryColor }]}>
-                  ⚜️ Rama: <Text style={{ fontWeight: 'bold' }}>{unit.toUpperCase()}</Text>
-                </Text>
-                <View style={[styles.fixedUnitBadge, { backgroundColor: primaryColor }]}>
-                  <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: 'bold' }}>Tu Unidad</Text>
+              canSwitchBaseUnit ? (
+                <View style={[styles.sinodalBox, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: primaryColor }]}>
+                  <Text style={{ fontSize: 11, color: theme.subText, marginBottom: 8 }}>
+                    Selecciona la rama para este programa (como Scouter/Jefatura puedes elegir cualquiera):
+                  </Text>
+                  <View style={styles.unitSelectorRow}>
+                    {(['manada', 'tropa', 'caminantes', 'clan'] as const).map(u => {
+                      const isSelected = unit === u;
+                      return (
+                        <TouchableOpacity
+                          key={u}
+                          style={[
+                            styles.unitChip,
+                            isSelected && { backgroundColor: primaryColor, borderColor: primaryColor },
+                            { borderColor: theme.border }
+                          ]}
+                          onPress={() => {
+                            setUnit(u);
+                            setSelectedUnits([u]);
+                            setHasUnsavedChanges(true);
+                          }}
+                        >
+                          <Text
+                            style={[
+                              styles.unitChipText,
+                              isSelected ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }
+                            ]}
+                          >
+                            {isSelected ? `✓ ${u.toUpperCase()}` : u.toUpperCase()}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
                 </View>
-              </View>
+              ) : (
+                /* MODO NORMAL: Tu unidad fijada */
+                <View style={[styles.fixedUnitBox, { backgroundColor: primaryColor + '15', borderColor: primaryColor }]}>
+                  <Text style={[styles.fixedUnitText, { color: primaryColor }]}>
+                    ⚜️ Rama: <Text style={{ fontWeight: 'bold' }}>{unit.toUpperCase()}</Text>
+                  </Text>
+                  <View style={[styles.fixedUnitBadge, { backgroundColor: primaryColor }]}>
+                    <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: 'bold' }}>Tu Unidad</Text>
+                  </View>
+                </View>
+              )
             ) : (
               /* MODO SINODAL: Selección múltiple con tu unidad bloqueada */
               <View style={[styles.sinodalBox, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: '#7c3aed' }]}>

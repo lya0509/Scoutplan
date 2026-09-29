@@ -1,5 +1,5 @@
 // Service Worker para Plan Progresivo Scout (PWA 100% Offline & Standalone)
-const CACHE_NAME = 'scoutplan-pwa-v9';
+const CACHE_NAME = 'scoutplan-pwa-v10';
 
 const CORE_STATIC_ASSETS = [
   '/',
@@ -24,7 +24,7 @@ const CORE_STATIC_ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
-      console.log('[SW] Instalando Service Worker PWA v9...');
+      console.log('[SW] Instalando Service Worker PWA v10...');
       const cache = await caches.open(CACHE_NAME);
 
       // A. Pre-cachear página principal y descubrir dinámicamente el bundle JS activo de Expo
@@ -37,9 +37,12 @@ self.addEventListener('install', (event) => {
           await cache.put('/index.html', rootResponse.clone());
 
           // Extraer los scripts <script src="..."> del HTML para pre-cachear el bundle JS de Expo
-          const scriptMatches = [...htmlText.matchAll(/src=["'](\/_expo\/static\/js\/[^"']+\.js)["']/g)];
+          const scriptMatches = [...htmlText.matchAll(/src=["']([^"']+\.js)["']/g)];
           for (const match of scriptMatches) {
-            const scriptUrl = match[1];
+            let scriptUrl = match[1];
+            if (!scriptUrl.startsWith('http') && !scriptUrl.startsWith('/')) {
+              scriptUrl = '/' + scriptUrl;
+            }
             try {
               console.log('[SW] Pre-cacheando bundle JS de Expo:', scriptUrl);
               const scriptRes = await fetch(scriptUrl);
