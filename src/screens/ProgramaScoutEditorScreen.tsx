@@ -645,6 +645,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
   const executeSaveWithStatus = async (targetStatus: 'draft' | 'published') => {
     setShowSaveOptionsModal(false);
+    setShowDiscardConfirmModal(false);
     const finalTitle = title.trim() || 'Programa de Actividades Scout';
     const finalDate = date.trim() || new Date().toISOString().split('T')[0];
     const finalLocation = location.trim() || 'Lugar por definir';
@@ -653,8 +654,8 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
     // Permisos de previsualización para el boceto
     const previewRolesList = targetStatus === 'draft'
-      ? ['scouter', 'jefatura', ...(previewGuias ? ['guias'] : [])]
-      : ['all', 'scouter', 'jefatura', 'scout'];
+      ? ['scouter', 'jefatura', 'jefe_grupo', ...(previewGuias ? ['guias', 'scout', 'clan', 'caminantes', 'jovenes'] : [])]
+      : ['all', 'scouter', 'jefatura', 'scout', 'jefe_grupo'];
 
     setSaving(true);
     try {
@@ -686,7 +687,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         importantNotes: importantNotes.trim() || 'Cada integrante debe tener dominio del tema y dar lo mejor de sí en este servicio.',
         registrationBadgeId,
         createdBy: user?.id || 'anonymous',
-        creatorName: user?.name || 'Scouter / Rover',
+        creatorName: user?.name || (user as any)?.full_name || 'Scouter / Rover',
         groupName: user?.group_name || 'Grupo Scout Orión #84',
         planActivityId,
         isExtraordinary,
@@ -722,21 +723,42 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
             ? '🎉 Programa publicado y validado oficialmente con las 6 áreas de crecimiento.'
             : `🚀 Programa publicado exitosamente (${completedAreasCount}/6 áreas completadas).`);
 
+      const handleExitAfterSave = () => {
+        if (pendingNavigationActionRef.current) {
+          navigation.dispatch(pendingNavigationActionRef.current);
+          pendingNavigationActionRef.current = null;
+        } else if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.navigate('ProgramaScout');
+        }
+      };
+
       showAlert(titleMsg, statusMsg, [
         {
           text: 'Aceptar',
-          onPress: () => {
-            navigation.goBack();
-          }
+          onPress: handleExitAfterSave
         }
       ]);
+
+      if (Platform.OS === 'web') {
+        setTimeout(handleExitAfterSave, 1200);
+      }
     } catch (err: any) {
       setSaving(false);
       console.error('Error al guardar programa:', err);
       showAlert('Aviso', 'El programa se ha guardado localmente en tu dispositivo.');
       setHasUnsavedChanges(false);
       isSavingSuccessRef.current = true;
-      navigation.goBack();
+
+      if (pendingNavigationActionRef.current) {
+        navigation.dispatch(pendingNavigationActionRef.current);
+        pendingNavigationActionRef.current = null;
+      } else if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.navigate('ProgramaScout');
+      }
     }
   };
 

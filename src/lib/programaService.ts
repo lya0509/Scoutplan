@@ -15,13 +15,22 @@ function mapDbRowToPrograma(d: any): ProgramaScout {
 
     let extractedStatus: 'draft' | 'published' = d.status || 'published';
     let extractedPreviewRoles: string[] = d.preview_roles || d.previewRoles || ['scouter', 'jefatura'];
+    let extractedCreatedBy = d.created_by || d.createdBy || '';
+    let extractedCreatorName = d.creator_name || d.creatorName || '';
 
     if (typeof (d.important_notes || d.importantNotes) === 'string') {
-      const statusMatch = (d.important_notes || d.importantNotes).match(/\[PROGRAMA_STATUS:([^\]]+)\]/);
+      const notesStr = d.important_notes || d.importantNotes;
+      const statusMatch = notesStr.match(/\[PROGRAMA_STATUS:([^\]]+)\]/);
       if (statusMatch) extractedStatus = statusMatch[1] as any;
 
-      const rolesMatch = (d.important_notes || d.importantNotes).match(/\[PREVIEW_ROLES:([^\]]+)\]/);
+      const rolesMatch = notesStr.match(/\[PREVIEW_ROLES:([^\]]+)\]/);
       if (rolesMatch) extractedPreviewRoles = rolesMatch[1].split(',');
+
+      const authorMatch = notesStr.match(/\[AUTHOR_ID:([^\]]+)\]/);
+      if (authorMatch && !extractedCreatedBy) extractedCreatedBy = authorMatch[1];
+
+      const authorNameMatch = notesStr.match(/\[AUTHOR_NAME:([^\]]+)\]/);
+      if (authorNameMatch && !extractedCreatorName) extractedCreatorName = authorNameMatch[1];
     }
 
     return {
@@ -49,8 +58,8 @@ function mapDbRowToPrograma(d: any): ProgramaScout {
       schedule: d.schedule || [],
       importantNotes: d.important_notes || d.importantNotes || '',
       registrationBadgeId: d.registration_badge_id || d.registrationBadgeId || 'reg_2026',
-      createdBy: d.created_by || d.createdBy,
-      creatorName: d.creator_name || d.creatorName || '',
+      createdBy: extractedCreatedBy,
+      creatorName: extractedCreatorName,
       groupName: d.group_name || d.groupName || 'Grupo Scout Orión #84',
       planActivityId: extractedPlanActId,
       isExtraordinary: isExtraordinary,
@@ -173,16 +182,36 @@ class ProgramaService {
       try {
         const remoteProgramas = await this.fetchFromSupabase();
         
-        // Si Supabase respondió (incluso si está vacío porque se eliminaron todos)
-        // la respuesta de Supabase es la FUENTE DE VERDAD
-        if (remoteProgramas) {
-          this.memoryCache = remoteProgramas;
-          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(remoteProgramas));
+        // FUSIÓN INTELIGENTE: Nunca descartar programas locales no sincronizados
+        if (remoteProgramas && Array.isArray(remoteProgramas)) {
+          const mergedMap = new Map<string, ProgramaScout>();
+          // 1. Agregar programas remotos
+          remoteProgramas.forEach(p => mergedMap.set(p.id, p));
+          // 2. Preservar programas locales más nuevos o que aún no están en la nube
+          localProgramas.forEach(p => {
+            if (!mergedMap.has(p.id)) {
+              mergedMap.set(p.id, p);
+            } else {
+              const remote = mergedMap.get(p.id)!;
+              const localTime = new Date(p.updatedAt || p.createdAt || 0).getTime();
+              const remoteTime = new Date(remote.updatedAt || remote.createdAt || 0).getTime();
+              if (localTime > remoteTime) {
+                mergedMap.set(p.id, p);
+              }
+            }
+          });
+
+          const mergedList = Array.from(mergedMap.values()).sort((a, b) => 
+            new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime()
+          );
+
+          this.memoryCache = mergedList;
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(mergedList));
           
           if (unitFilter && unitFilter !== 'todas') {
-            return remoteProgramas.filter(p => p.unit === unitFilter || (p.isSinodal && p.selectedUnits?.includes(unitFilter as any)));
+            return mergedList.filter(p => p.unit === unitFilter || (p.isSinodal && p.selectedUnits?.includes(unitFilter as any)));
           }
-          return remoteProgramas;
+          return mergedList;
         }
       } catch (cloudErr) {
         console.warn('Modo offline en getProgramas, usando caché local:', cloudErr);
@@ -225,6 +254,14 @@ class ProgramaService {
         finalNotes = finalNotes.replace(/\[PREVIEW_ROLES:[^\]]+\]/g, '').trim();
         finalNotes = `${finalNotes}\n[PREVIEW_ROLES:${programa.previewRoles.join(',')}]`.trim();
       }
+      if (programa.createdBy) {
+        finalNotes = finalNotes.replace(/\[AUTHOR_ID:[^\]]+\]/g, '').trim();
+        finalNotes = `${finalNotes}\n[AUTHOR_ID:${programa.createdBy}]`.trim();
+      }
+      if (programa.creatorName) {
+        finalNotes = finalNotes.replace(/\[AUTHOR_NAME:[^\]]+\]/g, '').trim();
+        finalNotes = `${finalNotes}\n[AUTHOR_NAME:${programa.creatorName}]`.trim();
+      }
 
       const updatedPrograma: ProgramaScout = {
         ...programa,
@@ -249,10 +286,11 @@ class ProgramaService {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(currentList));
       this.notifySubscribers(currentList);
 
-      // 2. Guardar en Supabase
+      // 2. Guardar en Supabase (Solo columnas verificadas en el esquema PostgreSQL)
       try {
         const isValidUUID = updatedPrograma.createdBy && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(updatedPrograma.createdBy);
-        const { error: saveError } = await supabase.from('scout_programas').upsert({
+        
+        const safePayload: any = {
           id: updatedPrograma.id,
           title: updatedPrograma.title,
           date: updatedPrograma.date,
@@ -273,10 +311,10 @@ class ProgramaService {
           created_by: isValidUUID ? updatedPrograma.createdBy : null,
           creator_name: updatedPrograma.creatorName,
           group_name: updatedPrograma.groupName,
-          status: updatedPrograma.status || 'published',
-          preview_roles: updatedPrograma.previewRoles || ['scouter', 'jefatura'],
           updated_at: updatedPrograma.updatedAt,
-        });
+        };
+
+        const { error: saveError } = await supabase.from('scout_programas').upsert(safePayload);
         if (saveError) {
           console.warn('Aviso guardando en Supabase scout_programas:', saveError.message);
         }

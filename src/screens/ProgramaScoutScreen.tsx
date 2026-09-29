@@ -271,28 +271,51 @@ export default function ProgramaScoutScreen({ navigation }: any) {
 
   const unitFilteredProgramas = useMemo(() => {
     return programas.filter((p: ProgramaScout) => {
+      // Determinar si el usuario actual es el autor de este programa
+      const isAuthor = Boolean(
+        (user?.id && p.createdBy === user.id) ||
+        (user?.name && p.creatorName && p.creatorName.trim().toLowerCase() === user.name.trim().toLowerCase()) ||
+        ((user as any)?.full_name && p.creatorName && p.creatorName.trim().toLowerCase() === (user as any).full_name.trim().toLowerCase())
+      );
+
       // Si es un boceto, validar que el usuario tenga permiso de previsualización
       if (p.status === 'draft') {
-        const canPreview =
-          !isScout ||
+        const isScouterOrLeader =
           isScouter ||
           isJefe ||
           (user?.role as string) === 'jefatura' ||
           user?.role === 'admin' ||
-          p.createdBy === user?.id ||
-          (p.previewRoles && p.previewRoles.includes(user?.role || ''));
+          user?.role === 'comisionado_distrital' ||
+          user?.role === 'comisionado_regional' ||
+          user?.role === 'nacional';
+
+        const hasPreviewRole = Boolean(
+          p.previewRoles && (
+            p.previewRoles.includes(user?.role || '') ||
+            p.previewRoles.includes('all') ||
+            (isScout && (
+              p.previewRoles.includes('scout') ||
+              p.previewRoles.includes('guias') ||
+              p.previewRoles.includes('jovenes') ||
+              p.previewRoles.includes('clan') ||
+              p.previewRoles.includes('caminantes')
+            ))
+          )
+        );
+
+        const canPreview = isAuthor || isScouterOrLeader || hasPreviewRole;
 
         if (!canPreview) return false;
       }
 
       if (isScout) {
-        return p.unit === userUnit || Boolean(p.isSinodal && p.selectedUnits && p.selectedUnits.includes(userUnit as any));
+        return isAuthor || p.unit === userUnit || Boolean(p.isSinodal && p.selectedUnits && p.selectedUnits.includes(userUnit as any));
       }
       return selectedUnitFilter === 'todas' ||
         p.unit === selectedUnitFilter ||
         Boolean(p.isSinodal && p.selectedUnits && p.selectedUnits.includes(selectedUnitFilter as any));
     });
-  }, [programas, isScout, userUnit, selectedUnitFilter, user]);
+  }, [programas, isScout, isScouter, isJefe, userUnit, selectedUnitFilter, user]);
 
   const countProximos = useMemo(() => {
     return unitFilteredProgramas.filter((p: ProgramaScout) => !p.date || p.date >= todayStr).length;
@@ -634,7 +657,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
 
                     <View style={{ flex: 1 }} />
 
-                    {canCreate && (
+                    {(canCreate || (Boolean(user?.id) && item.createdBy === user?.id) || (Boolean(user?.name) && Boolean(item.creatorName) && item.creatorName.trim().toLowerCase() === user?.name?.trim().toLowerCase())) && (
                       <View style={{ flexDirection: 'row', gap: 6 }}>
                         <TouchableOpacity
                           style={[styles.iconActionBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}
