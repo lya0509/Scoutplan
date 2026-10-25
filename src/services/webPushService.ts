@@ -1,8 +1,8 @@
 import { supabase } from '../lib/supabaseClient';
+import { postApi } from '../lib/apiClient';
 
-export const VAPID_PUBLIC_KEY = 'BKI-1dAzf2KYpi_pK4yrLEBeVE21dNkmMZvNmqi_DzMNDvQ765LxwSc0-J2qvTUcK428jGIvPc_4I3yTUm-uFf4';
-export const VAPID_PRIVATE_KEY = 'T0AG7UHD8QLWi2s7RkK3rMrIZmZf4yK6Jc0JvNyf19E';
-export const VAPID_SUBJECT = 'mailto:admin@scoutplan.app';
+// Solo la clave PÚBLICA va en la app. La privada vive en el servidor (Vercel).
+export const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY || '';
 
 export interface PushSubscriptionData {
   endpoint: string;
@@ -37,203 +37,13 @@ export function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray;
 }
 
-/**
- * Convierte un ArrayBuffer a Base64 URL-safe.
- */
-function bufferToBase64Url(buffer: ArrayBuffer | Uint8Array): string {
-  const uint8 = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < uint8.byteLength; i++) {
-    binary += String.fromCharCode(uint8[i]);
-  }
-  const base64 = typeof window !== 'undefined' ? window.btoa(binary) : Buffer.from(binary, 'binary').toString('base64');
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-/**
- * Convierte un string Base64 URL-safe a Uint8Array.
- */
-function base64UrlToUint8Array(base64Url: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64Url.length % 4)) % 4);
-  const base64 = (base64Url + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const binary = typeof window !== 'undefined' ? window.atob(base64) : Buffer.from(base64, 'base64').toString('binary');
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
-
-/**
- * Genera el JWT VAPID firmado con ES256 usando Web Crypto API.
- */
-async function generateVapidToken(audience: string): Promise<string> {
-  const cryptoObj = typeof window !== 'undefined' ? window.crypto : (globalThis as any).crypto;
-  if (!cryptoObj || !cryptoObj.subtle) {
-    throw new Error('Web Cryptography API no disponible');
-  }
-
-  const header = { typ: 'JWT', alg: 'ES256' };
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    aud: audience,
-    exp: now + 12 * 3600,
-    sub: VAPID_SUBJECT
-  };
-
-  const headerStr = bufferToBase64Url(new TextEncoder().encode(JSON.stringify(header)));
-  const payloadStr = bufferToBase64Url(new TextEncoder().encode(JSON.stringify(payload)));
-  const unsignedToken = `${headerStr}.${payloadStr}`;
-
-  // Clave privada PKCS#8 DER para P-256
-  const pkcs8Header = new Uint8Array([
-    0x30, 0x41, 0x02, 0x01, 0x00, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01,
-    0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x04, 0x27, 0x30, 0x25, 0x02, 0x01,
-    0x01, 0x04, 0x20
-  ]);
-  const privateKeyBytes = base64UrlToUint8Array(VAPID_PRIVATE_KEY);
-  const pkcs8Key = new Uint8Array(pkcs8Header.length + privateKeyBytes.length);
-  pkcs8Key.set(pkcs8Header);
-  pkcs8Key.set(privateKeyBytes, pkcs8Header.length);
-
-  const importedKey = await cryptoObj.subtle.importKey(
-    'pkcs8',
-    pkcs8Key,
-    { name: 'ECDSA', namedCurve: 'P-256' },
-    false,
-    ['sign']
-  );
-
-  const signature = await cryptoObj.subtle.sign(
-    { name: 'ECDSA', hash: { name: 'SHA-256' } },
-    importedKey,
-    new TextEncoder().encode(unsignedToken)
-  );
-
-  const signatureBase64 = bufferToBase64Url(signature);
-  return `${unsignedToken}.${signatureBase64}`;
-}
-
-/**
- * Cifra la carga útil con AES-128-GCM según RFC 8291 para Web Push.
- */
-async function encryptPayloadAes128Gcm(
-  userP256dhBase64: string,
-  userAuthBase64: string,
-  payloadText: string
-): Promise<Uint8Array> {
-  const cryptoObj = typeof window !== 'undefined' ? window.crypto : (globalThis as any).crypto;
-  const userPublicKeyBytes = base64UrlToUint8Array(userP256dhBase64);
-  const userAuthBytes = base64UrlToUint8Array(userAuthBase64);
-
-  // 1. Generar par de claves efímero local P-256
-  const localKeyPair = await cryptoObj.subtle.generateKey(
-    { name: 'ECDH', namedCurve: 'P-256' },
-    true,
-    ['deriveBits']
-  );
-
-  const localPublicKeyRaw = new Uint8Array(await cryptoObj.subtle.exportKey('raw', localKeyPair.publicKey));
-
-  // 2. Importar la clave pública del usuario
-  const userPublicKey = await cryptoObj.subtle.importKey(
-    'raw',
-    userPublicKeyBytes,
-    { name: 'ECDH', namedCurve: 'P-256' },
-    false,
-    []
-  );
-
-  // 3. Obtener el secreto compartido ECDH
-  const ecdhSecretBits = await cryptoObj.subtle.deriveBits(
-    { name: 'ECDH', public: userPublicKey },
-    localKeyPair.privateKey,
-    256
-  );
-
-  // 4. Derivación HKDF para auth y secret
-  const salt = cryptoObj.getRandomValues(new Uint8Array(16));
-
-  const ecdhSecretKey = await cryptoObj.subtle.importKey('raw', ecdhSecretBits, { name: 'HKDF' }, false, ['deriveKey', 'deriveBits']);
-
-  const keyInfo = new Uint8Array([
-    ...new TextEncoder().encode('WebPush: info\0'),
-    ...userPublicKeyBytes,
-    ...localPublicKeyRaw
-  ]);
-
-  const prkBits = await cryptoObj.subtle.deriveBits(
-    {
-      name: 'HKDF',
-      hash: 'SHA-256',
-      salt: userAuthBytes,
-      info: keyInfo
-    },
-    ecdhSecretKey,
-    256
-  );
-
-  const prkKey = await cryptoObj.subtle.importKey('raw', prkBits, { name: 'HKDF' }, false, ['deriveKey', 'deriveBits']);
-
-  // Derivar Content Encryption Key (16 bytes)
-  const cekInfo = new TextEncoder().encode('Content-Encoding: aes128gcm\0');
-  const cekBits = await cryptoObj.subtle.deriveBits(
-    {
-      name: 'HKDF',
-      hash: 'SHA-256',
-      salt,
-      info: cekInfo
-    },
-    prkKey,
-    128
-  );
-  const cek = await cryptoObj.subtle.importKey('raw', cekBits, { name: 'AES-GCM' }, false, ['encrypt']);
-
-  // Derivar Nonce (12 bytes)
-  const nonceInfo = new TextEncoder().encode('Content-Encoding: nonce\0');
-  const nonceBits = await cryptoObj.subtle.deriveBits(
-    {
-      name: 'HKDF',
-      hash: 'SHA-256',
-      salt,
-      info: nonceInfo
-    },
-    prkKey,
-    96
-  );
-  const nonce = new Uint8Array(nonceBits);
-
-  // 5. Preparar el registro con padding (0x02 delimitador según RFC 8291)
-  const payloadBytes = new TextEncoder().encode(payloadText);
-  const record = new Uint8Array(payloadBytes.length + 2);
-  record.set(payloadBytes, 0);
-  record[payloadBytes.length] = 0x02;
-  record[payloadBytes.length + 1] = 0x00;
-
-  // 6. Cifrar con AES-GCM
-  const ciphertextBuffer = await cryptoObj.subtle.encrypt(
-    { name: 'AES-GCM', iv: nonce },
-    cek,
-    record
-  );
-  const ciphertext = new Uint8Array(ciphertextBuffer);
-
-  // 7. Estructurar la cabecera del cuerpo aes128gcm
-  const rs = 4096;
-  const header = new Uint8Array(16 + 4 + 1 + 65);
-  header.set(salt, 0);
-  header[16] = (rs >> 24) & 0xff;
-  header[17] = (rs >> 16) & 0xff;
-  header[18] = (rs >> 8) & 0xff;
-  header[19] = rs & 0xff;
-  header[20] = 65;
-  header.set(localPublicKeyRaw, 21);
-
-  const fullBody = new Uint8Array(header.length + ciphertext.length);
-  fullBody.set(header, 0);
-  fullBody.set(ciphertext, header.length);
-
-  return fullBody;
+/** Compara la clave con la que se creó una suscripción existente. */
+function sameKey(existing: ArrayBuffer | null | undefined, expected: Uint8Array): boolean {
+  if (!existing) return false;
+  const a = new Uint8Array(existing);
+  if (a.length !== expected.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== expected[i]) return false;
+  return true;
 }
 
 class WebPushService {
@@ -249,11 +59,24 @@ class WebPushService {
     }
 
     try {
+      if (!VAPID_PUBLIC_KEY) {
+        console.warn('Falta EXPO_PUBLIC_VAPID_PUBLIC_KEY: notificaciones push desactivadas.');
+        return false;
+      }
+
       const registration = await navigator.serviceWorker.ready;
+      const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
       let subscription = await registration.pushManager.getSubscription();
 
+      // Si la suscripción se creó con una clave VAPID anterior, ya no sirve: se renueva.
+      if (subscription && !sameKey(subscription.options?.applicationServerKey, applicationServerKey)) {
+        const oldEndpoint = subscription.endpoint;
+        await subscription.unsubscribe();
+        await supabase.from('push_subscriptions').delete().eq('endpoint', oldEndpoint);
+        subscription = null;
+      }
+
       if (!subscription) {
-        const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: applicationServerKey as any
@@ -303,89 +126,18 @@ class WebPushService {
     targetUserId: string,
     payload: PushPayload
   ): Promise<number> {
-    // 1. Intentar despacho mediante la función Serverless backend de Vercel (Sin bloqueo de CORS)
+    // El envío se hace en el servidor (/api/send-push), que es el único que tiene la clave privada.
     try {
-      if (typeof window !== 'undefined') {
-        const pushApiUrl = window.location.hostname.includes('vercel.app')
-          ? '/api/send-push'
-          : 'https://scoutplan.vercel.app/api/send-push';
-
-        const res = await fetch(pushApiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            receiverId: targetUserId,
-            title: payload.title,
-            message: payload.body,
-            url: payload.url || '/',
-            data: payload.data || {}
-          })
-        });
-
-        if (res.ok) {
-          const json = await res.json();
-          if (json.count !== undefined) return json.count;
-        }
-      }
-    } catch (apiErr) {
-      console.warn('Aviso intentando dispatch vía /api/send-push:', apiErr);
-    }
-
-    // 2. Fallback: Despacho directo con Web Crypto API
-    try {
-      const { data: subscriptions, error } = await supabase
-        .from('push_subscriptions')
-        .select('*')
-        .eq('user_id', targetUserId);
-
-      if (error || !subscriptions || subscriptions.length === 0) {
-        return 0;
-      }
-
-      let successCount = 0;
-      const payloadString = JSON.stringify({
+      const json = await postApi<{ count?: number }>('/api/send-push', {
+        receiverId: targetUserId,
         title: payload.title,
-        body: payload.body,
-        icon: payload.icon || '/icon-192.png',
-        badge: payload.badge || '/icon-192.png',
-        image: payload.image,
-        tag: payload.tag || `scout_push_${Date.now()}`,
+        message: payload.body,
         url: payload.url || '/',
         data: payload.data || {}
       });
-
-      for (const sub of subscriptions) {
-        try {
-          const endpointUrl = new URL(sub.endpoint);
-          const audience = `${endpointUrl.protocol}//${endpointUrl.host}`;
-          const vapidToken = await generateVapidToken(audience);
-          const encryptedBody = await encryptPayloadAes128Gcm(sub.p256dh, sub.auth, payloadString);
-
-          const response = await fetch(sub.endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/octet-stream',
-              'Content-Encoding': 'aes128gcm',
-              'TTL': '86400',
-              'Urgency': 'high',
-              'Authorization': `vapid t=${vapidToken}, k=${VAPID_PUBLIC_KEY}`
-            },
-            body: encryptedBody as any
-          });
-
-          if (response.status === 200 || response.status === 201) {
-            successCount++;
-          } else if (response.status === 404 || response.status === 410) {
-            await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
-          }
-        } catch (pushErr) {
-          console.warn('Aviso enviando Push al endpoint:', sub.endpoint, pushErr);
-        }
-      }
-
-      return successCount;
+      return json.count ?? 0;
     } catch (err) {
-      console.warn('Aviso en dispatchBackgroundPushToUser:', err);
+      console.warn('Aviso enviando push vía /api/send-push:', err);
       return 0;
     }
   }
@@ -399,54 +151,19 @@ class WebPushService {
     role?: string;
     payload: PushPayload;
   }): Promise<number> {
-    // 1. Intentar despacho mediante backend Serverless
     try {
-      if (typeof window !== 'undefined') {
-        const pushApiUrl = window.location.hostname.includes('vercel.app')
-          ? '/api/send-push'
-          : 'https://scoutplan.vercel.app/api/send-push';
-
-        const res = await fetch(pushApiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            groupName: params.groupName,
-            unit: params.unit,
-            receiverRole: params.role,
-            title: params.payload.title,
-            message: params.payload.body,
-            url: params.payload.url || '/',
-            data: params.payload.data || {}
-          })
-        });
-
-        if (res.ok) {
-          const json = await res.json();
-          if (json.count !== undefined) return json.count;
-        }
-      }
-    } catch (apiErr) {
-      console.warn('Aviso intentando dispatch masivo vía /api/send-push:', apiErr);
-    }
-
-    // 2. Fallback
-    try {
-      let query = supabase.from('profiles').select('id');
-      if (params.role) query = query.eq('role', params.role);
-      if (params.groupName) query = query.ilike('group_name', `%${params.groupName}%`);
-      if (params.unit) query = query.ilike('unit', `%${params.unit}%`);
-
-      const { data: users } = await query;
-      if (!users || users.length === 0) return 0;
-
-      let totalPushed = 0;
-      for (const u of users) {
-        const count = await this.dispatchBackgroundPushToUser(u.id, params.payload);
-        totalPushed += count;
-      }
-      return totalPushed;
+      const json = await postApi<{ count?: number }>('/api/send-push', {
+        groupName: params.groupName,
+        unit: params.unit,
+        receiverRole: params.role,
+        title: params.payload.title,
+        message: params.payload.body,
+        url: params.payload.url || '/',
+        data: params.payload.data || {}
+      });
+      return json.count ?? 0;
     } catch (err) {
-      console.warn('Aviso en dispatchBackgroundPushToGroupOrRole:', err);
+      console.warn('Aviso en envío masivo vía /api/send-push:', err);
       return 0;
     }
   }

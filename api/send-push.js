@@ -1,25 +1,17 @@
 const webpush = require('web-push');
-const { createClient } = require('@supabase/supabase-js');
+const { getSupabase, setCors, requireUser, parseBody } = require('./_auth');
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://vumijajwmhvvzissrqbv.supabase.co';
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_4OFAGKEFxeT7JpsS5__Fvg_x_lTK-GO';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Las claves VAPID viven SOLO en las variables de entorno de Vercel.
+const VAPID_PUBLIC = process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@scoutplan.app';
 
-const VAPID_PUBLIC = 'BKI-1dAzf2KYpi_pK4yrLEBeVE21dNkmMZvNmqi_DzMNDvQ765LxwSc0-J2qvTUcK428jGIvPc_4I3yTUm-uFf4';
-const VAPID_PRIVATE = 'T0AG7UHD8QLWi2s7RkK3rMrIZmZf4yK6Jc0JvNyf19E';
-const VAPID_SUBJECT = 'mailto:admin@scoutplan.app';
-
-webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
+if (VAPID_PUBLIC && VAPID_PRIVATE) {
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
+}
 
 module.exports = async (req, res) => {
-  // CORS
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
+  setCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -29,8 +21,20 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
+    return res.status(500).json({ error: 'Claves VAPID no configuradas en el servidor' });
+  }
+
+  // Solo usuarios con sesión iniciada pueden enviar notificaciones.
+  const auth = await requireUser(req);
+  if (!auth) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+
+  const supabase = getSupabase();
+
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const body = parseBody(req);
     const { receiverId, groupName, unit, receiverRole, title, message, url, data } = body || {};
 
     let subs = [];

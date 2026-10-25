@@ -35,6 +35,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useModalBackHandler } from '../hooks/useBackHandler';
 import { colors } from '../theme/colors';
 import { supabase } from '../lib/supabaseClient';
+import { postApi } from '../lib/apiClient';
 import { storageService } from '../lib/storageService';
 import { showAlert } from '../utils/alert';
 import { checkProfileCompletion } from '../utils/profileGuard';
@@ -162,9 +163,6 @@ export default function HelpFloatingFAB() {
       const userRole = (user?.role || 'scout').toUpperCase();
       const userPhone = user?.phone || (user as any)?.phone_number || 'No registrado';
 
-      const TELEGRAM_BOT_TOKEN = '8542174214:AAGJt11WkNmWMND_LopQ3FR-XeQ9ZVx9oDg';
-      const TELEGRAM_CHAT_ID = '1162964312';
-
       const messageText = 
         `💡 *NUEVA SUGERENCIA DE FUNCIÓN / COMENTARIO*\n\n` +
         `👤 *Usuario:* ${realName}\n` +
@@ -175,17 +173,7 @@ export default function HelpFloatingFAB() {
         `📱 *Teléfono:* ${userPhone}\n\n` +
         `💡 *Sugerencia / Comentarios:*\n${suggestionText.trim()}`;
 
-      if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: TELEGRAM_CHAT_ID,
-            text: messageText,
-            parse_mode: 'Markdown'
-          })
-        });
-      }
+      await postApi('/api/telegram-notify', { text: messageText });
 
       showAlert(
         '¡Sugerencia Recibida! 💡',
@@ -253,67 +241,20 @@ export default function HelpFloatingFAB() {
           status: 'pendiente'
         });
 
-      // ENVIAR NOTIFICACIÓN PUSH Y FOTO DIRECTA A TELEGRAM
-      const TELEGRAM_BOT_TOKEN = '8542174214:AAGJt11WkNmWMND_LopQ3FR-XeQ9ZVx9oDg';
-      const TELEGRAM_CHAT_ID = '1162964312';
+      // Avisar al equipo por Telegram (el token del bot está en el servidor)
+      try {
+        const captionText = `⚠️ *NUEVO REPORTE DE ERROR EN APP SCOUT*\n\n` +
+          `👤 *Usuario:* ${realName} (${(user?.role || 'scout').toUpperCase()})\n` +
+          `📧 *Correo:* ${realEmail}\n\n` +
+          `📝 *Descripción del fallo:*\n${bugDescription.trim()}`;
 
-      if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-        try {
-          const captionText = `⚠️ *NUEVO REPORTE DE ERROR EN APP SCOUT*\n\n` +
-            `👤 *Usuario:* ${realName} (${(user?.role || 'scout').toUpperCase()})\n` +
-            `📧 *Correo:* ${realEmail}\n\n` +
-            `📝 *Descripción del fallo:*\n${bugDescription.trim()}`;
-
-          if (bugMediaUrl && bugMediaUrl.startsWith('data:image')) {
-            // Convertir la imagen Base64 a un Blob y enviarla directamente como FOTO a Telegram
-            const parts = bugMediaUrl.split(',');
-            const mimeMatch = parts[0].match(/:(.*?);/);
-            const mime = mimeMatch ? mimeMatch[1] : 'image/png';
-            const bstr = atob(parts[1]);
-            let n = bstr.length;
-            const u8arr = new Uint8Array(n);
-            while (n--) {
-              u8arr[n] = bstr.charCodeAt(n);
-            }
-            const photoBlob = new Blob([u8arr], { type: mime });
-
-            const formData = new FormData();
-            formData.append('chat_id', TELEGRAM_CHAT_ID);
-            formData.append('caption', captionText);
-            formData.append('parse_mode', 'Markdown');
-            formData.append('photo', photoBlob, 'evidencia_fallo.png');
-
-            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
-              method: 'POST',
-              body: formData
-            });
-          } else if (bugMediaUrl && bugMediaUrl.startsWith('http')) {
-            // Enviar la URL pública como foto a Telegram
-            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chat_id: TELEGRAM_CHAT_ID,
-                photo: bugMediaUrl,
-                caption: captionText,
-                parse_mode: 'Markdown'
-              })
-            });
-          } else {
-            // Enviar mensaje de texto regular
-            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chat_id: TELEGRAM_CHAT_ID,
-                text: captionText,
-                parse_mode: 'Markdown'
-              })
-            });
-          }
-        } catch (tgErr) {
-          console.warn('Aviso enviando a Telegram:', tgErr);
-        }
+        await postApi('/api/telegram-notify', {
+          text: captionText,
+          photoUrl: bugMediaUrl && bugMediaUrl.startsWith('https://') ? bugMediaUrl : undefined,
+          photoDataUrl: bugMediaUrl && bugMediaUrl.startsWith('data:image') ? bugMediaUrl : undefined
+        });
+      } catch (tgErr) {
+        console.warn('Aviso enviando a Telegram:', tgErr);
       }
 
       showAlert('¡Reporte Enviado!', 'Muchas gracias por tu reporte. Nuestro equipo técnico revisará el inconveniente de inmediato.');
