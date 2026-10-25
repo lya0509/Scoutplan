@@ -239,7 +239,14 @@ self.addEventListener('push', (event) => {
 // 5. Interacción del Usuario con la Notificación en la Pantalla de Bloqueo
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = event.notification.data?.url || '/';
+  // Solo se abren rutas de la propia app: un push no puede llevar a otro sitio.
+  let targetUrl = '/';
+  try {
+    const parsed = new URL(event.notification.data?.url || '/', self.location.origin);
+    if (parsed.origin === self.location.origin) {
+      targetUrl = parsed.pathname + parsed.search + parsed.hash;
+    }
+  } catch (err) {}
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
