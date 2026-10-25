@@ -1,5 +1,5 @@
 const webpush = require('web-push');
-const { getSupabase, setCors, requireUser, parseBody } = require('./_auth');
+const { getAdminSupabase, setCors, requireUser, parseBody } = require('./_auth');
 
 // Las claves VAPID viven SOLO en las variables de entorno de Vercel.
 const VAPID_PUBLIC = process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY;
@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: 'No autorizado' });
   }
 
-  const supabase = getSupabase();
+  const supabase = getAdminSupabase();
 
   try {
     const body = parseBody(req);

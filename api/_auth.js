@@ -16,6 +16,16 @@ function getSupabase(accessToken) {
   });
 }
 
+// Cliente con permisos de servidor: ignora las reglas RLS. Solo se usa dentro de /api.
+// Mientras no exista SUPABASE_SERVICE_ROLE_KEY en Vercel, usa la clave pública (comportamiento anterior).
+function getAdminSupabase() {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceKey) return getSupabase();
+  return createClient(supabaseUrl, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
 function setCors(req, res) {
   const allowed = (process.env.ALLOWED_ORIGINS || 'https://scoutplan.vercel.app')
     .split(',')
@@ -44,4 +54,4 @@ function parseBody(req) {
   return typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
 }
 
-module.exports = { getSupabase, setCors, requireUser, parseBody };
+module.exports = { getSupabase, getAdminSupabase, setCors, requireUser, parseBody };
