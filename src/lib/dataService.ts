@@ -1030,13 +1030,13 @@ export const dataService = {
       let targetUnit = (unit || 'clan').toLowerCase().trim();
       if (targetUnit === 'comunidad') targetUnit = 'caminantes';
 
-      // Usar select('*') para garantizar compatibilidad con cualquier columna existente
-      let { data, error } = await supabase
-        .from('profiles')
-        .select('*');
+      // Las reglas RLS solo dejan a un scout leer su propio perfil: el directorio
+      // del grupo viene de la función directorio_grupo() (solo datos públicos).
+      const { data: directorio, error } = await supabase.rpc('directorio_grupo');
+      let data: any[] | null = directorio;
 
       if (error || !data || data.length === 0) {
-        const res = await supabase.from('profiles').select('id, name');
+        const res = await supabase.from('profiles').select('*');
         data = res.data;
       }
 

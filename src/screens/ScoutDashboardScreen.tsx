@@ -11,6 +11,7 @@ import { colors } from '../theme/colors';
 import { useFocusEffect } from '@react-navigation/native';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { DualProfileAvatar } from '../components/DualProfileAvatar';
+import { ScoutUserIcon } from '../components/ScoutUserIcon';
 import { ProgramaPdfPreviewModal } from '../components/ProgramaPdfPreviewModal';
 import { ProgramaScout } from '../types/programa';
 import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, Target, FileText, CheckCircle, Info, Eye } from 'lucide-react-native';
@@ -357,17 +358,19 @@ export default function ScoutDashboardScreen({ navigation }: any) {
       {/* Saludo */}
       {(() => {
         const unitKey = (user?.unit || '').toLowerCase();
-        let motto = '⚜️ ¡Siempre Listo!';
-        if (unitKey === 'manada') motto = '🐾 ¡Siempre lo Mejor!';
-        else if (unitKey === 'tropa') motto = '⚜️ ¡Siempre Listo!';
-        else if (unitKey === 'caminantes' || unitKey === 'comunidad') motto = '🏕️ ¡Siempre Adelante!';
-        else if (unitKey === 'clan') motto = '🔴 ¡Siempre Listo para Servir!';
+        let motto = '¡Siempre Listo!';
+        if (unitKey === 'manada') motto = '¡Siempre lo Mejor!';
+        else if (unitKey === 'caminantes' || unitKey === 'comunidad') motto = '¡Siempre Adelante!';
+        else if (unitKey === 'clan') motto = '¡Siempre Listo para Servir!';
 
         return (
           <View style={[styles.welcomeCard, isDarkMode && { backgroundColor: '#000000', borderWidth: 1, borderColor: '#27272a' }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.welcomeTag}>{motto}</Text>
+                <View style={styles.welcomeTagRow}>
+                  <ScoutUserIcon unit={user?.unit} size={36} />
+                  <Text style={[styles.welcomeTag, { marginBottom: 0 }]}>{motto}</Text>
+                </View>
                 <Text style={styles.welcomeName}>¡Hola, {user?.name || 'Scout'}!</Text>
                 <Text style={styles.welcomeGroup}>
                   {user?.group_name ? `${user.group_name} • ` : ''}
@@ -707,6 +710,7 @@ const styles = StyleSheet.create({
   },
   welcomeCard: { backgroundColor: colors.primary, borderRadius: 16, padding: 20, marginBottom: 20 },
   welcomeTag: { color: '#E0D4F7', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 4 },
+  welcomeTagRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
   welcomeName: { color: '#FFF', fontSize: 22, fontWeight: 'bold' },
   welcomeGroup: { color: '#E0D4F7', fontSize: 13, marginTop: 4 },
   seeAllText: { fontSize: 13, color: colors.primary, fontWeight: '600' },

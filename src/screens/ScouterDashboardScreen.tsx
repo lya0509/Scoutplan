@@ -911,7 +911,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                           </>
                         )}
                         {/* Eliminar foto no institucional */}
-                        {scout.avatar_url && (user?.role === 'scouter' || user?.role === 'jefe_grupo') && (
+                        {!!scout.avatar_url && (user?.role === 'scouter' || user?.role === 'jefe_grupo') && (
                           <TouchableOpacity
                             style={{ backgroundColor: '#dc2626', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8 }}
                             onPress={() => {

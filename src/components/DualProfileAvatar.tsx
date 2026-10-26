@@ -246,7 +246,7 @@ export function DualProfileAvatar({
               </Text>
             </TouchableOpacity>
 
-            {currentPhotoUrl && onDeletePhoto && (
+            {!!currentPhotoUrl && onDeletePhoto && (
               <TouchableOpacity
                 style={[styles.deleteMiniBtn, { backgroundColor: isDarkMode ? '#27272a' : '#fee2e2' }]}
                 onPress={handleDeleteCurrentPhoto}
@@ -415,7 +415,7 @@ export function DualProfileAvatar({
               </TouchableOpacity>
             )}
 
-            {onDeletePhoto && currentPhotoUrl && (
+            {onDeletePhoto && !!currentPhotoUrl && (
               <TouchableOpacity
                 style={[styles.zoomActionBtn, { backgroundColor: '#ef4444' }]}
                 onPress={handleDeleteCurrentPhoto}

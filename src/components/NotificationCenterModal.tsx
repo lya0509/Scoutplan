@@ -366,7 +366,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                           {notif.message}
                         </Text>
 
-                        {notif.message && notif.message.length > 80 && (
+                        {!!notif.message && notif.message.length > 80 && (
                           <TouchableOpacity
                             onPress={(e) => {
                               e.stopPropagation();
@@ -380,7 +380,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                           </TouchableOpacity>
                         )}
 
-                        {notif.unit && (
+                        {!!notif.unit && (
                           <View style={{ flexDirection: 'row', marginTop: 6 }}>
                             <View style={[styles.unitTag, { backgroundColor: isDarkMode ? '#3f3f46' : '#e4e4e7' }]}>
                               <Text style={{ fontSize: 9, fontWeight: 'bold', color: theme.text }}>
@@ -422,7 +422,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                   </Text>
                 </View>
 
-                {testSuccessMessage && (
+                {!!testSuccessMessage && (
                   <View style={styles.successBox}>
                     <CheckCircle2 size={16} color="#10b981" style={{ marginRight: 6 }} />
                     <Text style={{ fontSize: 12, color: '#10b981', fontWeight: 'bold', flex: 1 }}>

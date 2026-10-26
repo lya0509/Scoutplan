@@ -1300,7 +1300,7 @@ export default function NudosManualScreen({ navigation }: any) {
                     <Text style={[styles.miniFeatureText, { color: '#0284c7' }]}>Visual</Text>
                   </View>
 
-                  {item.multimedia?.videoEmbedId && (
+                  {!!item.multimedia?.videoEmbedId && (
                     <View style={[styles.miniFeaturePill, { backgroundColor: '#ef444415' }]}>
                       <Video size={10} color="#ef4444" />
                       <Text style={[styles.miniFeatureText, { color: '#ef4444' }]}>Video</Text>
@@ -1491,7 +1491,7 @@ export default function NudosManualScreen({ navigation }: any) {
                     )}
 
                     {/* Advertencia de seguridad */}
-                    {selectedItem.safety && (
+                    {!!selectedItem.safety && (
                       <View style={[modalStyles.tipBox, { backgroundColor: isDarkMode ? '#451a03' : '#fef2f2', borderColor: '#ef4444' }]}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
                           <AlertTriangle size={14} color="#ef4444" />
@@ -1614,7 +1614,7 @@ export default function NudosManualScreen({ navigation }: any) {
                           <Text style={{ fontSize: 12, color: theme.text, lineHeight: 18 }}>
                             {selectedItem.visualSteps[visualStepIndex - 1]?.instruction}
                           </Text>
-                          {selectedItem.visualSteps[visualStepIndex - 1]?.callout && (
+                          {!!selectedItem.visualSteps[visualStepIndex - 1]?.callout && (
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
                               <Sparkles size={13} color="#eab308" />
                               <Text style={{ fontSize: 11, fontWeight: 'bold', color: isDarkMode ? '#fde047' : '#ca8a04' }}>
@@ -1710,7 +1710,7 @@ export default function NudosManualScreen({ navigation }: any) {
                           <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: 'bold', marginTop: 8 }}>
                             Toca para ver el video demostrativo
                           </Text>
-                          {selectedItem.multimedia?.videoDuration && (
+                          {!!selectedItem.multimedia?.videoDuration && (
                             <View style={modalStyles.durationBadge}>
                               <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: 'bold' }}>
                                 ⏱️ {selectedItem.multimedia.videoDuration}
@@ -1822,7 +1822,7 @@ export default function NudosManualScreen({ navigation }: any) {
       )}
 
       {/* LIGHTBOX MODAL PARA VER IMAGEN EN PANTALLA COMPLETA */}
-      {lightboxImage && (
+      {!!lightboxImage && (
         <Modal visible transparent animationType="fade" onRequestClose={() => setLightboxImage(null)}>
           <View style={modalStyles.lightboxOverlay}>
             <TouchableOpacity style={modalStyles.lightboxCloseBtn} onPress={() => setLightboxImage(null)}>

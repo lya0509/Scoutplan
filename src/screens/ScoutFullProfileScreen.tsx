@@ -58,11 +58,17 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
     setLoading(true);
     try {
       // 1. Cargar Perfil
-      const { data: profData } = await supabase
+      let { data: profData } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', scoutId)
-        .single();
+        .maybeSingle();
+
+      // Un compañero de grupo no puede leer el perfil completo (RLS): solo los datos públicos.
+      if (!profData) {
+        const { data: pub } = await supabase.rpc('perfil_publico', { p_id: scoutId });
+        profData = pub?.[0] || null;
+      }
 
       setProfile(profData);
 

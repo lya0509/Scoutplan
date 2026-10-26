@@ -389,9 +389,11 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
 
     loadData(true);
 
-    // Sincronización en tiempo real vía WebSockets (estilo WhatsApp)
+    // Sincronización en tiempo real vía WebSockets (estilo WhatsApp).
+    // Nombre único por montaje: la pantalla existe en el Drawer y en el Stack a la vez, y Supabase
+    // devuelve el canal ya suscrito si se repite el nombre ("cannot add postgres_changes ... after subscribe()").
     const channel = supabase
-      .channel(`realtime_quarterly_plans_${selectedQuarter}_${selectedYear}`)
+      .channel(`realtime_quarterly_plans_${selectedQuarter}_${selectedYear}_${Math.random().toString(36).slice(2, 8)}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'quarterly_plans' },
@@ -1355,7 +1357,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                 </View>
               </View>
 
-              {scoutPlan?.status && (
+              {!!scoutPlan?.status && (
                 <View style={[
                   styles.statusBanner,
                   scoutPlan.status === 'Aprobado' ? styles.bannerApproved : styles.bannerPending

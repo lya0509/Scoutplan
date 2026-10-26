@@ -21,6 +21,13 @@ import { showAlert } from '../utils/alert';
 import { exportDocxInBrowser } from '../utils/docxExporter';
 import { navigateBackOrHome } from '../utils/navigationHelper';
 import { pickImageUniversal } from '../utils/filePicker';
+import FichaMedicaOrion84Form from '../components/FichaMedicaOrion84Form';
+
+type FichaTab = 'scout' | 'orion84';
+const FICHA_TABS: { key: FichaTab; label: string }[] = [
+  { key: 'scout', label: 'Ficha Médica Scout' },
+  { key: 'orion84', label: 'Ficha Médica Orión 84' },
+];
 
 const BLOOD_TYPES = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'];
 
@@ -30,8 +37,10 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
 
   // Si se pasa targetUserId por params (Vista de Scouter / Jefe de Grupo)
   const targetUserId = route?.params?.targetUserId || user?.id;
-  const isViewOnlyForScouter = targetUserId !== user?.id && (user?.role === 'scouter' || user?.role === 'jefe_grupo' || (user?.role as any) === 'admin');
+  // Ver la ficha de otra persona es siempre de solo lectura: el guardado escribe en el perfil propio (user.id).
+  const isViewOnlyForScouter = targetUserId !== user?.id;
 
+  const [activeTab, setActiveTab] = useState<FichaTab>(route?.params?.formato === 'orion84' ? 'orion84' : 'scout');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -315,21 +324,30 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
         signatureDate
       };
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({ medical_data: payload })
-        .eq('id', user.id);
-
       if (typeof window !== 'undefined' && window.localStorage) {
         window.localStorage.setItem(`medical_data_${user.id}`, JSON.stringify(payload));
       }
+
+      // medical_data también guarda la Ficha Orión 84 (clave orion84): se mezcla en vez de reemplazar.
+      const { data: current, error: readError } = await supabase
+        .from('profiles')
+        .select('medical_data')
+        .eq('id', user.id)
+        .single();
+      // Sin la lectura no se escribe: se perdería la Ficha Orión 84 guardada en el mismo campo.
+      if (readError) throw readError;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ medical_data: { ...(current?.medical_data || {}), ...payload } })
+        .eq('id', user.id);
+      if (error) throw error;
 
       savedStateRef.current = getCurrentFormJSON();
       setHasChanges(false);
 
       showAlert('¡Ficha Médica Guardada!', 'Se han guardado todos los datos de tu Ficha Médica.');
     } catch (err: any) {
-      showAlert('¡Guardado Completado!', 'Datos médicos guardados en tu dispositivo.');
+      showAlert('Guardada solo en este dispositivo', 'No se pudo guardar en la nube. Revisa tu conexión y vuelve a guardar.');
     } finally {
       setSaving(false);
     }
@@ -469,11 +487,28 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View style={{ flex: 1 }}>
               <Text style={styles.asociacionBanner}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>
-              <Text style={[styles.title, { color: theme.text }]}>Ficha Médica Oficial</Text>
+              <Text style={[styles.title, { color: theme.text }]}>Ficha Médica</Text>
             </View>
           </View>
 
-          {hasChanges && !isViewOnlyForScouter && (
+          <View style={[styles.tabBar, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]} accessibilityRole="tablist">
+            {FICHA_TABS.map(tab => {
+              const active = activeTab === tab.key;
+              return (
+                <TouchableOpacity
+                  key={tab.key}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: active }}
+                  style={[styles.tab, active && styles.tabActive]}
+                  onPress={() => setActiveTab(tab.key)}
+                >
+                  <Text style={[styles.tabText, { color: active ? 'white' : theme.text }]}>{tab.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {activeTab === 'scout' && hasChanges && !isViewOnlyForScouter && (
             <View style={styles.changesBanner}>
               <AlertCircle size={14} color="#f59e0b" style={{ marginRight: 6 }} />
               <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#f59e0b', flex: 1 }}>
@@ -485,7 +520,15 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
       </View>
 
       <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 60 }}>
-        {loading ? (
+        {activeTab === 'orion84' ? (
+          <FichaMedicaOrion84Form
+            targetUserId={targetUserId}
+            readOnly={isViewOnlyForScouter}
+            theme={theme}
+            isDarkMode={isDarkMode}
+            fallbackProfile={targetUserId === user?.id ? user : undefined}
+          />
+        ) : loading ? (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 30 }} />
         ) : (
           <View style={[styles.sheet, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
@@ -743,6 +786,10 @@ const styles = StyleSheet.create({
   exportHeaderBtnText: { color: 'white', fontWeight: 'bold', fontSize: 11 },
   changesBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.12)', padding: 8, borderRadius: 8, marginTop: 8 },
   headerInner: { maxWidth: 850, width: '100%', alignSelf: 'center' },
+  tabBar: { flexDirection: 'row', borderRadius: 12, padding: 4, marginTop: 10, gap: 4 },
+  tab: { flex: 1, paddingVertical: 9, paddingHorizontal: 6, borderRadius: 9, alignItems: 'center' },
+  tabActive: { backgroundColor: colors.primary },
+  tabText: { fontSize: 12, fontWeight: 'bold', textAlign: 'center' },
 
   sheet: { borderRadius: 18, padding: 18, borderWidth: 1, maxWidth: 850, width: '100%', alignSelf: 'center' },
   sectionTitle: { fontSize: 14, fontWeight: 'bold', marginBottom: 6 },

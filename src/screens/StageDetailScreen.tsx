@@ -968,7 +968,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
 
                             <View style={{ padding: 8, flex: 1, justifyContent: 'space-between' }}>
                               <View>
-                                {cert.level && (
+                                {!!cert.level && (
                                   <View style={{ alignSelf: 'flex-start', backgroundColor: colors.primary, paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginBottom: 3 }}>
                                     <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 8 }}>{cert.level.toUpperCase()}</Text>
                                   </View>
@@ -1034,7 +1034,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                           <Text style={[modalStyles.eventTitle, { color: theme.text }]}>
                             {cert.title}
                           </Text>
-                          {cert.level && (
+                          {!!cert.level && (
                             <View style={{ backgroundColor: colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
                               <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 9 }}>
                                 {cert.level.toUpperCase()}

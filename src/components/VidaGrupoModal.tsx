@@ -486,13 +486,13 @@ export function VidaGrupoModal({
                       </Text>
                     </View>
 
-                    {item.subtype && (
+                    {!!item.subtype && (
                       <Text style={{ fontSize: 11, color: colors.primary, fontWeight: 'bold', marginBottom: 2 }}>
                         Tipo: {item.subtype}
                       </Text>
                     )}
 
-                    {item.location && (
+                    {!!item.location && (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
                         <MapPin size={12} color={theme.subText} />
                         <Text style={{ fontSize: 11, color: theme.subText }}>{item.location}</Text>

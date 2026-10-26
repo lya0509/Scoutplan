@@ -326,7 +326,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                           <Text style={{ fontSize: 12, fontWeight: '600', color: theme.text }}>
                             {act.text}
                           </Text>
-                          {act.subArea && (
+                          {!!act.subArea && (
                             <Text style={{ fontSize: 10, color: theme.subText }}>
                               Área: {act.subArea}
                             </Text>

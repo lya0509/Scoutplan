@@ -437,7 +437,7 @@ export default function HelpFloatingFAB() {
                 </Text>
               </TouchableOpacity>
 
-              {bugMediaUrl && (
+              {!!bugMediaUrl && (
                 <View style={styles.mediaPreviewBox}>
                   {bugMediaType === 'video' ? (
                     <View style={{ alignItems: 'center' }}>
