@@ -1,0 +1,217 @@
+# Full-System Graphify Architectural Report — Plan Progresivo Scout ASV (v3.0.0)
+
+> **Generated**: `2026-11-07T12:13:58.469Z` | **Communities**: `8` | **Nodes**: `96` (`25` Screens, `21` Components, `16` Services, `9` Catalogs, `11` DB Tables) | **QA Suites**: `10`
+
+---
+
+## 1. System Communities Overview
+
+### 1. Core Entry, Contexts & Multi-Role Navigation Router (`core_navigation_contexts`)
+Entry points (index.ts, App.tsx), PWA Service Worker registration, multi-role Stack & Drawer routers (AppNavigator.tsx, DrawerNavigator.tsx), 3 global Context providers (AuthContext, ThemeContext, NotificationContext), and domain types/theme.
+
+- **index.ts (Expo Root Entry)** ([`index.ts`](file:///home/lya/proyectos/plan-progresivo/index.ts), `9 lines`): Registers root App component with Expo registerRootComponent.
+- **App.tsx (Root Providers, PWA SW & Offline Reconnect Sync)** ([`App.tsx`](file:///home/lya/proyectos/plan-progresivo/App.tsx), `61 lines`): Initializes Graphify Bridge, registers /sw.js Service Worker on Web, listens to window online events to flush dataService.syncPendingRequirements(), and wraps ThemeProvider -> AuthProvider -> NotificationProvider -> AppNavigator.
+- **AppNavigator.tsx (Role-Based Stack Router & Deep Linking)** ([`src/navigation/AppNavigator.tsx`](file:///home/lya/proyectos/plan-progresivo/src/navigation/AppNavigator.tsx), `224 lines`): Routes unauthenticated users to Login/Register and authenticated users by role (scout -> DrawerNavigator, scouter -> ScouterDashboard, jefe_grupo -> JefeDashboard, comisionados/nacional/admin -> ComisionadoDashboard) plus shared screens.
+- **DrawerNavigator.tsx (Scout Sidebar Navigation & Theme Controls)** ([`src/navigation/DrawerNavigator.tsx`](file:///home/lya/proyectos/plan-progresivo/src/navigation/DrawerNavigator.tsx), `245 lines`): 15-screen Drawer menu for Scouts with custom header avatar, dark mode toggle, ThemeCustomizerModal trigger, and PWAInstallModal trigger.
+- **AuthContext.tsx (Instant Local Auth Cache + Supabase Session)** ([`src/context/AuthContext.tsx`](file:///home/lya/proyectos/plan-progresivo/src/context/AuthContext.tsx), `298 lines`): Restores @scout_cached_profile in <10ms with 800ms safety timeout, syncs Supabase Auth session & profiles table, initializes presenceService, and exposes updateUserProfile/refreshProfile/signOut. — **DB Tables**: `profiles`
+- **ThemeContext.tsx (Dark Mode & Custom Primary Palette)** ([`src/context/ThemeContext.tsx`](file:///home/lya/proyectos/plan-progresivo/src/context/ThemeContext.tsx), `115 lines`): Persists app_dark_mode and app_primary_color in AsyncStorage and provides dynamic theme tokens across all screens.
+- **NotificationContext.tsx (Realtime Notifications & Toasts)** ([`src/context/NotificationContext.tsx`](file:///home/lya/proyectos/plan-progresivo/src/context/NotificationContext.tsx), `198 lines`): Polls & subscribes to scout_notifications/notifications, manages unread badge counts, triggers LiveNotificationToast, and registers Web Push subscriptions.
+- **progression.ts (Core Role, Unit, Profile & Stage Types)** ([`src/types/progression.ts`](file:///home/lya/proyectos/plan-progresivo/src/types/progression.ts), `72 lines`): Defines Role (7 roles), Unit (6 units), StageStatus, Profile, Requirement, StageTemplate, StageProgress, and RequirementProgress.
+- **programa.ts (ProgramaScout & Schedule Domain Types)** ([`src/types/programa.ts`](file:///home/lya/proyectos/plan-progresivo/src/types/programa.ts), `40 lines`): Defines ProgramaScout and ActivityScheduleItem interfaces.
+- **colors.ts (Design System Color Tokens)** ([`src/theme/colors.ts`](file:///home/lya/proyectos/plan-progresivo/src/theme/colors.ts), `28 lines`): Central color palette for units, stages, and dark/light surfaces.
+
+### 2. Backend, Offline Sync Queue, Realtime Presence & Web Push Services (`backend_offline_services`)
+12 core services across src/lib/ and src/services/: fichaOrion84PdfGenerator (Ficha Médica Orión 84 PDF filler, lazy pdf-lib), Supabase client, Offline-First dataService with FIFO sync queue, programaService, storageService (image compression + bucket upload), autoSaveService, presenceService (Realtime), notificationService, webPushService (VAPID), docxProgramaGenerator, and graphifyBridge.
+
+- **supabaseClient.ts (Supabase Client Singleton)** ([`src/lib/supabaseClient.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/supabaseClient.ts), `77 lines`): Configures @supabase/supabase-js with AsyncStorage session persistence.
+- **supabase.ts (Supabase Helper Re-export)** ([`src/lib/supabase.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/supabase.ts), `21 lines`): Re-exports configured Supabase instance.
+- **dataService.ts (Offline Sync Queue, Progression, Logs & Certificates)** ([`src/lib/dataService.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/dataService.ts), `1766 lines`): Async data layer on top of the offline outbox (@scout_outbox_v1) with cached reads: stage/requirement progress, stage/requirement progress, stage review/approval, certificates + curriculum auto-sync, quarterly plans, CIP events, nights log, vida de grupo log, and membership dates. — **DB Tables**: `stage_progress`, `requirement_progress`, `profiles`, `certificates`, `scout_notifications`, `calendar_events`, `quarterly_plans`
+- **outbox.ts (Offline Outbox Queue)** ([`src/lib/offline/outbox.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/offline/outbox.ts), `300 lines`): Generic ordered queue of pending operations (@scout_outbox_v1). run() executes now or queues; flush() replays in order when back online, on app focus and every 30 s; network errors wait, other errors retry 5 times then stay as failed. Migrates the old @scout_offline_sync_queue.
+- **net.ts (Connectivity & Supabase error helpers)** ([`src/lib/offline/net.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/offline/net.ts), `75 lines`): isOnline, isNetworkError, isRetryableError, must() (supabase-js returns {error} instead of throwing when offline), isDuplicateError, newId (UUID).
+- **readCache.ts (Network-first reads with local copy)** ([`src/lib/offline/readCache.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/offline/readCache.ts), `52 lines`): cachedQuery(key, fetcher, fallback): returns fresh data and stores a copy (@scout_rc_*), or the last copy when offline / timeout.
+- **offlineDocs.ts (PDF guides available offline)** ([`src/lib/offline/offlineDocs.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/offline/offlineDocs.ts), `112 lines`): Saves guide PDFs in Cache Storage scoutplan-docs-v1 (shared with public/sw.js); appPdfUrl() routes scouts.org.ve guides through the /asv-pdf/* proxy in vercel.json.
+- **programaService.ts (CRUD & Offline Sync for Programas Scout)** ([`src/lib/programaService.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/programaService.ts), `437 lines`): Manages scout_programas table and @scout_programas_list local cache with getProgramas, savePrograma, deletePrograma, and duplicatePrograma. — **DB Tables**: `scout_programas`
+- **storageService.ts (Canvas Image Compression & Supabase Storage)** ([`src/lib/storageService.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/storageService.ts), `137 lines`): Compresses images >800px via HTML5 Canvas and uploads to scout-files Supabase Storage bucket.
+- **docxProgramaGenerator.ts (OpenXML DOCX Generator for Programas)** ([`src/lib/docxProgramaGenerator.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/docxProgramaGenerator.ts), `341 lines`): Generates official ASV Word .docx files for ProgramaScout using JSZip and public/programa_assets/Programa_Template.docx.
+- **graphifyBridge.ts (Runtime Bridge window.__SCOUT_GRAPHIFY__)** ([`src/lib/graphifyBridge.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/graphifyBridge.ts), `214 lines`): Mounts window.__SCOUT_GRAPHIFY__ for Claude Code programmatic navigation, state inspection, and diagnostics.
+- **autoSaveService.ts (Debounced Form Draft Persistence)** ([`src/services/autoSaveService.ts`](file:///home/lya/proyectos/plan-progresivo/src/services/autoSaveService.ts), `126 lines`): Debounced 300ms draft auto-saver in AsyncStorage (@scout_autosave_*) for long forms.
+- **notificationService.ts (Multi-Target Notification Dispatcher)** ([`src/services/notificationService.ts`](file:///home/lya/proyectos/plan-progresivo/src/services/notificationService.ts), `619 lines`): Dispatches in-app, browser, and Web Push notifications to users, units, groups, or roles via scout_notifications. — **DB Tables**: `notifications`, `scout_notifications`
+- **presenceService.ts (Supabase Realtime Online Presence)** ([`src/services/presenceService.ts`](file:///home/lya/proyectos/plan-progresivo/src/services/presenceService.ts), `196 lines`): Tracks online/offline status of scouts and scouters via Supabase Realtime channel scout_presence_global and updates profiles.updated_at. — **DB Tables**: `profiles`
+- **fichaOrion84PdfGenerator.ts (Ficha Médica Orión 84 PDF Filler)** ([`src/lib/fichaOrion84PdfGenerator.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/fichaOrion84PdfGenerator.ts), `182 lines`): Fills public/FICHA_MEDICA_ORION84_Template.pdf (Canva, no AcroForm) by drawing text at measured cell coordinates; auto-shrinks/wraps with ellipsis; lazy-loads pdf-lib/dist bundle (the ESM build breaks Metro via tslib).
+- **webPushService.ts (VAPID Web Push Subscription & Dispatch)** ([`src/services/webPushService.ts`](file:///home/lya/proyectos/plan-progresivo/src/services/webPushService.ts), `173 lines`): Registers Service Worker PushManager subscriptions in push_subscriptions and invokes /api/send-push. — **DB Tables**: `push_subscriptions`
+
+### 3. Scout Progression, Stages, Catalog & Evidence Screens (`scout_progression_screens`)
+Auth screens (LoginScreen, RegisterScreen) and core Scout journey screens: ScoutDashboardScreen, PlanProgresivoScreen (Precursor -> Rover), StageDetailScreen, CatalogSelectorScreen, EspecialidadesScreen, ProfileScreen, and ScoutFullProfileScreen.
+
+- **LoginScreen.tsx (route: Login)** ([`src/screens/LoginScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/LoginScreen.tsx), `517 lines`): Email/password authentication, password recovery modal, and link to RegisterScreen.
+- **RegisterScreen.tsx (route: Register)** ([`src/screens/RegisterScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/RegisterScreen.tsx), `802 lines`): Multi-role user registration (Scout, Scouter, Jefe de Grupo, Comisionado) with Region, District, Group, and Unit selectors. — **DB Tables**: `profiles`
+- **ScoutDashboardScreen.tsx (route: Resumen)** ([`src/screens/ScoutDashboardScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/ScoutDashboardScreen.tsx), `823 lines`): Main Scout home dashboard: ScoutUserIcon greeting badge, progression summary, active stage progress bar, unit Rovers directory (directorio_grupo RPC), quick access cards, CarnetScoutModal, OnboardingGuideModal, and HelpFloatingFAB. — **DB Tables**: `calendar_events`, `scout_programas`, `quarterly_plans`
+- **PlanProgresivoScreen.tsx (route: PlanProgresivo)** ([`src/screens/PlanProgresivoScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/PlanProgresivoScreen.tsx), `193 lines`): Displays the 4 Rover/Clan progression stages (Precursor, Expedicionario, Descubridor, Fundador) with completion percentages and lock status.
+- **StageDetailScreen.tsx (route: StageDetail)** ([`src/screens/StageDetailScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/StageDetailScreen.tsx), `1507 lines`): Interactive checklist of stage requirements, linking to CatalogSelectorScreen, NochesAireLibreModal, VidaGrupoModal, CertificateUploadScreen, and stage review submission.
+- **CatalogSelectorScreen.tsx (route: CatalogSelector)** ([`src/screens/CatalogSelectorScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/CatalogSelectorScreen.tsx), `474 lines`): Searchable selector for official ASV catalog activities (básicas, opcionales, especialidades, cursos, ciclos) filtered by stage and requirement type.
+- **EspecialidadesScreen.tsx (route: Especialidades)** ([`src/screens/EspecialidadesScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/EspecialidadesScreen.tsx), `681 lines`): Interactive catalog of Scout Specialties across 6 categories and 3 levels (Bronce, Plata, Oro).
+- **ProfileScreen.tsx (route: Perfil)** ([`src/screens/ProfileScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/ProfileScreen.tsx), `745 lines`): Scout & Scouter personal profile editor: dual avatars (Uniformado/Casual), cédula, dates (birth, promise, join), membership expiration proposal, and digital Carnet Scout. — **DB Tables**: `profiles`
+- **ScoutFullProfileScreen.tsx (route: ScoutFullProfile)** ([`src/screens/ScoutFullProfileScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/ScoutFullProfileScreen.tsx), `581 lines`): 360-degree view of a Scout profile for Scouters/Jefes: progression stages, certificates, medical record summary, curriculum, and membership status. — **DB Tables**: `profiles`, `stage_progress`
+
+### 4. Scouter, Jefe de Grupo & Comisionado Territorial Dashboards (`leadership_territorial_screens`)
+Role-segmented management dashboards: ScouterDashboardScreen (unit management), ScouterReviewScreen (stage & requirement validation), JefeGrupoScreen (group supervision, membership & photo approval), and ComisionadoDashboardScreen (Distrital, Regional, Nacional & Admin hierarchy).
+
+- **ScouterDashboardScreen.tsx (route: ScouterDashboard)** ([`src/screens/ScouterDashboardScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/ScouterDashboardScreen.tsx), `1429 lines`): Unit leader dashboard: lists unit scouts with online presence, pending stage reviews, quarterly plan feedback, unit programs, and profile photo moderation. — **DB Tables**: `calendar_events`, `stage_progress`
+- **ScouterReviewScreen.tsx (route: ScouterReview)** ([`src/screens/ScouterReviewScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/ScouterReviewScreen.tsx), `540 lines`): Detailed requirement-by-requirement verification screen for a Scout with Approve/Reject stage actions and notification dispatch.
+- **JefeGrupoScreen.tsx (route: JefeDashboard)** ([`src/screens/JefeGrupoScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/JefeGrupoScreen.tsx), `1901 lines`): Group Chief dashboard: supervises all units (Manada, Tropa, Caminantes, Clan), approves/rejects membership expiration dates, moderates photos, and manages group calendar. — **DB Tables**: `profiles`, `stage_progress`
+- **ComisionadoDashboardScreen.tsx (route: ComisionadoDashboard)** ([`src/screens/ComisionadoDashboardScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/ComisionadoDashboardScreen.tsx), `716 lines`): Territorial hierarchy dashboard (Distrital, Regional, Nacional, Admin) with drill-down metrics by Region -> District -> Group -> Unit. — **DB Tables**: `profiles`
+
+### 5. Programas Scout, Plan Trimestral, Calendario & Drive Screens (`programs_planning_screens`)
+Operational planning screens: ProgramaScoutScreen, ProgramaScoutEditorScreen (schedule, 6 growth areas, SDGs, DOCX/PDF export), QuarterlyPlanScreen (individual & shared unit plans), CalendarScreen (unit/group/CIP events), ActivityCenterScreen, and TemporalDriveScreen.
+
+- **ProgramaScoutScreen.tsx (route: ProgramaScout)** ([`src/screens/ProgramaScoutScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/ProgramaScoutScreen.tsx), `1180 lines`): Lists unit & sinodal Scout Activity Programs with filters by unit, duplicate/delete actions, PDF preview modal, and Word .docx export.
+- **ProgramaScoutEditorScreen.tsx (route: ProgramaScoutEditor)** ([`src/screens/ProgramaScoutEditorScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/ProgramaScoutEditorScreen.tsx), `2838 lines`): Full editor for ProgramaScout: metadata, unit/sinodal selector, objectives, SDGs (17 ODS), 6 Growth Area achievement indicators, time-table schedule, and autoSaveService integration.
+- **QuarterlyPlanScreen.tsx (route: QuarterlyPlan)** ([`src/screens/QuarterlyPlanScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/QuarterlyPlanScreen.tsx), `2299 lines`): Quarterly planner (Trimestres I-IV) supporting individual Rover plans and shared unit plans linked to ProgramaScoutEditor.
+- **CalendarScreen.tsx (route: CalendarStandalone)** ([`src/screens/CalendarScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/CalendarScreen.tsx), `690 lines`): Interactive calendar (react-native-calendars) for unit, group, district, and CIP events with event creation and reminders. — **DB Tables**: `calendar_events`, `quarterly_plans`, `scout_programas`
+- **ActivityCenterScreen.tsx (route: CentroActividades)** ([`src/screens/ActivityCenterScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/ActivityCenterScreen.tsx), `284 lines`): Hub for CIP events, unit activities, and direct launch of activity programs.
+- **TemporalDriveScreen.tsx (route: TemporalDrive)** ([`src/screens/TemporalDriveScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/TemporalDriveScreen.tsx), `697 lines`): Photo evidence albums organized by activity/date, backed by Supabase Storage scout-files and @scout_temporal_drive_albums cache. — **DB Tables**: `calendar_events`
+
+### 6. Ficha Médica, Currículum Scout, Certificados & Offline Manuals (`documents_manuals_screens`)
+Official records & offline reference screens: FichaMedicaScreen (DOCX export), CurriculumScoutScreen (auto-synced with certificates & DOCX export), CertificateUploadScreen, NudosManualScreen (interactive SVG knot diagrams), CancioneroScreen, and DocumentosScreen.
+
+- **FichaMedicaScreen.tsx (route: FichaMedica)** ([`src/screens/FichaMedicaScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/FichaMedicaScreen.tsx), `817 lines`): Two-tab medical record: "Ficha Médica Scout" (ASV form, Word .docx export) and "Ficha Médica Orión 84" (FichaMedicaOrion84Form, PDF export). Both live in profiles.medical_data (Orión 84 under medical_data.orion84; saves merge, never overwrite each other).
+- **CurriculumScoutScreen.tsx (route: CurriculumScout)** ([`src/screens/CurriculumScoutScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/CurriculumScoutScreen.tsx), `1224 lines`): Official Scout Curriculum Vitae form auto-synced with uploaded certificates, awards, and progression stages, with Word .docx export.
+- **CertificateUploadScreen.tsx (route: CertificateUpload)** ([`src/screens/CertificateUploadScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/CertificateUploadScreen.tsx), `1355 lines`): Uploads and categorizes Scout certificates/courses to Supabase Storage and syncs them automatically into CurriculumScout.
+- **NudosManualScreen.tsx (route: NudosManual)** ([`src/screens/NudosManualScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/NudosManualScreen.tsx), `1906 lines`): 100% offline interactive manual of Scout knots, lashings (amarres), camping techniques, and visual SVG diagrams (ManualVisualDiagram).
+- **CancioneroScreen.tsx (route: Cancionero)** ([`src/screens/CancioneroScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/CancioneroScreen.tsx), `192 lines`): Offline Scout songbook categorized by unit (Manada, Tropa, Caminantes, Clan, Fogata) with search and chords/lyrics.
+- **DocumentosScreen.tsx (route: Documentos)** ([`src/screens/DocumentosScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/DocumentosScreen.tsx), `1054 lines`): Digital library of official ASV & WOSM PDF manuals and Mundialito guides stored in public/documentos/.
+
+### 7. Reusable Modals, Avatars, Notifications & Theme Components (`ui_modals_components`)
+21 shared UI components in src/components/: OfflineStatusBanner, PendingChangesModal, ActividadesPersonalesModal, ScoutQRCode, FichaMedicaOrion84Form, ScoutUserIcon, CarnetScoutModal, NochesAireLibreModal, VidaGrupoModal, ProgramaPdfPreviewModal, OnboardingGuideModal, NotificationCenterModal, NotificationHeaderBell, LiveNotificationToast, ThemeCustomizerModal, PWAInstallModal, HelpFloatingFAB, DualProfileAvatar, UserScoutAvatar, StageBadgeIcon, ManualVisualDiagram.
+
+- **CarnetScoutModal.tsx (Digital Scout ID Card)** ([`src/components/CarnetScoutModal.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/CarnetScoutModal.tsx), `249 lines`): Renders official digital Scout ID card with QR verification, membership status badge, and PDF/image export.
+- **NochesAireLibreModal.tsx (Camping Nights Logbook)** ([`src/components/NochesAireLibreModal.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/NochesAireLibreModal.tsx), `627 lines`): Modal logbook for recording camping nights (date, location, nights count, notes) toward stage requirements.
+- **VidaGrupoModal.tsx (Group Life Logbook)** ([`src/components/VidaGrupoModal.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/VidaGrupoModal.tsx), `659 lines`): Modal logbook for recording Vida de Grupo participations and council activities.
+- **ProgramaPdfPreviewModal.tsx (HTML/PDF Programa Preview)** ([`src/components/ProgramaPdfPreviewModal.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/ProgramaPdfPreviewModal.tsx), `833 lines`): Renders official ASV formatted preview of a ProgramaScout with html2pdf / print export.
+- **OnboardingGuideModal.tsx (Interactive Welcome Tour)** ([`src/components/OnboardingGuideModal.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/OnboardingGuideModal.tsx), `284 lines`): Step-by-step interactive onboarding guide for new Scouts and Scouters.
+- **NotificationCenterModal.tsx (Inbox & Announcements Modal)** ([`src/components/NotificationCenterModal.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/NotificationCenterModal.tsx), `756 lines`): Displays personal notifications and official system announcements with mark-as-read and clear actions.
+- **NotificationHeaderBell.tsx (Unread Bell Badge)** ([`src/components/NotificationHeaderBell.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/NotificationHeaderBell.tsx), `76 lines`): Header bell button with animated unread counter opening NotificationCenterModal.
+- **LiveNotificationToast.tsx (Floating In-App Toast)** ([`src/components/LiveNotificationToast.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/LiveNotificationToast.tsx), `140 lines`): Global top toast banner displaying incoming real-time notifications.
+- **ThemeCustomizerModal.tsx (Palette & Dark Mode Picker)** ([`src/components/ThemeCustomizerModal.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/ThemeCustomizerModal.tsx), `293 lines`): Modal allowing users to customize primary accent color and dark/light theme.
+- **PWAInstallModal.tsx (iOS/Android/Desktop Install Guide)** ([`src/components/PWAInstallModal.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/PWAInstallModal.tsx), `317 lines`): Triggers native beforeinstallprompt or displays step-by-step iOS Safari Add to Home Screen instructions.
+- **HelpFloatingFAB.tsx (Support & Bug Report FAB)** ([`src/components/HelpFloatingFAB.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/HelpFloatingFAB.tsx), `594 lines`): Floating action button submitting diagnostic bug reports to bug_reports table. — **DB Tables**: `bug_reports`
+- **DualProfileAvatar.tsx (Scout Uniform & Casual Avatar)** ([`src/components/DualProfileAvatar.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/DualProfileAvatar.tsx), `717 lines`): Switches and uploads dual profile photos (Uniformado vs Personal) with online status dot.
+- **UserScoutAvatar.tsx (Unit-Badged Avatar)** ([`src/components/UserScoutAvatar.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/UserScoutAvatar.tsx), `106 lines`): Renders user avatar with unit logo fallback and role badge.
+- **StageBadgeIcon.tsx (SVG Progression Stage Insignia)** ([`src/components/StageBadgeIcon.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/StageBadgeIcon.tsx), `53 lines`): Renders vector insignias for Precursor, Expedicionario, Descubridor, and Fundador.
+- **FichaMedicaOrion84Form.tsx (Ficha Médica Orión 84 Form)** ([`src/components/FichaMedicaOrion84Form.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/FichaMedicaOrion84Form.tsx), `351 lines`): Orión 84 medical form: prefilled from profile + Ficha Médica Scout, autosaved draft, saves to profiles.medical_data.orion84 and downloads the filled PDF.
+- **ScoutUserIcon.tsx (User Silhouette with Scout Neckerchief)** ([`src/components/ScoutUserIcon.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/ScoutUserIcon.tsx), `44 lines`): SVG user icon wearing a neckerchief in the unit color; shown above the name on the Scout home greeting.
+- **OfflineStatusBanner.tsx (Offline / Sync status pill)** ([`src/components/OfflineStatusBanner.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/OfflineStatusBanner.tsx), `178 lines`): Shows "Sin conexión · N", "Enviando…", "Todo enviado" or failed changes with retry; collapses to a small chip under the header so it never covers bottom action buttons.
+- **PendingChangesModal.tsx (Pending offline changes list)** ([`src/components/PendingChangesModal.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/PendingChangesModal.tsx), `238 lines`): Opened from OfflineStatusBanner: lists queued outbox operations in send order, failed ones with a friendly error, retry-all and discard-one actions.
+- **ActividadesPersonalesModal.tsx (Personal activities logbook)** ([`src/components/ActividadesPersonalesModal.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/ActividadesPersonalesModal.tsx), `353 lines`): Logbook for "Actividades Personales (3 de su propia creación)": name, date and description per activity, stored as certificates rows personal_<stage>_<req>; auto-checks the requirement at the required count.
+- **ScoutQRCode.tsx (Offline QR renderer)** ([`src/components/ScoutQRCode.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/ScoutQRCode.tsx), `42 lines`): Draws a QR code on-device with qrcode-generator + react-native-svg (replaces api.qrserver.com, works offline).
+- **ManualVisualDiagram.tsx (SVG Knot & Lashing Diagrams)** ([`src/components/ManualVisualDiagram.tsx`](file:///home/lya/proyectos/plan-progresivo/src/components/ManualVisualDiagram.tsx), `327 lines`): Renders step-by-step vector diagrams for knots, lashings, and camping setups.
+
+### 8. Supabase Schema (11 Tables), Static Catalogs & PWA/Serverless Config (`database_catalogs_pwa`)
+9 normative static catalogs (src/data/*, incl. fichaMedicaOrion84Layout PDF field map), 8 utility helpers (src/utils/*), 11 Supabase PostgreSQL tables, scout-files Storage bucket, 5 SQL migration scripts, Vercel Web Push serverless endpoint (api/send-push.js), DOCX templates, and PWA Service Worker (public/sw.js).
+
+- **progressionTemplate.ts (Stages & Requirements Catalog)** ([`src/data/progressionTemplate.ts`](file:///home/lya/proyectos/plan-progresivo/src/data/progressionTemplate.ts), `103 lines`): Defines Precursor, Expedicionario, Descubridor, and Fundador stage requirements.
+- **activitiesCatalog.ts (Official ASV Activities Catalog)** ([`src/data/activitiesCatalog.ts`](file:///home/lya/proyectos/plan-progresivo/src/data/activitiesCatalog.ts), `2307 lines`): Full catalog of ASV activities mapped to stages and requirement types.
+- **achievementIndicatorsData.ts (6 Growth Areas Indicators)** ([`src/data/achievementIndicatorsData.ts`](file:///home/lya/proyectos/plan-progresivo/src/data/achievementIndicatorsData.ts), `711 lines`): Indicators across Corporalidad, Creatividad, Carácter, Afectividad, Sociabilidad, and Espiritualidad for Manada, Tropa, Caminantes, and Clan.
+- **specialtiesData.ts (Scout Specialties Catalog)** ([`src/data/specialtiesData.ts`](file:///home/lya/proyectos/plan-progresivo/src/data/specialtiesData.ts), `675 lines`): Catalog of Scout specialties and requirements across Bronce, Plata, and Oro levels.
+- **documentsData.ts (PDF Manuals Metadata)** ([`src/data/documentsData.ts`](file:///home/lya/proyectos/plan-progresivo/src/data/documentsData.ts), `137 lines`): Metadata and file paths for official PDF guides in public/documentos/.
+- **sdgData.ts (17 UN Sustainable Development Goals)** ([`src/data/sdgData.ts`](file:///home/lya/proyectos/plan-progresivo/src/data/sdgData.ts), `28 lines`): 17 ODS definitions, colors, and icons for ProgramaScout.
+- **registrationBadgesData.ts (Annual Registration Badges)** ([`src/data/registrationBadgesData.ts`](file:///home/lya/proyectos/plan-progresivo/src/data/registrationBadgesData.ts), `35 lines`): Institutional registration badges and Mundialito programs.
+- **trimestresData.ts (Quarterly Planning Templates)** ([`src/data/trimestresData.ts`](file:///home/lya/proyectos/plan-progresivo/src/data/trimestresData.ts), `39 lines`): Quarter definitions and suggested milestones.
+- **fichaMedicaOrion84Layout.ts (Ficha Orión 84 Field Map)** ([`src/data/fichaMedicaOrion84Layout.ts`](file:///home/lya/proyectos/plan-progresivo/src/data/fichaMedicaOrion84Layout.ts), `174 lines`): Single source of truth for the Orión 84 form: field labels/types and exact PDF cell coordinates, plus titles printed on the template blank header bars.
+- **docxExporter.ts (Ficha Médica & Currículum DOCX Exporter)** ([`src/utils/docxExporter.ts`](file:///home/lya/proyectos/plan-progresivo/src/utils/docxExporter.ts), `138 lines`): Injects user data and images into Ficha Médica and Currículum Scout Word .docx templates.
+- **api/send-push.js (Vercel Web Push Serverless Function)** ([`api/send-push.js`](file:///home/lya/proyectos/plan-progresivo/api/send-push.js), `164 lines`): Dispatches encrypted RFC 8030 Web Push payloads using web-push and VAPID keys. — **DB Tables**: `profiles`, `push_subscriptions`
+- **public/sw.js (PWA Service Worker & Push Listener)** ([`public/sw.js`](file:///home/lya/proyectos/plan-progresivo/public/sw.js), `253 lines`): Caches static assets for offline operation and handles push/notificationclick events.
+- **supabase_master_fix_all_tables.sql (Master PostgreSQL Schema & RLS)** ([`supabase_master_fix_all_tables.sql`](file:///home/lya/proyectos/plan-progresivo/supabase_master_fix_all_tables.sql), `292 lines`): Idempotent SQL master script defining tables, columns, RLS policies, and storage buckets.
+- **DB Table: public.profiles** : Users, roles, units, groups, districts, regions, avatars, medical/curriculum JSON, nights/vida_grupo logs, and membership status.
+- **DB Table: public.stage_progress** : Stage status per scout (En Progreso, En Revision, Aprobada, Bloqueada).
+- **DB Table: public.requirement_progress** : Individual requirement completion records synced with offline queue.
+- **DB Table: public.certificates** : Uploaded certificates with title, category, level, file_url, and date.
+- **DB Table: public.scout_programas** : Unit & sinodal activity programs with schedule, indicators, and SDGs.
+- **DB Table: public.quarterly_plans** : Individual and shared unit quarterly plans with Scouter feedback.
+- **DB Table: public.calendar_events** : Calendar and CIP events by unit, group, and district.
+- **DB Table: public.scout_notifications** : Targeted in-app notifications by user, role, unit, or group.
+- **DB Table: public.notifications** : Direct sender-to-receiver notifications.
+- **DB Table: public.push_subscriptions** : Browser/PWA Web Push VAPID endpoints and keys per user.
+- **DB Table: public.bug_reports** : User feedback and bug reports submitted from HelpFloatingFAB.
+
+---
+
+## 2. Hyperedges (End-to-End Critical Data Flows)
+
+- **Offline-First Progression & Stage Approval Flow** (`he_offline_progression_sync`): Scout toggles requirements or selects catalog activities (queued in the @scout_outbox_v1 outbox if offline, replayed automatically when back online) -> submits stage for review -> Scouter approves/rejects in ScouterReviewScreen -> triggers real-time + Web Push notification.
+  - *Nodes*: `StageDetailScreen.tsx` -> `CatalogSelectorScreen.tsx` -> `dataService.ts` -> `ScouterReviewScreen.tsx` -> `db:requirement_progress` -> `db:stage_progress` -> `notificationService.ts`
+- **Programa Scout Creation, Indicators, SDGs & DOCX Export Pipeline** (`he_programa_scout_pipeline`): Leaders/Rovers design unit or sinodal programs selecting 6 Growth Area indicators and 17 UN SDGs -> auto-saved locally -> persisted to scout_programas -> exported to official ASV Word .docx or PDF.
+  - *Nodes*: `ProgramaScoutScreen.tsx` -> `ProgramaScoutEditorScreen.tsx` -> `programaService.ts` -> `achievementIndicatorsData.ts` -> `sdgData.ts` -> `docxProgramaGenerator.ts` -> `ProgramaPdfPreviewModal.tsx` -> `db:scout_programas`
+- **Certificate Upload & Automatic Curriculum Scout Synchronization** (`he_certificate_curriculum_sync`): Uploading a certificate compresses and stores the image in scout-files bucket, inserts into certificates table, and automatically synchronizes the achievement into the Scout Curriculum JSON for instant .docx export.
+  - *Nodes*: `CertificateUploadScreen.tsx` -> `storageService.ts` -> `dataService.ts` -> `CurriculumScoutScreen.tsx` -> `docxExporter.ts` -> `db:certificates` -> `db:profiles`
+- **Multi-Role National Territorial Hierarchy (Scout -> Unidad -> Grupo -> Distrito -> Región -> Nacional)** (`he_territorial_hierarchy`): Role-gated navigation and data scoping across all 7 organizational levels of the Asociación de Scouts de Venezuela.
+  - *Nodes*: `AuthContext.tsx` -> `AppNavigator.tsx` -> `ScoutDashboardScreen.tsx` -> `ScouterDashboardScreen.tsx` -> `JefeGrupoScreen.tsx` -> `ComisionadoDashboardScreen.tsx` -> `db:profiles`
+
+---
+
+## 3. E2E & Visual QA Matrix (`window.__SCOUT_GRAPHIFY__`)
+
+### QA-01: LoginScreen & RegisterScreen (routes: Login, Register)
+- **File**: `src/screens/LoginScreen.tsx` | **Command**: `window.__SCOUT_GRAPHIFY__.navigate('Login')`
+- **Focus**: Authentication, Role Registration & Instant Offline Profile Restore
+  - Verify LoginScreen renders institutional branding, email/password inputs, and password recovery modal.
+  - Navigate to Register (`window.__SCOUT_GRAPHIFY__.navigate("Register")`) and verify role selector (Scout, Scouter, Jefe de Grupo, Comisionado) and Region/District/Group/Unit fields.
+  - Verify AuthContext 800ms safety timer prevents infinite loading spinners when offline.
+
+### QA-02: ScoutDashboardScreen (route: Resumen)
+- **File**: `src/screens/ScoutDashboardScreen.tsx` | **Command**: `window.__SCOUT_GRAPHIFY__.navigate('Resumen')`
+- **Focus**: Scout Main Dashboard, Carnet Digital, Onboarding & Help FAB
+  - Verify active stage card, global progress percentage, and quick access grid render properly.
+  - Open CarnetScoutModal and verify unit colors, QR code, and membership status badge.
+  - Verify NotificationHeaderBell and HelpFloatingFAB open their respective modals.
+
+### QA-03: PlanProgresivoScreen & StageDetailScreen (routes: PlanProgresivo, StageDetail)
+- **File**: `src/screens/PlanProgresivoScreen.tsx` | **Command**: `window.__SCOUT_GRAPHIFY__.navigate('PlanProgresivo')`
+- **Focus**: 4 Progression Stages (Precursor -> Fundador), Requirements & Offline Sync Queue
+  - Verify Precursor, Expedicionario, Descubridor, and Fundador cards display accurate requirement counts.
+  - Navigate to StageDetail (`window.__SCOUT_GRAPHIFY__.navigate("StageDetail", { stageId: "precursor" })`).
+  - Test opening NochesAireLibreModal and VidaGrupoModal from stage requirements.
+
+### QA-04: CatalogSelectorScreen & EspecialidadesScreen (routes: CatalogSelector, Especialidades)
+- **File**: `src/screens/CatalogSelectorScreen.tsx` | **Command**: `window.__SCOUT_GRAPHIFY__.navigate('Especialidades')`
+- **Focus**: ASV Official Catalog Search & Specialties Levels (Bronce, Plata, Oro)
+  - Verify EspecialidadesScreen filters by category and displays Bronce, Plata, and Oro requirements.
+  - Verify CatalogSelectorScreen filters activities by stage and prevents duplicate selections across stages.
+
+### QA-05: ProgramaScoutScreen & ProgramaScoutEditorScreen (routes: ProgramaScout, ProgramaScoutEditor)
+- **File**: `src/screens/ProgramaScoutEditorScreen.tsx` | **Command**: `window.__SCOUT_GRAPHIFY__.navigate('ProgramaScout')`
+- **Focus**: Activity Programs CRUD, 6 Growth Areas, 17 SDGs, PDF Preview & DOCX Export
+  - Verify ProgramaScoutScreen lists programs with unit filter pills (Manada, Tropa, Caminantes, Clan, Sinodal).
+  - Open ProgramaScoutEditorScreen (`window.__SCOUT_GRAPHIFY__.navigate("ProgramaScoutEditor")`) and verify schedule rows, 6 growth area indicators, and SDG selector.
+  - Test ProgramaPdfPreviewModal and Word .docx export via docxProgramaGenerator.
+
+### QA-06: QuarterlyPlanScreen & CalendarScreen (routes: QuarterlyPlan, CalendarStandalone)
+- **File**: `src/screens/QuarterlyPlanScreen.tsx` | **Command**: `window.__SCOUT_GRAPHIFY__.navigate('QuarterlyPlan')`
+- **Focus**: Quarterly Planning (Trimestres I-IV), Shared Unit Plans & Calendar Events
+  - Verify QuarterlyPlanScreen switches across Trimestres I-IV and displays individual vs unit shared activities.
+  - Navigate to CalendarStandalone (`window.__SCOUT_GRAPHIFY__.navigate("CalendarStandalone")`) and verify monthly markers and event list.
+
+### QA-07: FichaMedicaScreen & CurriculumScoutScreen (routes: FichaMedica, CurriculumScout)
+- **File**: `src/screens/FichaMedicaScreen.tsx` | **Command**: `window.__SCOUT_GRAPHIFY__.navigate('FichaMedica')`
+- **Focus**: Medical Record, Auto-Synced Scout Curriculum & Official DOCX Template Export
+  - Verify FichaMedicaScreen sections (blood type, allergies, emergency contacts, signature) and Word .docx export.
+  - Switch to the "Ficha Médica Orión 84" tab: fields prefilled from profile, Sí/No grid, save, and "Descargar Ficha Orión 84 (PDF)" produces an application/pdf blob.
+  - Navigate to CurriculumScout (`window.__SCOUT_GRAPHIFY__.navigate("CurriculumScout")`) and verify uploaded certificates sync automatically.
+
+### QA-08: CertificateUploadScreen & TemporalDriveScreen (routes: CertificateUpload, TemporalDrive)
+- **File**: `src/screens/CertificateUploadScreen.tsx` | **Command**: `window.__SCOUT_GRAPHIFY__.navigate('CertificateUpload')`
+- **Focus**: Certificate Upload, Canvas Image Compression & Photo Evidence Albums
+  - Verify CertificateUploadScreen category/level pickers and certificate cards.
+  - Navigate to TemporalDrive (`window.__SCOUT_GRAPHIFY__.navigate("TemporalDrive")`) and verify album grid and photo viewer.
+
+### QA-09: NudosManualScreen, CancioneroScreen & DocumentosScreen (Offline Library)
+- **File**: `src/screens/NudosManualScreen.tsx` | **Command**: `window.__SCOUT_GRAPHIFY__.navigate('NudosManual')`
+- **Focus**: 100% Offline Technical Manuals, SVG Knot Diagrams, Songbook & PDF Guides
+  - Verify NudosManualScreen renders interactive SVG diagrams (ManualVisualDiagram) for knots and lashings.
+  - Navigate to Cancionero (`window.__SCOUT_GRAPHIFY__.navigate("Cancionero")`) and Documentos (`window.__SCOUT_GRAPHIFY__.navigate("Documentos")`).
+
+### QA-10: ScouterDashboardScreen, JefeGrupoScreen & ComisionadoDashboardScreen
+- **File**: `src/screens/ScouterDashboardScreen.tsx` | **Command**: `window.__SCOUT_GRAPHIFY__.navigate('ScouterDashboard')`
+- **Focus**: Leadership Dashboards, Requirement Validation, Membership Approval & Territorial Metrics
+  - Verify ScouterDashboardScreen displays unit scouts, online presence dots, and pending reviews.
+  - Verify JefeGrupoScreen membership expiration approval/rejection and ComisionadoDashboardScreen territorial drill-down.

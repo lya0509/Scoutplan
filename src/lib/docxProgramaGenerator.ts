@@ -29,54 +29,49 @@ export const docxProgramaGenerator = {
       // 2. Abrir con JSZip
       const zip = await JSZip.loadAsync(arrayBuffer);
 
-      // Inyectar el logo de Grupo Orion #84 a la izquierda (image3.jpeg)
-      try {
-        const orionRes = await fetch('/programa_assets/orion.png');
-        if (orionRes.ok) {
-          const orionBuf = await orionRes.arrayBuffer();
-          zip.file('word/media/image3.jpeg', orionBuf);
+      // Logos: cada imagen se guarda con SU extensión real (antes un PNG iba dentro de
+      // image3.jpeg y un JPG dentro de image4.png) y se actualiza la relación en el .rels.
+      const relsPath = 'word/_rels/document.xml.rels';
+      let relsXml = (await zip.file(relsPath)?.async('string')) || '';
+      const injectImage = async (oldTarget: string, url: string) => {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) return;
+          const buf = new Uint8Array(await res.arrayBuffer());
+          const isPng = buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+          const isJpeg = buf[0] === 0xff && buf[1] === 0xd8;
+          if (!isPng && !isJpeg) return;
+          const newTarget = oldTarget.replace(/\.(png|jpe?g)$/i, isPng ? '.png' : '.jpeg');
+          if (newTarget !== oldTarget) {
+            zip.remove(`word/${oldTarget}`);
+            relsXml = relsXml.split(`Target="${oldTarget}"`).join(`Target="${newTarget}"`);
+          }
+          zip.file(`word/${newTarget}`, buf);
+        } catch (e) {
+          console.warn('Logo por defecto (no se pudo cargar):', url);
         }
-      } catch (e) {
-        console.warn('Logo Orion cargado por defecto');
-      }
+      };
 
-      // Inyectar el logo de la unidad a la derecha (image4.png)
-      try {
-        let logoFile = '/programa_assets/logo_clan.jpg';
-        const u = (programa.unit as string || '').toLowerCase();
-        if (u === 'manada') logoFile = '/programa_assets/logo_manada.jpg';
-        else if (u === 'tropa') logoFile = '/programa_assets/logo_tropa.png';
-        else if (u === 'caminantes' || u === 'comunidad') logoFile = '/programa_assets/logo_caminantes.png';
-        
-        const logoRes = await fetch(logoFile);
-        if (logoRes.ok) {
-          const logoBuf = await logoRes.arrayBuffer();
-          zip.file('word/media/image4.png', logoBuf);
-        }
-      } catch (e) {
-        console.warn('Logo de unidad cargado por defecto');
-      }
+      const u = (programa.unit as string || '').toLowerCase();
+      let unitLogo = '/programa_assets/logo_clan.jpg';
+      if (u === 'manada') unitLogo = '/programa_assets/logo_manada.jpg';
+      else if (u === 'tropa') unitLogo = '/programa_assets/logo_tropa.png';
+      else if (u === 'caminantes' || u === 'comunidad') unitLogo = '/programa_assets/logo_caminantes.png';
 
-      // Inyectar el logo Scout Mundial WOSM a la derecha (image5.png)
-      try {
-        const scoutRes = await fetch('/programa_assets/logo_scout.png');
-        if (scoutRes.ok) {
-          const scoutBuf = await scoutRes.arrayBuffer();
-          zip.file('word/media/image5.png', scoutBuf);
-        }
-      } catch (e) {
-        console.warn('Logo Scout cargado por defecto');
-      }
+      await injectImage('media/image3.jpeg', '/programa_assets/orion.png');       // Grupo Orión #84 (izquierda)
+      await injectImage('media/image4.png', unitLogo);                            // Logo de la unidad (derecha)
+      await injectImage('media/image5.png', '/programa_assets/logo_scout.png');   // Scout Mundial
+      await injectImage('media/image6.png', '/programa_assets/registro_2026.png'); // Insignia de registro 2026
+      zip.file(relsPath, relsXml);
 
-      // Inyectar insignia de registro 2026 oficial en el Word (image6.png)
-      try {
-        const badgeRes = await fetch('/programa_assets/registro_2026.png');
-        if (badgeRes.ok) {
-          const badgeBuf = await badgeRes.arrayBuffer();
-          zip.file('word/media/image6.png', badgeBuf);
+      // La plantilla trae una miniatura de vista previa de 1,8 MB que no aparece en el
+      // documento: se quita para que el Word pese la mitad.
+      if (zip.file('docProps/thumbnail.emf')) {
+        zip.remove('docProps/thumbnail.emf');
+        const rootRels = await zip.file('_rels/.rels')?.async('string');
+        if (rootRels) {
+          zip.file('_rels/.rels', rootRels.replace(/<Relationship[^>]*Target="docProps\/thumbnail\.emf"[^>]*\/>/g, ''));
         }
-      } catch (e) {
-        console.warn('Insignia 2026 cargada por defecto');
       }
 
       // 3. Modificar document.xml con los datos del programa
@@ -109,6 +104,7 @@ export const docxProgramaGenerator = {
               <w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/>
             </w:tblBorders>
           </w:tblPr>
+          <w:tblGrid><w:gridCol w:w="1800"/><w:gridCol w:w="2300"/><w:gridCol w:w="2500"/><w:gridCol w:w="2000"/><w:gridCol w:w="2423"/></w:tblGrid>
           <w:tr>
             <w:tc><w:tcPr><w:tcW w:w="1800" w:type="dxa"/><w:shd w:fill="B2A1C7"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Fecha</w:t></w:r></w:p></w:tc>
             <w:tc><w:tcPr><w:tcW w:w="2300" w:type="dxa"/><w:shd w:fill="B2A1C7"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Lugar:</w:t></w:r></w:p></w:tc>
@@ -142,6 +138,7 @@ export const docxProgramaGenerator = {
               <w:right w:val="single" w:sz="6" w:space="0" w:color="000000"/>
             </w:tblBorders>
           </w:tblPr>
+          <w:tblGrid><w:gridCol w:w="11023"/></w:tblGrid>
           <w:tr>
             <w:tc>
               <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
@@ -170,6 +167,7 @@ export const docxProgramaGenerator = {
               <w:right w:val="single" w:sz="6" w:space="0" w:color="000000"/>
             </w:tblBorders>
           </w:tblPr>
+          <w:tblGrid><w:gridCol w:w="11023"/></w:tblGrid>
           <w:tr>
             <w:tc>
               <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
@@ -203,6 +201,7 @@ export const docxProgramaGenerator = {
               <w:right w:val="single" w:sz="6" w:space="0" w:color="000000"/>
             </w:tblBorders>
           </w:tblPr>
+          <w:tblGrid><w:gridCol w:w="11023"/></w:tblGrid>
           <w:tr>
             <w:tc>
               <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
@@ -232,6 +231,7 @@ export const docxProgramaGenerator = {
               <w:right w:val="single" w:sz="6" w:space="0" w:color="000000"/>
             </w:tblBorders>
           </w:tblPr>
+          <w:tblGrid><w:gridCol w:w="11023"/></w:tblGrid>
           <w:tr>
             <w:tc>
               <w:tcPr><w:tcW w:w="11023" w:type="dxa"/></w:tcPr>
@@ -280,6 +280,7 @@ export const docxProgramaGenerator = {
               <w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/>
             </w:tblBorders>
           </w:tblPr>
+          <w:tblGrid><w:gridCol w:w="1800"/><w:gridCol w:w="4623"/><w:gridCol w:w="2300"/><w:gridCol w:w="2300"/></w:tblGrid>
           <w:tr>
             <w:tc><w:tcPr><w:tcW w:w="1800" w:type="dxa"/><w:shd w:fill="B2A1C7"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Horario (AM - PM)</w:t></w:r></w:p></w:tc>
             <w:tc><w:tcPr><w:tcW w:w="4623" w:type="dxa"/><w:shd w:fill="B2A1C7"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Actividad / Descripción</w:t></w:r></w:p></w:tc>
@@ -299,17 +300,15 @@ export const docxProgramaGenerator = {
       const tablesMatch = docXml.match(tableRegex);
 
       if (tablesMatch && tablesMatch.length >= 6) {
-        docXml = docXml
-          .replace(tablesMatch[0], table1Xml)
-          .replace(tablesMatch[1], table2Xml)
-          .replace(tablesMatch[2], table3Xml)
-          .replace(tablesMatch[3], table4Xml)
-          .replace(tablesMatch[4], table5Xml)
-          .replace(tablesMatch[5], table6Xml);
+        // Reemplazo con función: si el texto del usuario trae "$&" o "$'" no se interpreta
+        const newTables = [table1Xml, table2Xml, table3Xml, table4Xml, table5Xml, table6Xml];
+        newTables.forEach((tbl, idx) => {
+          docXml = docXml!.replace(tablesMatch[idx], () => tbl);
+        });
       }
 
       // Reemplazar título principal
-      docXml = docXml.replace(/Programa de Actividades de la Unidad del Clan/g, `Programa de Actividades de la Unidad ${escapeXml(unitLabel)}`);
+      docXml = docXml.replace(/Programa de Actividades de la Unidad del Clan/g, () => `Programa de Actividades de la Unidad ${escapeXml(unitLabel)}`);
 
       // Guardar el XML modificado en el zip
       zip.file('word/document.xml', docXml);
@@ -320,7 +319,9 @@ export const docxProgramaGenerator = {
       const fileUnitLabel = programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
         ? `${programa.selectedUnits.map(u => u.toUpperCase()).join('_')}_SINODAL`
         : programa.unit.toUpperCase();
-      const filename = `Programa_${fileUnitLabel}_${cleanTitle}_${cleanDate}.docx`;
+      // Nombre de archivo sin caracteres raros (antes salía "&amp;" si el título tenía "&")
+      const safeName = (txt: string) => (txt || '').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, '_').slice(0, 80);
+      const filename = `Programa_${fileUnitLabel}_${safeName(programa.title)}_${safeName(programa.date || 'sin_fecha')}.docx`;
 
       if (typeof window !== 'undefined') {
         const link = document.createElement('a');

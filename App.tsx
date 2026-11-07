@@ -5,12 +5,16 @@ import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { NotificationProvider } from './src/context/NotificationContext';
 import LiveNotificationToast from './src/components/LiveNotificationToast';
+import OfflineStatusBanner from './src/components/OfflineStatusBanner';
 import AppNavigator from './src/navigation/AppNavigator';
 import { StatusBar } from 'expo-status-bar';
-import { dataService } from './src/lib/dataService';
+import { dataService } from './src/lib/dataService'; // registra los manejadores de la cola offline
+import { outbox } from './src/lib/offline/outbox';
+import { initGraphifyBridge } from './src/lib/graphifyBridge';
 
 export default function App() {
   useEffect(() => {
+    initGraphifyBridge();
     // 1. Registro de Service Worker para PWA (Instalación y soporte offline inmediato)
     if (Platform.OS === 'web' && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       const registerSW = () => {
@@ -32,23 +36,12 @@ export default function App() {
         window.addEventListener('load', registerSW);
       }
 
-      // 2. Escuchar reconexión a Internet para sincronizar requisitos pendientes
-      const handleOnline = async () => {
-        console.log('📶 Conexión restablecida. Sincronizando requisitos pendientes...');
-        const res = await dataService.syncPendingRequirements();
-        if (res.synced > 0) {
-          console.log(`✅ ${res.synced} requisitos sincronizados con Supabase.`);
-        }
-      };
-
-      window.addEventListener('online', handleOnline);
-      // Intentar sincronización inicial al cargar
-      dataService.syncPendingRequirements();
-
-      return () => {
-        window.removeEventListener('online', handleOnline);
-      };
     }
+
+    // 2. Cola offline: envía lo hecho sin internet al volver la conexión, al volver
+    //    a la app y cada 30 s (ver src/lib/offline/outbox.ts)
+    void dataService; // asegura que los manejadores de la cola estén registrados
+    outbox.startAutoSync();
   }, []);
 
   return (
@@ -58,6 +51,7 @@ export default function App() {
           <StatusBar style="auto" />
           <LiveNotificationToast />
           <AppNavigator />
+          <OfflineStatusBanner />
         </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>

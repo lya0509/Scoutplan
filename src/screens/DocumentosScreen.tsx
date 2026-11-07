@@ -24,7 +24,10 @@ import {
   FileCode,
   ArrowLeft,
   Globe,
-  Award
+  Award,
+  WifiOff,
+  CloudDownload,
+  Trash2
 } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -39,6 +42,15 @@ import {
 import { showAlert } from '../utils/alert';
 import { navigateBackOrHome } from '../utils/navigationHelper';
 import HelpFloatingFAB from '../components/HelpFloatingFAB';
+import {
+  appPdfUrl,
+  getOfflineDocUrls,
+  isDocOffline,
+  saveDocOffline,
+  removeDocOffline,
+  saveDocsOffline,
+} from '../lib/offline/offlineDocs';
+import { isOnline } from '../lib/offline/net';
 
 const CATEGORIES = [
   { id: 'todos', label: 'Todos los Documentos', icon: Layers },
@@ -68,6 +80,83 @@ export default function DocumentosScreen({ navigation, route }: any) {
 
   // Soporte universal para gestos de retroceso en Android, iOS y PWA
   useModalBackHandler(viewModalVisible, () => setViewModalVisible(false));
+
+  // --- Guías disponibles sin internet ---
+  const offlineSupported = Platform.OS === 'web' && typeof window !== 'undefined' && 'caches' in window;
+  const [offlineSet, setOfflineSet] = useState<Set<string>>(new Set());
+  const [busyUrls, setBusyUrls] = useState<Set<string>>(new Set());
+  const [bulk, setBulk] = useState<{ done: number; total: number } | null>(null);
+  const stopBulkRef = React.useRef(false);
+
+  const allPdfUrls = useMemo(
+    () => [...SCOUT_DOCUMENTS.map(d => d.pdfUrl), ...SCOUT_SPECIALTIES.map(s => s.pdfUrl)].filter(Boolean),
+    []
+  );
+  const offlineCount = allPdfUrls.filter(u => isDocOffline(offlineSet, u)).length;
+
+  const refreshOffline = async () => setOfflineSet(await getOfflineDocUrls());
+  useEffect(() => { if (offlineSupported) refreshOffline(); }, []);
+
+  const toggleOffline = async (url: string) => {
+    if (busyUrls.has(url)) return;
+    const saved = isDocOffline(offlineSet, url);
+    if (!saved && !isOnline()) {
+      showAlert('Sin conexión', 'Necesitas internet para descargar la guía. Cuando la tengas guardada podrás abrirla sin conexión.');
+      return;
+    }
+    setBusyUrls(prev => new Set(prev).add(url));
+    try {
+      if (saved) await removeDocOffline(url);
+      else await saveDocOffline(url);
+    } catch (e: any) {
+      showAlert('No se pudo descargar', e?.message || 'Inténtalo de nuevo con internet.');
+    } finally {
+      setBusyUrls(prev => { const n = new Set(prev); n.delete(url); return n; });
+      refreshOffline();
+    }
+  };
+
+  const downloadAllOffline = async () => {
+    if (bulk) {
+      stopBulkRef.current = true;
+      return;
+    }
+    if (!isOnline()) {
+      showAlert('Sin conexión', 'Conéctate a internet (de preferencia Wi-Fi) para descargar las guías.');
+      return;
+    }
+    stopBulkRef.current = false;
+    setBulk({ done: 0, total: 0 });
+    const res = await saveDocsOffline(allPdfUrls, (done, total) => setBulk({ done, total }), () => stopBulkRef.current);
+    setBulk(null);
+    await refreshOffline();
+    if (res.failed.length > 0) {
+      showAlert('Descarga incompleta', `${res.failed.length} guía(s) no se pudieron descargar. Vuelve a intentarlo más tarde.`);
+    } else if (!stopBulkRef.current) {
+      showAlert('¡Guías descargadas!', 'Ya puedes abrir todas las guías sin internet.');
+    }
+  };
+
+  const renderOfflineToggle = (url: string) => {
+    if (!offlineSupported || !url) return null;
+    const saved = isDocOffline(offlineSet, url);
+    const busy = busyUrls.has(url);
+    return (
+      <TouchableOpacity
+        onPress={() => toggleOffline(url)}
+        disabled={busy}
+        accessibilityRole="button"
+        accessibilityLabel={saved ? 'Disponible sin internet. Toca para quitar la descarga' : 'Guardar esta guía para usarla sin internet'}
+        style={[styles.offlineToggle, { borderColor: saved ? '#16a34a55' : theme.border, backgroundColor: saved ? (isDarkMode ? '#052e16' : '#f0fdf4') : 'transparent' }]}
+      >
+        {saved ? <CheckCircle size={14} color="#16a34a" /> : <CloudDownload size={14} color={theme.subText} />}
+        <Text style={[styles.offlineToggleText, { color: saved ? '#16a34a' : theme.subText }]}>
+          {busy ? 'Descargando…' : saved ? 'Disponible sin internet' : 'Guardar para usar sin internet'}
+        </Text>
+        {saved && !busy && <Trash2 size={13} color={theme.subText} style={{ marginLeft: 'auto' }} />}
+      </TouchableOpacity>
+    );
+  };
 
   const filteredDocs = useMemo(() => {
     return SCOUT_DOCUMENTS.filter(doc => {
@@ -115,14 +204,14 @@ export default function DocumentosScreen({ navigation, route }: any) {
   const handleDownloadDoc = (doc: ScoutDocument) => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       const a = document.createElement('a');
-      a.href = doc.pdfUrl;
+      a.href = appPdfUrl(doc.pdfUrl);
       a.download = `${doc.title}.pdf`;
       a.target = '_blank';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
     } else {
-      Linking.openURL(doc.pdfUrl).catch(() => {
+      Linking.openURL(appPdfUrl(doc.pdfUrl)).catch(() => {
         showAlert('Descarga', 'Abriendo documento en el navegador...');
       });
     }
@@ -131,14 +220,14 @@ export default function DocumentosScreen({ navigation, route }: any) {
   const handleDownloadSpecialty = (spec: ScoutSpecialty) => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       const a = document.createElement('a');
-      a.href = spec.pdfUrl;
+      a.href = appPdfUrl(spec.pdfUrl);
       a.download = `Especialidad_${spec.title.replace(/\s+/g, '_')}.pdf`;
       a.target = '_blank';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
     } else {
-      Linking.openURL(spec.pdfUrl).catch(() => {
+      Linking.openURL(appPdfUrl(spec.pdfUrl)).catch(() => {
         showAlert('Descarga', 'Abriendo guía oficial en el navegador...');
       });
     }
@@ -198,6 +287,44 @@ export default function DocumentosScreen({ navigation, route }: any) {
             )}
           </View>
         </View>
+
+        {/* Panel: guías sin internet */}
+        {offlineSupported && (
+          <View style={{ paddingHorizontal: 16, marginBottom: 14 }}>
+            <View style={[styles.offlinePanel, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={[styles.offlinePanelIcon, { backgroundColor: primaryColor + '18' }]}>
+                  <WifiOff size={18} color={primaryColor} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '800', color: theme.text }}>Guías sin internet</Text>
+                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 1 }}>
+                    {offlineCount} de {allPdfUrls.length} guardadas en este teléfono
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={downloadAllOffline}
+                  accessibilityRole="button"
+                  style={[styles.offlinePanelBtn, { backgroundColor: bulk ? (isDarkMode ? '#3f3f46' : '#e5e7eb') : primaryColor }]}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: bulk ? theme.text : '#ffffff' }}>
+                    {bulk ? 'Detener' : offlineCount >= allPdfUrls.length ? 'Actualizar' : 'Descargar todas'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {bulk && (
+                <View style={{ marginTop: 10 }}>
+                  <View style={[styles.progressTrack, { backgroundColor: isDarkMode ? '#27272a' : '#e5e7eb' }]}>
+                    <View style={[styles.progressFill, { backgroundColor: primaryColor, width: `${bulk.total ? Math.round((bulk.done / bulk.total) * 100) : 0}%` as any }]} />
+                  </View>
+                  <Text style={{ fontSize: 11, color: theme.subText, marginTop: 4 }}>
+                    Descargando {bulk.done} de {bulk.total}… (unos 56 MB en total, mejor con Wi-Fi)
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
 
         {/* Banner Acceso a Especialidades Oficiales */}
         <View style={{ paddingHorizontal: 16, marginBottom: 14 }}>
@@ -423,6 +550,7 @@ export default function DocumentosScreen({ navigation, route }: any) {
                       <Text style={styles.downloadBtnText}>Descargar PDF</Text>
                     </TouchableOpacity>
                   </View>
+                  {renderOfflineToggle(spec.pdfUrl)}
                 </View>
               ))
             )
@@ -507,6 +635,7 @@ export default function DocumentosScreen({ navigation, route }: any) {
                     <Text style={styles.downloadBtnText}>Descargar PDF</Text>
                   </TouchableOpacity>
                 </View>
+                {renderOfflineToggle(doc.pdfUrl)}
               </View>
             ))
           )}
@@ -536,7 +665,7 @@ export default function DocumentosScreen({ navigation, route }: any) {
             <View style={[styles.viewerContent, { backgroundColor: isDarkMode ? '#09090b' : '#f8fafc' }]}>
               {Platform.OS === 'web' && selectedDoc ? (
                 <iframe
-                  src={selectedDoc.pdfUrl}
+                  src={appPdfUrl(selectedDoc.pdfUrl)}
                   title={selectedDoc.title}
                   style={{
                     width: '100%',
@@ -592,6 +721,49 @@ export default function DocumentosScreen({ navigation, route }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  offlinePanel: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+  },
+  offlinePanelIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  offlinePanelBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    minHeight: 36,
+    justifyContent: 'center',
+  },
+  progressTrack: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 6,
+    borderRadius: 3,
+  },
+  offlineToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    minHeight: 36,
+  },
+  offlineToggleText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   headerBanner: {
     padding: 24,

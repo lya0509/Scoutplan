@@ -481,9 +481,11 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
     const fileName = `TRIMESTRE_${unitName}_${selectedQuarter}_${selectedYear}.xls`;
 
     const e = educationalAreas;
-    const cleanGenObj = (generalObjective || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const cleanGoals = trimestreGoalsList.filter(s => s.trim()).join('. ').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const cleanSpecifics = specificObjectivesList.filter(s => s.trim()).join('. ').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    // Todo texto escrito por el usuario se escapa: un "&" o "<" rompía la celda del Excel
+    const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const cleanGenObj = esc(generalObjective || '');
+    const cleanGoals = esc(trimestreGoalsList.filter(s => s.trim()).join('. '));
+    const cleanSpecifics = esc(specificObjectivesList.filter(s => s.trim()).join('. '));
 
     let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
@@ -513,7 +515,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
   </tr>
   <tr>
     <td colspan="2" class="cell-bold">Elaborado por:</td>
-    <td colspan="11">${elaboratedBy || user?.name || ''}</td>
+    <td colspan="11">${esc(elaboratedBy || user?.name || '')}</td>
   </tr>
   <tr style="height: 60px;">
     <td colspan="6" style="vertical-align: top; padding: 8px;"><b>Metas del trimestre:</b> ${cleanGoals}</td>
@@ -581,11 +583,11 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
           if (idx === 0) {
             html += `<td rowspan="${mActs.length}" class="cell-center cell-bold" style="font-size: 12pt; background-color: #fafafa;">${m.toLowerCase()}</td>`;
           }
-          html += `<td class="cell-center">${a.day || ''}</td>
-            <td colspan="4" class="cell-center">${a.activity || ''}</td>
-            <td colspan="3" class="cell-center">${a.place || ''}</td>
-            <td colspan="2" class="cell-center">${a.responsible || ''}</td>
-            <td>${a.planB || ''}</td>
+          html += `<td class="cell-center">${esc(a.day || '')}</td>
+            <td colspan="4" class="cell-center">${esc(a.activity || '')}</td>
+            <td colspan="3" class="cell-center">${esc(a.place || '')}</td>
+            <td colspan="2" class="cell-center">${esc(a.responsible || '')}</td>
+            <td>${esc(a.planB || '')}</td>
             <td></td>
           </tr>`;
         });
@@ -912,7 +914,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
     isDirtyRef.current = false;
 
     try {
-      await dataService.saveQuarterlyPlan({
+      const saved: any = await dataService.saveQuarterlyPlan({
         scout_id: user.id,
         group_name: user.group_name || 'Grupo Scout Orión #84',
         unit: targetUnit,
@@ -925,6 +927,13 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
         educational_areas: educationalAreas,
         monthly_activities: activities
       });
+
+      if (saved?._pending) {
+        // Sin red: quedó en la cola y se envía solo (el aviso a la unidad irá cuando haya conexión)
+        setScouterEditUnlocked(false);
+        showAlert('Plan guardado en el teléfono', `No hay conexión ahora. El Plan Trimestral ${selectedQuarter} se enviará automáticamente cuando tengas internet.`);
+        return;
+      }
 
       // Enviar notificación instantánea en vivo a todos los miembros de la unidad
       notificationService.sendNotification({

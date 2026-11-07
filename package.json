@@ -15,6 +15,7 @@
     "jszip": "^3.10.1",
     "lucide-react-native": "^1.18.0",
     "pdf-lib": "^1.17.1",
+    "qrcode-generator": "^2.0.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.85.3",
@@ -38,7 +39,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build:web": "expo export -p web && node -e \"const fs=require('fs'); fs.copyFileSync('public/sw.js','dist/sw.js'); fs.copyFileSync('public/manifest.json','dist/manifest.json');\""
+    "build:web": "expo export -p web && node scripts/build-sw.js",
+    "graphify": "node scripts/graphify.js"
   },
   "private": true
 }

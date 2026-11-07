@@ -1,204 +1,190 @@
-// Service Worker para Plan Progresivo Scout (PWA 100% Offline & Standalone)
-const CACHE_NAME = 'scoutplan-pwa-v10';
+// Service Worker de Plan Progresivo Scout (PWA offline)
+//
+// - Al compilar (`npm run build:web` → scripts/build-sw.js) se inyecta la lista de
+//   archivos de la app (JS, imágenes, plantillas .docx/.pdf) y un BUILD_ID. Así todo
+//   lo necesario para trabajar sin internet queda descargado desde la primera visita.
+// - Las guías PDF van en su propia caché (DOCS_CACHE), que NO se borra al actualizar.
+// - Las llamadas a Supabase NO se interceptan: si no hay red, la app recibe el error
+//   y usa su copia local (ver src/lib/offline/). Inventar respuestas aquí la confundía.
 
-const CORE_STATIC_ASSETS = [
-  '/',
-  '/manifest.json',
-  '/favicon.png',
-  '/favicon.ico',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/apple-touch-icon.png',
-  '/programa_assets/asv_header.png',
-  '/programa_assets/asv_watermark.png',
-  '/programa_assets/logo_caminantes.png',
-  '/programa_assets/logo_manada.jpg',
-  '/programa_assets/logo_tropa.png',
-  '/programa_assets/logo_clan.jpg',
-  '/programa_assets/logo_scout.png',
-  '/programa_assets/orion.png',
-  '/programa_assets/registro_2026.png'
-];
+const BUILD_ID = '__BUILD_ID__';
+const PRECACHE = self.__PRECACHE__ || [];
+const IS_DEV = BUILD_ID.indexOf('__') === 0; // sw.js sin procesar (expo start)
 
-// 1. Instalación: Precarga HTML, bundles de JavaScript de Expo y assets esenciales
+const APP_CACHE = 'scoutplan-app-' + BUILD_ID;
+const DOCS_CACHE = 'scoutplan-docs-v1';
+const RUNTIME_CACHE = 'scoutplan-runtime-v1';
+const RUNTIME_MAX_ENTRIES = 80;
+
+const DOC_PATH = /^\/(documentos|asv-pdf)\//;
+
+// 1. Instalación: descargar la app completa
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    (async () => {
-      console.log('[SW] Instalando Service Worker PWA v10...');
-      const cache = await caches.open(CACHE_NAME);
-
-      // A. Pre-cachear página principal y descubrir dinámicamente el bundle JS activo de Expo
-      try {
-        const rootResponse = await fetch('/', { cache: 'no-cache' });
-        if (rootResponse && rootResponse.status === 200) {
-          const htmlText = await rootResponse.clone().text();
-          // Guardar el HTML bajo / y bajo /index.html
-          await cache.put('/', rootResponse.clone());
-          await cache.put('/index.html', rootResponse.clone());
-
-          // Extraer los scripts <script src="..."> del HTML para pre-cachear el bundle JS de Expo
-          const scriptMatches = [...htmlText.matchAll(/src=["']([^"']+\.js)["']/g)];
-          for (const match of scriptMatches) {
-            let scriptUrl = match[1];
-            if (!scriptUrl.startsWith('http') && !scriptUrl.startsWith('/')) {
-              scriptUrl = '/' + scriptUrl;
-            }
-            try {
-              console.log('[SW] Pre-cacheando bundle JS de Expo:', scriptUrl);
-              const scriptRes = await fetch(scriptUrl);
-              if (scriptRes && scriptRes.status === 200) {
-                await cache.put(scriptUrl, scriptRes);
-              }
-            } catch (scriptErr) {
-              console.warn('[SW] No se pudo pre-cachear script:', scriptUrl, scriptErr);
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('[SW] Error obteniendo root HTML durante install:', e);
-      }
-
-      // B. Pre-cachear assets estáticos conocidos
-      for (const asset of CORE_STATIC_ASSETS) {
+  event.waitUntil((async () => {
+    const cache = await caches.open(APP_CACHE);
+    const urls = ['/', '/index.html', ...PRECACHE];
+    // De a pocos y tolerando fallos: un archivo que falle no debe impedir la instalación
+    const BATCH = 6;
+    for (let i = 0; i < urls.length; i += BATCH) {
+      await Promise.all(urls.slice(i, i + BATCH).map(async (url) => {
         try {
-          const res = await fetch(asset);
-          if (res && res.status === 200) {
-            await cache.put(asset, res);
-          }
+          const res = await fetch(url, { cache: 'reload' });
+          if (res && res.ok) await cache.put(url, res);
         } catch (err) {
-          console.warn('[SW] Error pre-cacheando asset:', asset, err);
+          console.warn('[SW] No se pudo pre-descargar', url, err);
         }
-      }
-    })()
-  );
+      }));
+    }
+  })());
   self.skipWaiting();
 });
 
-// 2. Activación: Limpia cachés antiguas y toma el control de todos los clientes
+// 2. Activación: borrar versiones viejas de la app (las guías descargadas se conservan)
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            console.log('[SW] Eliminando caché antigua:', cache);
-            return caches.delete(cache);
-          }
-        })
-      );
-    })
-  );
-  self.clients.claim();
+  event.waitUntil((async () => {
+    const names = await caches.keys();
+    await Promise.all(names.map((name) => {
+      const isOldApp = (name.startsWith('scoutplan-app-') && name !== APP_CACHE) || name.startsWith('scoutplan-pwa-');
+      return isOldApp ? caches.delete(name) : undefined;
+    }));
+    await self.clients.claim();
+  })());
 });
 
-// 3. Interceptor de Peticiones (Estrategia 100% Offline Garantizada)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+async function trimCache(name, max) {
+  const cache = await caches.open(name);
+  const keys = await cache.keys();
+  for (let i = 0; i < keys.length - max; i++) await cache.delete(keys[i]);
+}
+
+async function cacheFirst(request, cacheName, { allowOpaque = false } = {}) {
+  const cached = await caches.match(request, { ignoreSearch: false });
+  if (cached) return cached;
+  const res = await fetch(request);
+  if (res && (res.ok || (allowOpaque && res.type === 'opaque'))) {
+    const cache = await caches.open(cacheName);
+    cache.put(request, res.clone()).then(() => trimCache(RUNTIME_CACHE, RUNTIME_MAX_ENTRIES)).catch(() => {});
+  }
+  return res;
+}
+
+// 3. Peticiones
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
-
   const url = new URL(request.url);
 
-  // A. Peticiones a Supabase API: Red primero con fallback offline controlado
-  if (url.hostname.includes('supabase.co')) {
-    event.respondWith(
-      fetch(request).catch(() => {
-        return new Response(JSON.stringify({ offline: true, data: [] }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      })
-    );
-    return;
-  }
-
-  // B. Navegación de páginas (SPA): Network con timeout y fallback garantizado al HTML en caché
-  if (request.mode === 'navigate' || request.destination === 'document') {
-    event.respondWith(
-      (async () => {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 2500);
-
-          const networkResponse = await fetch(request, { signal: controller.signal });
-          clearTimeout(timeoutId);
-
-          if (networkResponse && networkResponse.status === 200) {
-            const cache = await caches.open(CACHE_NAME);
-            cache.put('/', networkResponse.clone());
-            cache.put('/index.html', networkResponse.clone());
-            cache.put(request, networkResponse.clone());
-            return networkResponse;
-          }
-        } catch (err) {
-          console.log('[SW] Sin conexión a internet. Entregando aplicación desde caché offline.');
+  // A. Otros dominios
+  if (url.origin !== self.location.origin) {
+    // Fotos públicas de Supabase Storage (avatares, certificados, firmas). Se guardan solo
+    // respuestas legibles (CORS) para que sirvan tanto a <img> como a la exportación a Word.
+    const isStorageFile = url.hostname.endsWith('supabase.co') && url.pathname.includes('/storage/v1/object/public/');
+    if (isStorageFile) {
+      event.respondWith((async () => {
+        const cached = await caches.match(request.url, { ignoreVary: true });
+        if (cached) return cached;
+        const res = await fetch(request);
+        if (res && res.ok && res.type !== 'opaque') {
+          const cache = await caches.open(RUNTIME_CACHE);
+          cache.put(request.url, res.clone()).then(() => trimCache(RUNTIME_CACHE, RUNTIME_MAX_ENTRIES)).catch(() => {});
         }
-
-        // Recuperar HTML de la aplicación desde caché
-        const cache = await caches.open(CACHE_NAME);
-        const cachedMatch =
-          (await cache.match('/index.html')) ||
-          (await cache.match('/', { ignoreSearch: true })) ||
-          (await cache.match(request, { ignoreSearch: true }));
-
-        if (cachedMatch) return cachedMatch;
-
-        return new Response('<!DOCTYPE html><html><body><p>Plan Progresivo Offline</p></body></html>', {
-          headers: { 'Content-Type': 'text/html' }
-        });
-      })()
-    );
+        return res;
+      })().catch(() => caches.match(request.url, { ignoreVary: true }).then(r => r || new Response('', { status: 504 }))));
+      return;
+    }
+    // QR del carnet (imagen sin CORS)
+    if (url.hostname === 'api.qrserver.com' && request.destination === 'image') {
+      event.respondWith(cacheFirst(request, RUNTIME_CACHE, { allowOpaque: true }).catch(() => caches.match(request)));
+    }
+    // El resto (API de Supabase, realtime, YouTube...) va directo a la red
     return;
   }
 
-  // C. Bundles de JavaScript, CSS, Fuentes e Imágenes (Cache-First con Stale-While-Revalidate)
-  event.respondWith(
-    (async () => {
-      const cache = await caches.open(CACHE_NAME);
-      const cachedResponse = await cache.match(request, { ignoreSearch: true });
+  if (url.pathname.startsWith('/api/')) return;
 
-      // Si está en caché, devolver de inmediato (0ms de carga en modo avión / offline)
-      if (cachedResponse) {
-        // Si hay internet, refrescar silenciosamente en segundo plano
-        fetch(request)
-          .then((networkRes) => {
-            if (networkRes && networkRes.status === 200) {
-              cache.put(request, networkRes);
-            }
-          })
-          .catch(() => {});
-        return cachedResponse;
-      }
-
-      // Si no estaba en caché, buscar en la red y guardar copia
+  // B. Guías PDF: si están descargadas se abren sin internet (también dentro del visor/iframe)
+  if (DOC_PATH.test(url.pathname)) {
+    event.respondWith((async () => {
+      const docs = await caches.open(DOCS_CACHE);
+      const cached = await docs.match(request.url, { ignoreSearch: true });
+      if (cached) return cached;
       try {
-        const networkResponse = await fetch(request);
-        if (networkResponse && networkResponse.status === 200) {
-          cache.put(request, networkResponse.clone());
+        const res = await fetch(request);
+        // Lo que se abre una vez queda guardado para la próxima
+        if (res && res.ok && (res.headers.get('content-type') || '').includes('pdf')) {
+          docs.put(request.url, res.clone()).catch(() => {});
         }
-        return networkResponse;
-      } catch (networkError) {
-        // Fallback para scripts si el hash varió
-        if (request.destination === 'script' || url.pathname.endsWith('.js')) {
-          const keys = await cache.keys();
-          const jsKey = keys.find((k) => k.url.includes('/_expo/static/js/') || k.url.endsWith('.js'));
-          if (jsKey) {
-            const fallbackJs = await cache.match(jsKey);
-            if (fallbackJs) return fallbackJs;
-          }
-        }
-        if (request.destination === 'image') {
-          const fallbackImg = await cache.match('/favicon.png');
-          if (fallbackImg) return fallbackImg;
-        }
-        return new Response('', { status: 408, statusText: 'Offline' });
+        return res;
+      } catch (err) {
+        return new Response(
+          '<!DOCTYPE html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width">' +
+          '<body style="font-family:system-ui;padding:24px;color:#374151;text-align:center">' +
+          '<p style="font-size:40px;margin:0">📄</p><h3>Esta guía no está descargada</h3>' +
+          '<p>Conéctate a internet y ábrela una vez, o usa «Descargar para usar sin internet».</p></body></html>',
+          { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+        );
       }
-    })()
-  );
+    })());
+    return;
+  }
+
+  // C. Navegación (abrir la app o recargar): red con tiempo límite, si no la copia guardada
+  if (request.mode === 'navigate') {
+    event.respondWith((async () => {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 3000);
+        const res = await fetch(request, { signal: controller.signal });
+        clearTimeout(timer);
+        if (res && res.ok && !IS_DEV) {
+          const cache = await caches.open(APP_CACHE);
+          cache.put('/index.html', res.clone()).catch(() => {});
+        }
+        return res;
+      } catch (err) {
+        const cached = (await caches.match('/index.html')) || (await caches.match('/'));
+        if (cached) return cached;
+        return new Response('<!DOCTYPE html><html><body><p>Plan Progresivo: abre la app una vez con internet para usarla sin conexión.</p></body></html>', {
+          headers: { 'Content-Type': 'text/html; charset=utf-8' }
+        });
+      }
+    })());
+    return;
+  }
+
+  // D. En desarrollo (expo start) siempre red primero, para no ver código viejo
+  if (IS_DEV) {
+    event.respondWith(fetch(request).catch(() => caches.match(request)));
+    return;
+  }
+
+  // E. Archivos de la app (JS con hash, imágenes, plantillas): caché primero
+  event.respondWith((async () => {
+    const cached = await caches.match(request, { ignoreSearch: true });
+    if (cached) return cached;
+    try {
+      const res = await fetch(request);
+      if (res && res.ok) {
+        const cache = await caches.open(RUNTIME_CACHE);
+        cache.put(request, res.clone()).then(() => trimCache(RUNTIME_CACHE, RUNTIME_MAX_ENTRIES)).catch(() => {});
+      }
+      return res;
+    } catch (err) {
+      if (request.destination === 'image') {
+        const fallback = await caches.match('/favicon.png');
+        if (fallback) return fallback;
+      }
+      return new Response('', { status: 504, statusText: 'Sin conexión' });
+    }
+  })());
 });
 
-// 4. Receptor de Notificaciones Web Push en Segundo Plano (App Cerrada y Pantalla Bloqueada)
+// 4. Notificaciones Web Push en segundo plano (app cerrada / pantalla bloqueada)
 self.addEventListener('push', (event) => {
-  console.log('[SW] Evento Push recibido en segundo plano:', event);
   let data = {};
   if (event.data) {
     try {
@@ -236,7 +222,7 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// 5. Interacción del Usuario con la Notificación en la Pantalla de Bloqueo
+// 5. Toque en la notificación
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   // Solo se abren rutas de la propia app: un push no puede llevar a otro sitio.

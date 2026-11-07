@@ -43,6 +43,7 @@ import { docxProgramaGenerator } from '../lib/docxProgramaGenerator';
 import { ProgramaPdfPreviewModal } from '../components/ProgramaPdfPreviewModal';
 import { showAlert } from '../utils/alert';
 import { navigateBackOrHome } from '../utils/navigationHelper';
+import { todayLocal } from '../utils/dateLocal';
 
 export default function ProgramaScoutScreen({ navigation }: any) {
   const { user } = useAuth();
@@ -174,7 +175,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
     }, 60);
   };
 
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayStr = useMemo(() => todayLocal(), []);
 
   const loadProgramas = async () => {
     try {

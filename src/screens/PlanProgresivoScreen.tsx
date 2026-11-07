@@ -35,13 +35,8 @@ export default function PlanProgresivoScreen({ navigation }: any) {
     setLoading(true);
     const progressData = await dataService.getProgressForAllStages(user!.id);
 
-    const { data: stageRows } = await supabase
-      .from('stage_progress')
-      .select('stage_id, status')
-      .eq('scout_id', user!.id);
-
-    const statusMap: Record<string, string> = {};
-    stageRows?.forEach(r => { statusMap[r.stage_id] = r.status; });
+    // Con copia offline: sin red se mantiene la etapa real (no se bloquea todo)
+      const statusMap: Record<string, string> = await dataService.getAllStageStatuses(user!.id);
 
     let prevApproved = true;
     const enriched = progressData.map(stage => {

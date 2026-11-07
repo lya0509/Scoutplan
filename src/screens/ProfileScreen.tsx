@@ -13,7 +13,7 @@ import { UserScoutAvatar } from '../components/UserScoutAvatar';
 import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import { CarnetScoutModal } from '../components/CarnetScoutModal';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
-import { storageService } from '../lib/storageService';
+import { dataService } from '../lib/dataService';
 import { showAlert } from '../utils/alert';
 import { navigateBackOrHome } from '../utils/navigationHelper';
 
@@ -281,19 +281,16 @@ export default function ProfileScreen({ navigation }: any) {
     } else {
       setCustomAvatarUrl(newUrl);
     }
-    await updateUserProfile({ [fieldToUpdate]: newUrl });
+    // Mostrarla ya en el teléfono; la subida va por la cola (sin red, se sube al volver)
+    await updateUserProfile({ [fieldToUpdate]: newUrl }, { localOnly: true });
 
     try {
-      const fileName = `${type}_avatar_${user.id}_${Date.now()}.jpg`;
-      const uploadedUrl = await storageService.uploadImage(
-        'scout-files',
-        `avatars/${user.id}`,
-        fileName,
-        newUrl
-      );
-
-      await supabase.from('profiles').update({ [fieldToUpdate]: uploadedUrl }).eq('id', user.id);
-      await updateUserProfile({ [fieldToUpdate]: uploadedUrl });
+      const res = await dataService.setProfilePhoto(user.id, fieldToUpdate, newUrl);
+      if (res.queued) {
+        showAlert('Foto guardada en el teléfono', 'Se subirá automáticamente cuando tengas internet.');
+        return;
+      }
+      if (res.result) await updateUserProfile({ [fieldToUpdate]: res.result }, { localOnly: true });
       await refreshProfile();
     } catch (err: any) {
       console.warn('Error subiendo foto de perfil:', err);
@@ -310,7 +307,6 @@ export default function ProfileScreen({ navigation }: any) {
     }
     await updateUserProfile({ [fieldToUpdate]: null });
     try {
-      await supabase.from('profiles').update({ [fieldToUpdate]: null }).eq('id', user.id);
       await refreshProfile();
       showAlert('Foto Eliminada', 'Se ha eliminado la foto de perfil.');
     } catch (err: any) {
@@ -345,28 +341,8 @@ export default function ProfileScreen({ navigation }: any) {
     if (!user?.id) return;
     setSaving(true);
     
-    // 1. Guardar de inmediato en estado de la app y caché local
+    // Guarda en el teléfono y en Supabase (perfil + metadata); sin red queda en cola
     await updateUserProfile({ [field]: val });
-
-    // 2. Guardar en Supabase Auth metadata
-    try {
-      await supabase.auth.updateUser({ data: { [field]: val } });
-    } catch (e) {
-      console.warn('Aviso guardando user_metadata:', e);
-    }
-
-    // 3. Guardar en Supabase DB tabla profiles
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ [field]: val })
-        .eq('id', user.id);
-      if (error) {
-        console.warn('Aviso guardando en tabla profiles:', error.message);
-      }
-    } catch (e) {
-      console.warn('Excepción guardando en profiles:', e);
-    }
 
     setSaving(false);
     await refreshProfile();

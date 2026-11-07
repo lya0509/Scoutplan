@@ -27,6 +27,7 @@ import { useTheme } from '../context/ThemeContext';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 import { dataService } from '../lib/dataService';
+import { todayLocal } from '../utils/dateLocal';
 
 export interface VidaGrupoEntry {
   id: string;
@@ -101,7 +102,7 @@ export function VidaGrupoModal({
   const [title, setTitle] = useState('');
   const [subtype, setSubtype] = useState('Cultural'); // Para peregrinajes
   const [location, setLocation] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(todayLocal());
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -180,7 +181,7 @@ export function VidaGrupoModal({
       setTitle('');
       setLocation('');
       setDescription('');
-      setDate(new Date().toISOString().split('T')[0]);
+      setDate(todayLocal());
       setShowAddForm(false);
 
       const isDone = updatedList.length >= requiredCount;

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen, Flag, Moon, ArrowLeft, Compass, Tent, HeartHandshake, Sparkles } from 'lucide-react-native';
+import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen, Flag, Moon, ArrowLeft, Compass, Tent, HeartHandshake, Sparkles, Lightbulb } from 'lucide-react-native';
 import { dataService } from '../lib/dataService';
-import { notificationService } from '../services/notificationService';
 import { useTheme } from '../context/ThemeContext';
 import { stagesData } from '../data/progressionTemplate';
 import { activitiesCatalog } from '../data/activitiesCatalog';
@@ -18,10 +17,11 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
   
   const stageTemplate = stagesData.find(s => s.id === stageId);
   const [checks, setChecks] = useState<Record<string, boolean>>({});
-  const [completedActivities, setCompletedActivities] = useState<any[]>([]);
-  const [cipList, setCipList] = useState<any[]>([]);
+  // Actividades del catálogo hechas EN ESTA ETAPA, separadas en básicas y opcionales
+  const [activitiesByType, setActivitiesByType] = useState<{ basica: any[]; opcional: any[] }>({ basica: [], opcional: [] });
   const [cipSelectionsMap, setCipSelectionsMap] = useState<Record<string, any[]>>({});
   const [vidaGrupoMap, setVidaGrupoMap] = useState<Record<string, any[]>>({});
+  const [personalesMap, setPersonalesMap] = useState<Record<string, any[]>>({});
   const [linkedCertMap, setLinkedCertMap] = useState<Record<string, any>>({});
   const [showCatalogDetails, setShowCatalogDetails] = useState<Record<string, boolean>>({});
   const [nightsMap, setNightsMap] = useState<Record<string, any[]>>({});
@@ -41,6 +41,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
     const loadedNights: Record<string, any[]> = {};
     const loadedVg: Record<string, any[]> = {};
     const loadedCipSels: Record<string, any[]> = {};
+    const loadedPersonales: Record<string, any[]> = {};
 
     const allLinks = await dataService.getAllLinkedCertificates(scoutId);
     setLinkedCertMap(allLinks || {});
@@ -58,6 +59,11 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
         loadedVg[req.id] = logs || [];
       }
 
+      if (req.type === 'personales') {
+        const acts = await dataService.getPersonalActivities(scoutId, stageId, req.id);
+        loadedPersonales[req.id] = acts || [];
+      }
+
       if (req.type === 'ciclos' || req.text.toLowerCase().includes('ciclo')) {
         const sels = await dataService.getCipSelections(scoutId, stageId, req.id);
         loadedCipSels[req.id] = sels || [];
@@ -67,15 +73,16 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
     setNightsMap(loadedNights);
     setVidaGrupoMap(loadedVg);
     setCipSelectionsMap(loadedCipSels);
+    setPersonalesMap(loadedPersonales);
 
-    // Obtener IDs de actividades completadas por el Scout
-    const completedIds = await dataService.getCompletedCatalogActivityIds(scoutId);
-    const matched = activitiesCatalog.filter(act => completedIds.includes(act.id));
-    setCompletedActivities(matched);
-
-    // Cargar CIPs de la unidad / registrados por dirigentes o convalidados por el Scout
-    const cips = await dataService.getCipEvents();
-    setCipList(cips || []);
+    // Actividades del catálogo que el Scout marcó en ESTA etapa (antes salían las de todas
+    // las etapas, y la misma lista en Básicas y en Opcionales)
+    const reqRows = await dataService.getRequirementRows(scoutId);
+    const stageActIds = new Set(reqRows.filter(r => r.completed && r.stage_id === stageId).map(r => r.requirement_id));
+    setActivitiesByType({
+      basica: activitiesCatalog.filter(act => stageActIds.has(act.id) && act.superArea === 'BÁSICAS'),
+      opcional: activitiesCatalog.filter(act => stageActIds.has(act.id) && act.superArea === 'OPCIONALES'),
+    });
 
     setLoading(false);
   };
@@ -100,24 +107,15 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
       return;
     }
 
+    // La notificación al scout la envía dataService (antes se mandaba dos veces)
     if (confirmStep === 'reject') {
-      await dataService.rejectStage(scoutId, stageId);
-      notificationService.sendNotification({
-        receiverId: scoutId,
-        title: '📋 Ficha de Etapa Devuelta',
-        message: `Tu dirigente ha revisado tu etapa "${stageTemplate?.title || 'Revisión'}" y tiene requisitos pendientes por completar.`,
-        type: 'alert'
-      }).catch(() => {});
+      const pendientes = (stageTemplate?.requirements || []).filter(req => !checks[req.id]).map(req => req.text);
+      const reason = pendientes.length > 0 ? `faltan ${pendientes.length} requisito(s): ${pendientes.slice(0, 5).join('; ')}${pendientes.length > 5 ? '…' : ''}` : undefined;
+      await dataService.rejectStage(scoutId, stageId, reason);
       showAlert('Ficha Devuelta', 'Se ha devuelto la ficha al scout para que complete los requisitos faltantes.');
       navigation.goBack();
     } else if (confirmStep === 'approve') {
       await dataService.approveStage(scoutId, stageId);
-      notificationService.sendNotification({
-        receiverId: scoutId,
-        title: '🎉 ¡Etapa e Insignia Aprobadas!',
-        message: `¡Felicidades! Tu dirigente ha aprobado oficialmente tu etapa "${stageTemplate?.title || 'Revisión'}".`,
-        type: 'badge'
-      }).catch(() => {});
       showAlert('¡Etapa Aprobada!', 'La etapa ha sido aprobada exitosamente y el scout ha sido notificado.');
       navigation.goBack();
     }
@@ -193,6 +191,9 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
           const totalNightsLogged = (nightsMap[req.id] || []).reduce((acc: number, item: any) => acc + (item.nightsCount || 1), 0);
           const reqVgEntries = vidaGrupoMap[req.id] || [];
           const reqCipSelections = cipSelectionsMap[req.id] || [];
+          const isPersonalesReq = req.type === 'personales';
+          const reqPersonales = personalesMap[req.id] || [];
+          const completedActivities = req.type === 'opcional' ? activitiesByType.opcional : activitiesByType.basica;
 
           return (
             <View key={req.id} style={{ marginBottom: 10 }}>
@@ -229,7 +230,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                     >
                       <BookOpen size={14} color={colors.primary} style={{ marginRight: 4 }} />
                       <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>
-                        {isExpanded ? 'Ocultar actividades realizadas' : `Ver actividades realizadas (${completedActivities.length})`}
+                        {isExpanded ? 'Ocultar actividades realizadas' : `Ver actividades realizadas (${completedActivities.length} de ${req.requiredCount || 0})`}
                       </Text>
                       {isExpanded ? <ChevronUp size={14} color={colors.primary} style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color={colors.primary} style={{ marginLeft: 2 }} />}
                     </TouchableOpacity>
@@ -247,9 +248,27 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                       <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>
                         {isExpanded
                           ? 'Ocultar actividades CIP'
-                          : `Ver actividades CIP (${(reqCipSelections.length || cipList.length) > 0 ? `${reqCipSelections.length || cipList.length} seleccionadas` : isChecked ? 'convalidadas' : '0 seleccionadas'})`}
+                          : `Ver actividades CIP (${reqCipSelections.length > 0 ? `${reqCipSelections.length} de ${req.requiredCount || 1} seleccionadas` : isChecked ? 'convalidadas' : '0 seleccionadas'})`}
                       </Text>
                       {isExpanded ? <ChevronUp size={14} color={colors.primary} style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color={colors.primary} style={{ marginLeft: 2 }} />}
+                    </TouchableOpacity>
+                  )}
+
+                  {isPersonalesReq && (
+                    <TouchableOpacity
+                      style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        toggleShowDetails(req.id);
+                      }}
+                    >
+                      <Lightbulb size={14} color="#d97706" style={{ marginRight: 4 }} />
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#d97706' }}>
+                        {isExpanded
+                          ? 'Ocultar actividades personales'
+                          : `Ver actividades personales (${reqPersonales.length} de ${req.requiredCount || 3})`}
+                      </Text>
+                      {isExpanded ? <ChevronUp size={14} color="#d97706" style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color="#d97706" style={{ marginLeft: 2 }} />}
                     </TouchableOpacity>
                   )}
 
@@ -344,12 +363,12 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                   <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text, marginBottom: 8 }}>
                     Actividades CIP seleccionadas por {scoutName} ({reqCipSelections.length} de {req.requiredCount || 1}):
                   </Text>
-                  {(reqCipSelections.length > 0 ? reqCipSelections : cipList).length === 0 ? (
+                  {reqCipSelections.length === 0 ? (
                     <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic' }}>
                       No hay eventos CIP registrados o convalidados aún.
                     </Text>
                   ) : (
-                    (reqCipSelections.length > 0 ? reqCipSelections : cipList).map((cip, index) => (
+                    reqCipSelections.map((cip, index) => (
                       <View key={cip.id || index} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8, backgroundColor: theme.cardBg, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: theme.border }}>
                         <Flag size={16} color={colors.primary} style={{ marginRight: 8, marginTop: 2 }} />
                         <View style={{ flex: 1 }}>
@@ -402,6 +421,39 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                           ) : null}
                           <Text style={{ fontSize: 11, color: theme.subText, marginTop: 1 }}>
                             📅 Fecha: {entry.date || 'Sin fecha'} {entry.subtype ? `• Tipo: ${entry.subtype}` : ''}
+                          </Text>
+                          {entry.description ? (
+                            <Text style={{ fontSize: 11, color: theme.subText, fontStyle: 'italic', marginTop: 2 }}>
+                              "{entry.description}"
+                            </Text>
+                          ) : null}
+                        </View>
+                      </View>
+                    ))
+                  )}
+                </View>
+              )}
+
+              {/* LISTA DESPLEGABLE DE ACTIVIDADES PERSONALES */}
+              {isPersonalesReq && isExpanded && (
+                <View style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: '#d97706', borderRadius: 12, padding: 12, marginTop: -4, marginLeft: 10, marginRight: 10 }}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#d97706', marginBottom: 8 }}>
+                    Actividades de creación propia ({reqPersonales.length} de {req.requiredCount || 3}):
+                  </Text>
+                  {reqPersonales.length === 0 ? (
+                    <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic' }}>
+                      {isChecked
+                        ? 'El Rover marcó este requisito pero no anotó cuáles actividades fueron.'
+                        : 'El Rover aún no ha registrado actividades personales.'}
+                    </Text>
+                  ) : (
+                    reqPersonales.map((entry, index) => (
+                      <View key={entry.id || index} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8, backgroundColor: theme.cardBg, padding: 10, borderRadius: 8, borderWidth: 1, borderColor: theme.border }}>
+                        <Lightbulb size={18} color="#d97706" style={{ marginRight: 8, marginTop: 2 }} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>{entry.title}</Text>
+                          <Text style={{ fontSize: 11, color: theme.subText, marginTop: 1 }}>
+                            📅 Fecha: {entry.date || 'Sin fecha'}
                           </Text>
                           {entry.description ? (
                             <Text style={{ fontSize: 11, color: theme.subText, fontStyle: 'italic', marginTop: 2 }}>

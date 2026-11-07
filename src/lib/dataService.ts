@@ -5,100 +5,156 @@ import { stagesData } from '../data/progressionTemplate';
 import { notificationService } from '../services/notificationService';
 import { presenceService } from '../services/presenceService';
 import { storageService } from './storageService';
+import { outbox } from './offline/outbox';
+import { must, isDuplicateError, isRetryableError, isOnline, newId } from './offline/net';
+import { cachedQuery, readCached, writeCached } from './offline/readCache';
+import { isSafeFileUrl } from '../utils/safeUrl';
+import { todayLocal } from '../utils/dateLocal';
 
-const SYNC_QUEUE_KEY = '@scout_offline_sync_queue';
+const SYNC_QUEUE_KEY = '@scout_offline_sync_queue'; // cola antigua: outbox.ts la migra sola
 
-interface SyncQueueItem {
-  id: string;
-  scoutId: string;
-  stageId: string;
-  reqId: string;
-  completed: boolean;
-  timestamp: number;
+/** Tablas a las que la cola offline puede escribir con las operaciones genéricas row.*. */
+const OUTBOX_TABLES = new Set([
+  'profiles', 'requirement_progress', 'stage_progress', 'certificates', 'quarterly_plans',
+  'calendar_events', 'scout_notifications', 'notifications', 'bug_reports', 'scout_programas',
+]);
+
+const reqDedupeKey = (scoutId: string, stageId: string, reqId: string) => `req:${scoutId}:${stageId}:${reqId}`;
+const stageDedupeKey = (scoutId: string, stageId: string) => `stage:${scoutId}:${stageId}`;
+
+/** Requisitos marcados/desmarcados sin conexión que aún no llegan a Supabase. */
+async function pendingRequirementMap(scoutId: string): Promise<Map<string, boolean>> {
+  const map = new Map<string, boolean>();
+  const ops = await outbox.pending('requirement.set');
+  ops.forEach(o => {
+    if (o.payload?.scoutId === scoutId) map.set(`${o.payload.stageId}:${o.payload.reqId}`, !!o.payload.completed);
+  });
+  return map;
+}
+
+/** Filas de `certificates` creadas/borradas sin conexión, para mostrarlas antes de sincronizar. */
+async function pendingCertificateRows(scoutId: string) {
+  const inserts: any[] = [];
+  const deletes = new Set<string>();
+  const updates = new Map<string, any>();
+  const ops = await outbox.pending();
+  for (const o of ops) {
+    const p = o.payload || {};
+    if (o.type === 'row.insert' && p.table === 'certificates') {
+      const rows = Array.isArray(p.rows) ? p.rows : [p.row];
+      rows.forEach((r: any) => { if (r?.scout_id === scoutId) inserts.push({ ...r, created_at: r.created_at || new Date(o.createdAt).toISOString(), _pending: true }); });
+    } else if (o.type === 'row.delete' && p.table === 'certificates' && p.match?.id) {
+      deletes.add(p.match.id);
+    } else if (o.type === 'certificate.upload' && p.scoutId === scoutId) {
+      inserts.push({
+        id: p.tempId, scout_id: scoutId, title: p.title, category: p.category, level: p.level,
+        file_url: p.fileUrl, created_at: new Date(o.createdAt).toISOString(), _pending: true,
+      });
+    } else if (o.type === 'certificate.update' && p.scoutId === scoutId) {
+      updates.set(p.certificateId, p.updates);
+    } else if (o.type === 'certificate.delete' && p.scoutId === scoutId) {
+      deletes.add(p.certificateId);
+    }
+  }
+  return { inserts, deletes, updates };
+}
+
+function applyPendingRows(rows: any[], pend: { inserts: any[]; deletes: Set<string>; updates: Map<string, any> }, filter: (r: any) => boolean) {
+  const ids = new Set(rows.map(r => r.id));
+  const merged = [
+    ...pend.inserts.filter(r => filter(r) && !ids.has(r.id)),
+    ...rows,
+  ]
+    .filter(r => !pend.deletes.has(r.id))
+    .map(r => (pend.updates.has(r.id) ? { ...r, ...pend.updates.get(r.id) } : r));
+  return merged;
+}
+
+interface QuarterlyPlanInput {
+  scout_id: string;
+  quarter: string;
+  year: number;
+  elaborated_by?: string;
+  general_objectives?: string;
+  trimestre_goals?: string;
+  specific_objectives?: string;
+  educational_areas?: Record<string, boolean>;
+  monthly_activities?: any[];
+  goals?: string;
+  group_name?: string;
+  unit?: string;
+}
+
+/** Algunos planes viejos guardaron todo como JSON dentro de `goals`. */
+function expandPlanGoals(item: any) {
+  if (item && typeof item.goals === 'string' && item.goals.startsWith('{')) {
+    try {
+      return { ...item, ...JSON.parse(item.goals) };
+    } catch {}
+  }
+  return item;
+}
+
+/** Plan trimestral guardado sin conexión que aún no se envía (manda sobre lo que haya en el servidor). */
+async function pendingQuarterlyPlan(groupName: string | null, unit: string | null, quarter: string, year: number, scoutId?: string) {
+  const ops = await outbox.pending('quarterly.save');
+  const match = ops.filter(o => {
+    const p = o.payload || {};
+    if (p.quarter !== quarter || Number(p.year) !== Number(year)) return false;
+    if (scoutId && p.scout_id === scoutId) return true;
+    if (groupName !== null && unit !== null) {
+      let u = (p.unit || 'clan').toLowerCase().trim();
+      if (u === 'comunidad') u = 'caminantes';
+      return u === unit && (!groupName || (p.group_name || '') === groupName);
+    }
+    return false;
+  }).pop();
+  if (!match) return null;
+  return { ...match.payload, general_objectives: match.payload.general_objectives || match.payload.goals, status: 'Enviado', updated_at: new Date(match.createdAt).toISOString(), _pending: true };
+}
+
+/** Convierte un registro local antiguo (noche / vida de grupo / CIP) en fila de `certificates`. */
+function legacyEntryToRow(scoutId: string, category: string, e: any) {
+  const id = newId();
+  if (category.startsWith('aire_libre_')) {
+    return { id, scout_id: scoutId, category, title: e.location || 'Campamento / Pernocta', level: String(e.nightsCount || 1), file_url: JSON.stringify({ date: e.date || '', notes: e.notes || '' }) };
+  }
+  if (category.startsWith('vida_grupo_')) {
+    return { id, scout_id: scoutId, category, title: e.title || 'Evento de Vida de Grupo', level: e.subtype || e.type || null, file_url: JSON.stringify({ type: e.type, subtype: e.subtype || null, location: e.location || '', date: e.date || '', description: e.description || '' }) };
+  }
+  if (category.startsWith('cip_sel_')) {
+    return { id, scout_id: scoutId, category, title: e.title, level: e.scope || 'distrital', file_url: JSON.stringify({ eventId: e.id || null, location: e.location || '', description: e.description || '', date: e.date || '' }) };
+  }
+  return null;
 }
 
 export const dataService = {
-  // --- MOTOR DE SINCRONIZACIÓN OFFLINE ---
-  async getSyncQueue(): Promise<SyncQueueItem[]> {
-    try {
-      const raw = await AsyncStorage.getItem(SYNC_QUEUE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
+  // --- MOTOR DE SINCRONIZACIÓN OFFLINE (ver src/lib/offline/outbox.ts) ---
+  async getSyncQueue() {
+    return outbox.list();
   },
 
-  async addToSyncQueue(item: Omit<SyncQueueItem, 'id' | 'timestamp'>) {
-    try {
-      const queue = await this.getSyncQueue();
-      // Eliminar elementos previos del mismo requisito para no duplicar
-      const filtered = queue.filter(q => !(q.scoutId === item.scoutId && q.stageId === item.stageId && q.reqId === item.reqId));
-      filtered.push({
-        ...item,
-        id: `${item.scoutId}_${item.stageId}_${item.reqId}_${Date.now()}`,
-        timestamp: Date.now()
-      });
-      await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(filtered));
-    } catch (e) {
-      console.warn('Error guardando en cola offline:', e);
-    }
+  async addToSyncQueue(item: { scoutId: string; stageId: string; reqId: string; completed: boolean }) {
+    await outbox.enqueue('requirement.set', item, {
+      dedupeKey: reqDedupeKey(item.scoutId, item.stageId, item.reqId),
+      label: 'Requisito marcado',
+    });
   },
 
+  /** Envía a Supabase todo lo que se hizo sin conexión (no solo requisitos; se mantiene el nombre). */
   async syncPendingRequirements(): Promise<{ synced: number; remaining: number }> {
-    const queue = await this.getSyncQueue();
-    if (queue.length === 0) return { synced: 0, remaining: 0 };
-
-    const remainingItems: SyncQueueItem[] = [];
-    let syncedCount = 0;
-
-    for (const item of queue) {
-      try {
-        const { data: existing } = await supabase
-          .from('requirement_progress')
-          .select('id')
-          .eq('scout_id', item.scoutId)
-          .eq('stage_id', item.stageId)
-          .eq('requirement_id', item.reqId)
-          .single();
-
-        if (existing) {
-          await supabase
-            .from('requirement_progress')
-            .update({ completed: item.completed, updated_at: new Date().toISOString() })
-            .eq('id', existing.id);
-        } else {
-          await supabase
-            .from('requirement_progress')
-            .insert({
-              scout_id: item.scoutId,
-              stage_id: item.stageId,
-              requirement_id: item.reqId,
-              completed: item.completed
-            });
-        }
-        syncedCount++;
-      } catch (err) {
-        // Si aún no hay conexión, se mantiene en la cola
-        remainingItems.push(item);
-      }
-    }
-
-    try {
-      await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(remainingItems));
-    } catch {}
-
-    return { synced: syncedCount, remaining: remainingItems.length };
+    return outbox.flush();
   },
 
   async initializeScout(scoutId: string) {
     try {
-      const { data: existing } = await supabase
+      const existing = must(await supabase
         .from('stage_progress')
         .select('id')
         .eq('scout_id', scoutId)
         .eq('stage_id', 'precursor')
-        .single();
-        
+        .maybeSingle());
+
       if (!existing) {
         await supabase.from('stage_progress').insert({
           scout_id: scoutId,
@@ -112,98 +168,120 @@ export const dataService = {
   },
 
   async getStageStatus(scoutId: string, stageId: string): Promise<StageStatus> {
-    try {
-      const { data } = await supabase
-        .from('stage_progress')
-        .select('status')
-        .eq('scout_id', scoutId)
-        .eq('stage_id', stageId)
-        .maybeSingle();
-        
-      if (data?.status) {
-        AsyncStorage.setItem(`@scout_stage_status_${scoutId}_${stageId}`, data.status).catch(() => {});
-        return data.status as StageStatus;
-      } else {
-        AsyncStorage.removeItem(`@scout_stage_status_${scoutId}_${stageId}`).catch(() => {});
+    const localKey = `@scout_stage_status_${scoutId}_${stageId}`;
+    // Un cambio de estado hecho sin conexión manda hasta que se sincronice
+    const pendingStage = (await outbox.pending()).filter(o => o.dedupeKey === stageDedupeKey(scoutId, stageId)).pop();
+    if (pendingStage?.payload?.status) return pendingStage.payload.status as StageStatus;
+
+    const res = await supabase
+      .from('stage_progress')
+      .select('status')
+      .eq('scout_id', scoutId)
+      .eq('stage_id', stageId)
+      .maybeSingle();
+
+    if (!res.error) {
+      if (res.data?.status) {
+        AsyncStorage.setItem(localKey, res.data.status).catch(() => {});
+        return res.data.status as StageStatus;
       }
-    } catch (e) {
-      // Fallback a almacenamiento local offline solo si hubo error de red
-      const local = await AsyncStorage.getItem(`@scout_stage_status_${scoutId}_${stageId}`);
+      AsyncStorage.removeItem(localKey).catch(() => {});
+    } else {
+      // Sin red: usar el último estado conocido (nunca borrarlo por un fallo de conexión)
+      const local = await AsyncStorage.getItem(localKey).catch(() => null);
       if (local) return local as StageStatus;
     }
     return stageId === 'precursor' ? 'En Progreso' : 'Bloqueada';
   },
 
+  /** Estado de todas las etapas del scout { stageId: status }, con copia offline y cambios pendientes. */
+  async getAllStageStatuses(scoutId: string): Promise<Record<string, string>> {
+    const map = await cachedQuery<Record<string, string>>(`stage_statuses_${scoutId}`, async () => {
+      const rows = must(await supabase.from('stage_progress').select('stage_id, status').eq('scout_id', scoutId));
+      const m: Record<string, string> = {};
+      (rows || []).forEach((r: any) => { m[r.stage_id] = r.status; });
+      return m;
+    }, {});
+    const result = { ...map };
+    (await outbox.pending('stage.setStatus')).forEach(o => {
+      if (o.payload?.scoutId === scoutId) result[o.payload.stageId] = o.payload.status;
+    });
+    return result;
+  },
+
+  /** Todas las filas de requirement_progress del scout, con copia offline y cambios pendientes. */
+  async getRequirementRows(scoutId: string): Promise<{ requirement_id: string; stage_id: string; completed: boolean }[]> {
+    const rows = await cachedQuery<any[]>(`req_rows_${scoutId}`, async () =>
+      must(await supabase.from('requirement_progress').select('requirement_id, stage_id, completed').eq('scout_id', scoutId)) || [], []);
+    const pending = await pendingRequirementMap(scoutId);
+    if (pending.size === 0) return rows;
+    const byKey = new Map(rows.map((r: any) => [`${r.stage_id}:${r.requirement_id}`, r]));
+    pending.forEach((completed, key) => {
+      const [stage_id, ...rest] = key.split(':');
+      byKey.set(key, { stage_id, requirement_id: rest.join(':'), completed });
+    });
+    return Array.from(byKey.values());
+  },
+
   async getRequirement(scoutId: string, stageId: string, reqId: string): Promise<boolean> {
     const localKey = `@scout_req_${scoutId}_${stageId}_${reqId}`;
-    try {
-      const { data } = await supabase
-        .from('requirement_progress')
-        .select('completed')
-        .eq('scout_id', scoutId)
-        .eq('stage_id', stageId)
-        .eq('requirement_id', reqId)
-        .maybeSingle();
-        
-      if (data && data.completed !== undefined && data.completed !== null) {
-        AsyncStorage.setItem(localKey, String(data.completed)).catch(() => {});
-        return data.completed;
-      } else {
-        AsyncStorage.removeItem(localKey).catch(() => {});
-        return false;
+    const pending = await pendingRequirementMap(scoutId);
+    if (pending.has(`${stageId}:${reqId}`)) return pending.get(`${stageId}:${reqId}`)!;
+
+    const res = await supabase
+      .from('requirement_progress')
+      .select('completed')
+      .eq('scout_id', scoutId)
+      .eq('stage_id', stageId)
+      .eq('requirement_id', reqId)
+      .maybeSingle();
+
+    if (!res.error) {
+      if (res.data && res.data.completed !== undefined && res.data.completed !== null) {
+        AsyncStorage.setItem(localKey, String(res.data.completed)).catch(() => {});
+        return res.data.completed;
       }
-    } catch (e) {
-      // Fallback a almacenamiento local offline solo si no hay red
-      const local = await AsyncStorage.getItem(localKey);
-      if (local !== null) {
-        return local === 'true';
-      }
+      AsyncStorage.removeItem(localKey).catch(() => {});
+      return false;
     }
-    return false;
+    const local = await AsyncStorage.getItem(localKey).catch(() => null);
+    return local === 'true';
   },
 
   async getCompletedCatalogActivityIds(scoutId: string): Promise<string[]> {
-    try {
-      const { data } = await supabase
+    const ids = await cachedQuery<string[]>(`catalog_ids_${scoutId}`, async () => {
+      const data = must(await supabase
         .from('requirement_progress')
         .select('requirement_id')
         .eq('scout_id', scoutId)
-        .eq('completed', true);
+        .eq('completed', true));
+      return (data || []).map((item: any) => item.requirement_id);
+    }, []);
 
-      if (data) {
-        const ids = data.map(item => item.requirement_id);
-        AsyncStorage.setItem(`@scout_catalog_ids_${scoutId}`, JSON.stringify(ids)).catch(() => {});
-        return ids;
-      }
-    } catch (e) {
-      const local = await AsyncStorage.getItem(`@scout_catalog_ids_${scoutId}`);
-      if (local) return JSON.parse(local);
-    }
-    return [];
+    const pending = await pendingRequirementMap(scoutId);
+    if (pending.size === 0) return ids;
+    const set = new Set(ids);
+    pending.forEach((completed, key) => {
+      const reqId = key.split(':').slice(1).join(':');
+      if (completed) set.add(reqId); else set.delete(reqId);
+    });
+    return Array.from(set);
   },
 
   async getProgressForAllStages(scoutId: string) {
-    let completedReqSet = new Set<string>();
-    try {
-      const { data: completedReqs } = await supabase
+    const arr = await cachedQuery<string[]>(`all_completed_${scoutId}`, async () => {
+      const data = must(await supabase
         .from('requirement_progress')
         .select('stage_id, requirement_id')
         .eq('scout_id', scoutId)
-        .eq('completed', true);
+        .eq('completed', true));
+      return (data || []).map((req: any) => `${req.stage_id}:${req.requirement_id}`);
+    }, []);
 
-      if (completedReqs) {
-        completedReqs.forEach(req => {
-          completedReqSet.add(`${req.stage_id}:${req.requirement_id}`);
-        });
-        AsyncStorage.setItem(`@scout_all_completed_${scoutId}`, JSON.stringify(Array.from(completedReqSet))).catch(() => {});
-      }
-    } catch (e) {
-      const local = await AsyncStorage.getItem(`@scout_all_completed_${scoutId}`);
-      if (local) {
-        const arr = JSON.parse(local);
-        completedReqSet = new Set(arr);
-      }
-    }
+    const completedReqSet = new Set<string>(arr);
+    (await pendingRequirementMap(scoutId)).forEach((completed, key) => {
+      if (completed) completedReqSet.add(key); else completedReqSet.delete(key);
+    });
 
     return stagesData.map(stageTemplate => {
       const totalReqs = stageTemplate.requirements.length;
@@ -226,154 +304,100 @@ export const dataService = {
 
   async toggleRequirement(scoutId: string, stageId: string, reqId: string, completed: boolean) {
     const localKey = `@scout_req_${scoutId}_${stageId}_${reqId}`;
-    // 1. Guardar de inmediato en almacenamiento local para respuesta instantánea (Offline-first)
-    await AsyncStorage.setItem(localKey, String(completed));
-
-    // 2. Registrar en la cola de sincronización pendiente
-    await this.addToSyncQueue({ scoutId, stageId, reqId, completed });
-
-    // 3. Intentar enviar a Supabase de inmediato si hay conexión
-    try {
-      const { data: existing } = await supabase
-        .from('requirement_progress')
-        .select('id')
-        .eq('scout_id', scoutId)
-        .eq('stage_id', stageId)
-        .eq('requirement_id', reqId)
-        .single();
-
-      if (existing) {
-        await supabase
-          .from('requirement_progress')
-          .update({ completed, updated_at: new Date().toISOString() })
-          .eq('id', existing.id);
-      } else {
-        await supabase
-          .from('requirement_progress')
-          .insert({
-            scout_id: scoutId,
-            stage_id: stageId,
-            requirement_id: reqId,
-            completed
-          });
-      }
-
-      // Si se envió exitosamente, limpiar de la cola pendiente
-      const queue = await this.getSyncQueue();
-      const filtered = queue.filter(q => !(q.scoutId === scoutId && q.stageId === stageId && q.reqId === reqId));
-      await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(filtered));
-    } catch (err) {
-      console.log('Guardado localmente en modo Offline. Se sincronizará al volver la conexión.');
-    }
+    // 1. Guardar de inmediato en el dispositivo (respuesta instantánea, funciona sin red)
+    await AsyncStorage.setItem(localKey, String(completed)).catch(() => {});
+    // 2. Enviar ya si hay red; si no, queda en la cola y se envía al volver la conexión
+    await outbox.run('requirement.set', { scoutId, stageId, reqId, completed }, {
+      dedupeKey: reqDedupeKey(scoutId, stageId, reqId),
+      label: completed ? 'Requisito completado' : 'Requisito desmarcado',
+    });
   },
 
-  async submitStageForReview(scoutId: string, stageId: string) {
-    const { data: existing } = await supabase
-      .from('stage_progress')
-      .select('id')
-      .eq('scout_id', scoutId)
-      .eq('stage_id', stageId)
-      .single();
-
-    if (existing) {
-      await supabase
-        .from('stage_progress')
-        .update({ status: 'En Revision', updated_at: new Date().toISOString() })
-        .eq('id', existing.id);
-    } else {
-      await supabase.from('stage_progress').insert({
-        scout_id: scoutId,
-        stage_id: stageId,
-        status: 'En Revision'
-      });
-    }
+  async submitStageForReview(scoutId: string, stageId: string, notifyScouters?: any) {
+    AsyncStorage.setItem(`@scout_stage_status_${scoutId}_${stageId}`, 'En Revision').catch(() => {});
+    return outbox.run('stage.setStatus', { scoutId, stageId, status: 'En Revision', notifyPayload: notifyScouters }, {
+      dedupeKey: stageDedupeKey(scoutId, stageId),
+      label: 'Etapa enviada a revisión',
+    });
   },
 
   async approveStage(scoutId: string, stageId: string) {
-    await supabase
-      .from('stage_progress')
-      .update({ status: 'Aprobada', updated_at: new Date().toISOString() })
-      .eq('scout_id', scoutId)
-      .eq('stage_id', stageId);
-
-    const stageTitle = stagesData.find(s => s.id === stageId)?.title || 'Etapa';
-
-    // Despachar notificación Push y en vivo al Scout
-    await notificationService.sendNotification({
-      receiverId: scoutId,
-      title: '🎉 ¡Etapa e Insignia Aprobadas!',
-      message: `¡Felicidades! Tu dirigente ha aprobado oficialmente tu etapa "${stageTitle}". Ya pasaste a la siguiente etapa.`,
-      type: 'badge'
-    }).catch(() => {});
+    await outbox.run('stage.setStatus', { scoutId, stageId, status: 'Aprobada', notify: 'approve' }, {
+      dedupeKey: stageDedupeKey(scoutId, stageId),
+      label: 'Etapa aprobada',
+    });
   },
 
   async rejectStage(scoutId: string, stageId: string, reason?: string) {
     // Al rechazar / devolver, se cambia a 'En Progreso' para que se DESBLOQUEEN las actividades
-    await supabase
-      .from('stage_progress')
-      .update({ status: 'En Progreso', updated_at: new Date().toISOString() })
-      .eq('scout_id', scoutId)
-      .eq('stage_id', stageId);
-
-    const stageTitle = stagesData.find(s => s.id === stageId)?.title || 'Etapa';
-
-    await notificationService.sendNotification({
-      receiverId: scoutId,
-      title: '📋 Ficha de Etapa Devuelta',
-      message: reason
-        ? `Tu dirigente devolvió tu etapa "${stageTitle}": ${reason}`
-        : `Tu dirigente ha revisado tu etapa "${stageTitle}" y requiere completar requisitos pendientes.`,
-      type: 'alert'
-    }).catch(() => {});
+    await outbox.run('stage.setStatus', { scoutId, stageId, status: 'En Progreso', notify: 'reject', reason }, {
+      dedupeKey: stageDedupeKey(scoutId, stageId),
+      label: 'Etapa devuelta',
+    });
   },
 
   async getScoutsForScouter(unit: string, groupName: string) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'scout')
-      .eq('unit', unit)
-      .eq('group_name', groupName);
-
-    return data || [];
+    return cachedQuery<any[]>(`scouts_${unit}_${groupName}`, async () => {
+      const data = must(await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'scout')
+        .eq('unit', unit)
+        .eq('group_name', groupName));
+      return data || [];
+    }, []);
   },
 
   // ----------------------------------------------------
   // MÓDULO DE CERTIFICADOS
   // ----------------------------------------------------
   async getCertificates(scoutId: string) {
-    const { data, error } = await supabase
-      .from('certificates')
-      .select('*')
-      .eq('scout_id', scoutId)
-      .order('created_at', { ascending: false });
+    const rows = await cachedQuery<any[] | null>(`certs_${scoutId}`, async () => {
+      const data = must(await supabase
+        .from('certificates')
+        .select('*')
+        .eq('scout_id', scoutId)
+        .order('created_at', { ascending: false }));
+      return data || [];
+    }, null);
+    if (rows === null) throw new Error('Sin conexión y sin copia guardada de tus certificados.');
 
-    if (error) throw error;
-    return (data || []).filter(
-      d =>
-        !d.category?.startsWith('vida_grupo_') &&
-        !d.category?.startsWith('cip_sel_') &&
-        !d.category?.startsWith('linked_cert_')
-    );
+    const isRealCert = (d: any) =>
+      !d.category?.startsWith('vida_grupo_') &&
+      !d.category?.startsWith('cip_sel_') &&
+      !d.category?.startsWith('linked_cert_') &&
+      !d.category?.startsWith('aire_libre_') &&
+      !d.category?.startsWith('personal_');
+    const pend = await pendingCertificateRows(scoutId);
+    return applyPendingRows(rows, pend, isRealCert).filter(isRealCert);
   },
 
   async uploadCertificate(scoutId: string, title: string, category: string, level: string | null, fileUrl: string, date?: string) {
+    if (fileUrl && !isSafeFileUrl(fileUrl)) throw new Error('El enlace del archivo debe ser una imagen o una dirección web (https://).');
+    const payload = { scoutId, title, category, level, fileUrl, date, tempId: newId('pending_') };
+    const res = await outbox.run('certificate.upload', payload, { label: `Certificado: ${title}` });
+    if (res.queued) {
+      // Se guardó en el teléfono; se sube solo al volver la conexión.
+      return { id: payload.tempId, scout_id: scoutId, title, category, level, file_url: fileUrl, _pending: true };
+    }
+    return null;
+  },
+
+  /** Implementación real (la llama la cola). Lanza error si falla, para poder reintentar. */
+  async _uploadCertificateNow(scoutId: string, title: string, category: string, level: string | null, fileUrl: string, date?: string) {
     let safeUrl = fileUrl;
-    // Si la imagen es un Data URL de base64, subirla directamente a Supabase Storage bucket 'scout-files'
+    // Si la imagen es un Data URL de base64, subirla a Supabase Storage bucket 'scout-files'
     if (safeUrl && safeUrl.startsWith('data:image')) {
-      try {
-        const uploadedUrl = await storageService.uploadImage(
-          'scout-files',
-          'certificates',
-          `cert_${scoutId}_${Date.now()}.png`,
-          safeUrl
-        );
-        if (uploadedUrl && uploadedUrl.startsWith('http')) {
-          safeUrl = uploadedUrl;
-        }
-      } catch (uploadErr) {
-        console.warn('Aviso subiendo imagen a storage:', uploadErr);
-      }
+      // throwOnNetworkError: si no hay red, la cola lo reintenta más tarde en vez de
+      // guardar la imagen en base64 dentro de la base de datos.
+      const uploadedUrl = await storageService.uploadImage(
+        'scout-files',
+        'certificates',
+        `cert_${scoutId}_${Date.now()}.png`,
+        safeUrl,
+        { throwOnNetworkError: true }
+      );
+      if (uploadedUrl && uploadedUrl.startsWith('http')) safeUrl = uploadedUrl;
     }
 
     const payload: any = {
@@ -391,7 +415,7 @@ export const dataService = {
 
     if (error) {
       console.error('Error insertando certificado en Supabase:', error);
-      throw new Error(error.message || 'No se pudo guardar en la base de datos');
+      throw error;
     }
 
     // Sincronizar automáticamente con el currículum scout
@@ -399,7 +423,7 @@ export const dataService = {
       title,
       category,
       level,
-      date: date || new Date().toISOString().split('T')[0]
+      date: date || todayLocal()
     });
 
     return data ? data[0] : null;
@@ -413,20 +437,33 @@ export const dataService = {
     date?: string;
     file_url?: string;
   }) {
+    if (updates.file_url && !isSafeFileUrl(updates.file_url)) throw new Error('El enlace del archivo debe ser una imagen o una dirección web (https://).');
+    const res = await outbox.run('certificate.update', { certificateId, scoutId, updates }, {
+      dedupeKey: `certupd:${certificateId}`,
+      label: `Certificado editado: ${updates.title || ''}`,
+    });
+    return res.queued ? { id: certificateId, ...updates, _pending: true } : null;
+  },
+
+  async _updateCertificateNow(certificateId: string, scoutId: string, updates: {
+    title?: string;
+    category?: string;
+    area?: string | null;
+    level?: string | null;
+    date?: string;
+    file_url?: string;
+  }) {
     let safeUrl = updates.file_url;
     if (safeUrl && safeUrl.startsWith('data:image')) {
-      try {
-        const uploadedUrl = await storageService.uploadImage(
-          'scout-files',
-          'certificates',
-          `cert_${scoutId}_${Date.now()}.png`,
-          safeUrl
-        );
-        if (uploadedUrl && uploadedUrl.startsWith('http')) {
-          safeUrl = uploadedUrl;
-        }
-      } catch (uploadErr) {
-        console.warn('Aviso subiendo imagen editada a storage:', uploadErr);
+      const uploadedUrl = await storageService.uploadImage(
+        'scout-files',
+        'certificates',
+        `cert_${scoutId}_${Date.now()}.png`,
+        safeUrl,
+        { throwOnNetworkError: true }
+      );
+      if (uploadedUrl && uploadedUrl.startsWith('http')) {
+        safeUrl = uploadedUrl;
       }
     }
 
@@ -445,7 +482,7 @@ export const dataService = {
 
     if (error) {
       console.error('Error actualizando certificado en Supabase:', error);
-      throw new Error(error.message || 'No se pudo actualizar el certificado');
+      throw error;
     }
 
     if (updates.title && updates.category) {
@@ -453,7 +490,7 @@ export const dataService = {
         title: updates.title,
         category: updates.category,
         level: updates.level,
-        date: updates.date || new Date().toISOString().split('T')[0]
+        date: updates.date || todayLocal()
       });
     }
 
@@ -468,18 +505,19 @@ export const dataService = {
     director?: string;
   }) {
     try {
-      const { data: prof } = await supabase
+      // Si esta lectura falla (sin red) NO se continúa: escribir encima borraría el currículum.
+      const prof: any = must(await supabase
         .from('profiles')
         .select('curriculum_data')
         .eq('id', scoutId)
-        .single();
+        .maybeSingle());
 
       let curr = prof?.curriculum_data || {};
       if (typeof curr === 'string') {
         try { curr = JSON.parse(curr); } catch {}
       }
 
-      const certDate = cert.date || new Date().toISOString().split('T')[0];
+      const certDate = cert.date || todayLocal();
       const normTitle = (cert.title || '').toLowerCase();
 
       // 1. Cursos de Liderazgo Scout (Horqueta, Remo, Canoa, Plan de Formación)
@@ -538,16 +576,18 @@ export const dataService = {
         }
       }
 
-      await supabase
+      must(await supabase
         .from('profiles')
         .update({ curriculum_data: curr })
-        .eq('id', scoutId);
+        .eq('id', scoutId));
 
       if (typeof window !== 'undefined' && window.localStorage) {
         window.localStorage.setItem(`curriculum_data_${scoutId}`, JSON.stringify(curr));
       }
       return curr;
     } catch (err) {
+      // Sin red: lanzar para que la cola reintente el certificado completo más tarde
+      if (isRetryableError(err)) throw err;
       console.warn('Error sincronizando certificado con currículum:', err);
       return null;
     }
@@ -555,12 +595,13 @@ export const dataService = {
 
   async syncAllCertificatesToCurriculum(scoutId: string) {
     try {
-      const certs = await this.getCertificates(scoutId);
-      const { data: prof } = await supabase
+      if (!isOnline()) return { curriculum: null, count: 0, total: 0 };
+      const certs = (await this.getCertificates(scoutId)).filter((c: any) => !c._pending);
+      const prof: any = must(await supabase
         .from('profiles')
         .select('curriculum_data')
         .eq('id', scoutId)
-        .single();
+        .maybeSingle());
 
       let curr = prof?.curriculum_data || {};
       if (typeof curr === 'string') {
@@ -574,7 +615,7 @@ export const dataService = {
       let importedCount = 0;
 
       for (const cert of certs) {
-        const certDate = cert.date || (cert.created_at ? cert.created_at.split('T')[0] : new Date().toISOString().split('T')[0]);
+        const certDate = cert.date || (cert.created_at ? cert.created_at.split('T')[0] : todayLocal());
         const normTitle = (cert.title || '').toLowerCase();
 
         // 1. Cursos de Liderazgo Scout
@@ -632,10 +673,10 @@ export const dataService = {
         }
       }
 
-      await supabase
+      must(await supabase
         .from('profiles')
         .update({ curriculum_data: curr })
-        .eq('id', scoutId);
+        .eq('id', scoutId));
 
       if (typeof window !== 'undefined' && window.localStorage) {
         window.localStorage.setItem(`curriculum_data_${scoutId}`, JSON.stringify(curr));
@@ -648,23 +689,16 @@ export const dataService = {
     }
   },
 
-  async deleteCertificate(certificateId: string, scoutId: string, certTitle?: string, reason?: string) {
-    const { error } = await supabase
-      .from('certificates')
-      .delete()
-      .eq('id', certificateId);
-
-    if (error) throw error;
-
-    // Despachar notificación Push y guardar en bandeja del Scout
-    await notificationService.sendNotification({
-      receiverId: scoutId,
-      title: `⚠️ Certificado / Especialidad Eliminado: ${certTitle || 'Acreditación'}`,
-      message: reason && reason.trim()
-        ? `Tu dirigente ha eliminado "${certTitle || 'tu acreditación'}": ${reason}`
-        : `Tu dirigente ha eliminado el certificado/especialidad "${certTitle || 'Acreditación'}".`,
-      type: 'alert'
-    }).catch(() => {});
+  async deleteCertificate(certificateId: string, scoutId: string, certTitle?: string, reason?: string, notifyScout = true) {
+    // Un certificado que aún no se subía: basta con sacarlo de la cola
+    if (String(certificateId).startsWith('pending_')) {
+      await outbox.removeWhere(o => o.type === 'certificate.upload' && o.payload?.tempId === certificateId);
+      return;
+    }
+    await outbox.run('certificate.delete', { certificateId, scoutId, certTitle, reason, notifyScout }, {
+      dedupeKey: `certdel:${certificateId}`,
+      label: `Certificado eliminado: ${certTitle || ''}`,
+    });
   },
 
   // ----------------------------------------------------
@@ -683,10 +717,9 @@ export const dataService = {
   },
 
   async markNotificationRead(notificationId: string) {
-    await supabase
-      .from('scout_notifications')
-      .update({ is_read: true })
-      .eq('id', notificationId);
+    await outbox.run('row.update', { table: 'scout_notifications', values: { is_read: true }, match: { id: notificationId } }, {
+      dedupeKey: `notifread:${notificationId}`,
+    }).catch(() => {});
   },
 
   // ----------------------------------------------------
@@ -700,129 +733,102 @@ export const dataService = {
     description?: string;
     created_by: string;
   }) {
-    const { data, error } = await supabase
-      .from('calendar_events')
-      .insert({
-        title: `[CIP ${event.scope.toUpperCase()}] ${event.title}`,
-        description: event.description || `Ciclo Institucional de Programa (CIP) de alcance ${event.scope}.`,
-        date: event.date,
-        unit: event.unit,
-        created_by: event.created_by
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    const row = {
+      id: newId(),
+      title: `[CIP ${event.scope.toUpperCase()}] ${event.title}`,
+      description: event.description || `Ciclo Institucional de Programa (CIP) de alcance ${event.scope}.`,
+      date: event.date,
+      unit: event.unit,
+      created_by: event.created_by
+    };
+    await outbox.run('row.insert', { table: 'calendar_events', row }, { label: `Evento CIP: ${event.title}` });
+    return row;
   },
 
   async getCipEvents(unit?: string) {
-    let query = supabase
-      .from('calendar_events')
-      .select('*')
-      .or('title.ilike.%[CIP%,title.ilike.%[6P%')
-      .order('date', { ascending: false });
+    const rows = await cachedQuery<any[]>(`cip_events_${unit || 'all'}`, async () => {
+      let query = supabase
+        .from('calendar_events')
+        .select('*')
+        .or('title.ilike.%[CIP%,title.ilike.%[6P%')
+        .order('date', { ascending: false });
 
-    if (unit) {
-      query = query.in('unit', [unit.toLowerCase(), 'grupo']);
-    }
+      if (unit) {
+        query = query.in('unit', [unit.toLowerCase(), 'grupo']);
+      }
+      return must(await query) || [];
+    }, []);
 
-    const { data, error } = await query;
-    if (error) return [];
-    return data || [];
+    // Eventos creados sin conexión
+    const ids = new Set(rows.map((r: any) => r.id));
+    const pendingRows = (await outbox.pending('row.insert'))
+      .filter(o => o.payload?.table === 'calendar_events' && o.payload.row && !ids.has(o.payload.row.id))
+      .map(o => ({ ...o.payload.row, _pending: true }))
+      .filter((r: any) => !unit || [unit.toLowerCase(), 'grupo'].includes(String(r.unit).toLowerCase()));
+    return [...pendingRows, ...rows];
   },
 
   // ----------------------------------------------------
   // MÓDULO DE PLANES TRIMESTRALES (Q1 - Q4)
   // ----------------------------------------------------
-  async getQuarterlyPlan(scoutId: string, quarter: string, year: number) {
-    try {
-      const fetchPromise = (async () => {
-        const { data, error } = await supabase
-          .from('quarterly_plans')
-          .select('*')
-          .eq('scout_id', scoutId)
-          .eq('quarter', quarter)
-          .eq('year', year)
-          .maybeSingle();
+  async getQuarterlyPlan(scoutId: string, quarter: string, year: number, opts: { skipPending?: boolean } = {}) {
+    const pending = opts.skipPending ? null : await pendingQuarterlyPlan(null, null, quarter, year, scoutId);
+    if (pending) return pending;
+    return cachedQuery<any>(`qplan_${scoutId}_${quarter}_${year}`, async () => {
+      const { data, error } = await supabase
+        .from('quarterly_plans')
+        .select('*')
+        .eq('scout_id', scoutId)
+        .eq('quarter', quarter)
+        .eq('year', year)
+        .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error fetching quarterly plan:', error);
-        }
-
-        if (data) {
-          // Intentar recuperar de fallback JSON si se guardó en la columna 'goals'
-          if (typeof data.goals === 'string' && data.goals.startsWith('{')) {
-            try {
-              const parsed = JSON.parse(data.goals);
-              return { ...data, ...parsed };
-            } catch (e) {}
-          }
-        }
-        return data || null;
-      })();
-
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500));
-      return await Promise.race([fetchPromise, timeoutPromise]);
-    } catch (e) {
-      return null;
-    }
+      if (error && error.code !== 'PGRST116') throw error;
+      return expandPlanGoals(data) || null;
+    }, null, 6000);
   },
 
   async getQuarterlyPlansHistory(scoutId: string, groupName?: string, unit?: string) {
-    try {
-      const fetchPromise = (async () => {
-        let query = supabase.from('quarterly_plans').select('*');
-        if (groupName && unit) {
-          let cleanUnit = (unit || 'clan').toLowerCase().trim();
-          if (cleanUnit === 'comunidad') cleanUnit = 'caminantes';
-          query = query.eq('group_name', groupName).eq('unit', cleanUnit);
-        } else {
-          query = query.eq('scout_id', scoutId);
-        }
+    let cleanUnit = (unit || 'clan').toLowerCase().trim();
+    if (cleanUnit === 'comunidad') cleanUnit = 'caminantes';
+    const cacheKey = groupName && unit ? `qplan_hist_${groupName}_${cleanUnit}` : `qplan_hist_${scoutId}`;
+    return cachedQuery<any[]>(cacheKey, async () => {
+      let query = supabase.from('quarterly_plans').select('*');
+      if (groupName && unit) {
+        query = query.eq('group_name', groupName).eq('unit', cleanUnit);
+      } else {
+        query = query.eq('scout_id', scoutId);
+      }
 
-        const { data, error } = await query
-          .order('year', { ascending: false })
-          .order('quarter', { ascending: false });
-
-        if (error) return [];
-        return (data || []).map(item => {
-          if (typeof item.goals === 'string' && item.goals.startsWith('{')) {
-            try {
-              const parsed = JSON.parse(item.goals);
-              return { ...item, ...parsed };
-            } catch (e) {}
-          }
-          return item;
-        });
-      })();
-
-      const timeoutPromise = new Promise<any[]>((resolve) => setTimeout(() => resolve([]), 4000));
-      return await Promise.race([fetchPromise, timeoutPromise]);
-    } catch (e) {
-      return [];
-    }
+      const data = must(await query
+        .order('year', { ascending: false })
+        .order('quarter', { ascending: false }));
+      return (data || []).map(expandPlanGoals);
+    }, [], 6000);
   },
 
-  async saveQuarterlyPlan(plan: {
-    scout_id: string;
-    quarter: string;
-    year: number;
-    elaborated_by?: string;
-    general_objectives?: string;
-    trimestre_goals?: string;
-    specific_objectives?: string;
-    educational_areas?: Record<string, boolean>;
-    monthly_activities?: any[];
-    goals?: string;
-    group_name?: string;
-    unit?: string;
-  }) {
+  async saveQuarterlyPlan(plan: QuarterlyPlanInput) {
+    let cleanUnit = (plan.unit || 'clan').toLowerCase().trim();
+    if (cleanUnit === 'comunidad') cleanUnit = 'caminantes';
+    const res = await outbox.run('quarterly.save', plan, {
+      dedupeKey: `qplan:${plan.group_name || ''}:${cleanUnit}:${plan.quarter}:${plan.year}`,
+      label: `Plan trimestral ${plan.quarter} ${plan.year}`,
+    });
+    if (res.queued) {
+      // Guardado en el teléfono: devolver lo que se va a enviar para que la pantalla lo muestre
+      return { ...plan, unit: cleanUnit, status: 'Enviado', updated_at: new Date().toISOString(), _pending: true };
+    }
+    return res.result;
+  },
+
+  async _saveQuarterlyPlanNow(plan: QuarterlyPlanInput) {
     let cleanUnit = (plan.unit || 'clan').toLowerCase().trim();
     if (cleanUnit === 'comunidad') cleanUnit = 'caminantes';
 
-    const existing = await this.getUnitSharedQuarterlyPlan(plan.group_name || '', cleanUnit, plan.quarter, plan.year)
-      || await this.getQuarterlyPlan(plan.scout_id, plan.quarter, plan.year);
+    // skipPending: aquí se busca la fila REAL del servidor (con id), no la copia en cola
+    const found = await this.getUnitSharedQuarterlyPlan(plan.group_name || '', cleanUnit, plan.quarter, plan.year, { skipPending: true })
+      || await this.getQuarterlyPlan(plan.scout_id, plan.quarter, plan.year, { skipPending: true });
+    const existing = found && found.id ? found : null;
 
     const fullPayload = {
       scout_id: plan.scout_id,
@@ -869,6 +875,8 @@ export const dataService = {
         throw error;
       }
     } catch (primaryErr: any) {
+      // Sin red: que la cola lo reintente tal cual (no usar el plan B de columnas)
+      if (isRetryableError(primaryErr)) throw primaryErr;
       // Fallback seguro: Si faltan columnas en Supabase, guardar como JSON en la columna 'goals'
       const fallbackGoalsStr = JSON.stringify(fullPayload);
       if (existing) {
@@ -906,43 +914,50 @@ export const dataService = {
   },
 
   async getUnitQuarterlyPlans(unit: string, groupName: string, quarter: string, year: number) {
-    let query = supabase
-      .from('profiles')
-      .select('id, name, unit')
-      .eq('role', 'scout')
-      .eq('group_name', groupName);
+    return cachedQuery<any[]>(`unit_qplans_${unit}_${groupName}_${quarter}_${year}`, async () => {
+      let query = supabase
+        .from('profiles')
+        .select('id, name, unit')
+        .eq('role', 'scout')
+        .eq('group_name', groupName);
 
-    if (unit && unit !== 'all') {
-      query = query.eq('unit', unit.toLowerCase());
-    }
+      if (unit && unit !== 'all') {
+        query = query.eq('unit', unit.toLowerCase());
+      }
 
-    const { data: scouts } = await query.order('unit', { ascending: true }).order('name', { ascending: true });
-    if (!scouts || scouts.length === 0) return [];
+      const scouts = must(await query.order('unit', { ascending: true }).order('name', { ascending: true }));
+      if (!scouts || scouts.length === 0) return [];
 
-    const scoutIds = scouts.map(s => s.id);
-    const { data: plans } = await supabase
-      .from('quarterly_plans')
-      .select('*')
-      .in('scout_id', scoutIds)
-      .eq('quarter', quarter)
-      .eq('year', year);
+      const scoutIds = scouts.map((s: any) => s.id);
+      const plans = must(await supabase
+        .from('quarterly_plans')
+        .select('*')
+        .in('scout_id', scoutIds)
+        .eq('quarter', quarter)
+        .eq('year', year));
 
-    const planMap: Record<string, any> = {};
-    plans?.forEach(p => { planMap[p.scout_id] = p; });
+      const planMap: Record<string, any> = {};
+      plans?.forEach((p: any) => { planMap[p.scout_id] = p; });
 
-    return scouts.map(s => ({
-      scout: s,
-      plan: planMap[s.id] || null
-    }));
+      return scouts.map((s: any) => ({
+        scout: s,
+        plan: planMap[s.id] || null
+      }));
+    }, []);
   },
 
   // OBTENER Y GUARDAR PLAN TRIMESTRAL ÚNICO Y COMPARTIDO POR UNIDAD
-  async getUnitSharedQuarterlyPlan(groupName: string, unit: string, quarter: string, year: number) {
+  async getUnitSharedQuarterlyPlan(groupName: string, unit: string, quarter: string, year: number, opts: { skipPending?: boolean } = {}) {
     try {
       let cleanUnit = (unit || 'clan').toLowerCase().trim();
       if (cleanUnit === 'comunidad') cleanUnit = 'caminantes';
       const unitAliases = [cleanUnit, cleanUnit === 'caminantes' ? 'comunidad' : cleanUnit];
 
+      const pending = opts.skipPending ? null : await pendingQuarterlyPlan(groupName || '', cleanUnit, quarter, year);
+      if (pending) return pending;
+
+      const cacheKey = `unit_qplan_${groupName}_${cleanUnit}_${quarter}_${year}`;
+      // Si hay error de red en cualquier consulta se lanza, y se usa la copia guardada.
       const fetchPromise = (async () => {
         // 1. Intento principal: buscar directamente en quarterly_plans por group_name y unit
         if (groupName && groupName.trim().length > 0) {
@@ -957,7 +972,8 @@ export const dataService = {
             .limit(1)
             .maybeSingle();
 
-          if (!err1 && directData) return directData;
+          if (err1) throw err1;
+          if (directData) return directData;
         }
 
         // 2. Intento rápido: buscar directamente por unit, quarter, year sin depender de discrepancias en el texto de group_name
@@ -971,7 +987,8 @@ export const dataService = {
           .limit(1)
           .maybeSingle();
 
-        if (!err2 && unitData) return unitData;
+        if (err2) throw err2;
+        if (unitData) return unitData;
 
         // 3. Fallback legacy: Buscar a través de los perfiles de la unidad
         let query = supabase.from('profiles').select('id');
@@ -997,25 +1014,15 @@ export const dataService = {
         return null;
       })();
 
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500));
-      const result: any = await Promise.race([fetchPromise, timeoutPromise]);
-
-      if (result) {
-        if (typeof result.goals === 'string' && result.goals.startsWith('{')) {
-          try {
-            const parsed = JSON.parse(result.goals);
-            return { ...result, ...parsed };
-          } catch (e) {}
-        }
-        return result;
-      }
-      return null;
+      const result: any = await cachedQuery<any>(cacheKey, async () => (await fetchPromise) || null, null, 6000);
+      return result ? expandPlanGoals(result) : null;
     } catch (e) {
       return null;
     }
   },
 
   async updateLastSeen(scoutId: string) {
+    if (!isOnline()) return;
     try {
       await supabase.from('profiles').update({
         updated_at: new Date().toISOString()
@@ -1032,13 +1039,13 @@ export const dataService = {
 
       // Las reglas RLS solo dejan a un scout leer su propio perfil: el directorio
       // del grupo viene de la función directorio_grupo() (solo datos públicos).
-      const { data: directorio, error } = await supabase.rpc('directorio_grupo');
-      let data: any[] | null = directorio;
-
-      if (error || !data || data.length === 0) {
-        const res = await supabase.from('profiles').select('*');
-        data = res.data;
-      }
+      // Sin red se usa la última copia del directorio.
+      const data: any[] = await cachedQuery<any[]>(`directorio_${groupName}`, async () => {
+        const { data: directorio, error } = await supabase.rpc('directorio_grupo');
+        if (error && isRetryableError(error)) throw error;
+        if (!error && directorio && directorio.length > 0) return directorio;
+        return must(await supabase.from('profiles').select('*')) || [];
+      }, []);
 
       if (!data || data.length === 0) return [];
 
@@ -1070,224 +1077,256 @@ export const dataService = {
   },
 
   async updateQuarterlyPlanByScouter(planId: string, feedback: string, status: string) {
-    const { data, error } = await supabase
-      .from('quarterly_plans')
-      .update({
-        scouter_feedback: feedback,
-        status: status
-      })
-      .eq('id', planId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    const res = await outbox.run('row.update', {
+      table: 'quarterly_plans',
+      values: { scouter_feedback: feedback, status },
+      match: { id: planId },
+    }, { dedupeKey: `qplanreview:${planId}`, label: 'Revisión de plan trimestral' });
+    return res.queued ? { id: planId, scouter_feedback: feedback, status, _pending: true } : res.result;
   },
 
   async updateCedula(scoutId: string, cedula: string) {
-    try {
-      await supabase.from('profiles').update({ cedula: cedula.trim() }).eq('id', scoutId);
-    } catch (e) {
-      console.warn('Aviso actualizando cédula:', e);
+    await this.updateProfileFields(scoutId, { cedula: cedula.trim() }, 'Cédula actualizada').catch(e => console.warn('Aviso actualizando cédula:', e));
+  },
+
+  /** Actualiza columnas del perfil; sin red queda en cola. */
+  async updateProfileFields(profileId: string, values: Record<string, any>, label = 'Perfil actualizado') {
+    const keys = Object.keys(values).sort().join(',');
+    return outbox.run('row.update', { table: 'profiles', values, match: { id: profileId } }, {
+      dedupeKey: `profile:${profileId}:${keys}`,
+      label,
+    });
+  },
+
+  /** Fila completa del perfil, con copia offline y los cambios pendientes ya aplicados. */
+  async getProfileRow(profileId: string): Promise<any | null> {
+    const row = await cachedQuery<any>(`profile_row_${profileId}`, async () =>
+      must(await supabase.from('profiles').select('*').eq('id', profileId).maybeSingle()) || null, null);
+    const ops = await outbox.pending();
+    let merged = row ? { ...row } : null;
+    for (const o of ops) {
+      const p = o.payload || {};
+      if (o.type === 'row.update' && p.table === 'profiles' && p.match?.id === profileId) {
+        merged = { ...(merged || { id: profileId }), ...p.values };
+      } else if (o.type === 'profile.mergeJson' && p.id === profileId) {
+        merged = merged || { id: profileId };
+        let base = merged[p.column] || {};
+        if (typeof base === 'string') { try { base = JSON.parse(base); } catch { base = {}; } }
+        merged[p.column] = { ...base, ...p.patch };
+      }
     }
+    return merged;
+  },
+
+  /** Sube una foto de perfil y guarda su URL; sin red queda en cola (la imagen viaja en la cola). */
+  async setProfilePhoto(profileId: string, field: 'avatar_url' | 'custom_avatar_url', dataUrlOrHttp: string) {
+    return outbox.run<string>('profile.photo', { profileId, field, image: dataUrlOrHttp }, {
+      dedupeKey: `photo:${profileId}:${field}`,
+      label: 'Foto de perfil',
+    });
+  },
+
+  /** Mezcla campos dentro de una columna JSON del perfil (medical_data, curriculum_data) sin pisar el resto. */
+  async mergeProfileJson(profileId: string, column: 'medical_data' | 'curriculum_data', patch: Record<string, any>, label = 'Datos guardados') {
+    return outbox.run('profile.mergeJson', { id: profileId, column, patch }, {
+      dedupeKey: `profilejson:${profileId}:${column}:${Object.keys(patch).sort().join(',')}`,
+      label,
+    });
   },
 
   async proposeMembershipDate(scoutId: string, expiresAt: string) {
-    try {
-      await supabase.from('profiles').update({
-        membership_expires_at: expiresAt,
-        membership_status: 'pending_approval',
-        membership_rejected_reason: null
-      }).eq('id', scoutId);
-    } catch (e) {
-      console.warn('Aviso proponiendo membresía:', e);
-    }
+    await this.updateProfileFields(scoutId, {
+      membership_expires_at: expiresAt,
+      membership_status: 'pending_approval',
+      membership_rejected_reason: null
+    }, 'Fecha de membresía propuesta').catch(e => console.warn('Aviso proponiendo membresía:', e));
   },
 
   async approveMembershipDate(scoutId: string) {
-    try {
-      await supabase.from('profiles').update({
-        membership_status: 'approved',
-        membership_rejected_reason: null
-      }).eq('id', scoutId);
-    } catch (e) {
-      console.warn('Aviso aprobando membresía:', e);
-    }
+    await outbox.run('row.update', {
+      table: 'profiles',
+      values: { membership_status: 'approved', membership_rejected_reason: null },
+      match: { id: scoutId },
+    }, { dedupeKey: `membership:${scoutId}`, label: 'Membresía aprobada' }).catch(e => console.warn('Aviso aprobando membresía:', e));
   },
 
   async rejectMembershipDate(scoutId: string, reason: string) {
-    try {
-      await supabase.from('profiles').update({
-        membership_status: 'rejected',
-        membership_rejected_reason: reason
-      }).eq('id', scoutId);
-
-      // Notificación Push en tiempo real al Scout
-      await notificationService.sendNotification({
+    await outbox.run('row.update', {
+      table: 'profiles',
+      values: { membership_status: 'rejected', membership_rejected_reason: reason },
+      match: { id: scoutId },
+      notify: {
         receiverId: scoutId,
         title: '📑 Registro de Membresía Devuelto',
         message: reason && reason.trim()
           ? `Tu fecha de registro/membresía fue devuelta: ${reason}`
           : 'Tu dirigente ha revisado tu fecha de membresía y requiere corrección.',
         type: 'membership'
-      }).catch(() => {});
-    } catch (e) {
-      console.warn('Aviso rechazando membresía:', e);
-    }
+      },
+    }, { dedupeKey: `membership:${scoutId}`, label: 'Membresía devuelta' }).catch(e => console.warn('Aviso rechazando membresía:', e));
   },
 
   async deleteProfilePhotoWithReason(scoutId: string, reason: string, photoType: 'scout' | 'custom' | 'both' = 'both') {
-    try {
-      const updatePayload: any = { photo_rejected_reason: reason || null };
-      if (photoType === 'scout' || photoType === 'both') updatePayload.avatar_url = null;
-      if (photoType === 'custom' || photoType === 'both') updatePayload.custom_avatar_url = null;
+    const updatePayload: any = { photo_rejected_reason: reason || null };
+    if (photoType === 'scout' || photoType === 'both') updatePayload.avatar_url = null;
+    if (photoType === 'custom' || photoType === 'both') updatePayload.custom_avatar_url = null;
+    const typeLabel = photoType === 'custom' ? 'Foto Personal' : (photoType === 'scout' ? 'Foto Scout con Uniforme' : 'Foto de Perfil');
 
-      await supabase.from('profiles').update(updatePayload).eq('id', scoutId);
-
-      const typeLabel = photoType === 'custom' ? 'Foto Personal' : (photoType === 'scout' ? 'Foto Scout con Uniforme' : 'Foto de Perfil');
-
-      // Notificación Push en tiempo real al Scout
-      await notificationService.sendNotification({
+    await outbox.run('row.update', {
+      table: 'profiles',
+      values: updatePayload,
+      match: { id: scoutId },
+      notify: {
         receiverId: scoutId,
         title: `📷 ${typeLabel} Removida por Dirigente`,
         message: reason && reason.trim()
           ? `Tu dirigente ha solicitado cambiar tu ${typeLabel.toLowerCase()}: ${reason}`
           : `Tu dirigente ha removido tu ${typeLabel.toLowerCase()}. Por favor sube una foto adecuada.`,
         type: 'alert'
-      }).catch(() => {});
-    } catch (e) {
-      console.warn('Aviso eliminando foto de perfil:', e);
+      },
+    }, { label: 'Foto de perfil removida' }).catch(e => console.warn('Aviso eliminando foto de perfil:', e));
+  },
+
+  // --- REGISTROS GUARDADOS EN `certificates` POR CATEGORÍA (noches, vida de grupo, CIP, vínculos) ---
+  // Red primero (así el dirigente ve lo último), con lo pendiente offline encima, y copia local de respaldo.
+  async _getCategoryRows(scoutId: string, category: string, localKey: string, mapRow: (d: any) => any) {
+    const res = await supabase
+      .from('certificates')
+      .select('*')
+      .eq('scout_id', scoutId)
+      .eq('category', category)
+      .order('created_at', { ascending: false });
+
+    if (res.error) {
+      try {
+        const raw = await AsyncStorage.getItem(localKey);
+        if (raw) return JSON.parse(raw);
+      } catch {}
+      return [];
+    }
+
+    const remoteRows = res.data || [];
+    await this._rescueLocalOnlyRows(scoutId, category, localKey, remoteRows);
+    const pend = await pendingCertificateRows(scoutId);
+    const rows = applyPendingRows(remoteRows, pend, r => r.category === category);
+    const entries = rows.map(mapRow);
+    AsyncStorage.setItem(localKey, JSON.stringify(entries)).catch(() => {});
+    return entries;
+  },
+
+  /**
+   * Antes de esta versión, estos registros se creaban con ids tipo "night_123" y la
+   * columna `certificates.id` es UUID: el insert fallaba siempre y solo quedaban en el
+   * teléfono. La primera vez que se leen con red, se suben los que falten.
+   */
+  async _rescueLocalOnlyRows(scoutId: string, category: string, localKey: string, remoteRows: any[]) {
+    const flagKey = `@scout_rescued_v1_${localKey}`;
+    try {
+      if (await AsyncStorage.getItem(flagKey)) return;
+      const raw = await AsyncStorage.getItem(localKey);
+      const local: any[] = raw ? JSON.parse(raw) : [];
+      const remoteIds = new Set(remoteRows.map(r => r.id));
+      const isUuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || '');
+      const remoteTitles = new Set(remoteRows.map(r => r.title));
+      const lost = category.startsWith('cip_sel_')
+        ? local.filter(e => e && e.title && !remoteTitles.has(e.title))
+        : local.filter(e => e && e.id && !isUuid(e.id) && !remoteIds.has(e.id));
+      for (const e of lost) {
+        const row = legacyEntryToRow(scoutId, category, e);
+        if (row) await outbox.enqueue('row.insert', { table: 'certificates', row }, { label: 'Registro recuperado del teléfono' });
+      }
+      await AsyncStorage.setItem(flagKey, '1');
+    } catch (err) {
+      console.warn('Aviso recuperando registros locales:', err);
     }
   },
 
   // --- GESTIÓN DE REGISTRO DE NOCHES DE VIDA AL AIRE LIBRE ---
   async getNightsLog(scoutId: string, stageId: string, reqId: string) {
     const key = `@scout_noches_${scoutId}_${stageId}_${reqId}`;
-    try {
-      const raw = await AsyncStorage.getItem(key);
-      if (raw) return JSON.parse(raw);
-    } catch {}
-
-    try {
-      const { data } = await supabase
-        .from('certificates')
-        .select('*')
-        .eq('scout_id', scoutId)
-        .eq('category', `aire_libre_${stageId}_${reqId}`)
-        .order('created_at', { ascending: false });
-
-      if (data && data.length > 0) {
-        const entries = data.map(d => {
-          let dateVal = d.created_at ? d.created_at.split('T')[0] : '';
-          let notesVal = '';
-          if (d.file_url) {
-            if (d.file_url.startsWith('date:')) {
-              dateVal = d.file_url.replace('date:', '');
-            } else if (d.file_url.startsWith('{')) {
-              try {
-                const meta = JSON.parse(d.file_url);
-                if (meta.date) dateVal = meta.date;
-                if (meta.notes) notesVal = meta.notes;
-              } catch {}
-            }
-          }
-          return {
-            id: d.id,
-            date: dateVal,
-            location: d.title || 'Campamento / Pernocta',
-            nightsCount: parseInt(d.level || '1', 10) || 1,
-            notes: notesVal,
-            createdAt: d.created_at
-          };
-        });
-        await AsyncStorage.setItem(key, JSON.stringify(entries)).catch(() => {});
-        return entries;
+    return this._getCategoryRows(scoutId, `aire_libre_${stageId}_${reqId}`, key, d => {
+      let dateVal = d.created_at ? d.created_at.split('T')[0] : '';
+      let notesVal = '';
+      if (d.file_url) {
+        if (d.file_url.startsWith('date:')) {
+          dateVal = d.file_url.replace('date:', '');
+        } else if (d.file_url.startsWith('{')) {
+          try {
+            const meta = JSON.parse(d.file_url);
+            if (meta.date) dateVal = meta.date;
+            if (meta.notes) notesVal = meta.notes;
+          } catch {}
+        }
       }
-    } catch {}
-
-    return [];
+      return {
+        id: d.id,
+        date: dateVal,
+        location: d.title || 'Campamento / Pernocta',
+        nightsCount: parseInt(d.level || '1', 10) || 1,
+        notes: notesVal,
+        createdAt: d.created_at,
+        pending: !!d._pending
+      };
+    });
   },
 
   async addNightEntry(scoutId: string, stageId: string, reqId: string, entry: { date: string; location: string; nightsCount: number; notes?: string }) {
-    const current = await this.getNightsLog(scoutId, stageId, reqId);
-    const newEntry = {
-      ...entry,
-      id: `night_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      createdAt: new Date().toISOString()
+    const row = {
+      id: newId(),
+      scout_id: scoutId,
+      category: `aire_libre_${stageId}_${reqId}`,
+      title: entry.location || 'Campamento / Pernocta',
+      level: String(entry.nightsCount || 1),
+      file_url: JSON.stringify({ date: entry.date, notes: entry.notes || '' })
     };
-    const updated = [newEntry, ...current];
+    const res = await outbox.run('row.insert', { table: 'certificates', row }, { label: `Noche: ${row.title}` });
+    const newEntry = { ...entry, id: row.id, createdAt: new Date().toISOString(), pending: res.queued };
     const key = `@scout_noches_${scoutId}_${stageId}_${reqId}`;
-    await AsyncStorage.setItem(key, JSON.stringify(updated));
-
-    // Guardar en Supabase usando estrictamente columnas existentes en certificates
-    try {
-      await supabase.from('certificates').insert({
-        id: newEntry.id,
-        scout_id: scoutId,
-        category: `aire_libre_${stageId}_${reqId}`,
-        title: entry.location || 'Campamento / Pernocta',
-        level: String(entry.nightsCount || 1),
-        file_url: JSON.stringify({ date: entry.date, notes: entry.notes || '' })
-      });
-    } catch (e) {
-      console.warn('Aviso guardando noche en Supabase:', e);
-    }
-
+    let current: any[] = [];
+    try { current = JSON.parse((await AsyncStorage.getItem(key)) || '[]'); } catch {}
+    const updated = [newEntry, ...current.filter(e => e.id !== row.id)];
+    await AsyncStorage.setItem(key, JSON.stringify(updated)).catch(() => {});
     return updated;
   },
 
   async deleteNightEntry(scoutId: string, stageId: string, reqId: string, entryId: string) {
-    const current = await this.getNightsLog(scoutId, stageId, reqId);
-    const updated = current.filter((e: any) => e.id !== entryId);
+    await this._deleteCategoryRow(entryId, 'Noche eliminada');
     const key = `@scout_noches_${scoutId}_${stageId}_${reqId}`;
-    await AsyncStorage.setItem(key, JSON.stringify(updated));
-
-    try {
-      await supabase.from('certificates').delete().eq('id', entryId);
-    } catch {}
-
+    let current: any[] = [];
+    try { current = JSON.parse((await AsyncStorage.getItem(key)) || '[]'); } catch {}
+    const updated = current.filter((e: any) => e.id !== entryId);
+    await AsyncStorage.setItem(key, JSON.stringify(updated)).catch(() => {});
     return updated;
+  },
+
+  /** Borra una fila de certificates; si nunca llegó a subirse, basta con sacarla de la cola. */
+  async _deleteCategoryRow(rowId: string, label: string) {
+    const removed = await outbox.removeWhere(o =>
+      o.type === 'row.insert' && o.payload?.table === 'certificates' && o.payload?.row?.id === rowId);
+    if (removed > 0) return;
+    await outbox.run('row.delete', { table: 'certificates', match: { id: rowId } }, { label });
   },
 
   // --- GESTIÓN DE REGISTRO DE VIDA DE GRUPO (PEREGRINAJES, CAMPAMENTOS, PROYECTOS) ---
   async getVidaGrupoLog(scoutId: string, stageId: string, reqId: string) {
     const key = `@scout_vidagrupo_${scoutId}_${stageId}_${reqId}`;
-    try {
-      const raw = await AsyncStorage.getItem(key);
-      if (raw) return JSON.parse(raw);
-    } catch {}
-
-    try {
-      const { data } = await supabase
-        .from('certificates')
-        .select('*')
-        .eq('scout_id', scoutId)
-        .eq('category', `vida_grupo_${stageId}_${reqId}`)
-        .order('created_at', { ascending: false });
-
-      if (data && data.length > 0) {
-        const entries = data.map(d => {
-          let meta: any = {};
-          if (d.file_url && d.file_url.startsWith('{')) {
-            try { meta = JSON.parse(d.file_url); } catch {}
-          }
-          return {
-            id: d.id,
-            type: (meta.type || d.level || 'peregrinaje') as any,
-            subtype: meta.subtype || d.level || undefined,
-            location: meta.location || '',
-            title: d.title || 'Evento de Vida de Grupo',
-            date: meta.date || (d.created_at ? d.created_at.split('T')[0] : ''),
-            description: meta.description || '',
-            createdAt: d.created_at
-          };
-        });
-        await AsyncStorage.setItem(key, JSON.stringify(entries)).catch(() => {});
-        return entries;
+    return this._getCategoryRows(scoutId, `vida_grupo_${stageId}_${reqId}`, key, d => {
+      let meta: any = {};
+      if (d.file_url && d.file_url.startsWith('{')) {
+        try { meta = JSON.parse(d.file_url); } catch {}
       }
-    } catch {}
-
-    return [];
+      return {
+        id: d.id,
+        type: (meta.type || d.level || 'peregrinaje') as any,
+        subtype: meta.subtype || d.level || undefined,
+        location: meta.location || '',
+        title: d.title || 'Evento de Vida de Grupo',
+        date: meta.date || (d.created_at ? d.created_at.split('T')[0] : ''),
+        description: meta.description || '',
+        createdAt: d.created_at,
+        pending: !!d._pending
+      };
+    });
   },
 
   async addVidaGrupoEntry(
@@ -1296,115 +1335,136 @@ export const dataService = {
     reqId: string,
     entry: { type: string; subtype?: string; location: string; title: string; date: string; description?: string }
   ) {
-    const current = await this.getVidaGrupoLog(scoutId, stageId, reqId);
-    const newEntry = {
-      ...entry,
-      id: `vg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      createdAt: new Date().toISOString()
+    const row = {
+      id: newId(),
+      scout_id: scoutId,
+      category: `vida_grupo_${stageId}_${reqId}`,
+      title: entry.title || 'Evento de Vida de Grupo',
+      level: entry.subtype || entry.type || null,
+      file_url: JSON.stringify({
+        type: entry.type,
+        subtype: entry.subtype || null,
+        location: entry.location || '',
+        date: entry.date || todayLocal(),
+        description: entry.description || ''
+      })
     };
-    const updated = [newEntry, ...current];
+    const res = await outbox.run('row.insert', { table: 'certificates', row }, { label: `Vida de grupo: ${row.title}` });
+    const newEntry = { ...entry, id: row.id, createdAt: new Date().toISOString(), pending: res.queued };
     const key = `@scout_vidagrupo_${scoutId}_${stageId}_${reqId}`;
-    await AsyncStorage.setItem(key, JSON.stringify(updated));
-
-    try {
-      await supabase.from('certificates').insert({
-        id: newEntry.id,
-        scout_id: scoutId,
-        category: `vida_grupo_${stageId}_${reqId}`,
-        title: entry.title || 'Evento de Vida de Grupo',
-        level: entry.subtype || entry.type || null,
-        file_url: JSON.stringify({
-          type: entry.type,
-          subtype: entry.subtype || null,
-          location: entry.location || '',
-          date: entry.date || new Date().toISOString().split('T')[0],
-          description: entry.description || ''
-        })
-      });
-    } catch (e) {
-      console.warn('Aviso guardando Vida de Grupo en Supabase:', e);
-    }
-
+    let current: any[] = [];
+    try { current = JSON.parse((await AsyncStorage.getItem(key)) || '[]'); } catch {}
+    await AsyncStorage.setItem(key, JSON.stringify([newEntry, ...current.filter(e => e.id !== row.id)])).catch(() => {});
     return newEntry;
   },
 
   async deleteVidaGrupoEntry(scoutId: string, stageId: string, reqId: string, entryId: string) {
-    const current = await this.getVidaGrupoLog(scoutId, stageId, reqId);
-    const updated = current.filter((e: any) => e.id !== entryId);
+    await this._deleteCategoryRow(entryId, 'Vida de grupo eliminada');
     const key = `@scout_vidagrupo_${scoutId}_${stageId}_${reqId}`;
-    await AsyncStorage.setItem(key, JSON.stringify(updated));
+    let current: any[] = [];
+    try { current = JSON.parse((await AsyncStorage.getItem(key)) || '[]'); } catch {}
+    const updated = current.filter((e: any) => e.id !== entryId);
+    await AsyncStorage.setItem(key, JSON.stringify(updated)).catch(() => {});
+    return updated;
+  },
 
-    try {
-      await supabase.from('certificates').delete().eq('id', entryId);
-    } catch {}
+  // --- ACTIVIDADES PERSONALES (de creación propia del Rover) ---
+  // Se guardan como filas de `certificates` con categoría personal_<etapa>_<requisito>.
+  async getPersonalActivities(scoutId: string, stageId: string, reqId: string) {
+    const key = `@scout_personales_${scoutId}_${stageId}_${reqId}`;
+    return this._getCategoryRows(scoutId, `personal_${stageId}_${reqId}`, key, d => {
+      let meta: any = {};
+      if (d.file_url && d.file_url.startsWith('{')) {
+        try { meta = JSON.parse(d.file_url); } catch {}
+      }
+      return {
+        id: d.id,
+        title: d.title || 'Actividad personal',
+        date: meta.date || (d.created_at ? d.created_at.split('T')[0] : ''),
+        description: meta.description || '',
+        createdAt: d.created_at,
+        pending: !!d._pending
+      };
+    });
+  },
 
+  async addPersonalActivity(scoutId: string, stageId: string, reqId: string, entry: { title: string; date: string; description?: string }) {
+    const row = {
+      id: newId(),
+      scout_id: scoutId,
+      category: `personal_${stageId}_${reqId}`,
+      title: entry.title || 'Actividad personal',
+      level: null,
+      file_url: JSON.stringify({ date: entry.date || todayLocal(), description: entry.description || '' })
+    };
+    const res = await outbox.run('row.insert', { table: 'certificates', row }, { label: `Actividad personal: ${row.title}` });
+    const newEntry = { ...entry, id: row.id, createdAt: new Date().toISOString(), pending: res.queued };
+    const key = `@scout_personales_${scoutId}_${stageId}_${reqId}`;
+    let current: any[] = [];
+    try { current = JSON.parse((await AsyncStorage.getItem(key)) || '[]'); } catch {}
+    const updated = [newEntry, ...current.filter(e => e.id !== row.id)];
+    await AsyncStorage.setItem(key, JSON.stringify(updated)).catch(() => {});
+    return updated;
+  },
+
+  async deletePersonalActivity(scoutId: string, stageId: string, reqId: string, entryId: string) {
+    await this._deleteCategoryRow(entryId, 'Actividad personal eliminada');
+    const key = `@scout_personales_${scoutId}_${stageId}_${reqId}`;
+    let current: any[] = [];
+    try { current = JSON.parse((await AsyncStorage.getItem(key)) || '[]'); } catch {}
+    const updated = current.filter((e: any) => e.id !== entryId);
+    await AsyncStorage.setItem(key, JSON.stringify(updated)).catch(() => {});
     return updated;
   },
 
   // --- GESTIÓN DE SELECCIONES MÚLTIPLES DE CIP / CICLOS INSTITUCIONALES ---
   async getCipSelections(scoutId: string, stageId: string, reqId: string) {
     const key = `@scout_cip_selections_${scoutId}_${stageId}_${reqId}`;
-    try {
-      const raw = await AsyncStorage.getItem(key);
-      if (raw) return JSON.parse(raw);
-    } catch {}
-
-    try {
-      const { data } = await supabase
-        .from('certificates')
-        .select('*')
-        .eq('scout_id', scoutId)
-        .eq('category', `cip_sel_${stageId}_${reqId}`)
-        .order('created_at', { ascending: false });
-
-      if (data && data.length > 0) {
-        const events = data.map(d => {
-          let meta: any = {};
-          if (d.file_url && d.file_url.startsWith('{')) {
-            try { meta = JSON.parse(d.file_url); } catch {}
-          }
-          return {
-            id: d.id,
-            title: d.title,
-            scope: d.level || 'distrital',
-            date: meta.date || (d.created_at ? d.created_at.split('T')[0] : ''),
-            location: meta.location || '',
-            description: meta.description || ''
-          };
-        });
-        await AsyncStorage.setItem(key, JSON.stringify(events)).catch(() => {});
-        return events;
+    // Si hay un cambio sin enviar, lo local manda
+    const pendingReplace = (await outbox.pending('certificates.replaceCategory'))
+      .filter(o => o.payload?.scoutId === scoutId && o.payload?.category === `cip_sel_${stageId}_${reqId}`).pop();
+    if (pendingReplace) {
+      try { return JSON.parse((await AsyncStorage.getItem(key)) || '[]'); } catch { return []; }
+    }
+    return this._getCategoryRows(scoutId, `cip_sel_${stageId}_${reqId}`, key, d => {
+      let meta: any = {};
+      if (d.file_url && d.file_url.startsWith('{')) {
+        try { meta = JSON.parse(d.file_url); } catch {}
       }
-    } catch {}
-
-    return [];
+      return {
+        id: meta.eventId || d.id,
+        title: d.title,
+        scope: d.level || 'distrital',
+        date: meta.date || (d.created_at ? d.created_at.split('T')[0] : ''),
+        location: meta.location || '',
+        description: meta.description || ''
+      };
+    });
   },
 
   async saveCipSelections(scoutId: string, stageId: string, reqId: string, events: any[]) {
     const key = `@scout_cip_selections_${scoutId}_${stageId}_${reqId}`;
-    await AsyncStorage.setItem(key, JSON.stringify(events));
+    await AsyncStorage.setItem(key, JSON.stringify(events)).catch(() => {});
 
-    try {
-      // Eliminar anteriores y re-insertar usando scout_id
-      await supabase.from('certificates').delete().eq('scout_id', scoutId).eq('category', `cip_sel_${stageId}_${reqId}`);
-      if (events.length > 0) {
-        const rows = events.map(evt => ({
-          id: evt.id || `cip_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-          scout_id: scoutId,
-          category: `cip_sel_${stageId}_${reqId}`,
-          title: evt.title,
-          level: evt.scope || 'distrital',
-          file_url: JSON.stringify({
-            location: evt.location || '',
-            description: evt.description || '',
-            date: evt.date || ''
-          })
-        }));
-        await supabase.from('certificates').insert(rows);
-      }
-    } catch (e) {
-      console.warn('Aviso guardando CIP en Supabase:', e);
-    }
+    const category = `cip_sel_${stageId}_${reqId}`;
+    const rows = events.map(evt => ({
+      // Cada selección es una fila propia (el id del evento original va en file_url)
+      id: newId(),
+      scout_id: scoutId,
+      category,
+      title: evt.title,
+      level: evt.scope || 'distrital',
+      file_url: JSON.stringify({
+        eventId: evt.id || null,
+        location: evt.location || '',
+        description: evt.description || '',
+        date: evt.date || ''
+      })
+    }));
+    await outbox.run('certificates.replaceCategory', { scoutId, category, rows }, {
+      dedupeKey: `catreplace:${scoutId}:${category}`,
+      label: 'Selección de CIP',
+    }).catch(e => console.warn('Aviso guardando CIP en Supabase:', e));
 
     return events;
   },
@@ -1418,36 +1478,29 @@ export const dataService = {
   ) {
     const key = `@scout_req_linked_${scoutId}_${stageId}_${reqId}`;
     if (certData) {
-      await AsyncStorage.setItem(key, JSON.stringify(certData));
+      await AsyncStorage.setItem(key, JSON.stringify(certData)).catch(() => {});
     } else {
-      await AsyncStorage.removeItem(key);
+      await AsyncStorage.removeItem(key).catch(() => {});
     }
 
-    try {
-      // Eliminar registro previo en Supabase usando scout_id
-      await supabase
-        .from('certificates')
-        .delete()
-        .eq('scout_id', scoutId)
-        .eq('category', `linked_cert_${stageId}_${reqId}`);
-
-      if (certData) {
-        await supabase.from('certificates').insert({
-          id: `link_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-          scout_id: scoutId,
-          title: certData.certTitle,
-          category: `linked_cert_${stageId}_${reqId}`,
-          level: certData.level || null,
-          file_url: JSON.stringify(certData)
-        });
-      }
-    } catch (e) {
-      console.warn('Aviso guardando vinculacion en Supabase:', e);
-    }
+    const category = `linked_cert_${stageId}_${reqId}`;
+    const rows = certData ? [{
+      id: newId(),
+      scout_id: scoutId,
+      title: certData.certTitle,
+      category,
+      level: certData.level || null,
+      file_url: JSON.stringify(certData)
+    }] : [];
+    await outbox.run('certificates.replaceCategory', { scoutId, category, rows }, {
+      dedupeKey: `catreplace:${scoutId}:${category}`,
+      label: 'Certificado vinculado a requisito',
+    }).catch(e => console.warn('Aviso guardando vinculacion en Supabase:', e));
   },
 
   async getAllLinkedCertificates(scoutId: string): Promise<Record<string, { certId?: string; certTitle: string; level?: string; date?: string }>> {
     const result: Record<string, { certId?: string; certTitle: string; level?: string; date?: string }> = {};
+    let remoteLoaded = false;
 
     // 1. Cargar desde Supabase
     try {
@@ -1457,6 +1510,7 @@ export const dataService = {
         .eq('scout_id', scoutId)
         .like('category', 'linked_cert_%');
 
+      if (!error) remoteLoaded = true;
       if (!error && data && data.length > 0) {
         for (const row of data) {
           const rawCat = row.category.replace('linked_cert_', '');
@@ -1488,17 +1542,24 @@ export const dataService = {
       console.warn('Aviso cargando vinculaciones desde Supabase:', e);
     }
 
-    // 2. Cargar fallbacks desde AsyncStorage
+    // 2. Cargar fallbacks desde AsyncStorage (vínculos hechos en este teléfono)
+    const pendingCats = new Set((await outbox.pending('certificates.replaceCategory'))
+      .filter(o => o.payload?.scoutId === scoutId).map(o => o.payload.category));
     for (const stg of stagesData) {
       for (const r of stg.requirements) {
         if (r.type === 'cursos' || r.type === 'especialidad') {
           const key = `@scout_req_linked_${scoutId}_${stg.id}_${r.id}`;
-          if (!result[`${stg.id}_${r.id}`]) {
+          const category = `linked_cert_${stg.id}_${r.id}`;
+          if (!result[`${stg.id}_${r.id}`] || pendingCats.has(category)) {
             try {
               const localStr = await AsyncStorage.getItem(key);
               if (localStr) {
                 const parsed = JSON.parse(localStr);
                 result[`${stg.id}_${r.id}`] = parsed;
+                // Vínculo que nunca llegó al servidor (versiones anteriores fallaban): subirlo
+                if (remoteLoaded && !pendingCats.has(category) && parsed?.certTitle) {
+                  this.saveLinkedCertificate(scoutId, stg.id, r.id, parsed).catch(() => {});
+                }
               }
             } catch {}
           }
@@ -1544,3 +1605,161 @@ export const dataService = {
     return null;
   }
 };
+
+// ----------------------------------------------------
+// MANEJADORES DE LA COLA OFFLINE (se ejecutan al haber red, en orden)
+// Cada uno debe LANZAR el error si falla, para que la cola sepa si reintentar.
+// ----------------------------------------------------
+function assertTable(table: string) {
+  if (!OUTBOX_TABLES.has(table)) throw new Error(`Tabla no permitida en la cola offline: ${table}`);
+}
+
+function applyMatch(query: any, match: Record<string, any>) {
+  Object.entries(match || {}).forEach(([k, v]) => { query = query.eq(k, v); });
+  return query;
+}
+
+async function sendNotify(notify: any) {
+  if (!notify) return;
+  await notificationService.sendNotification(notify).catch(() => {});
+}
+
+outbox.register('row.insert', async ({ table, row, rows, notify }) => {
+  assertTable(table);
+  const { error } = await supabase.from(table).insert(rows || row);
+  // Si el insert sí llegó pero se perdió la respuesta, al reintentar da "duplicado": ya está guardado.
+  if (error && !isDuplicateError(error)) throw error;
+  // Aviso asociado (p. ej. nueva actividad en el calendario): sale cuando el dato ya está en el servidor
+  if (!error) await sendNotify(notify);
+});
+
+outbox.register('row.update', async ({ table, values, match, notify }) => {
+  assertTable(table);
+  const data = must(await applyMatch(supabase.from(table).update(values), match).select());
+  await sendNotify(notify);
+  return Array.isArray(data) ? data[0] : data;
+});
+
+outbox.register('row.delete', async ({ table, match }) => {
+  assertTable(table);
+  must(await applyMatch(supabase.from(table).delete(), match));
+});
+
+outbox.register('profile.mergeJson', async ({ id, column, patch }) => {
+  if (column !== 'medical_data' && column !== 'curriculum_data') throw new Error('Columna no permitida');
+  // Imágenes (firma, foto) guardadas sin red: subirlas primero y guardar solo la URL
+  patch = { ...patch };
+  for (const [k, v] of Object.entries(patch)) {
+    if (typeof v === 'string' && v.startsWith('data:image')) {
+      const url = await storageService.uploadImage('scout-files', k.toLowerCase().includes('signature') ? 'signatures' : `avatars/${id}`, `${k}_${id}_${Date.now()}.png`, v, { throwOnNetworkError: true });
+      if (url && url.startsWith('http')) patch[k] = url;
+    }
+  }
+  const current: any = must(await supabase.from('profiles').select(column).eq('id', id).maybeSingle());
+  let base = current?.[column] || {};
+  if (typeof base === 'string') { try { base = JSON.parse(base); } catch { base = {}; } }
+  must(await supabase.from('profiles').update({ [column]: { ...base, ...patch } }).eq('id', id));
+});
+
+outbox.register('profile.photo', async ({ profileId, field, image }) => {
+  if (field !== 'avatar_url' && field !== 'custom_avatar_url') throw new Error('Campo de foto no permitido');
+  let url = image;
+  if (typeof image === 'string' && image.startsWith('data:')) {
+    const prefix = field === 'avatar_url' ? 'scout' : 'custom';
+    url = await storageService.uploadImage('scout-files', `avatars/${profileId}`, `${prefix}_avatar_${profileId}_${Date.now()}.jpg`, image, { throwOnNetworkError: true });
+  }
+  must(await supabase.from('profiles').update({ [field]: url }).eq('id', profileId));
+  return url;
+});
+
+outbox.register('requirement.set', async ({ scoutId, stageId, reqId, completed }) => {
+  const existing: any = must(await supabase
+    .from('requirement_progress')
+    .select('id')
+    .eq('scout_id', scoutId)
+    .eq('stage_id', stageId)
+    .eq('requirement_id', reqId)
+    .maybeSingle());
+  if (existing) {
+    must(await supabase
+      .from('requirement_progress')
+      .update({ completed, updated_at: new Date().toISOString() })
+      .eq('id', existing.id));
+  } else {
+    const { error } = await supabase
+      .from('requirement_progress')
+      .insert({ scout_id: scoutId, stage_id: stageId, requirement_id: reqId, completed });
+    if (error && !isDuplicateError(error)) throw error;
+  }
+});
+
+outbox.register('stage.setStatus', async ({ scoutId, stageId, status, notify, reason, notifyPayload }) => {
+  const existing: any = must(await supabase
+    .from('stage_progress')
+    .select('id')
+    .eq('scout_id', scoutId)
+    .eq('stage_id', stageId)
+    .maybeSingle());
+  if (existing) {
+    must(await supabase
+      .from('stage_progress')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', existing.id));
+  } else {
+    must(await supabase.from('stage_progress').insert({ scout_id: scoutId, stage_id: stageId, status }));
+  }
+
+  const stageTitle = stagesData.find(s => s.id === stageId)?.title || 'Etapa';
+  if (notifyPayload) await sendNotify(notifyPayload); // aviso a dirigentes al enviar a revisión
+  if (notify === 'approve') {
+    await sendNotify({
+      receiverId: scoutId,
+      title: '🎉 ¡Etapa e Insignia Aprobadas!',
+      message: `¡Felicidades! Tu dirigente ha aprobado oficialmente tu etapa "${stageTitle}". Ya pasaste a la siguiente etapa.`,
+      type: 'badge'
+    });
+  } else if (notify === 'reject') {
+    await sendNotify({
+      receiverId: scoutId,
+      title: '📋 Ficha de Etapa Devuelta',
+      message: reason
+        ? `Tu dirigente devolvió tu etapa "${stageTitle}": ${reason}`
+        : `Tu dirigente ha revisado tu etapa "${stageTitle}" y requiere completar requisitos pendientes.`,
+      type: 'alert'
+    });
+  }
+});
+
+outbox.register('certificates.replaceCategory', async ({ scoutId, category, rows }) => {
+  must(await supabase.from('certificates').delete().eq('scout_id', scoutId).eq('category', category));
+  if (rows && rows.length > 0) {
+    const { error } = await supabase.from('certificates').insert(rows);
+    if (error && !isDuplicateError(error)) throw error;
+  }
+});
+
+outbox.register('certificate.upload', async ({ scoutId, title, category, level, fileUrl, date }) => {
+  return dataService._uploadCertificateNow(scoutId, title, category, level, fileUrl, date);
+});
+
+outbox.register('certificate.update', async ({ certificateId, scoutId, updates }) => {
+  return dataService._updateCertificateNow(certificateId, scoutId, updates);
+});
+
+outbox.register('certificate.delete', async ({ certificateId, scoutId, certTitle, reason, notifyScout }) => {
+  must(await supabase.from('certificates').delete().eq('id', certificateId));
+  // Solo se avisa cuando lo borra un dirigente (no cuando el scout borra el suyo)
+  if (notifyScout === false) return;
+  await sendNotify({
+    receiverId: scoutId,
+    title: `⚠️ Certificado / Especialidad Eliminado: ${certTitle || 'Acreditación'}`,
+    message: reason && reason.trim()
+      ? `Tu dirigente ha eliminado "${certTitle || 'tu acreditación'}": ${reason}`
+      : `Tu dirigente ha eliminado el certificado/especialidad "${certTitle || 'Acreditación'}".`,
+    type: 'alert'
+  });
+});
+
+outbox.register('quarterly.save', async (plan) => {
+  return dataService._saveQuarterlyPlanNow(plan);
+});

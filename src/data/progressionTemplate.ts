@@ -86,7 +86,9 @@ export const stagesData: StageTemplate[] = [
     requirements: [
       { id: 'rov_opcionales', text: 'Actividades Opcionales (9 cualquier área)', type: 'opcional', requiredCount: 9 },
       { id: 'rov_personales', text: 'Actividades Personales (3 de su propia creación)', type: 'personales', requiredCount: 3 },
-      { id: 'rov_esp_oro', text: 'Especialidades (2 Oro)', type: 'especialidad', level: 'oro' },
+      // El cuadro oficial pide 2 especialidades Oro: un requisito por cada una (no se puede reutilizar el mismo certificado)
+      { id: 'rov_esp_oro', text: 'Especialidades (Oro, 1.ª de 2)', type: 'especialidad', level: 'oro' },
+      { id: 'rov_esp_oro_2', text: 'Especialidades (Oro, 2.ª de 2)', type: 'especialidad', level: 'oro' },
       { id: 'rov_vg_campamento', text: 'Vida de Grupo (2 Campamentos)', type: 'vida_grupo', requiredCount: 2 },
       { id: 'rov_vg_peregrinaje', text: 'Vida de Grupo (3 Peregrinajes)', type: 'vida_grupo', requiredCount: 3 },
       { id: 'rov_vg_proyecto', text: 'Vida de Grupo (1 Proyecto de Servicio)', type: 'vida_grupo', requiredCount: 1 },

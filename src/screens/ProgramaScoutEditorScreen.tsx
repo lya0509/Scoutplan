@@ -59,6 +59,7 @@ import { useModalBackHandler } from '../hooks/useBackHandler';
 import { ProgramaPdfPreviewModal } from '../components/ProgramaPdfPreviewModal';
 import { notificationService } from '../services/notificationService';
 import { showAlert } from '../utils/alert';
+import { todayLocal } from '../utils/dateLocal';
 
 export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
   const { user } = useAuth();
@@ -91,7 +92,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
     existingPrograma?.isExtraordinary ?? (passedIsExtraordinary || false)
   );
   const [title, setTitle] = useState(existingPrograma?.title || passedInitialTitle || '');
-  const [date, setDate] = useState(existingPrograma?.date || passedInitialDate || new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(existingPrograma?.date || passedInitialDate || todayLocal());
   const [location, setLocation] = useState(existingPrograma?.location || passedInitialPlace || '');
   const [activityType, setActivityType] = useState(
     existingPrograma?.activityType || passedInitialActivityType || (passedIsExtraordinary ? 'Otros / Extraordinaria' : '')
@@ -646,7 +647,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
     setShowSaveOptionsModal(false);
     setShowDiscardConfirmModal(false);
     const finalTitle = title.trim() || 'Programa de Actividades Scout';
-    const finalDate = date.trim() || new Date().toISOString().split('T')[0];
+    const finalDate = date.trim() || todayLocal();
     const finalLocation = location.trim() || 'Lugar por definir';
     const finalActivityType = activityType.trim() || 'Actividad Scout';
     const finalProjection = participantProjection.trim() || '4 Jóvenes';
@@ -1736,7 +1737,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                   const dd = String(day).padStart(2, '0');
                   const cellDateStr = `${calendarYear}-${mm}-${dd}`;
                   const isSelected = date === cellDateStr;
-                  const isToday = new Date().toISOString().split('T')[0] === cellDateStr;
+                  const isToday = todayLocal() === cellDateStr;
 
                   slots.push(
                     <TouchableOpacity

@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './supabaseClient';
+import { outbox } from './offline/outbox';
 import { ProgramaScout } from '../types/programa';
 
 const STORAGE_KEY = '@scout_programas_list';
@@ -245,7 +246,10 @@ class ProgramaService {
 
       // 2. Intentar obtener datos frescos de Supabase
       try {
-        const remoteProgramas = await this.fetchFromSupabase();
+        // Programas borrados sin conexión: no dejar que reaparezcan antes de sincronizar
+        const pendingDeletes = new Set((await outbox.pending('row.delete'))
+          .filter(o => o.payload?.table === 'scout_programas').map(o => o.payload.match?.id));
+        const remoteProgramas = (await this.fetchFromSupabase()).filter(p => !pendingDeletes.has(p.id));
         
         // FUSIÓN INTELIGENTE: Nunca descartar programas locales no sincronizados
         if (remoteProgramas && Array.isArray(remoteProgramas)) {
@@ -398,12 +402,9 @@ class ProgramaService {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
       this.notifySubscribers(filtered);
 
-      // 2. Eliminar de Supabase
+      // 2. Eliminar de Supabase (sin red queda en cola; si no, al volver la red reaparecería)
       try {
-        const { error } = await supabase.from('scout_programas').delete().eq('id', id);
-        if (error) {
-          console.warn('Aviso eliminando en Supabase scout_programas:', error.message);
-        }
+        await outbox.run('row.delete', { table: 'scout_programas', match: { id } }, { label: 'Programa eliminado' });
       } catch (cloudErr) {
         console.warn('Error eliminando en la nube:', cloudErr);
       }

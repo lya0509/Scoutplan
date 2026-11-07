@@ -1,0 +1,121 @@
+{
+  "version": "3.0.0",
+  "bridgeObject": "window.__SCOUT_GRAPHIFY__",
+  "suites": [
+    {
+      "id": "QA-01",
+      "screenOrModule": "LoginScreen & RegisterScreen (routes: Login, Register)",
+      "file": "src/screens/LoginScreen.tsx",
+      "navigateCommand": "window.__SCOUT_GRAPHIFY__.navigate('Login')",
+      "focus": "Authentication, Role Registration & Instant Offline Profile Restore",
+      "steps": [
+        "Verify LoginScreen renders institutional branding, email/password inputs, and password recovery modal.",
+        "Navigate to Register (`window.__SCOUT_GRAPHIFY__.navigate(\"Register\")`) and verify role selector (Scout, Scouter, Jefe de Grupo, Comisionado) and Region/District/Group/Unit fields.",
+        "Verify AuthContext 800ms safety timer prevents infinite loading spinners when offline."
+      ]
+    },
+    {
+      "id": "QA-02",
+      "screenOrModule": "ScoutDashboardScreen (route: Resumen)",
+      "file": "src/screens/ScoutDashboardScreen.tsx",
+      "navigateCommand": "window.__SCOUT_GRAPHIFY__.navigate('Resumen')",
+      "focus": "Scout Main Dashboard, Carnet Digital, Onboarding & Help FAB",
+      "steps": [
+        "Verify active stage card, global progress percentage, and quick access grid render properly.",
+        "Open CarnetScoutModal and verify unit colors, QR code, and membership status badge.",
+        "Verify NotificationHeaderBell and HelpFloatingFAB open their respective modals."
+      ]
+    },
+    {
+      "id": "QA-03",
+      "screenOrModule": "PlanProgresivoScreen & StageDetailScreen (routes: PlanProgresivo, StageDetail)",
+      "file": "src/screens/PlanProgresivoScreen.tsx",
+      "navigateCommand": "window.__SCOUT_GRAPHIFY__.navigate('PlanProgresivo')",
+      "focus": "4 Progression Stages (Precursor -> Fundador), Requirements & Offline Sync Queue",
+      "steps": [
+        "Verify Precursor, Expedicionario, Descubridor, and Fundador cards display accurate requirement counts.",
+        "Navigate to StageDetail (`window.__SCOUT_GRAPHIFY__.navigate(\"StageDetail\", { stageId: \"precursor\" })`).",
+        "Test opening NochesAireLibreModal and VidaGrupoModal from stage requirements."
+      ]
+    },
+    {
+      "id": "QA-04",
+      "screenOrModule": "CatalogSelectorScreen & EspecialidadesScreen (routes: CatalogSelector, Especialidades)",
+      "file": "src/screens/CatalogSelectorScreen.tsx",
+      "navigateCommand": "window.__SCOUT_GRAPHIFY__.navigate('Especialidades')",
+      "focus": "ASV Official Catalog Search & Specialties Levels (Bronce, Plata, Oro)",
+      "steps": [
+        "Verify EspecialidadesScreen filters by category and displays Bronce, Plata, and Oro requirements.",
+        "Verify CatalogSelectorScreen filters activities by stage and prevents duplicate selections across stages."
+      ]
+    },
+    {
+      "id": "QA-05",
+      "screenOrModule": "ProgramaScoutScreen & ProgramaScoutEditorScreen (routes: ProgramaScout, ProgramaScoutEditor)",
+      "file": "src/screens/ProgramaScoutEditorScreen.tsx",
+      "navigateCommand": "window.__SCOUT_GRAPHIFY__.navigate('ProgramaScout')",
+      "focus": "Activity Programs CRUD, 6 Growth Areas, 17 SDGs, PDF Preview & DOCX Export",
+      "steps": [
+        "Verify ProgramaScoutScreen lists programs with unit filter pills (Manada, Tropa, Caminantes, Clan, Sinodal).",
+        "Open ProgramaScoutEditorScreen (`window.__SCOUT_GRAPHIFY__.navigate(\"ProgramaScoutEditor\")`) and verify schedule rows, 6 growth area indicators, and SDG selector.",
+        "Test ProgramaPdfPreviewModal and Word .docx export via docxProgramaGenerator."
+      ]
+    },
+    {
+      "id": "QA-06",
+      "screenOrModule": "QuarterlyPlanScreen & CalendarScreen (routes: QuarterlyPlan, CalendarStandalone)",
+      "file": "src/screens/QuarterlyPlanScreen.tsx",
+      "navigateCommand": "window.__SCOUT_GRAPHIFY__.navigate('QuarterlyPlan')",
+      "focus": "Quarterly Planning (Trimestres I-IV), Shared Unit Plans & Calendar Events",
+      "steps": [
+        "Verify QuarterlyPlanScreen switches across Trimestres I-IV and displays individual vs unit shared activities.",
+        "Navigate to CalendarStandalone (`window.__SCOUT_GRAPHIFY__.navigate(\"CalendarStandalone\")`) and verify monthly markers and event list."
+      ]
+    },
+    {
+      "id": "QA-07",
+      "screenOrModule": "FichaMedicaScreen & CurriculumScoutScreen (routes: FichaMedica, CurriculumScout)",
+      "file": "src/screens/FichaMedicaScreen.tsx",
+      "navigateCommand": "window.__SCOUT_GRAPHIFY__.navigate('FichaMedica')",
+      "focus": "Medical Record, Auto-Synced Scout Curriculum & Official DOCX Template Export",
+      "steps": [
+        "Verify FichaMedicaScreen sections (blood type, allergies, emergency contacts, signature) and Word .docx export.",
+        "Switch to the \"Ficha Médica Orión 84\" tab: fields prefilled from profile, Sí/No grid, save, and \"Descargar Ficha Orión 84 (PDF)\" produces an application/pdf blob.",
+        "Navigate to CurriculumScout (`window.__SCOUT_GRAPHIFY__.navigate(\"CurriculumScout\")`) and verify uploaded certificates sync automatically."
+      ]
+    },
+    {
+      "id": "QA-08",
+      "screenOrModule": "CertificateUploadScreen & TemporalDriveScreen (routes: CertificateUpload, TemporalDrive)",
+      "file": "src/screens/CertificateUploadScreen.tsx",
+      "navigateCommand": "window.__SCOUT_GRAPHIFY__.navigate('CertificateUpload')",
+      "focus": "Certificate Upload, Canvas Image Compression & Photo Evidence Albums",
+      "steps": [
+        "Verify CertificateUploadScreen category/level pickers and certificate cards.",
+        "Navigate to TemporalDrive (`window.__SCOUT_GRAPHIFY__.navigate(\"TemporalDrive\")`) and verify album grid and photo viewer."
+      ]
+    },
+    {
+      "id": "QA-09",
+      "screenOrModule": "NudosManualScreen, CancioneroScreen & DocumentosScreen (Offline Library)",
+      "file": "src/screens/NudosManualScreen.tsx",
+      "navigateCommand": "window.__SCOUT_GRAPHIFY__.navigate('NudosManual')",
+      "focus": "100% Offline Technical Manuals, SVG Knot Diagrams, Songbook & PDF Guides",
+      "steps": [
+        "Verify NudosManualScreen renders interactive SVG diagrams (ManualVisualDiagram) for knots and lashings.",
+        "Navigate to Cancionero (`window.__SCOUT_GRAPHIFY__.navigate(\"Cancionero\")`) and Documentos (`window.__SCOUT_GRAPHIFY__.navigate(\"Documentos\")`)."
+      ]
+    },
+    {
+      "id": "QA-10",
+      "screenOrModule": "ScouterDashboardScreen, JefeGrupoScreen & ComisionadoDashboardScreen",
+      "file": "src/screens/ScouterDashboardScreen.tsx",
+      "navigateCommand": "window.__SCOUT_GRAPHIFY__.navigate('ScouterDashboard')",
+      "focus": "Leadership Dashboards, Requirement Validation, Membership Approval & Territorial Metrics",
+      "steps": [
+        "Verify ScouterDashboardScreen displays unit scouts, online presence dots, and pending reviews.",
+        "Verify JefeGrupoScreen membership expiration approval/rejection and ComisionadoDashboardScreen territorial drill-down."
+      ]
+    }
+  ]
+}

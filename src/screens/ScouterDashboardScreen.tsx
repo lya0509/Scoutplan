@@ -17,6 +17,9 @@ import { useModalBackHandler } from '../hooks/useBackHandler';
 import HelpFloatingFAB from '../components/HelpFloatingFAB';
 import { dataService } from '../lib/dataService';
 import { supabase } from '../lib/supabaseClient';
+import { outbox } from '../lib/offline/outbox';
+import { must } from '../lib/offline/net';
+import { cachedQuery } from '../lib/offline/readCache';
 import { notificationService } from '../services/notificationService';
 import { presenceService } from '../services/presenceService';
 import { stagesData } from '../data/progressionTemplate';
@@ -30,6 +33,7 @@ import { showAlert } from '../utils/alert';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
 import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
+import { todayLocal, defaultMembershipDate } from '../utils/dateLocal';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
   if (!dateStr) return 'Seleccionar fecha en el calendario';
@@ -180,11 +184,13 @@ function ActivitiesPanel({ unitFilter, isDarkMode, theme, onAddCip }: { unitFilt
 
   const loadEvents = async () => {
     if (loaded) return;
-    const { data } = await supabase
-      .from('calendar_events')
-      .select('*')
-      .in('unit', [unitFilter, 'grupo'])
-      .order('date', { ascending: true });
+    // Con copia offline: sin red se ven los últimos eventos cargados
+    const data = await cachedQuery<any[]>(`scouter_events_${unitFilter}`, async () =>
+      must(await supabase
+        .from('calendar_events')
+        .select('*')
+        .in('unit', [unitFilter, 'grupo'])
+        .order('date', { ascending: true })) || [], []);
     setEvents(data || []);
     setLoaded(true);
   };
@@ -196,8 +202,13 @@ function ActivitiesPanel({ unitFilter, isDarkMode, theme, onAddCip }: { unitFilt
 
   const handleDelete = async (eventId: string) => {
     if (deletingId === eventId) {
-      const { error } = await supabase.from('calendar_events').delete().eq('id', eventId);
-      if (!error) setEvents(prev => prev.filter(e => e.id !== eventId));
+      try {
+        // Sin red queda en cola y se borra al volver la conexión
+        await outbox.run('row.delete', { table: 'calendar_events', match: { id: eventId } }, { label: 'Evento eliminado' });
+        setEvents(prev => prev.filter(e => e.id !== eventId));
+      } catch (e: any) {
+        showAlert('No se pudo eliminar', e?.message || 'Inténtalo de nuevo.');
+      }
       setDeletingId(null);
     } else {
       setDeletingId(eventId);
@@ -414,7 +425,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
   const [showCipModal, setShowCipModal] = useState(false);
   const [cipTitle, setCipTitle] = useState('');
   const [cipScope, setCipScope] = useState<'distrital' | 'regional' | 'nacional' | 'internacional'>('distrital');
-  const [cipDate, setCipDate] = useState(new Date().toISOString().split('T')[0]);
+  const [cipDate, setCipDate] = useState(todayLocal());
   const [showCipDatePicker, setShowCipDatePicker] = useState(false);
   const [cipDesc, setCipDesc] = useState('');
   const [savingCip, setSavingCip] = useState(false);
@@ -877,7 +888,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                           style={{ backgroundColor: '#7c3aed', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8 }}
                           onPress={() => {
                             setSelectedScoutForMembership(scout);
-                            setMembershipDateInput(mDate || new Date().toISOString().split('T')[0]);
+                            setMembershipDateInput(mDate || defaultMembershipDate());
                             setShowMembershipModal(true);
                           }}
                         >
@@ -961,7 +972,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
               <CalendarIcon size={18} color={primaryColor} style={{ marginRight: 10 }} />
               <View style={{ flex: 1 }}>
                 <Text style={{ color: theme.text, fontSize: 13, fontWeight: 'bold' }}>
-                  {formatDateWithDayOfWeek(membershipDateInput || new Date().toISOString().split('T')[0])}
+                  {formatDateWithDayOfWeek(membershipDateInput || todayLocal())}
                 </Text>
                 <Text style={{ color: theme.subText, fontSize: 11 }}>
                   Toca para seleccionar el día exacto en el calendario
@@ -982,7 +993,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
               <TouchableOpacity
                 style={{ backgroundColor: primaryColor, padding: 12, borderRadius: 10 }}
                 onPress={async () => {
-                  const finalDate = membershipDateInput || new Date().toISOString().split('T')[0];
+                  const finalDate = membershipDateInput || todayLocal();
                   if (!finalDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
                     showAlert('Formato Inválido', 'Por favor selecciona una fecha válida en el calendario.');
                     return;
@@ -1037,7 +1048,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
             </View>
 
             <RNCalendar
-              current={membershipDateInput || new Date().toISOString().split('T')[0]}
+              current={membershipDateInput || todayLocal()}
               markedDates={{
                 [membershipDateInput || '']: { selected: true, selectedColor: primaryColor }
               }}
@@ -1210,7 +1221,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                 <CalendarIcon size={18} color={primaryColor} style={{ marginRight: 10 }} />
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: theme.text, fontSize: 13, fontWeight: 'bold' }}>
-                    {formatDateWithDayOfWeek(cipDate || new Date().toISOString().split('T')[0])}
+                    {formatDateWithDayOfWeek(cipDate || todayLocal())}
                   </Text>
                   <Text style={{ color: theme.subText, fontSize: 11 }}>
                     Toca para abrir el calendario y ver días exactos (Sábados/Domingos)
@@ -1264,7 +1275,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
             </View>
 
             <RNCalendar
-              current={cipDate || new Date().toISOString().split('T')[0]}
+              current={cipDate || todayLocal()}
               markedDates={{
                 [cipDate || '']: { selected: true, selectedColor: primaryColor }
               }}

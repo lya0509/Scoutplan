@@ -6,6 +6,9 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import HelpFloatingFAB from '../components/HelpFloatingFAB';
 import { supabase } from '../lib/supabaseClient';
+import { outbox } from '../lib/offline/outbox';
+import { newId, must } from '../lib/offline/net';
+import { cachedQuery } from '../lib/offline/readCache';
 import { dataService } from '../lib/dataService';
 import { notificationService } from '../services/notificationService';
 import { colors, UNIT_COLORS } from '../theme/colors';
@@ -23,6 +26,7 @@ import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import {
   exportCensoExcel, exportPadronMedicoExcel, exportMembresiasExcel, printDocumentHTML, MemberRecord
 } from '../utils/exportHelpers';
+import { todayLocal, defaultMembershipDate } from '../utils/dateLocal';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
   if (!dateStr) return 'Seleccionar fecha en el calendario';
@@ -75,7 +79,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [eventTitle, setEventTitle] = useState('');
   const [eventDesc, setEventDesc] = useState('');
-  const [eventDate, setEventDate] = useState(new Date().toISOString().split('T')[0]);
+  const [eventDate, setEventDate] = useState(todayLocal());
   const [eventUnit, setEventUnit] = useState<'grupo' | 'scouters' | 'manada' | 'tropa' | 'comunidad' | 'clan'>('grupo');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [savingEvent, setSavingEvent] = useState(false);
@@ -120,11 +124,24 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
     try {
       // 1. Obtener todos los miembros (Scouts, Scouters y Jefatura) del grupo
-      const { data: members, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('group_name', user.group_name)
-        .order('name', { ascending: true });
+      // Con copia offline: sin red se ve la última nómina cargada
+      const groupData = await cachedQuery<{ members: any[]; approved: number } | null>(`jefe_grupo_${user.group_name}`, async () => {
+        const list = must(await supabase
+          .from('profiles')
+          .select('*')
+          .eq('group_name', user.group_name)
+          .order('name', { ascending: true })) || [];
+        // Insignias aprobadas SOLO de los miembros de este grupo
+        const ids = list.map((m: any) => m.id);
+        const approvedRows = ids.length > 0 ? (must(await supabase
+          .from('stage_progress')
+          .select('id')
+          .eq('status', 'Aprobada')
+          .in('scout_id', ids)) || []) : [];
+        return { members: list, approved: approvedRows.length };
+      }, null);
+      const members = groupData?.members;
+      const error = !groupData;
 
       if (!error && members) {
         setAllMembers(members);
@@ -136,11 +153,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
         const clan = scoutsOnly.filter(s => s.unit === 'clan').length;
         const scouters = members.filter(m => m.role === 'scouter' || m.role === 'jefe_grupo').length;
 
-        // 2. Contar insignias aprobadas
-        const { count } = await supabase
-          .from('stage_progress')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'Aprobada');
+        const count = groupData?.approved || 0;
 
         setStats({
           manada,
@@ -170,30 +183,48 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
     setSavingEvent(true);
     try {
-      const { error } = await supabase.from('calendar_events').insert({
-        title: eventTitle.trim(),
-        description: eventDesc.trim(),
-        date: eventDate.trim(),
-        unit: eventUnit,
-        created_by: user?.id,
-      });
+      let error: any = null;
+      let queued = false;
+      try {
+        const destLabelForNotify = eventUnit === 'grupo' ? 'Todo el Grupo Scout' : eventUnit === 'scouters' ? 'Solo Scouters (Asamblea)' : eventUnit.toUpperCase();
+        const res = await outbox.run('row.insert', {
+          table: 'calendar_events',
+          row: {
+            id: newId(),
+            title: eventTitle.trim(),
+            description: eventDesc.trim(),
+            date: eventDate.trim(),
+            unit: eventUnit,
+            created_by: user?.id,
+          },
+          // El aviso viaja con el evento: si no hay red, sale cuando se publique
+          notify: {
+            senderId: user?.id,
+            groupName: user?.group_name || undefined,
+            unit: eventUnit === 'grupo' ? undefined : eventUnit,
+            receiverRole: eventUnit === 'scouters' ? 'scouter' : undefined,
+            title: `📅 ${eventTitle}`,
+            message: `Nueva actividad programada para el ${formatDateWithDayOfWeek(eventDate)} (${destLabelForNotify}).`,
+            type: 'calendar'
+          },
+        }, { label: `Evento: ${eventTitle.trim()}` });
+        queued = res.queued;
+      } catch (e) {
+        error = e;
+      }
 
       if (error) {
         showAlert('Error al crear evento', error.message);
+      } else if (queued) {
+        showAlert('Actividad guardada en el teléfono', `"${eventTitle}" se publicará en el calendario cuando tengas internet.`);
+        setShowAddEventModal(false);
+        setEventTitle('');
+        setEventDesc('');
       } else {
         const destLabel = eventUnit === 'grupo' ? 'Todo el Grupo Scout' : eventUnit === 'scouters' ? 'Solo Scouters (Asamblea)' : eventUnit.toUpperCase();
         showAlert('¡Actividad Creada!', `La actividad "${eventTitle}" ha sido registrada en el calendario para ${destLabel}.`);
 
-        // Enviar notificación en vivo instantánea
-        notificationService.sendNotification({
-          senderId: user?.id,
-          groupName: user?.group_name || undefined,
-          unit: eventUnit === 'grupo' ? undefined : eventUnit,
-          receiverRole: eventUnit === 'scouters' ? 'scouter' : undefined,
-          title: `📅 ${eventTitle}`,
-          message: `Nueva actividad programada para el ${formatDateWithDayOfWeek(eventDate)} (${destLabel}).`,
-          type: 'calendar'
-        }).catch(() => {});
+        // El aviso al grupo ya lo envía la cola junto con el evento
 
         setShowAddEventModal(false);
         setEventTitle('');
@@ -253,7 +284,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
   const handleSaveMembershipDate = async () => {
     if (!selectedMemberForMembership) return;
-    const finalDate = membershipDateInput || new Date().toISOString().split('T')[0];
+    const finalDate = membershipDateInput || todayLocal();
     await dataService.proposeMembershipDate(selectedMemberForMembership.id, finalDate);
     await dataService.approveMembershipDate(selectedMemberForMembership.id);
 
@@ -1362,7 +1393,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                           style={{ backgroundColor: isDarkMode ? '#27272a' : '#e2e8f0', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }}
                           onPress={() => {
                             setSelectedMemberForMembership(m);
-                            setMembershipDateInput(m.membership_expires_at || new Date().toISOString().split('T')[0]);
+                            setMembershipDateInput(m.membership_expires_at || defaultMembershipDate());
                             setShowMembershipDatePicker(true);
                           }}
                         >
@@ -1399,7 +1430,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
             </Text>
 
             <RNCalendar
-              current={membershipDateInput || new Date().toISOString().split('T')[0]}
+              current={membershipDateInput || todayLocal()}
               markedDates={{
                 [membershipDateInput || '']: { selected: true, selectedColor: primaryColor }
               }}

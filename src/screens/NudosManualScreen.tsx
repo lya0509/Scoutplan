@@ -139,7 +139,7 @@ const MANUALS_DATA: ManualItem[] = [
       videoDuration: '1:45 min',
       images: [
         {
-          url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Reef_knot.svg/640px-Reef_knot.svg.png',
+          url: '/nudos/Reef_knot.svg.png',
           caption: 'Estructura simétrica del Nudo Rizo azocado'
         }
       ]
@@ -258,7 +258,7 @@ const MANUALS_DATA: ManualItem[] = [
       videoDuration: '2:40 min',
       images: [
         {
-          url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Bowline.svg/640px-Bowline.svg.png',
+          url: '/nudos/Bowline.svg.png',
           caption: 'As de Guía con gaza de seguridad'
         }
       ]
@@ -490,7 +490,7 @@ const MANUALS_DATA: ManualItem[] = [
       videoDuration: '1:55 min',
       images: [
         {
-          url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Sheet_bend.svg/640px-Sheet_bend.svg.png',
+          url: '/nudos/Sheet_bend.svg.png',
           caption: 'Vuelta de escota con cabo grueso y fino'
         }
       ]
@@ -600,7 +600,7 @@ const MANUALS_DATA: ManualItem[] = [
       videoDuration: '4:10 min',
       images: [
         {
-          url: 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?w=800&auto=format&fit=crop',
+          url: '/nudos/unsplash_photo-1510312305653-8ed496efae75.jpg',
           caption: 'Fogata pirámide en campamento al atardecer'
         }
       ]
@@ -936,7 +936,7 @@ const MANUALS_DATA: ManualItem[] = [
       videoDuration: '4:30 min',
       images: [
         {
-          url: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=800&auto=format&fit=crop',
+          url: '/nudos/unsplash_photo-1584515979956-d9f6e5d09982.jpg',
           caption: 'Inmovilización y vendaje de brazo en primeros auxilios'
         }
       ]

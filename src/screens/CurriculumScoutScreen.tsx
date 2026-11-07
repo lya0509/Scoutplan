@@ -13,8 +13,8 @@ import {
 import { Award, FileText, Download, User, Briefcase, GraduationCap, Compass, CheckCircle, Plus, Trash2, Camera, Shield, Save, AlertCircle, RefreshCw, ArrowLeft } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { supabase } from '../lib/supabaseClient';
 import { dataService } from '../lib/dataService';
+import { isOnline } from '../lib/offline/net';
 import { storageService } from '../lib/storageService';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
@@ -135,11 +135,8 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
     if (!targetUserId) return;
     setLoading(true);
     try {
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', targetUserId)
-        .single();
+      // Con copia offline: sin internet se ve el último currículum guardado
+      const prof = await dataService.getProfileRow(targetUserId);
 
       if (prof) {
         setFullName(prof.name || '');
@@ -154,11 +151,14 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
         const c = prof.curriculum_data || localData;
 
         // Cargar foto de perfil priorizando avatar_url o photoUrl guardada
-        const effectivePhoto = (c && c.photoUrl) ? c.photoUrl : (prof.avatar_url || null);
+        const effectivePhoto = (c && c.photoUrl) ? c.photoUrl : (prof.avatar_url || prof.custom_avatar_url || null);
         if (effectivePhoto) setPhotoUrl(effectivePhoto);
+        // Cédula del perfil como valor inicial (el currículum guardado la reemplaza si tiene una)
+        if (prof.cedula) setCi(String(prof.cedula).replace(/^[VvEe][-.\s]*/, ''));
 
         if (c) {
-          setCi(c.ci || '');
+          // Si el currículum no tiene cédula, se toma la del perfil
+          setCi(c.ci || String(prof.cedula || '').replace(/^[VvEe][-.\s]*/, '') || '');
           setNationality(c.nationality || 'V');
           setCivilStatus(c.civilStatus || 'Soltero(a)');
           setBirthPlace(c.birthPlace || '');
@@ -219,11 +219,8 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
         setPhotoUrl(finalPhotoUrl);
 
         if (user?.id) {
-          // 2. Actualizar avatar_url en Supabase
-          await supabase
-            .from('profiles')
-            .update({ avatar_url: finalPhotoUrl })
-            .eq('id', user.id);
+          // 2. Actualizar avatar_url (sin red: se sube en cola al volver la conexión)
+          await dataService.setProfilePhoto(user.id, 'avatar_url', finalPhotoUrl);
 
           // 3. Actualizar curriculum_data en localStorage y Supabase
           const localKey = `curriculum_data_${user.id}`;
@@ -234,10 +231,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
             window.localStorage?.setItem(localKey, JSON.stringify(existingObj));
           }
 
-          await supabase
-            .from('profiles')
-            .update({ curriculum_data: existingObj })
-            .eq('id', user.id);
+          await dataService.mergeProfileJson(user.id, 'curriculum_data', { photoUrl: finalPhotoUrl }, 'Foto del currículum');
         }
       } catch (err) {
         console.error('Error auto-guardando foto:', err);
@@ -249,6 +243,10 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
 
   const handleSyncCertificates = async () => {
     if (!targetUserId) return;
+    if (!isOnline()) {
+      showAlert('Sin conexión', 'Para importar tus certificados al currículum necesitas internet. Tus certificados nuevos se suman solos al currículum cuando se suben.');
+      return;
+    }
     setSyncingCerts(true);
     try {
       const res = await dataService.syncAllCertificatesToCurriculum(targetUserId);
@@ -322,18 +320,23 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
         updateData.avatar_url = uploadedPhotoUrl;
       }
 
-      const { error } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', user.id);
-
       if (typeof window !== 'undefined' && window.localStorage) {
         window.localStorage.setItem(`curriculum_data_${user.id}`, JSON.stringify(payload));
+      }
+
+      // Sin red queda en cola (la foto se sube al volver la conexión)
+      const res = await dataService.mergeProfileJson(user.id, 'curriculum_data', payload, 'Currículum Scout');
+      if (updateData.avatar_url && String(updateData.avatar_url).startsWith('http')) {
+        await dataService.updateProfileFields(user.id, { avatar_url: updateData.avatar_url }, 'Foto de perfil');
       }
 
       savedStateRef.current = getCurrentFormJSON();
       setHasChanges(false);
 
+      if (res.queued) {
+        showAlert('Currículum guardado en el teléfono', 'No hay conexión ahora. Se enviará automáticamente cuando tengas internet.');
+        return;
+      }
       showAlert('¡Currículum Guardado!', 'Se han guardado todos los datos de tu Currículum Scout Joven.');
     } catch (err: any) {
       showAlert('¡Guardado Completado!', 'Datos del currículum guardados localmente en tu dispositivo.');
@@ -410,9 +413,25 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
         '{{CANOA_CERT}}': canoaCert.certDate || '',
       };
 
+      // La plantilla oficial trae un número fijo de filas. Si hay más registros que filas,
+      // la última fila los agrupa ("y N más: ...") para que no se pierdan del documento.
+      const fitRows = (list: any[], slots: number) => {
+        const clean = (list || []).filter((it: any) => it && (it.title || '').trim());
+        if (clean.length <= slots) return clean;
+        const rest = clean.slice(slots - 1);
+        return [
+          ...clean.slice(0, slots - 1),
+          { title: `${rest[0].title} y ${rest.length - 1} más: ${rest.slice(1).map((it: any) => it.title).join('; ')}`, date: rest[0].date, director: rest[0].director, role: rest[0].role },
+        ];
+      };
+      const workshopsRows = fitRows(workshopsList, 5);
+      const distinctionsRows = fitRows(distinctionsList, 6);
+      const eventsRows = fitRows(eventsList, 6);
+      const programsRows = fitRows(worldProgramsList, 8);
+
       // Rellenar Talleres o Cursos Realizados (hasta 5)
       for (let i = 1; i <= 5; i++) {
-        const item = workshopsList[i - 1];
+        const item = workshopsRows[i - 1];
         replacements[`{{WORKSHOP_NAME_${i}}}`] = item?.title || '';
         replacements[`{{WORKSHOP_DATE_${i}}}`] = item?.date || '';
         replacements[`{{WORKSHOP_DIR_${i}}}`] = item?.director || '';
@@ -420,14 +439,14 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
 
       // Rellenar Condecoraciones y Distinciones (hasta 6)
       for (let i = 1; i <= 6; i++) {
-        const item = distinctionsList[i - 1];
+        const item = distinctionsRows[i - 1];
         replacements[`{{DISTINCTION_NAME_${i}}}`] = item?.title || '';
         replacements[`{{DISTINCTION_DATE_${i}}}`] = item?.date || '';
       }
 
       // Rellenar Eventos y Actividades Participadas (hasta 6)
       for (let i = 1; i <= 6; i++) {
-        const item = eventsList[i - 1];
+        const item = eventsRows[i - 1];
         replacements[`{{EVENT_NAME_${i}}}`] = item?.title || '';
         replacements[`{{EVENT_ROLE_${i}}}`] = item?.role || '';
         replacements[`{{EVENT_DATE_${i}}}`] = item?.date || '';
@@ -435,7 +454,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
 
       // Rellenar Proyectos y Programas Mundiales (hasta 8)
       for (let i = 1; i <= 8; i++) {
-        const item = worldProgramsList[i - 1];
+        const item = programsRows[i - 1];
         replacements[`{{PROGRAM_NAME_${i}}}`] = item?.title || '';
         replacements[`{{PROGRAM_ROLE_${i}}}`] = item?.role || '';
         replacements[`{{PROGRAM_DATE_${i}}}`] = item?.date || '';

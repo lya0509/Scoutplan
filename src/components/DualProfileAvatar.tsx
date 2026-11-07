@@ -56,9 +56,20 @@ export function DualProfileAvatar({
     }
   }, [scoutAvatarUrl, customAvatarUrl]);
 
-  // La foto activa SIEMPRE se corresponde directamente con activeTab
-  const currentPhotoUrl = activeTab === 'scout' ? scoutAvatarUrl : customAvatarUrl;
-  const hasBothPhotos = !!(scoutAvatarUrl && customAvatarUrl);
+  // Fotos cuya URL falló al cargar (archivo borrado, sin red y sin copia): se tratan como vacías
+  const [failedUrls, setFailedUrls] = useState<Record<string, boolean>>({});
+  const scoutOk = scoutAvatarUrl && !failedUrls[scoutAvatarUrl] ? scoutAvatarUrl : null;
+  const customOk = customAvatarUrl && !failedUrls[customAvatarUrl] ? customAvatarUrl : null;
+  const markFailed = (url?: string | null) => {
+    if (url) setFailedUrls(prev => (prev[url] ? prev : { ...prev, [url]: true }));
+  };
+
+  // En el perfil editable cada pestaña muestra SU foto. En las listas (no editable), si
+  // falta la foto scout se muestra la personal (y viceversa) en vez de un círculo vacío.
+  const currentPhotoUrl = editable
+    ? (activeTab === 'scout' ? scoutOk : customOk)
+    : (activeTab === 'scout' ? (scoutOk || customOk) : (customOk || scoutOk));
+  const hasBothPhotos = !!(scoutOk && customOk);
 
   // Mostrar pestañas en el perfil principal o cuando se solicite explícitamente (size >= 70)
   const shouldShowTabs = showTabs !== undefined ? showTabs : (size >= 70);
@@ -169,6 +180,7 @@ export function DualProfileAvatar({
               source={{ uri: currentPhotoUrl }}
               style={{ width: size - 6, height: size - 6, borderRadius: (size - 6) / 2 }}
               resizeMode="cover"
+              onError={() => markFailed(currentPhotoUrl)}
             />
           ) : activeTab === 'scout' ? (
             <UserScoutAvatar unit={unit} role={role} size={size - 6} />
@@ -344,6 +356,7 @@ export function DualProfileAvatar({
                 source={{ uri: currentPhotoUrl }}
                 style={styles.zoomImage}
                 resizeMode="contain"
+                onError={() => markFailed(currentPhotoUrl)}
               />
             ) : (
               <View style={[styles.zoomImage, styles.zoomPlaceholderContainer]}>

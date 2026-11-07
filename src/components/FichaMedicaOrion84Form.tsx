@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Platform } from 'react-native';
 import { Download, Save, AlertCircle } from 'lucide-react-native';
-import { supabase } from '../lib/supabaseClient';
+import { dataService } from '../lib/dataService';
 import { autoSaveService } from '../services/autoSaveService';
 import { showAlert } from '../utils/alert';
 import { colors } from '../theme/colors';
@@ -122,11 +122,8 @@ export default function FichaMedicaOrion84Form({ targetUserId, readOnly, theme, 
     (async () => {
       setLoading(true);
       try {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', targetUserId)
-          .maybeSingle();
+        // Con copia offline: sin internet se ve la última ficha guardada
+        const data = await dataService.getProfileRow(targetUserId);
         const prof = data || fallbackProfile;
         let loaded: Orion84Values;
         const saved = prof?.medical_data?.orion84;
@@ -166,20 +163,18 @@ export default function FichaMedicaOrion84Form({ targetUserId, readOnly, theme, 
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Se relee medical_data para no pisar la Ficha Médica Scout guardada en el mismo campo.
-      const { data: current, error: readError } = await supabase
-        .from('profiles')
-        .select('medical_data')
-        .eq('id', targetUserId)
-        .single();
-      if (readError) throw readError;
+      // Se mezcla dentro de medical_data para no pisar la Ficha Médica Scout guardada en el mismo campo.
+      // Sin red queda en cola y se envía sola al volver la conexión.
       const updatedAt = new Date().toISOString();
-      const merged = { ...(current?.medical_data || {}), orion84: { ...values, updatedAt } };
-      const { error } = await supabase.from('profiles').update({ medical_data: merged }).eq('id', targetUserId);
-      if (error) throw error;
+      const res = await dataService.mergeProfileJson(targetUserId, 'medical_data', { orion84: { ...values, updatedAt } }, 'Ficha Orión 84');
       savedJsonRef.current = JSON.stringify(values);
       setHasChanges(false);
       setSavedAt(updatedAt);
+      if (res.queued) {
+        // El borrador se conserva hasta que llegue al servidor
+        showAlert('Ficha guardada en el teléfono', 'No hay conexión ahora. Se enviará automáticamente cuando tengas internet.');
+        return;
+      }
       autoSaveService.removeDraft(draftKey);
       showAlert('¡Ficha Orión 84 guardada!', 'Tus datos quedaron guardados en tu perfil.');
     } catch (err: any) {

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import HelpFloatingFAB from '../components/HelpFloatingFAB';
 import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
+import { readCached, writeCached } from '../lib/offline/readCache';
 import { dataService } from '../lib/dataService';
 import { presenceService } from '../services/presenceService';
 import { colors } from '../theme/colors';
@@ -14,7 +15,8 @@ import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import { ScoutUserIcon } from '../components/ScoutUserIcon';
 import { ProgramaPdfPreviewModal } from '../components/ProgramaPdfPreviewModal';
 import { ProgramaScout } from '../types/programa';
-import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, Target, FileText, CheckCircle, Info, Eye } from 'lucide-react-native';
+import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, Target, FileText, CheckCircle, Info, Eye, ShieldAlert, ShieldCheck, Clock } from 'lucide-react-native';
+import { todayLocal, daysUntil, formatDateEs } from '../utils/dateLocal';
 
 const UNIT_COLORS: Record<string, string> = {
   'manada': '#ffb300',
@@ -140,13 +142,8 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
     const progressData = await dataService.getProgressForAllStages(user.id);
 
-    const { data: stageRows } = await supabase
-      .from('stage_progress')
-      .select('stage_id, status')
-      .eq('scout_id', user.id);
-
-    const statusMap: Record<string, string> = {};
-    stageRows?.forEach(r => { statusMap[r.stage_id] = r.status; });
+    // Con copia offline: sin red se mantiene la etapa real del scout
+    const statusMap: Record<string, string> = await dataService.getAllStageStatuses(user.id);
 
     let prevApproved = true;
     let activeStage  = null;
@@ -171,9 +168,10 @@ export default function ScoutDashboardScreen({ navigation }: any) {
     setCurrentStage(activeStage);
     setStageStatus(activeStatus);
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayLocal();
     const userUnit = (user.unit || 'manada').toLowerCase();
-    const combinedEvents: any[] = [];
+    let combinedEvents: any[] = [];
+    let anyLoaded = false;
 
     // 1. Eventos manuales del calendario general y de la unidad
     try {
@@ -183,7 +181,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
         .gte('date', today)
         .in('unit', [userUnit, 'grupo'])
         .order('date', { ascending: true });
-      if (events) combinedEvents.push(...events);
+      if (events) { combinedEvents.push(...events); anyLoaded = true; }
     } catch (e) {
       console.warn('Aviso cargando calendar_events:', e);
     }
@@ -196,6 +194,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
         .gte('date', today)
         .order('date', { ascending: true });
       if (progData) {
+        anyLoaded = true;
         progData.forEach((p: any) => {
           const unit = (p.unit || 'clan').toLowerCase();
           const isSinodalMatch = p.is_sinodal && (p.selected_units?.includes(userUnit) || p.selectedUnits?.includes(userUnit));
@@ -221,6 +220,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
         .select('*')
         .eq('unit', userUnit);
       if (qpData) {
+        anyLoaded = true;
         const monthMap: Record<string, string> = {
           enero: '01', febrero: '02', marzo: '03', abril: '04',
           mayo: '05', junio: '06', julio: '07', agosto: '08',
@@ -261,6 +261,14 @@ export default function ScoutDashboardScreen({ navigation }: any) {
       }
     } catch (e) {
       console.warn('Aviso cargando quarterly_plans en dashboard:', e);
+    }
+
+    // Copia offline: sin red se muestran las últimas actividades conocidas que aún no pasan
+    const eventsCacheKey = `dashboard_events_${user.id}`;
+    if (anyLoaded) {
+      writeCached(eventsCacheKey, combinedEvents);
+    } else {
+      combinedEvents = ((await readCached<any[]>(eventsCacheKey)) || []).filter(e => e.date >= today);
     }
 
     // Ordenar todas las actividades cronológicamente y tomar las próximas 5
@@ -380,6 +388,62 @@ export default function ScoutDashboardScreen({ navigation }: any) {
               <NotificationHeaderBell color="#ffffff" />
             </View>
           </View>
+        );
+      })()}
+
+      {/* Aviso de membresía: solo si está por vencer, vencida, pendiente o devuelta */}
+      {(() => {
+        const status = user?.membership_status;
+        const expires = user?.membership_expires_at;
+        const days = daysUntil(expires);
+        let tone: 'warn' | 'danger' | 'info' | null = null;
+        let title = '';
+        let detail = '';
+        if (status === 'approved' && days !== null) {
+          if (days < 0) {
+            tone = 'danger';
+            title = 'Tu membresía está vencida';
+            detail = `Venció el ${formatDateEs(expires)}. Habla con tu Scouter para renovarla.`;
+          } else if (days <= 60) {
+            tone = days <= 15 ? 'danger' : 'warn';
+            title = days === 0 ? 'Tu membresía vence hoy' : `Tu membresía vence en ${days} ${days === 1 ? 'día' : 'días'}`;
+            detail = `Válida hasta el ${formatDateEs(expires)}. Recuerda renovarla con tu Scouter.`;
+          }
+        } else if (status === 'pending_approval') {
+          tone = 'info';
+          title = 'Membresía en aprobación';
+          detail = expires
+            ? `Tu Scouter propuso el ${formatDateEs(expires)}. Falta la aprobación de Jefatura.`
+            : 'Falta la aprobación de Jefatura.';
+        } else if (status === 'rejected') {
+          tone = 'danger';
+          title = 'Membresía devuelta';
+          detail = user?.membership_rejected_reason
+            ? `Motivo: ${user.membership_rejected_reason}`
+            : 'Jefatura devolvió la fecha propuesta. Habla con tu Scouter.';
+        }
+        if (!tone) return null;
+        const pal = {
+          warn: { bg: isDarkMode ? '#2a1d06' : '#fffbeb', border: isDarkMode ? '#78350f' : '#fde68a', fg: isDarkMode ? '#fcd34d' : '#92400e' },
+          danger: { bg: isDarkMode ? '#2a1215' : '#fef2f2', border: isDarkMode ? '#7f1d1d' : '#fecaca', fg: isDarkMode ? '#fca5a5' : '#991b1b' },
+          info: { bg: isDarkMode ? '#0c1a33' : '#eff6ff', border: isDarkMode ? '#1e3a8a' : '#bfdbfe', fg: isDarkMode ? '#93c5fd' : '#1e40af' },
+        }[tone];
+        const Icon = tone === 'info' ? Clock : tone === 'warn' ? ShieldCheck : ShieldAlert;
+        return (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('Perfil')}
+            accessibilityRole="button"
+            accessibilityLabel={`${title}. ${detail}`}
+            style={[styles.membershipCard, { backgroundColor: pal.bg, borderColor: pal.border }]}
+          >
+            <Icon size={22} color={pal.fg} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.membershipTitle, { color: pal.fg }]}>{title}</Text>
+              <Text style={[styles.membershipDetail, { color: pal.fg }]}>{detail}</Text>
+            </View>
+            <ChevronRight size={18} color={pal.fg} />
+          </TouchableOpacity>
         );
       })()}
 
@@ -683,6 +747,9 @@ const styles = StyleSheet.create({
   notifBody: { color: '#7F1D1D', fontSize: 12, marginTop: 2 },
   notifReason: { color: '#B91C1C', fontSize: 12, marginTop: 2 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 8 },
+  membershipCard: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 16 },
+  membershipTitle: { fontSize: 15, fontWeight: '800' },
+  membershipDetail: { fontSize: 13, marginTop: 2, lineHeight: 18, opacity: 0.95 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginLeft: 8 },
   installCard: {
     flexDirection: 'row',

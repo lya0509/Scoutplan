@@ -5,12 +5,15 @@ import { Plus, X, Sun, Moon } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
-import { notificationService } from '../services/notificationService';
+import { outbox } from '../lib/offline/outbox';
+import { newId } from '../lib/offline/net';
+import { readCached, writeCached } from '../lib/offline/readCache';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { colors, UNIT_COLORS } from '../theme/colors';
 import { useFocusEffect } from '@react-navigation/native';
 import { useModalBackHandler } from '../hooks/useBackHandler';
 import { showAlert } from '../utils/alert';
+import { todayLocal } from '../utils/dateLocal';
 
 interface CalendarEvent {
   id: string;
@@ -62,7 +65,7 @@ export default function CalendarScreen() {
   const canSeeAllUnits = isJefe || isScouter;
   const userUnit = (user?.unit || 'clan').toLowerCase();
 
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState<string>(todayLocal());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [unitFilter, setUnitFilter] = useState<string>('all');
@@ -97,6 +100,7 @@ export default function CalendarScreen() {
   const fetchEvents = async () => {
     setLoading(true);
     const combinedEvents: CalendarEvent[] = [];
+    let anyLoaded = false;
 
     // 1. Cargar eventos manuales y eventos CIP de calendar_events
     try {
@@ -106,6 +110,7 @@ export default function CalendarScreen() {
       }
       const { data, error } = await query;
       if (!error && data) {
+        anyLoaded = true;
         combinedEvents.push(...data);
       }
     } catch (e) {
@@ -116,6 +121,7 @@ export default function CalendarScreen() {
     try {
       const { data: qpData, error: qpError } = await supabase.from('quarterly_plans').select('*');
       if (!qpError && qpData) {
+        anyLoaded = true;
         qpData.forEach((qp: any) => {
           let acts: any[] = [];
           if (qp.monthly_activities && Array.isArray(qp.monthly_activities)) {
@@ -159,6 +165,7 @@ export default function CalendarScreen() {
     try {
       const { data: progData, error: progError } = await supabase.from('scout_programas').select('*');
       if (!progError && progData) {
+        anyLoaded = true;
         progData.forEach((p: any) => {
           if (!p.date || !p.title) return;
           const unit = (p.unit || 'clan').toLowerCase();
@@ -180,7 +187,21 @@ export default function CalendarScreen() {
       console.warn('Aviso cargando scout_programas en calendario:', e);
     }
 
-    setEvents(combinedEvents);
+    // Copia offline del calendario: sin red se muestra la última versión cargada
+    const cacheKey = `calendar_${user?.role}_${userUnit}`;
+    let finalEvents = combinedEvents;
+    if (anyLoaded) {
+      writeCached(cacheKey, combinedEvents);
+    } else {
+      finalEvents = (await readCached<CalendarEvent[]>(cacheKey)) || [];
+    }
+    // Eventos creados sin conexión, aún sin enviar
+    const ids = new Set(finalEvents.map(e => e.id));
+    const pendingEvents = (await outbox.pending('row.insert'))
+      .filter(o => o.payload?.table === 'calendar_events' && o.payload.row && !ids.has(o.payload.row.id))
+      .map(o => ({ ...o.payload.row, description: `${o.payload.row.description || ''} (pendiente de enviar)`.trim() }));
+
+    setEvents([...finalEvents, ...pendingEvents]);
     setLoading(false);
   };
 
@@ -199,26 +220,43 @@ export default function CalendarScreen() {
       return;
     }
 
-    const { error } = await supabase.from('calendar_events').insert({
-      title: newEventTitle.trim(),
-      description: newEventDesc.trim(),
-      date: newEventDate.trim(),
-      unit: newEventUnit,
-      created_by: user?.id,
-    });
+    let error: any = null;
+    let queued = false;
+    try {
+      const res = await outbox.run('row.insert', {
+        table: 'calendar_events',
+        row: {
+          id: newId(),
+          title: newEventTitle.trim(),
+          description: newEventDesc.trim(),
+          date: newEventDate.trim(),
+          unit: newEventUnit,
+          created_by: user?.id,
+        },
+        notify: {
+          senderId: user?.id,
+          groupName: user?.group_name || undefined,
+          unit: newEventUnit === 'grupo' ? undefined : newEventUnit,
+          title: '📅 Nueva Actividad de Calendario',
+          message: `${newEventTitle.trim()} programada para el ${newEventDate.trim()} (${newEventUnit.toUpperCase()}).`,
+          type: 'calendar'
+        },
+      }, { label: `Evento: ${newEventTitle.trim()}` });
+      queued = res.queued;
+    } catch (e) {
+      error = e;
+    }
 
     if (error) {
       showAlert('Error al crear evento', error.message);
+    } else if (queued) {
+      showAlert('Evento guardado en el teléfono', 'Se publicará en el calendario cuando tengas internet.');
+      setModalVisible(false);
+      setNewEventTitle('');
+      setNewEventDesc('');
+      fetchEvents();
     } else {
-      // Enviar notificación en vivo por WebSockets
-      notificationService.sendNotification({
-        senderId: user?.id,
-        groupName: user?.group_name || undefined,
-        unit: newEventUnit === 'grupo' ? undefined : newEventUnit,
-        title: '📅 Nueva Actividad de Calendario',
-        message: `${newEventTitle.trim()} programada para el ${newEventDate.trim()} (${newEventUnit.toUpperCase()}).`,
-        type: 'calendar'
-      }).catch(() => {});
+      // El aviso ya lo envía la cola junto con el evento
 
       setModalVisible(false);
       setNewEventTitle('');

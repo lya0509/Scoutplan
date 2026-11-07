@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useModalBackHandler } from '../hooks/useBackHandler';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
+import { ScoutQRCode } from './ScoutQRCode';
 
 interface CarnetScoutModalProps {
   visible: boolean;
@@ -31,8 +32,12 @@ export const CarnetScoutModal: React.FC<CarnetScoutModalProps> = ({
 
   // Soporte universal para gestos de retroceso en Android, iOS y PWA
   useModalBackHandler(visible, onClose);
+  const [photoFailed, setPhotoFailed] = useState(false);
 
   if (!user) return null;
+
+  // Foto del carnet: la scout con uniforme; si no hay (o no carga), la personal
+  const carnetPhoto = (!photoFailed && user.avatar_url) || user.custom_avatar_url || null;
 
   const isMembershipApproved = user.membership_status === 'approved' && !!user.membership_expires_at;
   const expiryDate = isMembershipApproved ? user.membership_expires_at : 'Pendiente de Aprobación';
@@ -98,8 +103,8 @@ export const CarnetScoutModal: React.FC<CarnetScoutModalProps> = ({
               <View style={styles.carnetBody}>
                 {/* Cuadro de Foto */}
                 <View style={styles.photoContainer}>
-                  {user.avatar_url ? (
-                    <Image source={{ uri: user.avatar_url }} style={styles.photoImg} />
+                  {carnetPhoto ? (
+                    <Image source={{ uri: carnetPhoto }} style={styles.photoImg} onError={() => setPhotoFailed(true)} />
                   ) : (
                     <View style={styles.photoPlaceholder}>
                       <Text style={{ fontSize: 10, color: '#6b7280', fontWeight: 'bold' }}>FOTO</Text>
@@ -143,10 +148,9 @@ export const CarnetScoutModal: React.FC<CarnetScoutModalProps> = ({
               <View style={styles.carnetReverseBody}>
                 {/* Columna QR & Extravío */}
                 <View style={{ width: '45%', alignItems: 'center' }}>
-                  <Image
-                    source={{ uri: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ASV_SCOUT_${user.id}` }}
-                    style={styles.qrImg}
-                  />
+                  <View style={styles.qrImg}>
+                    <ScoutQRCode value={`ASV_SCOUT_${user.id}`} size={85} />
+                  </View>
                   <Text style={styles.lostText}>
                     Se agradece en caso de extravío notificarlo a través de:{'\n'}
                     Correo: operaciones@scouts.org.ve{'\n'}

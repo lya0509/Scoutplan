@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { isNetworkError } from './offline/net';
 
 /**
  * Convierte una cadena Base64 / Data URL a Uint8Array para subir a Supabase Storage
@@ -73,7 +74,8 @@ export const storageService = {
     bucketName: string,
     folderPath: string,
     fileName: string,
-    fileOrBase64: File | Blob | string
+    fileOrBase64: File | Blob | string,
+    opts: { throwOnNetworkError?: boolean } = {}
   ): Promise<string> {
     try {
       let fileBody: Uint8Array | File | Blob;
@@ -110,6 +112,7 @@ export const storageService = {
         });
 
       if (error) {
+        if (opts.throwOnNetworkError && isNetworkError(error)) throw error;
         console.error(`Error subiendo a Supabase Storage (${bucketName}):`, error.message);
         return typeof fileOrBase64 === 'string' ? fileOrBase64 : '';
       }
@@ -125,6 +128,7 @@ export const storageService = {
 
       return '';
     } catch (err) {
+      if (opts.throwOnNetworkError && isNetworkError(err)) throw err;
       console.error('Error en storageService.uploadImage:', err);
       return typeof fileOrBase64 === 'string' ? fileOrBase64 : '';
     }

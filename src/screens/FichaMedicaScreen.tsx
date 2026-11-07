@@ -13,7 +13,8 @@ import {
 import { FileText, Download, Shield, Plus, Trash2, Camera, CheckCircle, AlertCircle, Save, ArrowLeft } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { supabase } from '../lib/supabaseClient';
+import { dataService } from '../lib/dataService';
+import { isOnline } from '../lib/offline/net';
 import { storageService } from '../lib/storageService';
 import { colors } from '../theme/colors';
 import { autoSaveService } from '../services/autoSaveService';
@@ -22,6 +23,7 @@ import { exportDocxInBrowser } from '../utils/docxExporter';
 import { navigateBackOrHome } from '../utils/navigationHelper';
 import { pickImageUniversal } from '../utils/filePicker';
 import FichaMedicaOrion84Form from '../components/FichaMedicaOrion84Form';
+import { todayLocal } from '../utils/dateLocal';
 
 type FichaTab = 'scout' | 'orion84';
 const FICHA_TABS: { key: FichaTab; label: string }[] = [
@@ -125,7 +127,7 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
 
   // 8. FIRMA DIGITAL
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
-  const [signatureDate, setSignatureDate] = useState(new Date().toISOString().split('T')[0]);
+  const [signatureDate, setSignatureDate] = useState(todayLocal());
 
   useEffect(() => {
     loadMedicalData();
@@ -173,20 +175,26 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
     if (!targetUserId) return;
     setLoading(true);
     try {
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', targetUserId)
-        .single();
+      // Con copia offline: sin internet se ve la última ficha guardada
+      const prof = await dataService.getProfileRow(targetUserId);
 
       if (prof) {
         setFullName(prof.name || '');
         setGender(prof.gender || 'Masculino');
+
+        // Si la ficha no tiene cédula, se toma la del perfil (antes el Word salía "C.I. :" vacío)
+        const cedMatch = String(prof.cedula || '').trim().match(/^([VvEe])?[-.\s]*([\d.]+)$/);
+        const profileCi = cedMatch ? cedMatch[2] : '';
+        const profileNat: 'V' | 'E' = cedMatch && cedMatch[1] && cedMatch[1].toUpperCase() === 'E' ? 'E' : 'V';
+        if (!prof.medical_data?.ci && profileCi) {
+          setCi(profileCi);
+          setNationality(profileNat);
+        }
         
         if (prof.medical_data) {
           const m = prof.medical_data;
-          setCi(m.ci || '');
-          setNationality(m.nationality || 'V');
+          setCi(m.ci || profileCi || '');
+          setNationality(m.nationality || profileNat || 'V');
           setAge(m.age ? String(m.age) : '');
           setHeightCm(m.heightCm ? String(m.heightCm) : '');
           setWeightKg(m.weightKg ? String(m.weightKg) : '');
@@ -273,14 +281,18 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
     setSaving(true);
     try {
       let uploadedSignatureUrl = signatureUrl;
-      if (signatureUrl && signatureUrl.startsWith('data:image')) {
-        uploadedSignatureUrl = await storageService.uploadImage(
+      if (signatureUrl && signatureUrl.startsWith('data:image') && isOnline()) {
+        // Sin red la firma viaja en la cola y se sube al volver la conexión
+        const url = await storageService.uploadImage(
           'scout-files',
           'signatures',
           `signature_${user.id}.png`,
           signatureUrl
         );
-        setSignatureUrl(uploadedSignatureUrl);
+        if (url && url.startsWith('http')) {
+          uploadedSignatureUrl = url;
+          setSignatureUrl(url);
+        }
       }
 
       const payload = {
@@ -329,21 +341,16 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
       }
 
       // medical_data también guarda la Ficha Orión 84 (clave orion84): se mezcla en vez de reemplazar.
-      const { data: current, error: readError } = await supabase
-        .from('profiles')
-        .select('medical_data')
-        .eq('id', user.id)
-        .single();
-      // Sin la lectura no se escribe: se perdería la Ficha Orión 84 guardada en el mismo campo.
-      if (readError) throw readError;
-      const { error } = await supabase
-        .from('profiles')
-        .update({ medical_data: { ...(current?.medical_data || {}), ...payload } })
-        .eq('id', user.id);
-      if (error) throw error;
+      // Sin red queda en cola y se envía sola al volver la conexión.
+      const res = await dataService.mergeProfileJson(user.id, 'medical_data', payload, 'Ficha médica');
 
       savedStateRef.current = getCurrentFormJSON();
       setHasChanges(false);
+
+      if (res.queued) {
+        showAlert('Ficha guardada en el teléfono', 'No hay conexión ahora. Se enviará automáticamente cuando tengas internet.');
+        return;
+      }
 
       showAlert('¡Ficha Médica Guardada!', 'Se han guardado todos los datos de tu Ficha Médica.');
     } catch (err: any) {

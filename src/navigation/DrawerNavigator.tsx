@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { colors } from '../theme/colors';
 import { UserScoutAvatar } from '../components/UserScoutAvatar';
+import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import { Moon, Sun, Palette } from 'lucide-react-native';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
 import { useModalBackHandler } from '../hooks/useBackHandler';
@@ -70,7 +71,16 @@ function CustomDrawerContent(props: any & { onOpenCustomizer: () => void; onOpen
     >
       <View style={[styles.drawerHeader, { backgroundColor: isDarkMode ? '#000000' : primaryColor, borderBottomWidth: isDarkMode ? 1 : 0, borderBottomColor: '#27272a' }]}>
         <View style={styles.avatarContainer}>
-          <UserScoutAvatar unit={user?.unit || undefined} role={user?.role} size={72} />
+          {/* Foto del usuario (scout o, si no hay, la personal); si no tiene ninguna, la silueta */}
+          <DualProfileAvatar
+            scoutAvatarUrl={user?.avatar_url}
+            customAvatarUrl={user?.custom_avatar_url}
+            unit={user?.unit || undefined}
+            role={user?.role}
+            size={72}
+            editable={false}
+            showTabs={false}
+          />
         </View>
         <Text style={styles.userName}>{user?.name || 'Scout'}</Text>
         <Text style={styles.userUnit}>{user?.group_name ? `${user.group_name} • ${user?.unit?.toUpperCase() || ''}` : 'Sin Grupo'}</Text>

@@ -4,6 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, ActivityIndicator, Platform, BackHandler } from 'react-native';
 
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { registerGraphifyControllers, updateGraphifyRuntimeState } from '../lib/graphifyBridge';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 
@@ -84,9 +86,57 @@ const linking: any = {
   }
 };
 
+
+const DRAWER_SUBROUTES = new Set([
+  'Resumen',
+  'Perfil',
+  'PlanProgresivo',
+  'ProgramasScoutDrawer',
+  'PlanTrimestralDrawer',
+  'TemporalDriveDrawer',
+  'FichaMedicaDrawer',
+  'CurriculumScoutDrawer',
+  'NudosManualDrawer',
+  'CancioneroDrawer',
+  'DocumentosDrawer',
+  'EspecialidadesDrawer',
+  'CertificadosDrawer',
+  'CentroActividades',
+  'Calendario',
+]);
+
 export default function AppNavigator() {
   const { user, isLoading } = useAuth();
+  const { isDarkMode, primaryColor, toggleDarkMode, setPrimaryColor } = useTheme();
   const navigationRef = React.useRef<any>(null);
+
+  useEffect(() => {
+    updateGraphifyRuntimeState({
+      currentUserId: user?.id || null,
+      currentUserRole: user?.role || null,
+      currentUserUnit: user?.unit || null,
+      currentUserGroup: user?.group_name || null,
+      isDarkMode,
+      primaryColor,
+    });
+  }, [user, isDarkMode, primaryColor]);
+
+  useEffect(() => {
+    registerGraphifyControllers({
+      toggleDarkMode,
+      setPrimaryColor,
+      navigate: (routeName: string, params?: Record<string, any>) => {
+        if (!navigationRef.current || !navigationRef.current.isReady()) return false;
+        if (DRAWER_SUBROUTES.has(routeName) && (!user?.role || user?.role === 'scout')) {
+          navigationRef.current.navigate('Drawer', { screen: routeName, params });
+        } else {
+          navigationRef.current.navigate(routeName, params);
+        }
+        updateGraphifyRuntimeState({ currentRoute: routeName });
+        return true;
+      },
+    });
+  }, [user, toggleDarkMode, setPrimaryColor]);
 
   if (isLoading && !user) {
     return (
@@ -97,7 +147,16 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer ref={navigationRef} linking={linking}>
+    <NavigationContainer
+      ref={navigationRef}
+      linking={linking}
+      onStateChange={() => {
+        const current = navigationRef.current?.getCurrentRoute?.();
+        if (current?.name) {
+          updateGraphifyRuntimeState({ currentRoute: current.name });
+        }
+      }}
+    >
       <Stack.Navigator 
         screenOptions={{ 
           headerShown: false, 

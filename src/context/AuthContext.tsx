@@ -3,6 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabaseClient';
 import { presenceService } from '../services/presenceService';
 import { Profile } from '../types/progression';
+import { isRetryableError } from '../lib/offline/net';
+import { dataService } from '../lib/dataService';
 
 const CACHED_PROFILE_KEY = '@scout_cached_profile';
 const CACHED_SESSION_KEY = '@scout_cached_session';
@@ -13,7 +15,7 @@ interface AuthContextData {
   signOut: () => Promise<void>;
   isLoading: boolean;
   refreshProfile: () => Promise<void>;
-  updateUserProfile: (updates: Partial<Profile>) => Promise<void>;
+  updateUserProfile: (updates: Partial<Profile>, opts?: { localOnly?: boolean }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -96,6 +98,21 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         .eq('id', userId)
         .maybeSingle();
 
+      // Sin red: quedarse con el perfil guardado en el teléfono. Si se siguiera, se
+      // armaría un perfil con valores por defecto (rol 'scout', unidad 'tropa') que
+      // pisaría el bueno, y encima se intentaría escribir eso en la base de datos.
+      if (error) {
+        const cachedRaw = await AsyncStorage.getItem(CACHED_PROFILE_KEY).catch(() => null);
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw);
+          if (cached?.id === userId) {
+            setUser(cached);
+            return;
+          }
+        }
+        if (isRetryableError(error)) return;
+      }
+
       const resolvedEmail = data?.email || sess?.user?.email || meta.email || '';
       const resolvedRole = data?.role || meta.role || 'scout';
       const resolvedUnit = data?.unit || meta.unit || 'tropa';
@@ -142,8 +159,16 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       presenceService.init(mergedUser);
       await AsyncStorage.setItem(CACHED_PROFILE_KEY, JSON.stringify(mergedUser));
 
+      // Precargar las fotos propias (y la firma) para tenerlas sin internet, incluso al exportar a Word
+      if (typeof window !== 'undefined' && typeof fetch === 'function') {
+        const sign = (data?.medical_data as any)?.signatureUrl;
+        [resolvedScoutAvatar, resolvedCustomAvatar, sign]
+          .filter((u: any) => typeof u === 'string' && u.startsWith('http'))
+          .forEach((u: string) => { fetch(u, { mode: 'cors' }).catch(() => {}); });
+      }
+
       // Si no existía el registro en profiles o faltaban campos, sincronizarlo en segundo plano
-      if (!data) {
+      if (!data && !error) {
         supabase.from('profiles').upsert({
           id: userId,
           role: resolvedRole,
@@ -197,20 +222,22 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     }
   };
 
-  const updateUserProfile = async (updates: Partial<Profile>) => {
+  const updateUserProfile = async (updates: Partial<Profile>, opts: { localOnly?: boolean } = {}) => {
     setUser(prev => {
       if (!prev) return null;
       const updated = { ...prev, ...updates };
       AsyncStorage.setItem(CACHED_PROFILE_KEY, JSON.stringify(updated)).catch(() => {});
       return updated;
     });
+    if (opts.localOnly) return;
 
-    // Guardar en Supabase Auth metadata y en tabla profiles
+    // Guardar en tabla profiles (sin red queda en cola) y en Supabase Auth metadata
     try {
-      if (session?.user?.id) {
-        await supabase.from('profiles').update(updates).eq('id', session.user.id);
+      const uid = session?.user?.id || user?.id;
+      if (uid) {
+        await dataService.updateProfileFields(uid, updates as Record<string, any>);
       }
-      await supabase.auth.updateUser({ data: updates });
+      supabase.auth.updateUser({ data: updates }).catch(() => {});
     } catch (e) {
       console.warn('Aviso sincronizando perfil:', e);
     }

@@ -15,6 +15,7 @@ import { useTheme } from '../context/ThemeContext';
 import { dataService } from '../lib/dataService';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
+import { todayLocal } from '../utils/dateLocal';
 
 interface Props {
   visible: boolean;
@@ -46,7 +47,7 @@ export function NochesAireLibreModal({
   const [showAddForm, setShowAddForm] = useState(false);
 
   // Campos de formulario
-  const [dateInput, setDateInput] = useState(() => new Date().toISOString().split('T')[0]);
+  const [dateInput, setDateInput] = useState(() => todayLocal());
   const [locationInput, setLocationInput] = useState('');
   const [nightsInput, setNightsInput] = useState(1);
   const [notesInput, setNotesInput] = useState('');

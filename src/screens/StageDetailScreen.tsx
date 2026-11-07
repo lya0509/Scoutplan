@@ -20,11 +20,11 @@ import { useTheme } from '../context/ThemeContext';
 import { useModalBackHandler } from '../hooks/useBackHandler';
 import { supabase } from '../lib/supabaseClient';
 import { dataService } from '../lib/dataService';
-import { notificationService } from '../services/notificationService';
 import { stagesData } from '../data/progressionTemplate';
 import { StageBadgeIcon } from '../components/StageBadgeIcon';
 import { NochesAireLibreModal } from '../components/NochesAireLibreModal';
 import { VidaGrupoModal } from '../components/VidaGrupoModal';
+import { ActividadesPersonalesModal } from '../components/ActividadesPersonalesModal';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 import { checkProfileCompletion } from '../utils/profileGuard';
@@ -70,6 +70,11 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const [selectedReqForVidaGrupo, setSelectedReqForVidaGrupo] = useState<any>(null);
   const [vidaGrupoCountMap, setVidaGrupoCountMap] = useState<Record<string, number>>({});
 
+  // Estado para Actividades Personales (de creación propia)
+  const [showPersonalesModal, setShowPersonalesModal] = useState(false);
+  const [selectedReqForPersonales, setSelectedReqForPersonales] = useState<any>(null);
+  const [personalesCountMap, setPersonalesCountMap] = useState<Record<string, number>>({});
+
   // Formulario rápido para convalidar CIP previo
   const [showFastCipForm, setShowFastCipForm] = useState(false);
   const [fastCipName, setFastCipName] = useState('');
@@ -91,13 +96,8 @@ export default function StageDetailScreen({ route, navigation }: any) {
     setLoading(true);
     try {
       // 1. Obtener estado en base a la progresión general
-      const { data: stageRows } = await supabase
-        .from('stage_progress')
-        .select('stage_id, status')
-        .eq('scout_id', user.id);
-
-      const statusMap: Record<string, string> = {};
-      stageRows?.forEach((r: any) => { statusMap[r.stage_id] = r.status; });
+      // Con copia offline: sin red se mantiene la etapa real (no se bloquea todo)
+      const statusMap: Record<string, string> = await dataService.getAllStageStatuses(user.id);
 
       let prevApproved = true;
       let effectiveStatus = 'En Progreso';
@@ -126,6 +126,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
       const nightsMap: Record<string, number> = {};
       const vgMap: Record<string, number> = {};
       const cipsMap: Record<string, number> = {};
+      const personalesMap: Record<string, number> = {};
 
       const allLinkedCerts = await dataService.getAllLinkedCertificates(user.id);
       const userCertsList = await dataService.getCertificates(user.id);
@@ -156,6 +157,17 @@ export default function StageDetailScreen({ route, navigation }: any) {
           } catch {}
         }
 
+        if (req.type === 'personales') {
+          try {
+            const acts = await dataService.getPersonalActivities(user.id, stageId, req.id);
+            const total = (acts || []).length;
+            personalesMap[req.id] = total;
+            if (total >= (req.requiredCount || 3)) {
+              reqChecks[req.id] = true;
+            }
+          } catch {}
+        }
+
         if (req.type === 'ciclos' || req.text.toLowerCase().includes('ciclo')) {
           try {
             const cipSels = await dataService.getCipSelections(user.id, stageId, req.id);
@@ -180,6 +192,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
       setNochesCountMap(nightsMap);
       setVidaGrupoCountMap(vgMap);
       setCipCountMap(cipsMap);
+      setPersonalesCountMap(personalesMap);
     } catch (err) {
       console.error('Error al cargar avance de etapa:', err);
     } finally {
@@ -379,6 +392,12 @@ export default function StageDetailScreen({ route, navigation }: any) {
       return;
     }
 
+    if (req.type === 'personales') {
+      setSelectedReqForPersonales(req);
+      setShowPersonalesModal(true);
+      return;
+    }
+
     if (req.type === 'aire_libre' || req.text.toLowerCase().includes('noche')) {
       setSelectedReqForNoches(req);
       setShowNochesModal(true);
@@ -411,21 +430,22 @@ export default function StageDetailScreen({ route, navigation }: any) {
     if (!user) return;
     if (!checkProfileCompletion(user, navigation)) return;
     setConfirming(false);
-    await dataService.submitStageForReview(user.id, stageId);
+    // El aviso a los dirigentes viaja con el envío: sin red, ambos esperan en la cola
+    const res = await dataService.submitStageForReview(user.id, stageId, {
+      senderId: user.id,
+      groupName: user.group_name || undefined,
+      unit: user.unit || undefined,
+      receiverRole: 'scouter',
+      title: '⚜️ Ficha Enviada a Revisión',
+      message: `${user.name || 'Scout'} ha enviado la etapa "${stageTemplate?.title || 'Etapa'}" a revisión.`,
+      type: 'badge'
+    });
     setStatus('En Revision');
 
-    try {
-      await notificationService.sendNotification({
-        senderId: user.id,
-        groupName: user.group_name || undefined,
-        unit: user.unit || undefined,
-        receiverRole: 'scouter',
-        title: '⚜️ Ficha Enviada a Revisión',
-        message: `${user.name || 'Scout'} ha enviado la etapa "${stageTemplate?.title || 'Etapa'}" a revisión.`,
-        type: 'badge'
-      });
-    } catch {}
-
+    if (res?.queued) {
+      showAlert('¡Ficha lista para enviar!', 'No hay conexión: tu etapa quedó marcada como "En revisión" en el teléfono y le llegará a tu dirigente cuando tengas internet.');
+      return;
+    }
     showAlert('¡Ficha Enviada!', 'Tu etapa ha sido enviada a revisión por tu dirigente.');
   };
 
@@ -580,6 +600,18 @@ export default function StageDetailScreen({ route, navigation }: any) {
                         : isChecked
                         ? `${req.requiredCount || 1} / ${req.requiredCount || 1} convalidado en etapa aprobada`
                         : `0 / ${req.requiredCount || 1} registros guardados`} (Toca para ver o agregar)
+                    </Text>
+                  </View>
+                )}
+
+                {req.type === 'personales' && (
+                  <View style={{ marginTop: 4 }}>
+                    <Text style={[styles.reqBadge, { color: '#d97706', fontWeight: 'bold' }]}>
+                      💡 {(personalesCountMap[req.id] || 0) > 0
+                        ? `${personalesCountMap[req.id]} / ${req.requiredCount || 3} actividades registradas`
+                        : isChecked
+                        ? 'Marcado · toca para anotar cuáles fueron'
+                        : `0 / ${req.requiredCount || 3} actividades registradas`} (Toca para ver o agregar)
                     </Text>
                   </View>
                 )}
@@ -1398,6 +1430,26 @@ export default function StageDetailScreen({ route, navigation }: any) {
           onProgressChange={(total: number, isCompleted: boolean) => {
             setVidaGrupoCountMap(prev => ({ ...prev, [selectedReqForVidaGrupo.id]: total }));
             setChecks(prev => ({ ...prev, [selectedReqForVidaGrupo.id]: isCompleted }));
+          }}
+        />
+      )}
+
+      {/* MODAL DE ACTIVIDADES PERSONALES (de creación propia) */}
+      {user && selectedReqForPersonales && (
+        <ActividadesPersonalesModal
+          visible={showPersonalesModal}
+          onClose={() => setShowPersonalesModal(false)}
+          scoutId={user.id}
+          stageId={stageId}
+          reqId={selectedReqForPersonales.id}
+          reqTitle={selectedReqForPersonales.text}
+          requiredCount={selectedReqForPersonales.requiredCount || 3}
+          isReadOnly={isReadOnly}
+          onProgressChange={(total, isCompleted) => {
+            setPersonalesCountMap(prev => ({ ...prev, [selectedReqForPersonales.id]: total }));
+            if (isCompleted !== undefined) {
+              setChecks(prev => ({ ...prev, [selectedReqForPersonales.id]: isCompleted }));
+            }
           }}
         />
       )}

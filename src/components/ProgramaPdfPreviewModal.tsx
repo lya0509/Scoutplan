@@ -19,6 +19,7 @@ import { docxProgramaGenerator } from '../lib/docxProgramaGenerator';
 import { useTheme } from '../context/ThemeContext';
 import { useModalBackHandler } from '../hooks/useBackHandler';
 import { showAlert } from '../utils/alert';
+import { todayLocal } from '../utils/dateLocal';
 
 interface Props {
   visible: boolean;
@@ -104,7 +105,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
       if (!container) return;
 
       const cleanTitle = (programa.title || 'Actividad').trim().replace(/[^a-zA-Z0-9_\-áéíóúÁÉÍÓÚñÑ ]/g, '_').replace(/\s+/g, '_');
-      const cleanDate = (programa.date || new Date().toISOString().split('T')[0]).replace(/[^a-zA-Z0-9_\-]/g, '_');
+      const cleanDate = (programa.date || todayLocal()).replace(/[^a-zA-Z0-9_\-]/g, '_');
       const fileUnitLabel = programa.isSinodal && programa.selectedUnits && programa.selectedUnits.length > 1
         ? `${programa.selectedUnits.map(u => u.toUpperCase()).join('_')}_SINODAL`
         : (programa.unit || 'CLAN').toUpperCase();

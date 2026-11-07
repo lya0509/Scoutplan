@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { isSafeFileUrl } from '../utils/safeUrl';
 import {
   View,
   Text,
@@ -23,6 +24,7 @@ import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 import { navigateBackOrHome } from '../utils/navigationHelper';
 import { pickImageUniversal } from '../utils/filePicker';
+import { todayLocal } from '../utils/dateLocal';
 
 // Configuración del calendario en Español
 LocaleConfig.locales['es'] = {
@@ -71,7 +73,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
   const [fileUrl, setFileUrl] = useState('');
 
   // Fecha de expedición / realización del certificado
-  const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
+  const [issueDate, setIssueDate] = useState(todayLocal());
   const [showDatePickerModal, setShowDatePickerModal] = useState(false);
   const [calYear, setCalYear] = useState(new Date().getFullYear());
   const [calMonth, setCalMonth] = useState(new Date().getMonth() + 1);
@@ -113,6 +115,10 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
   };
 
   const handleDownloadCertificate = (cert: any) => {
+    if (cert?.file_url && !isSafeFileUrl(cert.file_url)) {
+      showAlert('Enlace no válido', 'El archivo de este certificado no es una imagen o enlace web válido, por seguridad no se abrirá.');
+      return;
+    }
     if (!cert?.file_url) {
       showAlert('Sin Archivo', 'Este certificado no posee un archivo de imagen adjunto.');
       return;
@@ -138,7 +144,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
     setArea(specialtyAreas[0].id);
     setLevel(returnToStage?.level || 'bronce');
     setFileUrl('');
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = todayLocal();
     setIssueDate(todayStr);
     setCalYear(new Date().getFullYear());
     setCalMonth(new Date().getMonth() + 1);
@@ -152,7 +158,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
     setArea(cert.area || specialtyAreas[0].id);
     setLevel(cert.level || 'bronce');
     setFileUrl(cert.file_url || '');
-    const certDate = cert.date || cert.created_at?.split('T')[0] || new Date().toISOString().split('T')[0];
+    const certDate = cert.date || cert.created_at?.split('T')[0] || todayLocal();
     setIssueDate(certDate);
     if (certDate.includes('-')) {
       const parts = certDate.split('-');
@@ -214,9 +220,11 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
           return;
         }
 
-        const msg = syncWithCurriculum
-          ? 'Tu acreditación ha sido guardada y sincronizada automáticamente con tu Currículum Scout (Hoja de Vida).'
-          : 'Tu acreditación ha sido registrada correctamente.';
+        const msg = (createdCert as any)?._pending
+          ? 'No hay conexión: quedó guardada en tu teléfono y se subirá sola (con su imagen) cuando tengas internet.'
+          : syncWithCurriculum
+            ? 'Tu acreditación ha sido guardada y sincronizada automáticamente con tu Currículum Scout (Hoja de Vida).'
+            : 'Tu acreditación ha sido registrada correctamente.';
 
         showAlert('¡Acreditación Guardada!', msg);
       }
@@ -263,7 +271,8 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
         deleteModalCert.id,
         deleteModalCert.scout_id,
         deleteModalCert.title,
-        isDeletingOwn ? '' : deleteReason.trim()
+        isDeletingOwn ? '' : deleteReason.trim(),
+        !isDeletingOwn
       );
 
       showAlert(

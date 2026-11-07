@@ -1,4 +1,5 @@
 // Helper profesional para exportar archivos Excel (.xls formateado con HTML/XML)
+import { todayLocal } from './dateLocal';
 // y generar documentos imprimibles/PDF con membrete oficial Scout.
 
 export interface MemberRecord {
@@ -19,8 +20,34 @@ export interface MemberRecord {
   medical_data?: any;
 }
 
+
+// Todo dato que viene de perfiles (nombres, alergias, teléfonos…) se escapa antes de ir al
+// HTML del Excel o de la ventana de impresión: un "&" rompía la celda, y un "<script>" en un
+// nombre se ejecutaba en la sesión de quien imprimía.
+export function escapeHtml(v: any): string {
+  return String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeDeep<T>(v: T): T {
+  if (typeof v === 'string') return escapeHtml(v) as any;
+  if (Array.isArray(v)) return v.map(escapeDeep) as any;
+  if (v && typeof v === 'object') {
+    const out: any = {};
+    Object.entries(v as any).forEach(([k, val]) => { out[k] = escapeDeep(val); });
+    return out;
+  }
+  return v;
+}
+
 // 1. EXPORTAR CENSO Y NÓMINA EN EXCEL
-export function exportCensoExcel(members: MemberRecord[], groupName: string) {
+export function exportCensoExcel(rawMembers: MemberRecord[], rawGroupName: string) {
+  const members = escapeDeep(rawMembers);
+  const groupName = escapeHtml(rawGroupName);
   const currentDate = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
   
   let rowsHtml = '';
@@ -84,11 +111,13 @@ export function exportCensoExcel(members: MemberRecord[], groupName: string) {
     </html>
   `;
 
-  downloadBlob(htmlContent, `Censo_Oficial_${(groupName || 'Grupo').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xls`, 'application/vnd.ms-excel');
+  downloadBlob(htmlContent, `Censo_Oficial_${(rawGroupName || 'Grupo').replace(/[^\p{L}\p{N}]+/gu, '_')}_${todayLocal()}.xls`, 'application/vnd.ms-excel');
 }
 
 // 2. EXPORTAR PADRÓN DE EMERGENCIA MÉDICA EN EXCEL
-export function exportPadronMedicoExcel(members: MemberRecord[], groupName: string) {
+export function exportPadronMedicoExcel(rawMembers: MemberRecord[], rawGroupName: string) {
+  const members = escapeDeep(rawMembers);
+  const groupName = escapeHtml(rawGroupName);
   const currentDate = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
   
   let rowsHtml = '';
@@ -166,11 +195,13 @@ export function exportPadronMedicoExcel(members: MemberRecord[], groupName: stri
     </html>
   `;
 
-  downloadBlob(htmlContent, `Padron_Medico_Emergencias_${(groupName || 'Grupo').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xls`, 'application/vnd.ms-excel');
+  downloadBlob(htmlContent, `Padron_Medico_Emergencias_${(rawGroupName || 'Grupo').replace(/[^\p{L}\p{N}]+/gu, '_')}_${todayLocal()}.xls`, 'application/vnd.ms-excel');
 }
 
 // 3. EXPORTAR REPORTE DE MEMBRESÍAS Y CARNETS EN EXCEL
-export function exportMembresiasExcel(members: MemberRecord[], groupName: string) {
+export function exportMembresiasExcel(rawMembers: MemberRecord[], rawGroupName: string) {
+  const members = escapeDeep(rawMembers);
+  const groupName = escapeHtml(rawGroupName);
   const currentDate = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const today = new Date();
 
@@ -244,11 +275,16 @@ export function exportMembresiasExcel(members: MemberRecord[], groupName: string
     </html>
   `;
 
-  downloadBlob(htmlContent, `Control_Membresias_${(groupName || 'Grupo').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xls`, 'application/vnd.ms-excel');
+  downloadBlob(htmlContent, `Control_Membresias_${(rawGroupName || 'Grupo').replace(/[^\p{L}\p{N}]+/gu, '_')}_${todayLocal()}.xls`, 'application/vnd.ms-excel');
 }
 
 // 4. IMPRESIÓN OFICIAL Y GENERACIÓN DE PDF FORMATEADO
-export function printDocumentHTML(title: string, subtitle: string, groupName: string, headers: string[], rows: (string | number)[][], themeColor: string = '#612499') {
+export function printDocumentHTML(rawTitle: string, rawSubtitle: string, rawGroupName: string, rawHeaders: string[], rawRows: (string | number)[][], themeColor: string = '#612499') {
+  const title = escapeHtml(rawTitle);
+  const subtitle = escapeHtml(rawSubtitle);
+  const groupName = escapeHtml(rawGroupName);
+  const headers = rawHeaders.map(escapeHtml);
+  const rows = rawRows.map(r => r.map(escapeHtml));
   if (typeof window === 'undefined') return;
 
   const currentDate = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });

@@ -103,13 +103,8 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
     setLoading(true);
     try {
       // 1. Obtener estado de la etapa considerando la cadena de progresión completa
-      const { data: allStages } = await supabase
-        .from('stage_progress')
-        .select('stage_id, status')
-        .eq('scout_id', user.id);
-
-      const statusMap: Record<string, string> = {};
-      allStages?.forEach((r: any) => { statusMap[r.stage_id] = r.status; });
+      // Con copia offline: sin red se mantiene la etapa real (no se bloquea todo)
+      const statusMap: Record<string, string> = await dataService.getAllStageStatuses(user.id);
 
       let prevApproved = true;
       let computedStatus = 'En Progreso';
@@ -130,10 +125,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
       setStageStatus(paramStageStatus || computedStatus);
 
       // 2. Obtener requisitos del usuario
-      const { data: userReqs, error } = await supabase
-        .from('requirement_progress')
-        .select('requirement_id, stage_id, completed')
-        .eq('scout_id', user.id);
+      const userReqs = await dataService.getRequirementRows(user.id);
 
       const currentStageCompleted: string[] = [];
       const previousCompleted: string[] = [];

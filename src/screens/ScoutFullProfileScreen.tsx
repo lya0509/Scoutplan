@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { isSafeFileUrl } from '../utils/safeUrl';
 import {
   View,
   Text,
@@ -120,6 +121,10 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
   };
 
   const handleDownloadCertificate = (cert: any) => {
+    if (cert?.file_url && !isSafeFileUrl(cert.file_url)) {
+      showAlert('Enlace no válido', 'El archivo de este certificado no es una imagen o enlace web válido, por seguridad no se abrirá.');
+      return;
+    }
     if (!cert?.file_url) {
       showAlert('Sin Archivo', 'Este certificado no posee un archivo de imagen adjunto.');
       return;
