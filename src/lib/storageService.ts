@@ -103,12 +103,13 @@ export const storageService = {
 
       const filePath = `${folderPath}/${Date.now()}_${fileName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
 
-      // Subir archivo al bucket de Supabase Storage (sobrescribe si existe)
+      // Subir archivo al bucket (nombre único con fecha: no hace falta sobrescribir,
+      // y sin upsert basta el permiso de INSERT; no se necesita poder listar el bucket)
       const { data, error } = await supabase.storage
         .from(bucketName)
         .upload(filePath, fileBody, {
           contentType,
-          upsert: true
+          upsert: false
         });
 
       if (error) {
