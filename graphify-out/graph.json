@@ -2,15 +2,15 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-07T19:26:45.206Z",
+    "generatedAt": "2026-11-07T20:48:54.467Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
-      "totalNodes": 107,
-      "totalEdges": 83,
+      "totalNodes": 109,
+      "totalEdges": 87,
       "totalHyperedges": 4,
-      "totalScreens": 26,
-      "totalComponents": 24,
+      "totalScreens": 27,
+      "totalComponents": 25,
       "totalContexts": 3,
       "totalServices": 20,
       "totalCatalogs": 10,
@@ -129,8 +129,8 @@
       "file": "src/navigation/AppNavigator.tsx",
       "role": "Routes unauthenticated users to Login/Register and authenticated users by role (scout -> DrawerNavigator, scouter -> ScouterDashboard, jefe_grupo -> JefeDashboard, comisionados/nacional/admin -> ComisionadoDashboard) plus shared screens.",
       "exists": true,
-      "lines": 276,
-      "bytes": 11769,
+      "lines": 280,
+      "bytes": 12243,
       "exports": [
         "hasPendingVerify",
         "AppNavigator"
@@ -166,6 +166,7 @@
         "../screens/ProgramaScoutEditorScreen",
         "../screens/EspecialidadesScreen",
         "../screens/VerificarCarnetScreen",
+        "../screens/CuentaEnRevisionScreen",
         "./DrawerNavigator"
       ],
       "supabaseTables": [],
@@ -230,8 +231,8 @@
       "file": "src/context/AuthContext.tsx",
       "role": "Restores @scout_cached_profile in <10ms with 800ms safety timeout, syncs Supabase Auth session & profiles table, initializes presenceService, and exposes updateUserProfile/refreshProfile/signOut.",
       "exists": true,
-      "lines": 300,
-      "bytes": 11608,
+      "lines": 302,
+      "bytes": 11767,
       "exports": [
         "AuthProvider",
         "useAuth"
@@ -316,8 +317,8 @@
       "file": "src/types/progression.ts",
       "role": "Defines Role (7 roles), Unit (6 units), StageStatus, Profile, Requirement, StageTemplate, StageProgress, and RequirementProgress.",
       "exists": true,
-      "lines": 72,
-      "bytes": 1959,
+      "lines": 74,
+      "bytes": 2127,
       "exports": [
         "Role",
         "Unit",
@@ -430,8 +431,8 @@
       "file": "src/lib/dataService.ts",
       "role": "Async data layer on top of the offline outbox (@scout_outbox_v1) with cached reads: stage/requirement progress, stage/requirement progress, stage review/approval, certificates + curriculum auto-sync, quarterly plans, CIP events, nights log, vida de grupo log, and membership dates.",
       "exists": true,
-      "lines": 1912,
-      "bytes": 83158,
+      "lines": 1929,
+      "bytes": 84019,
       "exports": [
         "MembershipReceipt",
         "MembershipHistoryEntry",
@@ -1161,8 +1162,8 @@
       "route": "Perfil",
       "role": "Scout & Scouter personal profile editor: dual avatars (Uniformado/Casual), cédula, dates (birth, promise, join), membership expiration proposal, and digital Carnet Scout.",
       "exists": true,
-      "lines": 766,
-      "bytes": 33815,
+      "lines": 776,
+      "bytes": 34690,
       "exports": [
         "ProfileScreen"
       ],
@@ -1182,6 +1183,7 @@
         "../components/NotificationHeaderBell",
         "../lib/dataService",
         "../utils/alert",
+        "../utils/dateLocal",
         "../utils/navigationHelper"
       ],
       "supabaseTables": [
@@ -1242,8 +1244,8 @@
       "route": "ScouterDashboard",
       "role": "Unit leader dashboard: lists unit scouts with online presence, pending stage reviews, quarterly plan feedback, unit programs, and profile photo moderation.",
       "exists": true,
-      "lines": 1458,
-      "bytes": 71684,
+      "lines": 1470,
+      "bytes": 72554,
       "exports": [
         "ScouterDashboardScreen"
       ],
@@ -1272,6 +1274,7 @@
         "../components/NotificationHeaderBell",
         "../components/InsigniasExportBar",
         "../components/MembershipRecordsModal",
+        "../components/PendingAccountsCard",
         "../utils/dateLocal"
       ],
       "supabaseTables": [
@@ -1324,8 +1327,8 @@
       "route": "JefeDashboard",
       "role": "Group Chief dashboard: supervises all units (Manada, Tropa, Caminantes, Clan), approves/rejects membership expiration dates, moderates photos, and manages group calendar.",
       "exists": true,
-      "lines": 1910,
-      "bytes": 89713,
+      "lines": 1922,
+      "bytes": 90465,
       "exports": [
         "JefeGrupoScreen"
       ],
@@ -1352,6 +1355,7 @@
         "../components/NotificationHeaderBell",
         "../components/InsigniasExportBar",
         "../components/MembershipRecordsModal",
+        "../components/PendingAccountsCard",
         "../data/unitTemplates",
         "../utils/exportHelpers",
         "../utils/dateLocal"
@@ -1373,8 +1377,8 @@
       "route": "ComisionadoDashboard",
       "role": "Territorial hierarchy dashboard (Distrital, Regional, Nacional, Admin) with drill-down metrics by Region -> District -> Group -> Unit.",
       "exists": true,
-      "lines": 695,
-      "bytes": 35653,
+      "lines": 696,
+      "bytes": 35822,
       "exports": [
         "ComisionadoDashboardScreen"
       ],
@@ -1842,8 +1846,8 @@
       "file": "src/components/CarnetScoutModal.tsx",
       "role": "Renders official digital Scout ID card with QR verification, membership status badge, and PDF/image export.",
       "exists": true,
-      "lines": 250,
-      "bytes": 12017,
+      "lines": 266,
+      "bytes": 13618,
       "exports": [
         "CarnetScoutModal"
       ],
@@ -1857,7 +1861,8 @@
         "../theme/colors",
         "../utils/alert",
         "./ScoutQRCode",
-        "./SecureImage"
+        "./SecureImage",
+        "../utils/dateLocal"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -2386,6 +2391,34 @@
       "storageKeys": []
     },
     {
+      "id": "PendingAccountsCard.tsx",
+      "label": "PendingAccountsCard.tsx (Approve new accounts)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/components/PendingAccountsCard.tsx",
+      "role": "Lists accounts with account_status pending/rejected for Scouter (own unit) and Jefatura (group); Approve/Reject via dataService.setAccountStatus.",
+      "exists": true,
+      "lines": 132,
+      "bytes": 5587,
+      "exports": [
+        "PendingMember",
+        "PendingAccountsCard"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "lucide-react-native",
+        "../context/ThemeContext",
+        "../lib/dataService",
+        "../utils/alert",
+        "../utils/dateLocal"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
       "id": "SecureImage.tsx",
       "label": "SecureImage.tsx (Image for the private bucket)",
       "type": "component",
@@ -2783,6 +2816,32 @@
       "storageKeys": []
     },
     {
+      "id": "CuentaEnRevisionScreen.tsx",
+      "label": "CuentaEnRevisionScreen.tsx (Account under review)",
+      "type": "screen",
+      "community": "scout_progression_screens",
+      "file": "src/screens/CuentaEnRevisionScreen.tsx",
+      "role": "Only screen for accounts with account_status pending/rejected (AppNavigator gate): explains the review, re-check button (refreshProfile) and sign out. Shows no group data.",
+      "exists": true,
+      "lines": 84,
+      "bytes": 4670,
+      "exports": [
+        "CuentaEnRevisionScreen"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "lucide-react-native",
+        "../context/AuthContext",
+        "../context/ThemeContext",
+        "../utils/alert"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
       "id": "VerificarCarnetScreen.tsx",
       "label": "VerificarCarnetScreen.tsx (In-app carnet verification /verificar/:id)",
       "type": "screen",
@@ -3095,6 +3154,26 @@
       "from": "SecureImage.tsx",
       "to": "fileUrl.ts",
       "relation": "resolves_signed_urls"
+    },
+    {
+      "from": "JefeGrupoScreen.tsx",
+      "to": "PendingAccountsCard.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "ScouterDashboardScreen.tsx",
+      "to": "PendingAccountsCard.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "PendingAccountsCard.tsx",
+      "to": "dataService.ts",
+      "relation": "set_account_status"
+    },
+    {
+      "from": "AppNavigator.tsx",
+      "to": "CuentaEnRevisionScreen.tsx",
+      "relation": "gates_unapproved"
     },
     {
       "from": "DualProfileAvatar.tsx",

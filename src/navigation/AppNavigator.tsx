@@ -30,6 +30,7 @@ import ProgramaScoutScreen from '../screens/ProgramaScoutScreen';
 import ProgramaScoutEditorScreen from '../screens/ProgramaScoutEditorScreen';
 import EspecialidadesScreen from '../screens/EspecialidadesScreen';
 import VerificarCarnetScreen from '../screens/VerificarCarnetScreen';
+import CuentaEnRevisionScreen from '../screens/CuentaEnRevisionScreen';
 
 import DrawerNavigator from './DrawerNavigator';
 
@@ -144,7 +145,7 @@ export default function AppNavigator() {
   if (!user) rememberPendingVerify();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || user.account_status === 'pending' || user.account_status === 'rejected') return;
     const id = takePendingVerify();
     if (!id) return;
     let tries = 0;
@@ -159,7 +160,7 @@ export default function AppNavigator() {
       }
     }, 150);
     return () => clearInterval(timer);
-  }, [user]);
+  }, [user?.id, user?.account_status]);
 
   useEffect(() => {
     updateGraphifyRuntimeState({
@@ -221,6 +222,9 @@ export default function AppNavigator() {
             <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Ingresar' }} />
             <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: true, title: 'Registro' }} />
           </Stack.Group>
+        ) : (user.account_status === 'pending' || user.account_status === 'rejected') ? (
+          // Cuenta nueva sin aprobar: no ve nada del grupo hasta que la aprueben
+          <Stack.Screen name="CuentaEnRevision" component={CuentaEnRevisionScreen} options={{ title: 'Cuenta en revisión' }} />
         ) : (
           <Stack.Group>
             {(!user.role || user.role === 'scout') && (

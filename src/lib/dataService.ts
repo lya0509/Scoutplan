@@ -1187,6 +1187,23 @@ export const dataService = {
     }, { dedupeKey: `membership:${scoutId}`, label: 'Membresía devuelta' }).catch(e => console.warn('Aviso rechazando membresía:', e));
   },
 
+  /** Scouter / Jefatura aprueban o rechazan una cuenta nueva (account_status). */
+  async setAccountStatus(memberId: string, status: 'approved' | 'rejected', groupName?: string | null) {
+    await outbox.run('row.update', {
+      table: 'profiles',
+      values: { account_status: status },
+      match: { id: memberId },
+      notify: {
+        receiverId: memberId,
+        title: status === 'approved' ? '✅ Cuenta aprobada' : 'Cuenta no aprobada',
+        message: status === 'approved'
+          ? `Tu cuenta fue aprobada${groupName ? ` en ${groupName}` : ''}. Ya puedes usar el Plan Progresivo.`
+          : 'Tu solicitud de acceso no fue aprobada. Habla con tu Scouter o la Jefatura de tu grupo.',
+        type: 'info',
+      },
+    }, { dedupeKey: `account:${memberId}`, label: status === 'approved' ? 'Cuenta aprobada' : 'Cuenta rechazada' });
+  },
+
   async deleteProfilePhotoWithReason(scoutId: string, reason: string, photoType: 'scout' | 'custom' | 'both' = 'both') {
     const updatePayload: any = { photo_rejected_reason: reason || null };
     if (photoType === 'scout' || photoType === 'both') updatePayload.avatar_url = null;

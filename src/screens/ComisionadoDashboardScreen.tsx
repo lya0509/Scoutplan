@@ -84,7 +84,8 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
 
       const { data, error } = await query;
       if (!error && data) {
-        setAllProfiles(data);
+        // Las cuentas nuevas sin aprobar no cuentan en los reportes territoriales
+        setAllProfiles(data.filter((p: any) => p.account_status !== 'pending' && p.account_status !== 'rejected'));
       }
     } catch (e) {
       console.warn('Error cargando perfiles territoriales:', e);

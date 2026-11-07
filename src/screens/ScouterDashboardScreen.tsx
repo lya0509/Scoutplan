@@ -35,6 +35,7 @@ import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { InsigniasExportBar } from '../components/InsigniasExportBar';
 import { MembershipRecordsModal } from '../components/MembershipRecordsModal';
+import { PendingAccountsCard } from '../components/PendingAccountsCard';
 import { daysUntil, defaultMembershipDate, formatDateEs, todayLocal } from '../utils/dateLocal';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
@@ -420,6 +421,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
 
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [scouts, setScouts] = useState<any[]>([]);
+  const [pendingAccounts, setPendingAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats]   = useState({ total: 0, inReview: 0, approved: 0 });
 
@@ -458,7 +460,11 @@ export default function ScouterDashboardScreen({ navigation }: any) {
     setLoading(true);
     if (!user?.unit) { setLoading(false); return; }
 
-    const rawData = await dataService.getScoutsForScouter(user.unit, user.group_name || '');
+    const allRows = await dataService.getScoutsForScouter(user.unit, user.group_name || '');
+    // Cuentas nuevas sin aprobar: se aprueban aparte y no cuentan en la unidad
+    const isUnapproved = (s: any) => s.account_status === 'pending' || s.account_status === 'rejected';
+    setPendingAccounts(allRows.filter(isUnapproved));
+    const rawData = allRows.filter((s: any) => !isUnapproved(s));
 
     const enriched = await Promise.all(rawData.map(async (scout) => {
       const { data: stageRows } = await supabase
@@ -744,6 +750,11 @@ export default function ScouterDashboardScreen({ navigation }: any) {
         <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
       ) : (
         <ScrollView style={styles.scroll} contentContainerStyle={{ padding: 16, paddingBottom: 30 }}>
+          {pendingAccounts.length > 0 && (
+            <View style={{ marginBottom: 16 }}>
+              <PendingAccountsCard members={pendingAccounts} groupName={user?.group_name} onChanged={loadScouts} />
+            </View>
+          )}
           {scouts.length > 0 && (
             <View style={{ marginBottom: 16 }}>
               <InsigniasExportBar

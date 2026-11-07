@@ -25,6 +25,7 @@ import { useModalBackHandler } from '../hooks/useBackHandler';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { InsigniasExportBar } from '../components/InsigniasExportBar';
 import { MembershipRecordsModal } from '../components/MembershipRecordsModal';
+import { PendingAccountsCard } from '../components/PendingAccountsCard';
 import { ageFitForUnit, ageFitLabel } from '../data/unitTemplates';
 import {
   exportCensoExcel, exportCensoPdf, exportPadronMedicoExcel, exportPadronMedicoPdf, exportMembresiasExcel, exportMembresiasPdf, MemberRecord
@@ -55,6 +56,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [allMembers, setAllMembers] = useState<any[]>([]);
+  const [pendingAccounts, setPendingAccounts] = useState<any[]>([]);
 
   const [stats, setStats] = useState({
     manada: 0,
@@ -144,7 +146,10 @@ export default function JefeGrupoScreen({ navigation }: any) {
           .in('scout_id', ids)) || []) : [];
         return { members: list, approved: approvedRows.length };
       }, null);
-      const members = groupData?.members;
+      // Cuentas nuevas en revisión o rechazadas: fuera del censo y las estadísticas
+      const isUnapproved = (m: any) => m.account_status === 'pending' || m.account_status === 'rejected';
+      const members = groupData?.members?.filter((m: any) => !isUnapproved(m));
+      setPendingAccounts((groupData?.members || []).filter(isUnapproved));
       const error = !groupData;
 
       if (!error && members) {
@@ -697,6 +702,13 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 <Text style={[styles.statLabel, { color: theme.subText }]}>Insignias Aprobadas</Text>
               </View>
             </View>
+
+            {/* CUENTAS NUEVAS POR APROBAR */}
+            {pendingAccounts.length > 0 && (
+              <View style={{ marginTop: 14 }}>
+                <PendingAccountsCard members={pendingAccounts} groupName={user?.group_name} onChanged={loadStatsAndMembers} />
+              </View>
+            )}
 
             {/* AVANCE DE INSIGNIAS DE LOS JÓVENES (EXCEL / PDF) */}
             <View style={{ marginTop: 14 }}>

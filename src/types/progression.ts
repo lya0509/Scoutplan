@@ -22,6 +22,8 @@ export interface Profile {
   join_date?: string | null;
   membership_expires_at?: string | null;
   membership_status?: 'none' | 'pending_approval' | 'approved' | 'rejected' | null;
+  /** Cuenta nueva: 'pending' hasta que su Scouter o la Jefatura la aprueban. Sin columna = aprobada. */
+  account_status?: 'pending' | 'approved' | 'rejected' | null;
   membership_rejected_reason?: string | null;
   photo_rejected_reason?: string | null;
   created_at?: string | null;

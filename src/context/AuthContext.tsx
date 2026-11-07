@@ -152,6 +152,8 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         membership_status: resolvedMembershipStatus,
         membership_expires_at: resolvedMembershipExpiresAt,
         membership_rejected_reason: resolvedMembershipRejectedReason,
+        // Solo lectura: lo cambia el Scouter o la Jefatura (nunca se envía desde aquí)
+        account_status: (data?.account_status as any) || 'approved',
         created_at: data?.created_at || new Date().toISOString(),
         updated_at: data?.updated_at || new Date().toISOString(),
       };
