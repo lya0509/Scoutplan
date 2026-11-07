@@ -16,6 +16,7 @@ import { MembershipRecordsModal } from '../components/MembershipRecordsModal';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { dataService } from '../lib/dataService';
 import { showAlert } from '../utils/alert';
+import { daysUntil, formatDateEs } from '../utils/dateLocal';
 import { navigateBackOrHome } from '../utils/navigationHelper';
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
@@ -544,13 +545,22 @@ export default function ProfileScreen({ navigation }: any) {
       <View style={[styles.section, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
         <Text style={[styles.sectionHeader, { color: isDarkMode ? '#c084fc' : colors.primary }]}>ESTADO DE MEMBRESÍA Y CARNET</Text>
 
-        {membershipStatus === 'approved' ? (
+        {membershipStatus === 'approved' && membershipExpiresAt && (daysUntil(membershipExpiresAt) ?? 0) < 0 ? (
+          <View style={[styles.cardMissingBox, { backgroundColor: isDarkMode ? '#450a0a' : '#fee2e2', borderColor: '#ef4444' }]}>
+            <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fca5a5' : '#991b1b', fontSize: 13, marginBottom: 4 }}>
+              ⚠️ ANUALIDAD VENCIDA
+            </Text>
+            <Text style={{ color: isDarkMode ? '#f4f4f5' : '#7f1d1d', fontSize: 12, lineHeight: 18 }}>
+              Venció el <Text style={{ fontWeight: 'bold' }}>{formatDateEs(membershipExpiresAt)}</Text>. Renueva tu inscripción anual con la ASV, sube el comprobante aquí abajo y pide a tu Scouter que registre la nueva fecha.
+            </Text>
+          </View>
+        ) : membershipStatus === 'approved' ? (
           <View style={[styles.cardAvailableBox, { backgroundColor: isDarkMode ? '#14532d' : '#dcfce7', borderColor: '#16a34a' }]}>
             <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#86efac' : '#15803d', fontSize: 13 }}>
               ✓ MEMBRESÍA REGISTRADA Y APROBADA
             </Text>
             <Text style={{ color: isDarkMode ? '#f4f4f5' : '#334155', fontSize: 12, marginTop: 4 }}>
-              Válida hasta el: <Text style={{ fontWeight: 'bold' }}>{membershipExpiresAt}</Text>
+              Válida hasta el: <Text style={{ fontWeight: 'bold' }}>{formatDateEs(membershipExpiresAt)}</Text>
             </Text>
           </View>
         ) : membershipStatus === 'pending_approval' ? (

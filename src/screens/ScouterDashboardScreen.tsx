@@ -35,7 +35,7 @@ import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { InsigniasExportBar } from '../components/InsigniasExportBar';
 import { MembershipRecordsModal } from '../components/MembershipRecordsModal';
-import { todayLocal, defaultMembershipDate } from '../utils/dateLocal';
+import { daysUntil, defaultMembershipDate, formatDateEs, todayLocal } from '../utils/dateLocal';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
   if (!dateStr) return 'Seleccionar fecha en el calendario';
@@ -889,7 +889,8 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                       <View style={{ flex: 1, marginLeft: 10 }}>
                         <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>{scout.name}</Text>
                         <Text style={{ fontSize: 11, color: theme.subText }}>
-                          {mStatus === 'approved' ? `✅ Aprobada hasta: ${mDate}` :
+                          {mStatus === 'approved' && mDate && (daysUntil(mDate) ?? 0) < 0 ? `🔴 Anualidad vencida el ${formatDateEs(mDate)}` :
+                           mStatus === 'approved' ? `✅ Aprobada hasta: ${formatDateEs(mDate)}` :
                            mStatus === 'pending_approval' ? `⏳ Pendiente: ${mDate}` :
                            mStatus === 'rejected' ? `❌ Rechazada: ${scout.membership_rejected_reason || 'Sin motivo'}` :
                            '📋 Sin membresía asignada'}

@@ -17,6 +17,7 @@ import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 import { ScoutQRCode } from './ScoutQRCode';
 import { SecureImage } from './SecureImage';
+import { daysUntil, formatDateEs } from '../utils/dateLocal';
 
 interface CarnetScoutModalProps {
   visible: boolean;
@@ -41,7 +42,19 @@ export const CarnetScoutModal: React.FC<CarnetScoutModalProps> = ({
   const carnetPhoto = (!photoFailed && user.avatar_url) || user.custom_avatar_url || null;
 
   const isMembershipApproved = user.membership_status === 'approved' && !!user.membership_expires_at;
-  const expiryDate = isMembershipApproved ? user.membership_expires_at : 'Pendiente de Aprobación';
+  // La anualidad la cobra la ASV; aquí solo se muestra si la fecha registrada ya pasó.
+  const daysLeft = isMembershipApproved ? daysUntil(user.membership_expires_at) : null;
+  const isExpired = daysLeft !== null && daysLeft < 0;
+  const isActive = isMembershipApproved && !isExpired;
+  const expiryDate = isMembershipApproved ? formatDateEs(user.membership_expires_at!) : 'Pendiente de Aprobación';
+  const banner = isExpired
+    ? { bg: '#fef2f2', border: '#fecaca', title: '#b91c1c', text: '#991b1b', label: 'ANUALIDAD VENCIDA',
+        detail: `Venció el ${expiryDate}. Renueva tu inscripción anual con la ASV y pide a tu Scouter que registre la nueva fecha.` }
+    : isActive
+      ? { bg: '#f0fdf4', border: '#bbf7d0', title: '#15803d', text: '#166534', label: 'MEMBRESÍA ACTIVA Y APROBADA POR JEFATURA',
+          detail: daysLeft !== null && daysLeft <= 30 ? `Válida hasta el ${expiryDate} (vence en ${daysLeft} ${daysLeft === 1 ? 'día' : 'días'}).` : `Válida hasta el ${expiryDate}.` }
+      : { bg: '#fffbeb', border: '#fef08a', title: '#b45309', text: '#92400e', label: 'MEMBRESÍA PENDIENTE DE VALIDACIÓN POR JEFATURA',
+          detail: 'Tu Scouter de Unidad o Jefe de Grupo debe aprobar tu fecha de membresía para validar la credencial.' };
 
   const handleDownloadCarnet = () => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -68,24 +81,15 @@ export const CarnetScoutModal: React.FC<CarnetScoutModalProps> = ({
 
           <ScrollView contentContainerStyle={{ padding: 20, alignItems: 'center' }}>
             {/* AVISO ESTADO DE MEMBRESÍA */}
-            <View style={[
-              styles.statusBanner,
-              { backgroundColor: isMembershipApproved ? '#f0fdf4' : '#fffbeb', borderColor: isMembershipApproved ? '#bbf7d0' : '#fef08a' }
-            ]}>
-              {isMembershipApproved ? (
+            <View style={[styles.statusBanner, { backgroundColor: banner.bg, borderColor: banner.border }]}>
+              {isActive ? (
                 <CheckCircle2 size={18} color="#16a34a" style={{ marginRight: 8 }} />
               ) : (
-                <AlertCircle size={18} color="#d97706" style={{ marginRight: 8 }} />
+                <AlertCircle size={18} color={isExpired ? '#dc2626' : '#d97706'} style={{ marginRight: 8 }} />
               )}
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 12, fontWeight: 'bold', color: isMembershipApproved ? '#15803d' : '#b45309' }}>
-                  {isMembershipApproved ? 'MEMBRESÍA ACTIVA Y APROBADA POR JEFATURA' : 'MEMBRESÍA PENDIENTE DE VALIDACIÓN POR JEFATURA'}
-                </Text>
-                <Text style={{ fontSize: 11, color: isMembershipApproved ? '#166534' : '#92400e', marginTop: 2 }}>
-                  {isMembershipApproved
-                    ? `Válida hasta el: ${expiryDate}`
-                    : 'Tu Scouter de Unidad o Jefe de Grupo debe aprobar tu fecha de membresía para validar la credencial.'}
-                </Text>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: banner.title }}>{banner.label}</Text>
+                <Text style={{ fontSize: 11, color: banner.text, marginTop: 2 }}>{banner.detail}</Text>
               </View>
             </View>
 
@@ -134,10 +138,19 @@ export const CarnetScoutModal: React.FC<CarnetScoutModalProps> = ({
 
               {/* Pie con Membresía */}
               <View style={styles.carnetFooterPattern}>
-                <Text style={styles.membershipText}>
-                  *Membresía válida hasta el: <Text style={{ fontWeight: 'bold' }}>{expiryDate}</Text>
+                <Text style={[styles.membershipText, isExpired && { color: '#b91c1c' }]}>
+                  {isExpired ? '*Anualidad vencida el: ' : '*Membresía válida hasta el: '}<Text style={{ fontWeight: 'bold' }}>{expiryDate}</Text>
                 </Text>
               </View>
+
+              {/* Sello de vencida sobre el carnet */}
+              {isExpired && (
+                <View pointerEvents="none" style={styles.expiredStampWrap} accessibilityLabel="Anualidad vencida">
+                  <View style={styles.expiredStamp}>
+                    <Text style={styles.expiredStampText}>VENCIDA</Text>
+                  </View>
+                </View>
+              )}
             </View>
 
             {/* VISTA PREVIA DEL CARNET SCOUT (REVERSO) */}
@@ -200,6 +213,9 @@ const styles = StyleSheet.create({
   statusBanner: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, borderWidth: 1, width: '100%', marginBottom: 16 },
   sideLabel: { fontSize: 11, fontWeight: '900', color: colors.primary, letterSpacing: 1, marginBottom: 8, alignSelf: 'flex-start' },
 
+  expiredStampWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
+  expiredStamp: { borderWidth: 3, borderColor: '#dc2626', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 4, backgroundColor: 'rgba(255,255,255,0.75)', transform: [{ rotate: '-14deg' }] },
+  expiredStampText: { color: '#dc2626', fontSize: 30, fontWeight: '900', letterSpacing: 4 },
   carnetBox: {
     width: 360,
     height: 220,
