@@ -13,7 +13,7 @@
 Before running broad file searches, read the pre-indexed Full-System Graphify suite:
 1. **[`SYSTEM_GRAPH.md`](file:///home/lya/proyectos/plan-progresivo/SYSTEM_GRAPH.md)**: Master Mermaid architecture diagram, interface contracts, role matrix, and incremental synchronization log (Protocolo Graphy).
 2. **[`graphify-out/GRAPH_REPORT.md`](file:///home/lya/proyectos/plan-progresivo/graphify-out/GRAPH_REPORT.md)**: Exhaustive architectural manual covering all **8 system communities**, **25 screens**, **21 components**, **3 contexts**, **16 services**, **9 static catalogs**, **11 database tables**, and **10 QA suites**.
-3. **[`graphify-out/graph.json`](file:///home/lya/proyectos/plan-progresivo/graphify-out/graph.json)**: Machine-readable knowledge graph (`96 nodes`, `66 directed edges`, `4 hyperedges`) with exact exports, imports, Supabase tables touched, storage buckets, and AsyncStorage keys per file.
+3. **[`graphify-out/graph.json`](file:///home/lya/proyectos/plan-progresivo/graphify-out/graph.json)**: Machine-readable knowledge graph (`104 nodes`, `78 directed edges`, `4 hyperedges`) with exact exports, imports, Supabase tables touched, storage buckets, and AsyncStorage keys per file.
 4. **[`graphify-out/qa_matrix.json`](file:///home/lya/proyectos/plan-progresivo/graphify-out/qa_matrix.json)**: Complete 10-suite E2E & Visual QA test matrix (`QA-01` through `QA-10`) with exact programmatic navigation commands.
 5. **[`graphify-out/graph.html`](file:///home/lya/proyectos/plan-progresivo/graphify-out/graph.html)**: Interactive visual knowledge graph & QA matrix explorer.
 6. **Regenerate / Verify Graph Anytime**:

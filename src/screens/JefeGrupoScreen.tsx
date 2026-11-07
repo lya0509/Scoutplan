@@ -16,15 +16,18 @@ import {
   Users, Award, Calendar, Calendar as CalendarIcon, Moon, Sun, FileText,
   ChevronRight, ChevronDown, ChevronUp, Camera, BookOpen, Palette, Plus, X,
   Shield, ShieldCheck, Flag, Sparkles, Download, Printer, Search, CheckCircle2,
-  AlertTriangle, Clock, RefreshCw, Eye, CheckCircle, Check, Phone, LogOut
+  AlertTriangle, Clock, RefreshCw, Eye, CheckCircle, Check, Phone, LogOut, Receipt
 } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
 import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import { useModalBackHandler } from '../hooks/useBackHandler';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
+import { InsigniasExportBar } from '../components/InsigniasExportBar';
+import { MembershipRecordsModal } from '../components/MembershipRecordsModal';
+import { ageFitForUnit, ageFitLabel } from '../data/unitTemplates';
 import {
-  exportCensoExcel, exportPadronMedicoExcel, exportMembresiasExcel, printDocumentHTML, MemberRecord
+  exportCensoExcel, exportCensoPdf, exportPadronMedicoExcel, exportPadronMedicoPdf, exportMembresiasExcel, exportMembresiasPdf, MemberRecord
 } from '../utils/exportHelpers';
 import { todayLocal, defaultMembershipDate } from '../utils/dateLocal';
 
@@ -97,6 +100,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
   // 4. Modal Semáforo de Membresías y Carnets
   const [showSemaforoModal, setShowSemaforoModal] = useState(false);
   const [semaforoSearch, setSemaforoSearch] = useState('');
+  const [recordsMember, setRecordsMember] = useState<any>(null);
   const [semaforoStatusFilter, setSemaforoStatusFilter] = useState<'all' | 'pending' | 'expiring_1m' | 'expiring_3m' | 'expired' | 'active'>('all');
   const [selectedMemberForMembership, setSelectedMemberForMembership] = useState<any>(null);
   const [membershipDateInput, setMembershipDateInput] = useState('');
@@ -239,7 +243,8 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
   // Acciones de Membresías
   const handleApproveMembership = async (memberId: string) => {
-    await dataService.approveMembershipDate(memberId);
+    const member = allMembers.find(x => x.id === memberId);
+    await dataService.approveMembershipDate(memberId, member?.membership_expires_at, user?.name);
     showAlert('Membresía Aprobada', 'El carnet del miembro ha sido validado institucionalmente.');
 
     // Notificación en vivo al Scout
@@ -264,7 +269,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
     setApprovingBatch(true);
     try {
       for (const p of pending) {
-        await dataService.approveMembershipDate(p.id);
+        await dataService.approveMembershipDate(p.id, p.membership_expires_at, user?.name);
         notificationService.sendNotification({
           senderId: user?.id,
           receiverId: p.id,
@@ -286,7 +291,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
     if (!selectedMemberForMembership) return;
     const finalDate = membershipDateInput || todayLocal();
     await dataService.proposeMembershipDate(selectedMemberForMembership.id, finalDate);
-    await dataService.approveMembershipDate(selectedMemberForMembership.id);
+    await dataService.approveMembershipDate(selectedMemberForMembership.id, finalDate, user?.name);
 
     notificationService.sendNotification({
       senderId: user?.id,
@@ -347,6 +352,10 @@ export default function JefeGrupoScreen({ navigation }: any) {
       matchUnit = (u === 'tropa') && !isJefe;
     } else if (censoUnitFilter === 'caminantes') {
       matchUnit = (u === 'caminantes' || u === 'comunidad') && !isJefe;
+    } else if (censoUnitFilter === 'edad') {
+      // Jóvenes cuya edad no coincide con su rama (posible paso de rama)
+      const fit = ageFitForUnit(m.unit, m.birth_date);
+      matchUnit = m.role === 'scout' && (fit.kind === 'old' || fit.kind === 'young');
     } else if (censoUnitFilter !== 'all') {
       matchUnit = u === censoUnitFilter.toLowerCase();
     }
@@ -689,6 +698,17 @@ export default function JefeGrupoScreen({ navigation }: any) {
               </View>
             </View>
 
+            {/* AVANCE DE INSIGNIAS DE LOS JÓVENES (EXCEL / PDF) */}
+            <View style={{ marginTop: 14 }}>
+              <InsigniasExportBar
+                members={allMembers
+                  .filter(m => m.role === 'scout')
+                  .map(m => ({ id: m.id, name: m.name, unit: m.unit, birth_date: m.birth_date }))}
+                groupName={user?.group_name || 'Grupo Scout'}
+                scopeLabel="Grupo completo"
+              />
+            </View>
+
             <Text style={[styles.sectionTitle, { color: theme.text, marginTop: 14, marginBottom: 12 }]}>
               🌳 Estructura y Miembros del Grupo ({allMembers.length})
             </Text>
@@ -922,33 +942,15 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   onPress={() => exportCensoExcel(filteredCensoMembers, user?.group_name || 'Grupo Scout')}
                 >
                   <Download size={15} color="white" />
-                  <Text style={styles.exportBtnText}>Excel (.XLS)</Text>
+                  <Text style={styles.exportBtnText}>Excel (.xlsx)</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[styles.exportBtn, { flex: 1, backgroundColor: primaryColor }]}
-                  onPress={() => {
-                    const headers = ['#', 'Nombre Completo', 'Cédula', 'Rol', 'Rama', 'Género', 'F. Nac.', 'F. Promesa', 'Teléfono', 'Carnet'];
-                    const rows = filteredCensoMembers.map((m, idx) => {
-                      const isJefe = m.role === 'jefe_grupo' || m.unit === 'grupo' || m.unit === 'jefatura';
-                      return [
-                        idx + 1,
-                        m.name || 'Sin Nombre',
-                        m.cedula || 'N/A',
-                        m.role === 'jefe_grupo' ? 'Jefe de Grupo' : m.role === 'scouter' ? 'Scouter' : 'Scout',
-                        isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase(),
-                        m.gender || 'N/A',
-                        m.birth_date || 'N/A',
-                        m.promise_date || 'N/A',
-                        m.phone || 'N/A',
-                        m.membership_status === 'approved' ? `Vigente (${m.membership_expires_at || ''})` : 'Sin Registro'
-                      ];
-                    });
-                    printDocumentHTML('CENSO Y NÓMINA OFICIAL DE MIEMBROS', 'REGISTRO INSTITUCIONAL SCOUT', user?.group_name || 'Grupo Scout', headers, rows, primaryColor);
-                  }}
+                  onPress={() => exportCensoPdf(filteredCensoMembers, user?.group_name || 'Grupo Scout')}
                 >
                   <Printer size={15} color="white" />
-                  <Text style={styles.exportBtnText}>PDF / Imprimir</Text>
+                  <Text style={styles.exportBtnText}>Descargar PDF</Text>
                 </TouchableOpacity>
               </View>
 
@@ -960,7 +962,8 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   { id: 'tropa', label: '🟢 Tropa' },
                   { id: 'caminantes', label: '🔵 Caminantes' },
                   { id: 'clan', label: '🔴 Clan' },
-                  { id: 'jefatura', label: '⚜️ Jefatura' }
+                  { id: 'jefatura', label: '⚜️ Jefatura' },
+                  { id: 'edad', label: '⚠️ Edad fuera de rama' }
                 ].map(item => (
                   <TouchableOpacity
                     key={item.id}
@@ -1004,6 +1007,16 @@ export default function JefeGrupoScreen({ navigation }: any) {
                       <View style={{ flex: 1.5 }}>
                         <Text style={{ fontSize: 11, color: theme.text }}>Prom: {m.promise_date || 'N/A'}</Text>
                         <Text style={{ fontSize: 10, color: theme.subText }}>Nac: {m.birth_date || 'N/A'}</Text>
+                        {m.role === 'scout' && (() => {
+                          const fit = ageFitForUnit(m.unit, m.birth_date);
+                          if (fit.kind === 'unknown') return null;
+                          const warn = fit.kind !== 'ok';
+                          return (
+                            <Text style={{ fontSize: 10, fontWeight: warn ? 'bold' : 'normal', color: warn ? (isDarkMode ? '#fdba74' : '#c2410c') : theme.subText }}>
+                              {warn ? '⚠️ ' : ''}{ageFitLabel(fit)}
+                            </Text>
+                          );
+                        })()}
                       </View>
                       <View style={{ flex: 1.5, alignItems: 'flex-end' }}>
                         <Text style={{ fontSize: 11, color: theme.text, fontWeight: '500' }}>{m.phone || 'Sin tlf'}</Text>
@@ -1064,41 +1077,15 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   onPress={() => exportPadronMedicoExcel(filteredMedicoMembers, user?.group_name || 'Grupo Scout')}
                 >
                   <Download size={15} color="white" />
-                  <Text style={styles.exportBtnText}>Excel (.XLS)</Text>
+                  <Text style={styles.exportBtnText}>Excel (.xlsx)</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[styles.exportBtn, { flex: 1, backgroundColor: '#dc2626' }]}
-                  onPress={() => {
-                    const headers = ['#', 'Scout / Dirigente', 'Rama', 'Tipo Sangre', 'Alergias', 'Contacto Emergencia', 'Teléfono', 'Seguro'];
-                    const rows = filteredMedicoMembers.map((m, idx) => {
-                      const med = m.medical_data || {};
-                      const isJefe = m.role === 'jefe_grupo' || m.unit === 'grupo' || m.unit === 'jefatura';
-                      const isAdult = m.role === 'scouter' || m.role === 'jefe_grupo' || isJefe;
-                      let allergies = 'Ninguna';
-                      if (med.allergies) {
-                        const list = [];
-                        if (med.allergies.medicamento) list.push(`Med: ${med.allergies.medicamento}`);
-                        if (med.allergies.alimento) list.push(`Alim: ${med.allergies.alimento}`);
-                        if (med.allergies.picada) list.push(`Picada: ${med.allergies.picada}`);
-                        if (list.length > 0) allergies = list.join(', ');
-                      }
-                      return [
-                        idx + 1,
-                        m.name,
-                        isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase(),
-                        med.bloodType || 'Sin Registrar',
-                        allergies,
-                        med.emergencyContactName || (isAdult ? 'Número de Contacto' : 'Representante'),
-                        med.emergencyPhonePersonal || med.emergencyPhoneHome || m.phone || 'N/A',
-                        med.hasInsurance ? 'Sí' : 'No'
-                      ];
-                    });
-                    printDocumentHTML('PADRÓN DE EMERGENCIA MÉDICA Y SALUD', 'FICHA OFICIAL DE CONTINGENCIA Y CAMPAMENTOS', user?.group_name || 'Grupo Scout', headers, rows, '#dc2626');
-                  }}
+                  onPress={() => exportPadronMedicoPdf(filteredMedicoMembers, user?.group_name || 'Grupo Scout')}
                 >
                   <Printer size={15} color="white" />
-                  <Text style={styles.exportBtnText}>PDF / Imprimir</Text>
+                  <Text style={styles.exportBtnText}>Descargar PDF</Text>
                 </TouchableOpacity>
               </View>
 
@@ -1312,7 +1299,14 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   onPress={() => exportMembresiasExcel(allMembers, user?.group_name || 'Grupo Scout')}
                 >
                   <Download size={15} color="white" />
-                  <Text style={styles.exportBtnText}>Exportar Todos a Excel ({allMembers.length} Miembros .XLS)</Text>
+                  <Text style={styles.exportBtnText}>Excel (.xlsx) · {allMembers.length}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.exportBtn, { flex: 1, backgroundColor: '#1e3a8a' }]}
+                  onPress={() => exportMembresiasPdf(allMembers, user?.group_name || 'Grupo Scout')}
+                >
+                  <Printer size={15} color="white" />
+                  <Text style={styles.exportBtnText}>Descargar PDF</Text>
                 </TouchableOpacity>
               </View>
 
@@ -1379,6 +1373,14 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
                       {/* BOTONES DE ACCIÓN */}
                       <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                        <TouchableOpacity
+                          style={{ backgroundColor: '#0f766e', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8 }}
+                          onPress={() => setRecordsMember(m)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Comprobante e historial de membresía de ${m.name}`}
+                        >
+                          <Receipt size={14} color="white" />
+                        </TouchableOpacity>
                         {isPending && (
                           <TouchableOpacity
                             style={{ backgroundColor: '#16a34a', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}
@@ -1408,6 +1410,13 @@ export default function JefeGrupoScreen({ navigation }: any) {
           </View>
         </View>
       </Modal>
+
+      <MembershipRecordsModal
+        visible={!!recordsMember}
+        onClose={() => setRecordsMember(null)}
+        member={recordsMember}
+        mode="leader"
+      />
 
       {/* MODAL PICKER DE CALENDARIO PARA ASIGNAR MEMBRESÍA */}
       <Modal visible={showMembershipDatePicker} transparent animationType="fade" onRequestClose={() => setShowMembershipDatePicker(false)}>

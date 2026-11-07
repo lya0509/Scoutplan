@@ -2,18 +2,18 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-07T12:13:58.469Z",
+    "generatedAt": "2026-11-07T18:30:34.989Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
-      "totalNodes": 96,
-      "totalEdges": 66,
+      "totalNodes": 104,
+      "totalEdges": 78,
       "totalHyperedges": 4,
       "totalScreens": 25,
-      "totalComponents": 21,
+      "totalComponents": 23,
       "totalContexts": 3,
-      "totalServices": 16,
-      "totalCatalogs": 9,
+      "totalServices": 19,
+      "totalCatalogs": 10,
       "totalDatabaseTables": 11,
       "totalQaSuites": 10
     }
@@ -59,13 +59,13 @@
       "id": "ui_modals_components",
       "name": "7. Reusable Modals, Avatars, Notifications & Theme Components",
       "color": "#8b5cf6",
-      "description": "21 shared UI components in src/components/: OfflineStatusBanner, PendingChangesModal, ActividadesPersonalesModal, ScoutQRCode, FichaMedicaOrion84Form, ScoutUserIcon, CarnetScoutModal, NochesAireLibreModal, VidaGrupoModal, ProgramaPdfPreviewModal, OnboardingGuideModal, NotificationCenterModal, NotificationHeaderBell, LiveNotificationToast, ThemeCustomizerModal, PWAInstallModal, HelpFloatingFAB, DualProfileAvatar, UserScoutAvatar, StageBadgeIcon, ManualVisualDiagram."
+      "description": "23 shared UI components in src/components/: OfflineStatusBanner, PendingChangesModal, ActividadesPersonalesModal, MembershipRecordsModal, InsigniasExportBar, ScoutQRCode, FichaMedicaOrion84Form, ScoutUserIcon, CarnetScoutModal, NochesAireLibreModal, VidaGrupoModal, ProgramaPdfPreviewModal, OnboardingGuideModal, NotificationCenterModal, NotificationHeaderBell, LiveNotificationToast, ThemeCustomizerModal, PWAInstallModal, HelpFloatingFAB, DualProfileAvatar, UserScoutAvatar, StageBadgeIcon, ManualVisualDiagram."
     },
     {
       "id": "database_catalogs_pwa",
       "name": "8. Supabase Schema (11 Tables), Static Catalogs & PWA/Serverless Config",
       "color": "#ef4444",
-      "description": "9 normative static catalogs (src/data/*, incl. fichaMedicaOrion84Layout PDF field map), 8 utility helpers (src/utils/*), 11 Supabase PostgreSQL tables, scout-files Storage bucket, 5 SQL migration scripts, Vercel Web Push serverless endpoint (api/send-push.js), DOCX templates, and PWA Service Worker (public/sw.js)."
+      "description": "9 normative static catalogs (src/data/*, incl. fichaMedicaOrion84Layout PDF field map), 8 utility helpers (src/utils/*), 11 Supabase PostgreSQL tables, scout-files Storage bucket, 5 SQL migration scripts, Vercel serverless endpoints (api/send-push.js, api/verificar.js, api/membership-reminders.js cron), DOCX templates, and PWA Service Worker (public/sw.js)."
     }
   ],
   "nodes": [
@@ -425,9 +425,11 @@
       "file": "src/lib/dataService.ts",
       "role": "Async data layer on top of the offline outbox (@scout_outbox_v1) with cached reads: stage/requirement progress, stage/requirement progress, stage review/approval, certificates + curriculum auto-sync, quarterly plans, CIP events, nights log, vida de grupo log, and membership dates.",
       "exists": true,
-      "lines": 1766,
-      "bytes": 76168,
+      "lines": 1912,
+      "bytes": 83158,
       "exports": [
+        "MembershipReceipt",
+        "MembershipHistoryEntry",
         "dataService"
       ],
       "imports": [
@@ -584,6 +586,73 @@
       "storageKeys": [
         "@scout_programas_list"
       ]
+    },
+    {
+      "id": "insigniasReport.ts",
+      "label": "insigniasReport.ts (Badge progress report builder)",
+      "type": "service",
+      "community": "backend_offline_services",
+      "file": "src/lib/insigniasReport.ts",
+      "role": "Bulk-reads stage_progress and requirement_progress (chunks of 80 ids) and builds a ReportTable: summary per member + detail per stage with approval dates.",
+      "exists": true,
+      "lines": 138,
+      "bytes": 5475,
+      "exports": [
+        "InsigniaMember"
+      ],
+      "imports": [
+        "./supabaseClient",
+        "./offline/net",
+        "../data/progressionTemplate",
+        "../utils/reportTable",
+        "../utils/exportHelpers",
+        "../utils/dateLocal"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "fichaScoutPdfGenerator.ts",
+      "label": "fichaScoutPdfGenerator.ts (Ficha Médica Scout PDF)",
+      "type": "service",
+      "community": "backend_offline_services",
+      "file": "src/lib/fichaScoutPdfGenerator.ts",
+      "role": "Draws the Ficha Médica Scout as a one-page PDF with pdf-lib from the same replacements used by the .docx template, including the signature image.",
+      "exists": true,
+      "lines": 203,
+      "bytes": 8797,
+      "exports": [],
+      "imports": [
+        "pdf-lib",
+        "../utils/reportTable"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "reportWriters",
+      "label": "reportTable.ts + xlsxWriter.ts + pdfTableWriter.ts (Real Excel & direct PDF)",
+      "type": "service",
+      "community": "backend_offline_services",
+      "file": "src/utils/xlsxWriter.ts",
+      "role": "ReportTable model; OOXML .xlsx writer with JSZip (merged title, frozen header, autofilter, colored cells) and landscape PDF writer with pdf-lib (wrapped cells, repeated header, page X of Y). Used by Censo, Padrón, Membresías, Plan Trimestral and Insignias.",
+      "exists": true,
+      "lines": 230,
+      "bytes": 12967,
+      "exports": [],
+      "imports": [
+        "jszip",
+        "./reportTable",
+        "./dateLocal"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
     },
     {
       "id": "storageService.ts",
@@ -919,8 +988,8 @@
       "route": "PlanProgresivo",
       "role": "Displays the 4 Rover/Clan progression stages (Precursor, Expedicionario, Descubridor, Fundador) with completion percentages and lock status.",
       "exists": true,
-      "lines": 193,
-      "bytes": 8338,
+      "lines": 210,
+      "bytes": 9542,
       "exports": [
         "PlanProgresivoScreen"
       ],
@@ -931,11 +1000,13 @@
         "../context/AuthContext",
         "../context/ThemeContext",
         "../lib/dataService",
+        "../utils/dateLocal",
         "../lib/supabaseClient",
         "../theme/colors",
         "lucide-react-native",
         "../components/StageBadgeIcon",
-        "../components/NotificationHeaderBell"
+        "../components/NotificationHeaderBell",
+        "../data/unitTemplates"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -951,8 +1022,8 @@
       "route": "StageDetail",
       "role": "Interactive checklist of stage requirements, linking to CatalogSelectorScreen, NochesAireLibreModal, VidaGrupoModal, CertificateUploadScreen, and stage review submission.",
       "exists": true,
-      "lines": 1507,
-      "bytes": 70174,
+      "lines": 1577,
+      "bytes": 73519,
       "exports": [
         "StageDetailScreen"
       ],
@@ -975,7 +1046,8 @@
         "../theme/colors",
         "../utils/alert",
         "../utils/profileGuard",
-        "../utils/navigationHelper"
+        "../utils/navigationHelper",
+        "../utils/dateLocal"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1055,8 +1127,8 @@
       "route": "Perfil",
       "role": "Scout & Scouter personal profile editor: dual avatars (Uniformado/Casual), cédula, dates (birth, promise, join), membership expiration proposal, and digital Carnet Scout.",
       "exists": true,
-      "lines": 745,
-      "bytes": 32654,
+      "lines": 766,
+      "bytes": 33815,
       "exports": [
         "ProfileScreen"
       ],
@@ -1072,6 +1144,7 @@
         "../components/UserScoutAvatar",
         "../components/DualProfileAvatar",
         "../components/CarnetScoutModal",
+        "../components/MembershipRecordsModal",
         "../components/NotificationHeaderBell",
         "../lib/dataService",
         "../utils/alert",
@@ -1133,8 +1206,8 @@
       "route": "ScouterDashboard",
       "role": "Unit leader dashboard: lists unit scouts with online presence, pending stage reviews, quarterly plan feedback, unit programs, and profile photo moderation.",
       "exists": true,
-      "lines": 1429,
-      "bytes": 70148,
+      "lines": 1458,
+      "bytes": 71684,
       "exports": [
         "ScouterDashboardScreen"
       ],
@@ -1161,6 +1234,8 @@
         "../components/ThemeCustomizerModal",
         "../components/DualProfileAvatar",
         "../components/NotificationHeaderBell",
+        "../components/InsigniasExportBar",
+        "../components/MembershipRecordsModal",
         "../utils/dateLocal"
       ],
       "supabaseTables": [
@@ -1213,8 +1288,8 @@
       "route": "JefeDashboard",
       "role": "Group Chief dashboard: supervises all units (Manada, Tropa, Caminantes, Clan), approves/rejects membership expiration dates, moderates photos, and manages group calendar.",
       "exists": true,
-      "lines": 1901,
-      "bytes": 89588,
+      "lines": 1910,
+      "bytes": 89713,
       "exports": [
         "JefeGrupoScreen"
       ],
@@ -1239,6 +1314,9 @@
         "../components/DualProfileAvatar",
         "../hooks/useBackHandler",
         "../components/NotificationHeaderBell",
+        "../components/InsigniasExportBar",
+        "../components/MembershipRecordsModal",
+        "../data/unitTemplates",
         "../utils/exportHelpers",
         "../utils/dateLocal"
       ],
@@ -1259,8 +1337,8 @@
       "route": "ComisionadoDashboard",
       "role": "Territorial hierarchy dashboard (Distrital, Regional, Nacional, Admin) with drill-down metrics by Region -> District -> Group -> Unit.",
       "exists": true,
-      "lines": 716,
-      "bytes": 36843,
+      "lines": 695,
+      "bytes": 35653,
       "exports": [
         "ComisionadoDashboardScreen"
       ],
@@ -1368,8 +1446,8 @@
       "route": "QuarterlyPlan",
       "role": "Quarterly planner (Trimestres I-IV) supporting individual Rover plans and shared unit plans linked to ProgramaScoutEditor.",
       "exists": true,
-      "lines": 2299,
-      "bytes": 114566,
+      "lines": 2226,
+      "bytes": 110730,
       "exports": [
         "QuarterlyPlanScreen"
       ],
@@ -1390,7 +1468,9 @@
         "../data/trimestresData",
         "../theme/colors",
         "../utils/alert",
-        "../utils/navigationHelper"
+        "../utils/navigationHelper",
+        "../utils/exportHelpers",
+        "../utils/reportTable"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1516,8 +1596,8 @@
       "route": "FichaMedica",
       "role": "Two-tab medical record: \"Ficha Médica Scout\" (ASV form, Word .docx export) and \"Ficha Médica Orión 84\" (FichaMedicaOrion84Form, PDF export). Both live in profiles.medical_data (Orión 84 under medical_data.orion84; saves merge, never overwrite each other).",
       "exists": true,
-      "lines": 817,
-      "bytes": 40612,
+      "lines": 846,
+      "bytes": 42099,
       "exports": [
         "FichaMedicaScreen"
       ],
@@ -1534,6 +1614,7 @@
         "../services/autoSaveService",
         "../utils/alert",
         "../utils/docxExporter",
+        "../lib/fichaScoutPdfGenerator",
         "../utils/navigationHelper",
         "../utils/filePicker",
         "../components/FichaMedicaOrion84Form",
@@ -1721,7 +1802,7 @@
       "role": "Renders official digital Scout ID card with QR verification, membership status badge, and PDF/image export.",
       "exists": true,
       "lines": 249,
-      "bytes": 11934,
+      "bytes": 11966,
       "exports": [
         "CarnetScoutModal"
       ],
@@ -2230,6 +2311,63 @@
       "storageKeys": []
     },
     {
+      "id": "MembershipRecordsModal.tsx",
+      "label": "MembershipRecordsModal.tsx (ASV payment receipt & membership history)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/components/MembershipRecordsModal.tsx",
+      "role": "mode=self: the member uploads the payment receipt (photo + reference + amount); mode=leader: Scouter/Jefatura view receipts and the year-by-year history of approvals and returns. Rows in certificates (membresia_pago / membresia_hist).",
+      "exists": true,
+      "lines": 376,
+      "bytes": 18488,
+      "exports": [
+        "MembershipRecordsModal"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "lucide-react-native",
+        "../context/ThemeContext",
+        "../hooks/useBackHandler",
+        "../lib/dataService",
+        "../utils/filePicker",
+        "../utils/alert",
+        "../utils/dateLocal"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "InsigniasExportBar.tsx",
+      "label": "InsigniasExportBar.tsx (Badge progress export)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/components/InsigniasExportBar.tsx",
+      "role": "Card with Excel/PDF buttons for the badge progress report of a unit or the whole group (online only).",
+      "exists": true,
+      "lines": 95,
+      "bytes": 3949,
+      "exports": [
+        "InsigniasExportBar"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "lucide-react-native",
+        "../context/ThemeContext",
+        "../lib/insigniasReport",
+        "../utils/exportHelpers",
+        "../lib/offline/net",
+        "../utils/alert"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
       "id": "ScoutQRCode.tsx",
       "label": "ScoutQRCode.tsx (Offline QR renderer)",
       "type": "component",
@@ -2290,6 +2428,37 @@
       ],
       "imports": [
         "../types/progression"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "unitTemplates.ts",
+      "label": "unitTemplates.ts (Units, age ranges & stage templates)",
+      "type": "catalog",
+      "community": "database_catalogs_pwa",
+      "file": "src/data/unitTemplates.ts",
+      "role": "Manada 7-10, Tropa 10-15, Caminantes 16-18, Clan 18-21; ageFitForUnit / ageFitLabel for the census age check; getStagesForUnit falls back to the Clan template until the other templates are loaded.",
+      "exists": true,
+      "lines": 83,
+      "bytes": 3787,
+      "exports": [
+        "UnitKey",
+        "UnitInfo",
+        "UNITS",
+        "unitKey",
+        "getUnitInfo",
+        "unitsForAge",
+        "AgeFit",
+        "ageFitForUnit",
+        "ageFitLabel",
+        "getStagesForUnit"
+      ],
+      "imports": [
+        "./progressionTemplate",
+        "../utils/dateLocal"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -2524,6 +2693,46 @@
       "storageKeys": []
     },
     {
+      "id": "verificar.js",
+      "label": "api/verificar.js + public/verificar.html (Public carnet verification)",
+      "type": "config_file",
+      "community": "database_catalogs_pwa",
+      "file": "api/verificar.js",
+      "role": "GET /api/verificar?id=<uuid> with the service role returns only name, group, unit/role and membership status/expiry; /verificar/<id> (vercel.json rewrite, excluded from the SW) renders it. The carnet QR points here.",
+      "exists": true,
+      "lines": 76,
+      "bytes": 2891,
+      "exports": [],
+      "imports": [],
+      "supabaseTables": [
+        "profiles"
+      ],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "membership-reminders.js",
+      "label": "api/membership-reminders.js (Daily membership reminder cron)",
+      "type": "config_file",
+      "community": "database_catalogs_pwa",
+      "file": "api/membership-reminders.js",
+      "role": "Vercel Cron 13:00 UTC: memberships expiring in 30 and 7 days -> scout_notifications + web push to the member and their unit Scouters (Jefatura for Scouters or units without Scouter); no repeats within 20 h; CRON_SECRET if set.",
+      "exists": true,
+      "lines": 151,
+      "bytes": 6684,
+      "exports": [],
+      "imports": [],
+      "supabaseTables": [
+        "scout_notifications",
+        "push_subscriptions",
+        "profiles"
+      ],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
       "id": "sw.js",
       "label": "public/sw.js (PWA Service Worker & Push Listener)",
       "type": "config_file",
@@ -2531,8 +2740,8 @@
       "file": "public/sw.js",
       "role": "Caches static assets for offline operation and handles push/notificationclick events.",
       "exists": true,
-      "lines": 253,
-      "bytes": 9720,
+      "lines": 255,
+      "bytes": 9934,
       "exports": [],
       "imports": [],
       "supabaseTables": [],
@@ -2716,6 +2925,66 @@
       "from": "ActividadesPersonalesModal.tsx",
       "to": "dataService.ts",
       "relation": "personal_activities_crud"
+    },
+    {
+      "from": "ProfileScreen.tsx",
+      "to": "MembershipRecordsModal.tsx",
+      "relation": "opens_self"
+    },
+    {
+      "from": "ScouterDashboardScreen.tsx",
+      "to": "MembershipRecordsModal.tsx",
+      "relation": "opens_leader"
+    },
+    {
+      "from": "JefeGrupoScreen.tsx",
+      "to": "MembershipRecordsModal.tsx",
+      "relation": "opens_leader"
+    },
+    {
+      "from": "MembershipRecordsModal.tsx",
+      "to": "dataService.ts",
+      "relation": "membership_records_crud"
+    },
+    {
+      "from": "ScouterDashboardScreen.tsx",
+      "to": "InsigniasExportBar.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "JefeGrupoScreen.tsx",
+      "to": "InsigniasExportBar.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "InsigniasExportBar.tsx",
+      "to": "insigniasReport.ts",
+      "relation": "builds_report"
+    },
+    {
+      "from": "insigniasReport.ts",
+      "to": "reportWriters",
+      "relation": "exports_with"
+    },
+    {
+      "from": "FichaMedicaScreen.tsx",
+      "to": "fichaScoutPdfGenerator.ts",
+      "relation": "exports_pdf"
+    },
+    {
+      "from": "JefeGrupoScreen.tsx",
+      "to": "unitTemplates.ts",
+      "relation": "age_check"
+    },
+    {
+      "from": "PlanProgresivoScreen.tsx",
+      "to": "unitTemplates.ts",
+      "relation": "template_notice"
+    },
+    {
+      "from": "CarnetScoutModal.tsx",
+      "to": "verificar.js",
+      "relation": "qr_links_to"
     },
     {
       "from": "CarnetScoutModal.tsx",

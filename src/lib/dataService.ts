@@ -128,6 +128,13 @@ function legacyEntryToRow(scoutId: string, category: string, e: any) {
   return null;
 }
 
+export interface MembershipReceipt {
+  id: string; year: string; imageUrl: string; reference: string; amount: string; paidOn: string; createdAt: string; pending: boolean;
+}
+export interface MembershipHistoryEntry {
+  id: string; status: 'approved' | 'rejected'; expiresAt: string; year: string; byName: string; reason: string; decidedAt: string; pending: boolean;
+}
+
 export const dataService = {
   // --- MOTOR DE SINCRONIZACIÓN OFFLINE (ver src/lib/offline/outbox.ts) ---
   async getSyncQueue() {
@@ -207,6 +214,16 @@ export const dataService = {
       if (o.payload?.scoutId === scoutId) result[o.payload.stageId] = o.payload.status;
     });
     return result;
+  },
+
+  /** Fecha del último cambio de estado de cada etapa { stageId: ISO }. En etapas aprobadas = fecha de aprobación. */
+  async getStageDates(scoutId: string): Promise<Record<string, string>> {
+    return cachedQuery<Record<string, string>>(`stage_dates_${scoutId}`, async () => {
+      const rows = must(await supabase.from('stage_progress').select('stage_id, updated_at').eq('scout_id', scoutId));
+      const m: Record<string, string> = {};
+      (rows || []).forEach((r: any) => { if (r.updated_at) m[r.stage_id] = r.updated_at; });
+      return m;
+    }, {});
   },
 
   /** Todas las filas de requirement_progress del scout, con copia offline y cambios pendientes. */
@@ -367,7 +384,8 @@ export const dataService = {
       !d.category?.startsWith('cip_sel_') &&
       !d.category?.startsWith('linked_cert_') &&
       !d.category?.startsWith('aire_libre_') &&
-      !d.category?.startsWith('personal_');
+      !d.category?.startsWith('personal_') &&
+      !d.category?.startsWith('membresia_');
     const pend = await pendingCertificateRows(scoutId);
     return applyPendingRows(rows, pend, isRealCert).filter(isRealCert);
   },
@@ -1142,15 +1160,18 @@ export const dataService = {
     }, 'Fecha de membresía propuesta').catch(e => console.warn('Aviso proponiendo membresía:', e));
   },
 
-  async approveMembershipDate(scoutId: string) {
+  /** `expiresAt` y `byName` se guardan en el historial de membresía (año por año). */
+  async approveMembershipDate(scoutId: string, expiresAt?: string | null, byName?: string | null) {
     await outbox.run('row.update', {
       table: 'profiles',
       values: { membership_status: 'approved', membership_rejected_reason: null },
       match: { id: scoutId },
     }, { dedupeKey: `membership:${scoutId}`, label: 'Membresía aprobada' }).catch(e => console.warn('Aviso aprobando membresía:', e));
+    await this._recordMembershipHistory(scoutId, { status: 'approved', expiresAt, byName });
   },
 
-  async rejectMembershipDate(scoutId: string, reason: string) {
+  async rejectMembershipDate(scoutId: string, reason: string, expiresAt?: string | null, byName?: string | null) {
+    await this._recordMembershipHistory(scoutId, { status: 'rejected', expiresAt, byName, reason });
     await outbox.run('row.update', {
       table: 'profiles',
       values: { membership_status: 'rejected', membership_rejected_reason: reason },
@@ -1415,6 +1436,131 @@ export const dataService = {
     const updated = current.filter((e: any) => e.id !== entryId);
     await AsyncStorage.setItem(key, JSON.stringify(updated)).catch(() => {});
     return updated;
+  },
+
+  // --- MEMBRESÍA: COMPROBANTES DE PAGO E HISTORIAL POR AÑO ---
+  // Filas de `certificates`: categoría membresia_pago (comprobante que sube el miembro)
+  // y membresia_hist (cada aprobación o devolución de Jefatura). No necesitan SQL nuevo.
+  async getMembershipRecords(scoutId: string): Promise<{ receipts: MembershipReceipt[]; history: MembershipHistoryEntry[] }> {
+    const parse = (d: any) => {
+      if (d.file_url && String(d.file_url).startsWith('{')) {
+        try { return JSON.parse(d.file_url); } catch {}
+      }
+      return {};
+    };
+    const [receipts, history] = await Promise.all([
+      this._getCategoryRows(scoutId, 'membresia_pago', `@scout_mem_pago_${scoutId}`, (d: any): MembershipReceipt => {
+        const m = parse(d);
+        return {
+          id: d.id,
+          year: m.year || d.level || '',
+          imageUrl: m.imageUrl || '',
+          reference: m.reference || '',
+          amount: m.amount || '',
+          paidOn: m.paidOn || '',
+          createdAt: d.created_at || m.createdAt || '',
+          pending: !!d._pending,
+        };
+      }),
+      this._getCategoryRows(scoutId, 'membresia_hist', `@scout_mem_hist_${scoutId}`, (d: any): MembershipHistoryEntry => {
+        const m = parse(d);
+        return {
+          id: d.id,
+          status: m.status === 'rejected' ? 'rejected' : 'approved',
+          expiresAt: m.expiresAt || '',
+          year: m.year || d.level || '',
+          byName: m.byName || '',
+          reason: m.reason || '',
+          decidedAt: m.decidedAt || d.created_at || '',
+          pending: !!d._pending,
+        };
+      }),
+    ]);
+    return { receipts, history };
+  },
+
+  /** El miembro sube su comprobante. La imagen necesita internet (se guarda en Storage). */
+  async addMembershipReceipt(scoutId: string, entry: { imageDataUrl?: string | null; reference?: string; amount?: string; paidOn?: string; year?: string }) {
+    let imageUrl = '';
+    if (entry.imageDataUrl) {
+      if (!isOnline()) throw new Error('Para adjuntar la foto del comprobante necesitas internet. Puedes guardar solo el número de referencia y agregar la foto después.');
+      let url = '';
+      try {
+        url = await storageService.uploadImage('scout-files', 'membresias', `pago_${scoutId}.png`, entry.imageDataUrl, { throwOnNetworkError: true });
+      } catch {
+        throw new Error('No hay conexión con el servidor para subir la foto. Guarda solo el número de referencia o inténtalo más tarde.');
+      }
+      if (!url || !url.startsWith('http')) throw new Error('No se pudo subir la imagen del comprobante. Inténtalo de nuevo.');
+      imageUrl = url;
+    }
+    const year = entry.year || String(new Date().getFullYear());
+    const row = {
+      id: newId(),
+      scout_id: scoutId,
+      category: 'membresia_pago',
+      title: `Comprobante de membresía ${year}`,
+      level: year,
+      file_url: JSON.stringify({
+        year,
+        imageUrl,
+        reference: (entry.reference || '').trim().slice(0, 80),
+        amount: (entry.amount || '').trim().slice(0, 40),
+        paidOn: entry.paidOn || todayLocal(),
+        createdAt: new Date().toISOString(),
+      }),
+    };
+    const res = await outbox.run('row.insert', { table: 'certificates', row }, { label: `Comprobante de membresía ${year}` });
+    const meta = JSON.parse(row.file_url);
+    await this._prependLocalEntry(`@scout_mem_pago_${scoutId}`, {
+      id: row.id, year, imageUrl, reference: meta.reference, amount: meta.amount, paidOn: meta.paidOn,
+      createdAt: meta.createdAt, pending: res.queued,
+    });
+    return { id: row.id, pending: res.queued };
+  },
+
+  /** Copia local para que lo recién guardado se vea también sin conexión. */
+  async _prependLocalEntry(key: string, entry: any) {
+    let current: any[] = [];
+    try { current = JSON.parse((await AsyncStorage.getItem(key)) || '[]'); } catch {}
+    await AsyncStorage.setItem(key, JSON.stringify([entry, ...current.filter(e => e?.id !== entry.id)])).catch(() => {});
+  },
+
+  async deleteMembershipReceipt(scoutId: string, receiptId: string) {
+    await this._deleteCategoryRow(receiptId, 'Comprobante eliminado');
+    const key = `@scout_mem_pago_${scoutId}`;
+    try {
+      const current: any[] = JSON.parse((await AsyncStorage.getItem(key)) || '[]');
+      await AsyncStorage.setItem(key, JSON.stringify(current.filter(e => e?.id !== receiptId)));
+    } catch {}
+  },
+
+  async _recordMembershipHistory(scoutId: string, e: { status: 'approved' | 'rejected'; expiresAt?: string | null; byName?: string | null; reason?: string }) {
+    const year = (e.expiresAt || '').slice(0, 4) || String(new Date().getFullYear());
+    const row = {
+      id: newId(),
+      scout_id: scoutId,
+      category: 'membresia_hist',
+      title: e.status === 'approved' ? `Membresía ${year} aprobada` : `Membresía ${year} devuelta`,
+      level: year,
+      file_url: JSON.stringify({
+        status: e.status,
+        expiresAt: e.expiresAt || '',
+        year,
+        byName: e.byName || '',
+        reason: e.reason || '',
+        decidedAt: new Date().toISOString(),
+      }),
+    };
+    try {
+      const res = await outbox.run('row.insert', { table: 'certificates', row }, { label: 'Historial de membresía' });
+      const meta = JSON.parse(row.file_url);
+      await this._prependLocalEntry(`@scout_mem_hist_${scoutId}`, {
+        id: row.id, status: e.status, expiresAt: meta.expiresAt, year, byName: meta.byName, reason: meta.reason,
+        decidedAt: meta.decidedAt, pending: res.queued,
+      });
+    } catch (err) {
+      console.warn('Aviso guardando historial de membresía:', err);
+    }
   },
 
   // --- GESTIÓN DE SELECCIONES MÚLTIPLES DE CIP / CICLOS INSTITUCIONALES ---

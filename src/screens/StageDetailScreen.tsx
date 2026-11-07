@@ -29,6 +29,7 @@ import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 import { checkProfileCompletion } from '../utils/profileGuard';
 import { navigateBackOrHome } from '../utils/navigationHelper';
+import { formatDateEs, humanDuration } from '../utils/dateLocal';
 
 export default function StageDetailScreen({ route, navigation }: any) {
   const { stageId } = route.params || { stageId: 'precursor' };
@@ -69,6 +70,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const [showVidaGrupoModal, setShowVidaGrupoModal] = useState(false);
   const [selectedReqForVidaGrupo, setSelectedReqForVidaGrupo] = useState<any>(null);
   const [vidaGrupoCountMap, setVidaGrupoCountMap] = useState<Record<string, number>>({});
+  const [stageDates, setStageDates] = useState<Record<string, string>>({});
 
   // Estado para Actividades Personales (de creación propia)
   const [showPersonalesModal, setShowPersonalesModal] = useState(false);
@@ -129,6 +131,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
       const personalesMap: Record<string, number> = {};
 
       const allLinkedCerts = await dataService.getAllLinkedCertificates(user.id);
+      dataService.getStageDates(user.id).then(setStageDates).catch(() => {});
       const userCertsList = await dataService.getCertificates(user.id);
 
       for (const req of stageTemplate.requirements) {
@@ -357,11 +360,55 @@ export default function StageDetailScreen({ route, navigation }: any) {
     }
 
     if (isReadOnly) {
-      if (status === 'En Revision') {
-        showAlert('⏳ En Revisión', 'Esta etapa se encuentra en revisión por tu dirigente y no puede modificarse.');
-      } else if (status === 'Aprobada') {
-        showAlert('✅ Etapa Aprobada', 'Esta etapa ya ha sido aprobada.');
+      // Etapa aprobada o en revisión: se puede CONSULTAR lo registrado, sin editar
+      const t = req.text.toLowerCase();
+      if (req.type === 'basica' || req.type === 'opcional') {
+        navigation.navigate('CatalogSelector', {
+          stageId, reqId: req.id, reqType: req.reqType || req.type,
+          requiredCount: req.requiredCount || 12, stageStatus: status,
+        });
+        return;
       }
+      if (req.type === 'personales') {
+        setSelectedReqForPersonales(req);
+        setShowPersonalesModal(true);
+        return;
+      }
+      if (req.type === 'vida_grupo' || t.includes('peregrinaje') || t.includes('campamento') || t.includes('proyecto de servicio') || t.includes('vida de grupo')) {
+        setSelectedReqForVidaGrupo(req);
+        setShowVidaGrupoModal(true);
+        return;
+      }
+      if (req.type === 'aire_libre' || t.includes('noche')) {
+        setSelectedReqForNoches(req);
+        setShowNochesModal(true);
+        return;
+      }
+      if (req.type === 'ciclos' || t.includes('ciclo')) {
+        let sels: any[] = [];
+        try { sels = user ? await dataService.getCipSelections(user.id, stageId, req.id) : []; } catch {}
+        showAlert(
+          `🚩 ${req.text}`,
+          sels.length
+            ? sels.map((c: any) => `• ${c.title}${c.date ? ` (${formatDateEs(String(c.date).slice(0, 10))})` : ''}`).join('\n')
+            : 'Convalidado al aprobar la etapa (no se registró cuáles actividades fueron).'
+        );
+        return;
+      }
+      if (req.type === 'cursos' || req.type === 'especialidad') {
+        const link = linkedCertMap[req.id];
+        showAlert(
+          `🏅 ${req.text}`,
+          link?.certTitle
+            ? `Acreditado con: ${link.certTitle}${link.level ? ` (${link.level})` : ''}`
+            : 'Convalidado al aprobar la etapa (sin certificado vinculado).'
+        );
+        return;
+      }
+      showAlert(
+        status === 'Aprobada' ? '✅ Etapa aprobada' : '⏳ En revisión',
+        `${req.text}\n\n${checks[req.id] ? 'Cumplido.' : 'No marcado.'}${status === 'En Revision' ? ' La etapa está en revisión y no se puede modificar.' : ''}`
+      );
       return;
     }
 
@@ -509,6 +556,29 @@ export default function StageDetailScreen({ route, navigation }: any) {
             </Text>
           </View>
         </View>
+
+        {/* LÍNEA DE TIEMPO: cuándo empezó (aprobación de la etapa anterior) y cuándo se aprobó */}
+        {(() => {
+          const idx = stagesData.findIndex(s => s.id === stageId);
+          const startIso = idx > 0 ? stageDates[stagesData[idx - 1].id] : undefined;
+          const endIso = stageDates[stageId];
+          let text = '';
+          if (status === 'Aprobada' && endIso) {
+            text = `Aprobada el ${formatDateEs(endIso.slice(0, 10))}`;
+            if (startIso) text += ` · ${humanDuration(startIso, endIso)} en la etapa`;
+          } else if (status === 'En Revision' && endIso) {
+            text = `Enviada a revisión el ${formatDateEs(endIso.slice(0, 10))}`;
+            if (startIso) text += ` · ${humanDuration(startIso, endIso)} trabajando en ella`;
+          } else if (status !== 'Bloqueada' && startIso) {
+            text = `En curso desde el ${formatDateEs(startIso.slice(0, 10))} · ${humanDuration(startIso)}`;
+          }
+          if (!text) return null;
+          return (
+            <Text style={{ fontSize: 12, color: theme.subText, marginTop: 6 }} accessibilityLabel={text}>
+              🗓️ {text}
+            </Text>
+          );
+        })()}
 
         {/* BARRA DE PROGRESO */}
         <View style={styles.progressSection}>
@@ -1410,7 +1480,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
           onProgressChange={(totalNights, isCompleted) => {
             if (selectedReqForNoches) {
               setNochesCountMap(prev => ({ ...prev, [selectedReqForNoches.id]: totalNights }));
-              setChecks(prev => ({ ...prev, [selectedReqForNoches.id]: isCompleted }));
+              if (!isReadOnly) setChecks(prev => ({ ...prev, [selectedReqForNoches.id]: isCompleted }));
             }
           }}
         />
@@ -1429,7 +1499,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
           isReadOnly={isReadOnly}
           onProgressChange={(total: number, isCompleted: boolean) => {
             setVidaGrupoCountMap(prev => ({ ...prev, [selectedReqForVidaGrupo.id]: total }));
-            setChecks(prev => ({ ...prev, [selectedReqForVidaGrupo.id]: isCompleted }));
+            if (!isReadOnly) setChecks(prev => ({ ...prev, [selectedReqForVidaGrupo.id]: isCompleted }));
           }}
         />
       )}
@@ -1447,7 +1517,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
           isReadOnly={isReadOnly}
           onProgressChange={(total, isCompleted) => {
             setPersonalesCountMap(prev => ({ ...prev, [selectedReqForPersonales.id]: total }));
-            if (isCompleted !== undefined) {
+            if (isCompleted !== undefined && !isReadOnly) {
               setChecks(prev => ({ ...prev, [selectedReqForPersonales.id]: isCompleted }));
             }
           }}

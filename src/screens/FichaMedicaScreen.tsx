@@ -20,6 +20,7 @@ import { colors } from '../theme/colors';
 import { autoSaveService } from '../services/autoSaveService';
 import { showAlert } from '../utils/alert';
 import { exportDocxInBrowser } from '../utils/docxExporter';
+import { downloadFichaScoutPdf } from '../lib/fichaScoutPdfGenerator';
 import { navigateBackOrHome } from '../utils/navigationHelper';
 import { pickImageUniversal } from '../utils/filePicker';
 import FichaMedicaOrion84Form from '../components/FichaMedicaOrion84Form';
@@ -360,9 +361,8 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
     }
   };
 
-  // EXPORTAR DOCUMENTO AUTO-RELLENADO EN FORMATO OFICIAL WORD (.DOCX)
-  const handleExportMedicalDoc = async () => {
-    try {
+  // DATOS DE LA FICHA YA FORMATEADOS (los usan el Word y el PDF)
+  const buildFichaReplacements = (): Record<string, string> => {
       const region = (user?.region || 'MIRANDA').toUpperCase();
       const groupName = (user?.group_name || 'ORION 84').toUpperCase();
       const districtName = (user?.district || 'GUARENAS GUATIRE').toUpperCase();
@@ -443,7 +443,13 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
         '{{HEALTH_NOTES}}': additionalHealthNotes || 'Sin observaciones adicionales.',
         '{{SIGNATURE_DATE}}': signatureDate
       };
+      return replacements;
+  };
 
+  // EXPORTAR DOCUMENTO AUTO-RELLENADO EN FORMATO OFICIAL WORD (.DOCX)
+  const handleExportMedicalDoc = async () => {
+    try {
+      const replacements = buildFichaReplacements();
       if (Platform.OS === 'web' && typeof window !== 'undefined') {
         const response = await fetch('/FICHA_MEDICA_Template.docx');
         if (!response.ok) {
@@ -458,6 +464,24 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
     } catch (err: any) {
       console.error('Error exportando Ficha Médica:', err);
       showAlert('Error', err?.message || 'No se pudo generar el documento Word.');
+    }
+  };
+
+  // EXPORTAR LA MISMA FICHA EN PDF (sin Word)
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const handleExportMedicalPdf = async () => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') {
+      showAlert('Descargar Ficha Médica', 'La descarga en PDF está disponible en la versión web.');
+      return;
+    }
+    setExportingPdf(true);
+    try {
+      await downloadFichaScoutPdf(buildFichaReplacements(), { signatureUrl, fileName: `FICHA_MEDICA_${fullName.replace(/\s+/g, '_')}.pdf` });
+    } catch (err: any) {
+      console.error('Error exportando Ficha Médica PDF:', err);
+      showAlert('Error', err?.message || 'No se pudo generar el PDF.');
+    } finally {
+      setExportingPdf(false);
     }
   };
 
@@ -770,9 +794,14 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
                 </TouchableOpacity>
               )}
 
-              <TouchableOpacity style={styles.bottomExportBtn} onPress={handleExportMedicalDoc}>
+              <TouchableOpacity style={styles.bottomExportBtn} onPress={handleExportMedicalPdf} disabled={exportingPdf}>
+                {exportingPdf ? <ActivityIndicator size="small" color="white" style={{ marginRight: 8 }} /> : <Download size={18} color="white" style={{ marginRight: 8 }} />}
+                <Text style={styles.bottomExportBtnText}>Descargar Ficha Médica (PDF)</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.bottomExportBtn, { backgroundColor: '#1e40af', marginTop: 8 }]} onPress={handleExportMedicalDoc}>
                 <Download size={18} color="white" style={{ marginRight: 8 }} />
-                <Text style={styles.bottomExportBtnText}>Descargar Ficha Médica Oficial (.docx)</Text>
+                <Text style={styles.bottomExportBtnText}>Descargar en Word (.docx)</Text>
               </TouchableOpacity>
             </View>
 

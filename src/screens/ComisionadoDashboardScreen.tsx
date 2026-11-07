@@ -15,7 +15,7 @@ import {
 import { showAlert } from '../utils/alert';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
 import {
-  exportCensoExcel, exportPadronMedicoExcel, exportMembresiasExcel, printDocumentHTML, MemberRecord
+  exportCensoExcel, exportCensoPdf, exportPadronMedicoExcel, exportPadronMedicoPdf, exportMembresiasExcel, exportMembresiasPdf, MemberRecord
 } from '../utils/exportHelpers';
 
 const REGIONS_DATA: { id: string; label: string }[] = [
@@ -462,31 +462,18 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
             <View style={{ padding: 14, flexDirection: 'row', gap: 10 }}>
               <TouchableOpacity
                 style={[styles.modalActionBtn, { backgroundColor: '#15803d' }]}
-                onPress={() => exportCensoExcel(filteredProfiles, `Territorial_${territorialTitle}`)}
+                onPress={() => exportCensoExcel(filteredProfiles, `Territorial ${territorialTitle}`)}
               >
                 <Download size={16} color="white" />
-                <Text style={styles.modalActionBtnText}>Exportar a Excel (.XLS)</Text>
+                <Text style={styles.modalActionBtnText}>Exportar a Excel (.xlsx)</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.modalActionBtn, { backgroundColor: levelInfo.themeColor }]}
-                onPress={() => {
-                  const headers = ['#', 'Nombre Completo', 'Cédula', 'Grupo', 'Rama', 'Rol', 'Teléfono', 'Carnet'];
-                  const rows = filteredProfiles.map((m, idx) => [
-                    idx + 1,
-                    m.name || 'Sin Nombre',
-                    m.cedula || 'N/A',
-                    m.group_name || 'Sin Grupo',
-                    (m.unit || 'General').toUpperCase(),
-                    m.role,
-                    m.phone || 'N/A',
-                    m.membership_status === 'approved' ? `Vigente (${m.membership_expires_at || ''})` : 'Sin Registro'
-                  ]);
-                  printDocumentHTML(`CENSO TERRITORIAL • ${territorialTitle.toUpperCase()}`, 'ASOCIACIÓN DE SCOUTS DE VENEZUELA', 'Dirección Territorial', headers, rows, levelInfo.themeColor);
-                }}
+                onPress={() => exportCensoPdf(filteredProfiles, `Territorial ${territorialTitle}`)}
               >
                 <Printer size={16} color="white" />
-                <Text style={styles.modalActionBtnText}>Imprimir / Guardar PDF</Text>
+                <Text style={styles.modalActionBtnText}>Descargar PDF</Text>
               </TouchableOpacity>
             </View>
 
@@ -536,33 +523,18 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
             <View style={{ padding: 14, flexDirection: 'row', gap: 10 }}>
               <TouchableOpacity
                 style={[styles.modalActionBtn, { backgroundColor: '#15803d' }]}
-                onPress={() => exportPadronMedicoExcel(filteredProfiles, `Padron_Medico_${territorialTitle}`)}
+                onPress={() => exportPadronMedicoExcel(filteredProfiles, `Territorial ${territorialTitle}`)}
               >
                 <Download size={16} color="white" />
-                <Text style={styles.modalActionBtnText}>Exportar a Excel (.XLS)</Text>
+                <Text style={styles.modalActionBtnText}>Exportar a Excel (.xlsx)</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.modalActionBtn, { backgroundColor: '#dc2626' }]}
-                onPress={() => {
-                  const headers = ['#', 'Scout / Dirigente', 'Grupo', 'Tipo Sangre', 'Alergias', 'Contacto Emergencia', 'Teléfono'];
-                  const rows = filteredProfiles.map((m, idx) => {
-                    const med = m.medical_data || {};
-                    return [
-                      idx + 1,
-                      m.name,
-                      m.group_name || 'Sin Grupo',
-                      med.bloodType || 'S/R',
-                      med.allergies ? (med.allergies.medicamento || med.allergies.alimento || 'Ninguna') : 'Ninguna',
-                      med.emergencyContactName || 'N/A',
-                      med.emergencyPhonePersonal || m.phone || 'N/A'
-                    ];
-                  });
-                  printDocumentHTML(`PADRÓN MÉDICO • ${territorialTitle.toUpperCase()}`, 'REGISTRO DE CONTINGENCIA Y SALUD', 'Dirección Territorial', headers, rows, '#dc2626');
-                }}
+                onPress={() => exportPadronMedicoPdf(filteredProfiles, `Territorial ${territorialTitle}`)}
               >
                 <Printer size={16} color="white" />
-                <Text style={styles.modalActionBtnText}>Imprimir / Guardar PDF</Text>
+                <Text style={styles.modalActionBtnText}>Descargar PDF</Text>
               </TouchableOpacity>
             </View>
 
@@ -610,13 +582,20 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
 
-            <View style={{ padding: 14 }}>
+            <View style={{ padding: 14, flexDirection: 'row', gap: 10 }}>
               <TouchableOpacity
                 style={[styles.modalActionBtn, { backgroundColor: '#15803d' }]}
-                onPress={() => exportMembresiasExcel(filteredProfiles, `Control_Membresias_${territorialTitle}`)}
+                onPress={() => exportMembresiasExcel(filteredProfiles, `Territorial ${territorialTitle}`)}
               >
                 <Download size={16} color="white" />
-                <Text style={styles.modalActionBtnText}>Exportar Reporte a Excel (.XLS)</Text>
+                <Text style={styles.modalActionBtnText}>Excel (.xlsx)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalActionBtn, { backgroundColor: '#1e3a8a' }]}
+                onPress={() => exportMembresiasPdf(filteredProfiles, `Territorial ${territorialTitle}`)}
+              >
+                <Printer size={16} color="white" />
+                <Text style={styles.modalActionBtnText}>Descargar PDF</Text>
               </TouchableOpacity>
             </View>
 

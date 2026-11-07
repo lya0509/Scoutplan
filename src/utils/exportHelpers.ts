@@ -1,6 +1,15 @@
-// Helper profesional para exportar archivos Excel (.xls formateado con HTML/XML)
-import { todayLocal } from './dateLocal';
-// y generar documentos imprimibles/PDF con membrete oficial Scout.
+// Exportaciones de Jefatura y Comisionados: Censo, Padrón Médico y Control de Membresías.
+// Cada reporte se arma UNA vez como tabla (ReportTable) y se descarga como Excel real
+// (.xlsx) o como PDF directo. Antes el "Excel" era HTML con extensión .xls (Excel avisaba
+// que el formato no coincidía) y el PDF dependía de la ventana de impresión del navegador.
+
+import { daysUntil, formatDateEs, ageFrom } from './dateLocal';
+
+export { ageFrom };
+import { ReportTable, Cell } from './reportTable';
+import { downloadXlsx } from './xlsxWriter';
+import { downloadPdf } from './pdfTableWriter';
+import { showAlert } from './alert';
 
 export interface MemberRecord {
   id: string;
@@ -20,10 +29,7 @@ export interface MemberRecord {
   medical_data?: any;
 }
 
-
-// Todo dato que viene de perfiles (nombres, alergias, teléfonos…) se escapa antes de ir al
-// HTML del Excel o de la ventana de impresión: un "&" rompía la celda, y un "<script>" en un
-// nombre se ejecutaba en la sesión de quien imprimía.
+// Se conserva para quien arme HTML con datos de perfiles (evita inyección de código).
 export function escapeHtml(v: any): string {
   return String(v ?? '')
     .replace(/&/g, '&amp;')
@@ -33,352 +39,163 @@ export function escapeHtml(v: any): string {
     .replace(/'/g, '&#39;');
 }
 
-function escapeDeep<T>(v: T): T {
-  if (typeof v === 'string') return escapeHtml(v) as any;
-  if (Array.isArray(v)) return v.map(escapeDeep) as any;
-  if (v && typeof v === 'object') {
-    const out: any = {};
-    Object.entries(v as any).forEach(([k, val]) => { out[k] = escapeDeep(val); });
-    return out;
+const isJefatura = (m: MemberRecord) => m.role === 'jefe_grupo' || m.unit === 'grupo' || m.unit === 'jefatura';
+const unitLabel = (m: MemberRecord) => (isJefatura(m) ? 'JEFATURA' : (m.unit || 'General').toUpperCase());
+const roleLabel = (m: MemberRecord) =>
+  m.role === 'jefe_grupo' ? 'Jefe de Grupo' : m.role === 'scouter' ? 'Scouter / Dirigente' : 'Joven Scout';
+const dateOrNA = (d?: string) => (d ? formatDateEs(d) : 'N/A');
+
+/** Estado de membresía como texto + color (mismo criterio que el semáforo de Jefatura). */
+export function membershipStatusCell(m: MemberRecord): { text: string; color: string } {
+  if (m.membership_status === 'pending_approval' || m.membership_status === 'pending') {
+    return { text: `Por aprobar${m.membership_expires_at ? ` (${formatDateEs(m.membership_expires_at)})` : ''}`, color: '#7e22ce' };
   }
-  return v;
+  if (m.membership_status === 'rejected') return { text: 'Devuelta', color: '#b91c1c' };
+  const days = m.membership_status === 'approved' ? daysUntil(m.membership_expires_at) : null;
+  if (days === null) return { text: 'Sin registro', color: '#b91c1c' };
+  if (days < 0) return { text: `Vencida hace ${Math.abs(days)} d`, color: '#b91c1c' };
+  if (days <= 30) return { text: `Vence en ${days} d`, color: '#c2410c' };
+  if (days <= 90) return { text: `Por vencer (${days} d)`, color: '#a16207' };
+  return { text: `Vigente (${days} d)`, color: '#15803d' };
 }
 
-// 1. EXPORTAR CENSO Y NÓMINA EN EXCEL
-export function exportCensoExcel(rawMembers: MemberRecord[], rawGroupName: string) {
-  const members = escapeDeep(rawMembers);
-  const groupName = escapeHtml(rawGroupName);
-  const currentDate = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  
-  let rowsHtml = '';
-  members.forEach((m, idx) => {
-    const isJefe = m.role === 'jefe_grupo' || m.unit === 'grupo' || m.unit === 'jefatura';
-    const roleLabel = m.role === 'jefe_grupo' ? 'Jefe de Grupo' : m.role === 'scouter' ? 'Scouter / Dirigente' : 'Joven Scout';
-    const unitLabel = isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase();
-    const isApproved = m.membership_status === 'approved' && m.membership_expires_at ? `Vigente (${m.membership_expires_at})` : 'Sin Registro';
-
-    rowsHtml += `
-      <tr>
-        <td style="text-align:center; padding: 6px; border: 1px solid #d1d5db;">${idx + 1}</td>
-        <td style="font-weight: bold; padding: 6px; border: 1px solid #d1d5db;">${m.name || 'Sin Nombre'}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${m.cedula || 'N/A'}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${roleLabel}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${unitLabel}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${m.gender || 'N/A'}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${m.birth_date || 'N/A'}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${m.join_date || 'N/A'}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${m.promise_date || 'N/A'}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${m.phone || 'N/A'}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${isApproved}</td>
-      </tr>
-    `;
-  });
-
-  const htmlContent = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-    <head>
-      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-      <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Censo Oficial</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
-      <style>
-        body { font-family: Arial, sans-serif; font-size: 11pt; }
-        .header-title { font-size: 16pt; font-weight: bold; color: #4a154b; text-align: center; }
-        .header-sub { font-size: 12pt; color: #374151; text-align: center; }
-        .table-header { background-color: #612499; color: #ffffff; font-weight: bold; text-align: center; }
-      </style>
-    </head>
-    <body>
-      <table>
-        <tr><td colspan="11" class="header-title">ASOCIACIÓN DE SCOUTS DE VENEZUELA</td></tr>
-        <tr><td colspan="11" class="header-sub">CENSO Y NÓMINA OFICIAL DE MIEMBROS • ${groupName || 'GRUPO SCOUT ORIÓN #84'}</td></tr>
-        <tr><td colspan="11" style="text-align:center; color:#6b7280; font-size:10pt;">Fecha de Emisión: ${currentDate} • Total Miembros Registrados: ${members.length}</td></tr>
-        <tr><td colspan="11"></td></tr>
-        <tr class="table-header">
-          <th style="background-color:#612499; color:#fff; padding:8px; border:1px solid #4a154b;">#</th>
-          <th style="background-color:#612499; color:#fff; padding:8px; border:1px solid #4a154b;">Nombres y Apellidos</th>
-          <th style="background-color:#612499; color:#fff; padding:8px; border:1px solid #4a154b;">Cédula / Identidad</th>
-          <th style="background-color:#612499; color:#fff; padding:8px; border:1px solid #4a154b;">Rol / Cargo</th>
-          <th style="background-color:#612499; color:#fff; padding:8px; border:1px solid #4a154b;">Unidad / Rama</th>
-          <th style="background-color:#612499; color:#fff; padding:8px; border:1px solid #4a154b;">Género</th>
-          <th style="background-color:#612499; color:#fff; padding:8px; border:1px solid #4a154b;">F. Nacimiento</th>
-          <th style="background-color:#612499; color:#fff; padding:8px; border:1px solid #4a154b;">F. Ingreso</th>
-          <th style="background-color:#612499; color:#fff; padding:8px; border:1px solid #4a154b;">F. Promesa</th>
-          <th style="background-color:#612499; color:#fff; padding:8px; border:1px solid #4a154b;">Teléfono Contacto</th>
-          <th style="background-color:#612499; color:#fff; padding:8px; border:1px solid #4a154b;">Membresía / Carnet</th>
-        </tr>
-        ${rowsHtml}
-      </table>
-    </body>
-    </html>
-  `;
-
-  downloadBlob(htmlContent, `Censo_Oficial_${(rawGroupName || 'Grupo').replace(/[^\p{L}\p{N}]+/gu, '_')}_${todayLocal()}.xls`, 'application/vnd.ms-excel');
+function allergiesText(med: any): string {
+  const a = med?.allergies;
+  if (!a) return 'Ninguna';
+  const list: string[] = [];
+  if (a.medicamento) list.push(`Medicamento: ${a.medicamento}`);
+  if (a.alimento) list.push(`Alimento: ${a.alimento}`);
+  if (a.picada) list.push(`Picada: ${a.picada}`);
+  if (a.otro) list.push(a.otro);
+  return list.length ? list.join(' | ') : 'Ninguna';
 }
 
-// 2. EXPORTAR PADRÓN DE EMERGENCIA MÉDICA EN EXCEL
-export function exportPadronMedicoExcel(rawMembers: MemberRecord[], rawGroupName: string) {
-  const members = escapeDeep(rawMembers);
-  const groupName = escapeHtml(rawGroupName);
-  const currentDate = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  
-  let rowsHtml = '';
-  members.forEach((m, idx) => {
-    const med = m.medical_data || {};
-    const isJefe = m.role === 'jefe_grupo' || m.unit === 'grupo' || m.unit === 'jefatura';
-    const isAdult = m.role === 'scouter' || m.role === 'jefe_grupo' || isJefe;
-    const unitLabel = isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase();
-    const blood = med.bloodType || 'Sin Registrar';
-    
-    // Concatenar alergias
-    let allergiesText = 'Ninguna';
-    if (med.allergies) {
-      const allList = [];
-      if (med.allergies.medicamento) allList.push(`Med: ${med.allergies.medicamento}`);
-      if (med.allergies.alimento) allList.push(`Alim: ${med.allergies.alimento}`);
-      if (med.allergies.picada) allList.push(`Picada: ${med.allergies.picada}`);
-      if (med.allergies.otro) allList.push(med.allergies.otro);
-      if (allList.length > 0) allergiesText = allList.join(' | ');
-    }
-
-    const contactName = med.emergencyContactName || (isAdult ? 'Contacto Directo' : 'Representante');
-    const contactPhone = med.emergencyPhonePersonal || med.emergencyPhoneHome || m.phone || 'Sin Registrar';
-    const prescription = med.hasPrescription ? `Sí: ${med.medicalPrescriptionExplain || 'Bajo Tratamiento'}` : 'No';
-    const insurance = med.hasInsurance ? `Sí: ${med.insuranceExplain || 'Póliza Activa'}` : 'No';
-
-    rowsHtml += `
-      <tr>
-        <td style="text-align:center; padding: 6px; border: 1px solid #d1d5db;">${idx + 1}</td>
-        <td style="font-weight: bold; padding: 6px; border: 1px solid #d1d5db;">${m.name}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${m.cedula || med.ci || 'N/A'}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${unitLabel}</td>
-        <td style="text-align:center; font-weight:bold; color:#dc2626; padding: 6px; border: 1px solid #d1d5db;">${blood}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db; color:${allergiesText !== 'Ninguna' ? '#b91c1c' : '#111827'}; font-weight:${allergiesText !== 'Ninguna' ? 'bold' : 'normal'}">${allergiesText}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${contactName}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db; font-weight:bold;">${contactPhone}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${prescription}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${insurance}</td>
-      </tr>
-    `;
-  });
-
-  const htmlContent = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-    <head>
-      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-      <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Padron Medico</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
-      <style>
-        body { font-family: Arial, sans-serif; font-size: 11pt; }
-        .header-title { font-size: 16pt; font-weight: bold; color: #991b1b; text-align: center; }
-        .header-sub { font-size: 12pt; color: #374151; text-align: center; }
-      </style>
-    </head>
-    <body>
-      <table>
-        <tr><td colspan="10" class="header-title">PADRÓN DE EMERGENCIA MÉDICA Y CONTACTOS • GRUPO SCOUT</td></tr>
-        <tr><td colspan="10" class="header-sub">${groupName || 'GRUPO SCOUT ORIÓN #84'} • REGISTRO DE SALUD PARA EVENTOS Y CAMPAMENTOS</td></tr>
-        <tr><td colspan="10" style="text-align:center; color:#6b7280; font-size:10pt;">Fecha de Emisión: ${currentDate} • Total Miembros en Padrón: ${members.length}</td></tr>
-        <tr><td colspan="10"></td></tr>
-        <tr>
-          <th style="background-color:#991b1b; color:#fff; padding:8px; border:1px solid #7f1d1d;">#</th>
-          <th style="background-color:#991b1b; color:#fff; padding:8px; border:1px solid #7f1d1d;">Scout / Dirigente</th>
-          <th style="background-color:#991b1b; color:#fff; padding:8px; border:1px solid #7f1d1d;">Cédula</th>
-          <th style="background-color:#991b1b; color:#fff; padding:8px; border:1px solid #7f1d1d;">Unidad</th>
-          <th style="background-color:#991b1b; color:#fff; padding:8px; border:1px solid #7f1d1d;">Tipo Sangre</th>
-          <th style="background-color:#991b1b; color:#fff; padding:8px; border:1px solid #7f1d1d;">Alergias Conocidas</th>
-          <th style="background-color:#991b1b; color:#fff; padding:8px; border:1px solid #7f1d1d;">Representante / Contacto</th>
-          <th style="background-color:#991b1b; color:#fff; padding:8px; border:1px solid #7f1d1d;">Teléfono Emergencia</th>
-          <th style="background-color:#991b1b; color:#fff; padding:8px; border:1px solid #7f1d1d;">Tratamiento Continuo</th>
-          <th style="background-color:#991b1b; color:#fff; padding:8px; border:1px solid #7f1d1d;">Seguro Médico</th>
-        </tr>
-        ${rowsHtml}
-      </table>
-    </body>
-    </html>
-  `;
-
-  downloadBlob(htmlContent, `Padron_Medico_Emergencias_${(rawGroupName || 'Grupo').replace(/[^\p{L}\p{N}]+/gu, '_')}_${todayLocal()}.xls`, 'application/vnd.ms-excel');
+// ---------- 1. Censo y nómina ----------
+export function buildCensoTable(members: MemberRecord[], groupName: string): ReportTable {
+  return {
+    title: 'Censo y Nómina Oficial de Miembros',
+    subtitle: `${members.length} miembros`,
+    groupName: groupName || 'Grupo Scout',
+    accent: '#612499',
+    fileBase: `Censo_${groupName}`,
+    sections: [{
+      name: 'Censo',
+      headers: ['#', 'Nombres y apellidos', 'Cédula', 'Rol / cargo', 'Rama', 'Edad', 'Género', 'F. nacimiento', 'F. ingreso', 'F. promesa', 'Teléfono', 'Membresía'],
+      widths: [3, 22, 11, 14, 10, 5, 8, 10, 10, 10, 12, 14],
+      rows: members.map((m, i) => {
+        const st = membershipStatusCell(m);
+        return [
+          i + 1,
+          { v: m.name || 'Sin nombre', bold: true },
+          m.cedula || 'N/A',
+          roleLabel(m),
+          unitLabel(m),
+          ageFrom(m.birth_date) ?? 'N/A',
+          m.gender || 'N/A',
+          dateOrNA(m.birth_date),
+          dateOrNA(m.join_date),
+          dateOrNA(m.promise_date),
+          m.phone || 'N/A',
+          { v: st.text, color: st.color, bold: true },
+        ] as Cell[];
+      }),
+    }],
+  };
 }
 
-// 3. EXPORTAR REPORTE DE MEMBRESÍAS Y CARNETS EN EXCEL
-export function exportMembresiasExcel(rawMembers: MemberRecord[], rawGroupName: string) {
-  const members = escapeDeep(rawMembers);
-  const groupName = escapeHtml(rawGroupName);
-  const currentDate = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  const today = new Date();
-
-  let rowsHtml = '';
-  members.forEach((m, idx) => {
-    let statusText = '🔴 Sin Registro / Vencida';
-    let statusColor = '#dc2626';
-
-    if (m.membership_status === 'pending_approval' || m.membership_status === 'pending') {
-      statusText = `⏳ Por Aprobar: ${m.proposed_membership_date || 'En Espera'}`;
-      statusColor = '#9333ea';
-    } else if (m.membership_expires_at) {
-      const expDate = new Date(m.membership_expires_at);
-      const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      if (diffDays < 0) {
-        statusText = `🔴 Vencida (${Math.abs(diffDays)}d • ${m.membership_expires_at})`;
-        statusColor = '#dc2626';
-      } else if (diffDays <= 30) {
-        statusText = `🟠 A Punto de Vencer (${diffDays}d restantes • ${m.membership_expires_at})`;
-        statusColor = '#ea580c';
-      } else if (diffDays <= 90) {
-        statusText = `🟡 Por Vencer en 3m (${diffDays}d restantes • ${m.membership_expires_at})`;
-        statusColor = '#ca8a04';
-      } else {
-        statusText = `🟢 Vigente hasta ${m.membership_expires_at} (${diffDays}d)`;
-        statusColor = '#16a34a';
-      }
-    }
-
-    rowsHtml += `
-      <tr>
-        <td style="text-align:center; padding: 6px; border: 1px solid #d1d5db;">${idx + 1}</td>
-        <td style="font-weight: bold; padding: 6px; border: 1px solid #d1d5db;">${m.name}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${m.cedula || 'N/A'}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${m.role === 'jefe_grupo' || m.unit === 'grupo' || m.unit === 'jefatura' ? 'JEFATURA' : (m.unit || 'General').toUpperCase()}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${m.role === 'scouter' ? 'Dirigente' : m.role === 'jefe_grupo' ? 'Jefe de Grupo' : 'Scout'}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db; font-weight:bold; color:${statusColor};">${statusText}</td>
-        <td style="padding: 6px; border: 1px solid #d1d5db;">${m.membership_expires_at || 'Sin fecha'}</td>
-      </tr>
-    `;
-  });
-
-  const htmlContent = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-    <head>
-      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-      <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Control Membresias</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
-      <style>
-        body { font-family: Arial, sans-serif; font-size: 11pt; }
-        .header-title { font-size: 16pt; font-weight: bold; color: #1e3a8a; text-align: center; }
-      </style>
-    </head>
-    <body>
-      <table>
-        <tr><td colspan="7" class="header-title">CONTROL INSTITUCIONAL DE MEMBRESÍAS Y CARNETS ASV</td></tr>
-        <tr><td colspan="7" style="text-align:center; font-size:12pt; color:#374151;">${groupName || 'GRUPO SCOUT ORIÓN #84'}</td></tr>
-        <tr><td colspan="7" style="text-align:center; color:#6b7280; font-size:10pt;">Fecha de Emisión: ${currentDate} • Total Miembros: ${members.length}</td></tr>
-        <tr><td colspan="7"></td></tr>
-        <tr>
-          <th style="background-color:#1e3a8a; color:#fff; padding:8px; border:1px solid #172554;">#</th>
-          <th style="background-color:#1e3a8a; color:#fff; padding:8px; border:1px solid #172554;">Miembro</th>
-          <th style="background-color:#1e3a8a; color:#fff; padding:8px; border:1px solid #172554;">Cédula</th>
-          <th style="background-color:#1e3a8a; color:#fff; padding:8px; border:1px solid #172554;">Unidad</th>
-          <th style="background-color:#1e3a8a; color:#fff; padding:8px; border:1px solid #172554;">Cargo</th>
-          <th style="background-color:#1e3a8a; color:#fff; padding:8px; border:1px solid #172554;">Estado de Semáforo</th>
-          <th style="background-color:#1e3a8a; color:#fff; padding:8px; border:1px solid #172554;">Fecha de Vencimiento</th>
-        </tr>
-        ${rowsHtml}
-      </table>
-    </body>
-    </html>
-  `;
-
-  downloadBlob(htmlContent, `Control_Membresias_${(rawGroupName || 'Grupo').replace(/[^\p{L}\p{N}]+/gu, '_')}_${todayLocal()}.xls`, 'application/vnd.ms-excel');
+// ---------- 2. Padrón de emergencia médica ----------
+export function buildPadronTable(members: MemberRecord[], groupName: string): ReportTable {
+  return {
+    title: 'Padrón de Emergencia Médica y Contactos',
+    subtitle: 'Datos de salud para actividades y campamentos — uso confidencial',
+    groupName: groupName || 'Grupo Scout',
+    accent: '#991b1b',
+    fileBase: `Padron_Medico_${groupName}`,
+    sections: [{
+      name: 'Padrón médico',
+      headers: ['#', 'Scout / dirigente', 'Cédula', 'Rama', 'Tipo de sangre', 'Alergias', 'Contacto de emergencia', 'Teléfono', 'Tratamiento', 'Seguro'],
+      widths: [3, 18, 10, 9, 7, 22, 15, 11, 16, 12],
+      rows: members.map((m, i) => {
+        const med = m.medical_data || {};
+        const adult = m.role === 'scouter' || isJefatura(m);
+        const allergies = allergiesText(med);
+        return [
+          i + 1,
+          { v: m.name || 'Sin nombre', bold: true },
+          m.cedula || med.ci || 'N/A',
+          unitLabel(m),
+          { v: med.bloodType || 'Sin registrar', color: '#b91c1c', bold: true },
+          allergies === 'Ninguna' ? allergies : { v: allergies, color: '#b91c1c', bold: true },
+          med.emergencyContactName || (adult ? 'Contacto directo' : 'Representante'),
+          { v: med.emergencyPhonePersonal || med.emergencyPhoneHome || m.phone || 'Sin registrar', bold: true },
+          med.hasPrescription ? `Sí: ${med.medicalPrescriptionExplain || 'bajo tratamiento'}` : 'No',
+          med.hasInsurance ? `Sí: ${med.insuranceExplain || 'póliza activa'}` : 'No',
+        ] as Cell[];
+      }),
+    }],
+  };
 }
 
-// 4. IMPRESIÓN OFICIAL Y GENERACIÓN DE PDF FORMATEADO
-export function printDocumentHTML(rawTitle: string, rawSubtitle: string, rawGroupName: string, rawHeaders: string[], rawRows: (string | number)[][], themeColor: string = '#612499') {
-  const title = escapeHtml(rawTitle);
-  const subtitle = escapeHtml(rawSubtitle);
-  const groupName = escapeHtml(rawGroupName);
-  const headers = rawHeaders.map(escapeHtml);
-  const rows = rawRows.map(r => r.map(escapeHtml));
-  if (typeof window === 'undefined') return;
+// ---------- 3. Control de membresías ----------
+export function buildMembresiasTable(members: MemberRecord[], groupName: string): ReportTable {
+  return {
+    title: 'Control de Membresías y Carnets ASV',
+    groupName: groupName || 'Grupo Scout',
+    accent: '#1e3a8a',
+    fileBase: `Membresias_${groupName}`,
+    sections: [{
+      name: 'Membresías',
+      headers: ['#', 'Miembro', 'Cédula', 'Rama', 'Cargo', 'Estado', 'Vence'],
+      widths: [3, 24, 12, 11, 14, 18, 11],
+      rows: members.map((m, i) => {
+        const st = membershipStatusCell(m);
+        return [
+          i + 1,
+          { v: m.name || 'Sin nombre', bold: true },
+          m.cedula || 'N/A',
+          unitLabel(m),
+          roleLabel(m),
+          { v: st.text, color: st.color, bold: true },
+          m.membership_expires_at ? formatDateEs(m.membership_expires_at) : 'Sin fecha',
+        ] as Cell[];
+      }),
+    }],
+  };
+}
 
-  const currentDate = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+/** En reportes territoriales (varios grupos) se agrega la columna "Grupo" después del nombre. */
+function withGroupColumn(table: ReportTable, members: MemberRecord[]): ReportTable {
+  const groups = new Set(members.map(m => (m.group_name || '').trim()).filter(Boolean));
+  if (groups.size <= 1) return table;
+  const sections = table.sections.map(sec => ({
+    ...sec,
+    headers: [...sec.headers.slice(0, 2), 'Grupo', ...sec.headers.slice(2)],
+    widths: sec.widths ? [...sec.widths.slice(0, 2), 14, ...sec.widths.slice(2)] : undefined,
+    rows: sec.rows.map((r, i) => [...r.slice(0, 2), members[i]?.group_name || 'Sin grupo', ...r.slice(2)]),
+  }));
+  return { ...table, sections };
+}
 
-  const headersHtml = headers.map(h => `<th style="background-color:${themeColor}; color:#ffffff; padding:8px 10px; font-size:11px; text-align:left; border:1px solid #333;">${h}</th>`).join('');
-
-  const rowsHtml = rows.map((r, idx) => {
-    const bg = idx % 2 === 0 ? '#ffffff' : '#f9fafb';
-    const cells = r.map(c => `<td style="padding:6px 8px; font-size:11px; border:1px solid #e5e7eb; color:#111827;">${c}</td>`).join('');
-    return `<tr style="background-color:${bg};">${cells}</tr>`;
-  }).join('');
-
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Por favor permite abrir ventanas emergentes para imprimir el reporte.');
-    return;
+async function run(job: () => Promise<void>) {
+  try {
+    await job();
+  } catch (e: any) {
+    console.warn('Error exportando:', e);
+    showAlert('No se pudo exportar', e?.message || 'Inténtalo de nuevo. Si no tienes internet, abre la app una vez con conexión para que guarde los módulos de exportación.');
   }
-
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-      <meta charset="UTF-8">
-      <title>${title} - ${groupName}</title>
-      <style>
-        @page { size: landscape; margin: 12mm; }
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 10px; color: #111827; }
-        .doc-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid ${themeColor}; padding-bottom: 10px; margin-bottom: 15px; }
-        .doc-title { font-size: 18px; font-weight: bold; color: ${themeColor}; margin: 0; }
-        .doc-subtitle { font-size: 12px; color: #4b5563; margin-top: 2px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-        .footer { margin-top: 25px; display: flex; justify-content: space-between; font-size: 10px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 8px; }
-        .sig-line { width: 180px; border-top: 1px solid #333; text-align: center; margin-top: 30px; font-size: 10px; color: #333; padding-top: 4px; }
-        @media print {
-          .no-print { display: none; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="no-print" style="margin-bottom:15px; background:#f3f4f6; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:13px; font-weight:bold;">📄 Vista Previa de Impresión Oficial</span>
-        <div>
-          <button onclick="window.print()" style="background:${themeColor}; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:bold; cursor:pointer;">🖨️ Imprimir / Guardar como PDF</button>
-          <button onclick="window.close()" style="background:#e5e7eb; border:none; padding:8px 14px; border-radius:6px; margin-left:8px; cursor:pointer;">Cerrar</button>
-        </div>
-      </div>
-
-      <div class="doc-header">
-        <div>
-          <h1 class="doc-title">${title}</h1>
-          <div class="doc-subtitle">${subtitle} • <strong>${groupName}</strong></div>
-        </div>
-        <div style="text-align: right; font-size: 11px; color: #4b5563;">
-          <div><strong>Asociación de Scouts de Venezuela</strong></div>
-          <div>Fecha: ${currentDate}</div>
-          <div>Registros: ${rows.length}</div>
-        </div>
-      </div>
-
-      <table>
-        <thead>
-          <tr>${headersHtml}</tr>
-        </thead>
-        <tbody>
-          ${rowsHtml}
-        </tbody>
-      </table>
-
-      <div style="display:flex; justify-content:space-around; margin-top:40px;">
-        <div class="sig-line">Jefe de Grupo<br>Firma y Sello</div>
-        <div class="sig-line">Consejo de Grupo<br>Firma</div>
-      </div>
-
-      <div class="footer">
-        <div>Documento Oficial Generado por Plataforma ScoutPlan</div>
-        <div>Página 1 de 1</div>
-      </div>
-    </body>
-    </html>
-  `);
-
-  printWindow.document.close();
 }
 
-function downloadBlob(content: string, filename: string, contentType: string) {
-  if (typeof window === 'undefined') return;
-  const blob = new Blob([content], { type: `${contentType};charset=utf-8;` });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', filename);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
+const censo = (m: MemberRecord[], g: string) => withGroupColumn(buildCensoTable(m, g), m);
+const padron = (m: MemberRecord[], g: string) => withGroupColumn(buildPadronTable(m, g), m);
+const membresias = (m: MemberRecord[], g: string) => withGroupColumn(buildMembresiasTable(m, g), m);
+
+export const exportCensoExcel = (m: MemberRecord[], g: string) => run(() => downloadXlsx(censo(m, g)));
+export const exportCensoPdf = (m: MemberRecord[], g: string) => run(() => downloadPdf(censo(m, g)));
+export const exportPadronMedicoExcel = (m: MemberRecord[], g: string) => run(() => downloadXlsx(padron(m, g)));
+export const exportPadronMedicoPdf = (m: MemberRecord[], g: string) => run(() => downloadPdf(padron(m, g)));
+export const exportMembresiasExcel = (m: MemberRecord[], g: string) => run(() => downloadXlsx(membresias(m, g)));
+export const exportMembresiasPdf = (m: MemberRecord[], g: string) => run(() => downloadPdf(membresias(m, g)));
+
+/** Descarga cualquier ReportTable (usado por Insignias y Plan Trimestral). */
+export const exportReportExcel = (t: ReportTable) => run(() => downloadXlsx(t));
+export const exportReportPdf = (t: ReportTable) => run(() => downloadPdf(t));

@@ -26,6 +26,8 @@ import { QUARTERS } from '../data/trimestresData';
 import { colors, UNIT_COLORS } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 import { navigateBackOrHome } from '../utils/navigationHelper';
+import { exportReportExcel, exportReportPdf } from '../utils/exportHelpers';
+import { ReportTable, Cell } from '../utils/reportTable';
 
 interface ActivityRow {
   id: string;
@@ -473,152 +475,72 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
     Q4: 'OCTUBRE, NOVIEMBRE Y DICIEMBRE',
   };
 
-  // EXPORTAR A EXCEL CON DISEÑO COMPLETO (COLORES, BORDES Y CELDAS COMBINADAS)
-  const handleExportToExcel = () => {
+  // EXPORTAR: el mismo contenido como Excel real (.xlsx) o PDF directo
+  const buildQuarterReport = (): ReportTable => {
     const unitName = getActiveUnit().toUpperCase();
-    const monthAbbr = QUARTER_MONTH_ABBR[selectedQuarter] || 'ABR.MAY.JUN';
     const monthFullText = QUARTER_MONTH_FULL_TEXT[selectedQuarter] || 'ABRIL, MAYO Y JUNIO';
-    const fileName = `TRIMESTRE_${unitName}_${selectedQuarter}_${selectedYear}.xls`;
-
     const e = educationalAreas;
-    // Todo texto escrito por el usuario se escapa: un "&" o "<" rompía la celda del Excel
-    const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    const cleanGenObj = esc(generalObjective || '');
-    const cleanGoals = esc(trimestreGoalsList.filter(s => s.trim()).join('. '));
-    const cleanSpecifics = esc(specificObjectivesList.filter(s => s.trim()).join('. '));
+    const areas = [
+      ['Corporalidad', e.corporalidad], ['Creatividad', e.creatividad], ['Afectividad', e.afectividad],
+      ['Espiritualidad', e.espiritualidad], ['Carácter', e.caracter], ['Sociabilidad', e.sociabilidad],
+    ] as [string, boolean][];
+    const goals = trimestreGoalsList.filter(s => s.trim());
+    const specifics = specificObjectivesList.filter(s => s.trim());
 
-    let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<style>
-  table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; font-size: 11pt; width: 100%; }
-  td, th { border: 1px solid #000000; padding: 6px; vertical-align: middle; }
-  .header-title { font-weight: bold; font-size: 12pt; text-align: left; background-color: #ffffff; }
-  .header-grey { background-color: #a6a6a6; font-weight: bold; text-align: center; font-size: 12pt; border: 2px solid #000000; }
-  .table-header { background-color: #e2e8f0; font-weight: bold; text-align: center; }
-  .cell-center { text-align: center; }
-  .cell-bold { font-weight: bold; }
-  .box-check { border: 2px solid #000000; text-align: center; font-weight: bold; }
-  .separator-row { height: 12px; background-color: #ffffff; border-left: none; border-right: none; }
-</style>
-</head>
-<body>
-<table>
-  <tr><td colspan="13" class="header-title" style="font-size: 13pt;"><b>ASOCIACION DE SCOUTS DE VENEZUELA</b></td></tr>
-  <tr><td colspan="13" class="header-title">REGION MIRANDA / DISTRITO GUARENAS - GUATIRE</td></tr>
-  <tr><td colspan="13" class="header-title">GRUPO SCOUT ORION # 84</td></tr>
-  <tr><td colspan="13" class="header-grey" style="font-size: 14pt; padding: 8px;">TRIMESTRE DE ${unitName}</td></tr>
-  <tr>
-    <td colspan="11" class="cell-bold">MESES: ${monthFullText}</td>
-    <td class="cell-bold" style="text-align: right;">Año:</td>
-    <td class="cell-center cell-bold">${selectedYear}</td>
-  </tr>
-  <tr>
-    <td colspan="2" class="cell-bold">Elaborado por:</td>
-    <td colspan="11">${esc(elaboratedBy || user?.name || '')}</td>
-  </tr>
-  <tr style="height: 60px;">
-    <td colspan="6" style="vertical-align: top; padding: 8px;"><b>Metas del trimestre:</b> ${cleanGoals}</td>
-    <td colspan="7" style="vertical-align: top; padding: 8px;"><b>Objetivos del Trimestre:</b> ${cleanGenObj}</td>
-  </tr>
-  <tr style="height: 45px;">
-    <td colspan="13" style="vertical-align: top; padding: 8px;"><b>objetivos especificos:</b> ${cleanSpecifics}</td>
-  </tr>
-  <tr><td colspan="13" class="header-grey">Objetivos Educativos</td></tr>
-  <tr>
-    <td class="cell-bold">Corporalidad:</td>
-    <td class="cell-center">${e.corporalidad ? 'Si' : 'No'}</td>
-    <td class="box-check">${e.corporalidad ? '✓' : ''}</td>
-    <td class="cell-center">${e.corporalidad ? '' : 'No'}</td>
-    <td style="border: none;"></td>
-    <td class="cell-bold">Creatividad </td>
-    <td class="cell-center">${e.creatividad ? 'si' : 'no'}</td>
-    <td style="border: none;"></td>
-    <td class="box-check">${e.creatividad ? '✓' : ''}</td>
-    <td class="cell-center">${e.creatividad ? '' : 'no'}</td>
-    <td colspan="3" style="border: none;"></td>
-  </tr>
-  <tr>
-    <td class="cell-bold">Afectividad:</td>
-    <td class="cell-center">${e.afectividad ? 'Si' : 'No'}</td>
-    <td class="box-check">${e.afectividad ? '✓' : ''}</td>
-    <td class="cell-center">${e.afectividad ? '' : 'No'}</td>
-    <td style="border: none;"></td>
-    <td class="cell-bold">Espiritualidad </td>
-    <td class="cell-center">${e.espiritualidad ? 'si' : 'no'}</td>
-    <td style="border: none;"></td>
-    <td class="box-check">${e.espiritualidad ? '✓' : ''}</td>
-    <td class="cell-center">${e.espiritualidad ? '' : 'no'}</td>
-    <td colspan="3" style="border: none;"></td>
-  </tr>
-  <tr>
-    <td class="cell-bold">Carácter:</td>
-    <td class="cell-center">${e.caracter ? 'Si' : 'No'}</td>
-    <td class="box-check">${e.caracter ? '✓' : ''}</td>
-    <td class="cell-center">${e.caracter ? '' : 'No'}</td>
-    <td style="border: none;"></td>
-    <td class="cell-bold">Sociabilidad </td>
-    <td class="cell-center">${e.sociabilidad ? 'si' : 'no'}</td>
-    <td style="border: none;"></td>
-    <td class="box-check">${e.sociabilidad ? '✓' : ''}</td>
-    <td class="cell-center">${e.sociabilidad ? '' : 'no'}</td>
-    <td colspan="3" style="border: none;"></td>
-  </tr>
-  <tr><td colspan="13" class="header-grey">ACTIVIDADES POR MES</td></tr>
-  <tr class="table-header">
-    <td>MES</td>
-    <td>DÍA</td>
-    <td colspan="4">ACTIVIDAD</td>
-    <td colspan="3">LUGAR</td>
-    <td colspan="2">RESPONSABLE</td>
-    <td>PLAN B</td>
-    <td>TIPO</td>
-  </tr>`;
-
+    const rows: Cell[][] = [];
     currentMonths.forEach(m => {
       const mActs = activities.filter(a => a.month === m);
-      if (mActs.length > 0) {
-        mActs.forEach((a, idx) => {
-          html += `<tr>`;
-          if (idx === 0) {
-            html += `<td rowspan="${mActs.length}" class="cell-center cell-bold" style="font-size: 12pt; background-color: #fafafa;">${m.toLowerCase()}</td>`;
-          }
-          html += `<td class="cell-center">${esc(a.day || '')}</td>
-            <td colspan="4" class="cell-center">${esc(a.activity || '')}</td>
-            <td colspan="3" class="cell-center">${esc(a.place || '')}</td>
-            <td colspan="2" class="cell-center">${esc(a.responsible || '')}</td>
-            <td>${esc(a.planB || '')}</td>
-            <td></td>
-          </tr>`;
-        });
+      if (mActs.length === 0) {
+        rows.push([{ v: m, bold: true }, '', { v: 'Sin actividades', color: '#6b7280' }, '', '', '']);
       } else {
-        html += `<tr>
-          <td class="cell-center cell-bold">${m.toLowerCase()}</td>
-          <td class="cell-center"></td>
-          <td colspan="4"></td>
-          <td colspan="3"></td>
-          <td colspan="2"></td>
-          <td></td>
-          <td></td>
-        </tr>`;
+        mActs.forEach((a, idx) => rows.push([
+          idx === 0 ? { v: m, bold: true } : '',
+          a.day || '',
+          { v: a.activity || '', bold: true },
+          a.place || '',
+          a.responsible || '',
+          a.planB || '',
+        ]));
       }
-      html += `<tr class="separator-row"><td colspan="13" style="border-left:none; border-right:none; border-top: 2px solid #000; border-bottom: 2px solid #000;"></td></tr>`;
     });
 
-    html += `</table></body></html>`;
+    return {
+      title: `Trimestre de ${unitName} · ${selectedQuarter} ${selectedYear}`,
+      subtitle: `Meses: ${monthFullText}`,
+      groupName: 'Grupo Scout Orión #84 · Región Miranda / Distrito Guarenas - Guatire',
+      // Tonos oscuros de cada rama: el texto blanco del encabezado debe leerse (el amarillo de Manada no se leía)
+      accent: ({ manada: '#a16207', tropa: '#2e7d32', comunidad: '#1565c0', caminantes: '#1565c0', clan: '#c62828' } as Record<string, string>)[getActiveUnit()] || colors.primary,
+      fileBase: `Trimestre_${unitName}_${selectedQuarter}_${selectedYear}`,
+      sections: [{
+        name: 'Plan trimestral',
+        notes: [
+          `Elaborado por: ${elaboratedBy || user?.name || ''}`,
+          `Metas del trimestre: ${goals.length ? goals.join('. ') : 'Sin definir'}`,
+          `Objetivo del trimestre: ${generalObjective || 'Sin definir'}`,
+          `Objetivos específicos: ${specifics.length ? specifics.join('. ') : 'Sin definir'}`,
+          `Áreas educativas: ${areas.map(([n, on]) => `${n} ${on ? 'Sí' : 'No'}`).join(' · ')}`,
+        ],
+        headers: ['Mes', 'Día', 'Actividad', 'Lugar', 'Responsable', 'Plan B'],
+        widths: [10, 6, 30, 18, 16, 18],
+        rows,
+      }],
+    };
+  };
 
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      link.click();
-      URL.revokeObjectURL(url);
-      showAlert('¡Excel con Diseño Exportado!', `Se ha generado el archivo Excel con colores, bordes y celdas combinadas: ${fileName}`);
-    } else {
-      showAlert('Función Web', 'La exportación con diseño avanzado Excel está disponible en la versión web.');
+  const handleExportToExcel = () => {
+    if (Platform.OS !== 'web') {
+      showAlert('Función web', 'La exportación está disponible en la versión web de la app.');
+      return;
     }
+    exportReportExcel(buildQuarterReport());
+  };
+
+  const handleExportToPdf = () => {
+    if (Platform.OS !== 'web') {
+      showAlert('Función web', 'La exportación está disponible en la versión web de la app.');
+      return;
+    }
+    exportReportPdf(buildQuarterReport());
   };
 
   // COPIAR RESUMEN FORMATO WHATSAPP CON EMOJIS
@@ -1191,7 +1113,12 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
 
           <TouchableOpacity style={[styles.actionPillBtn, { backgroundColor: '#059669' }]} onPress={handleExportToExcel}>
             <FileSpreadsheet size={14} color="white" style={{ marginRight: 6 }} />
-            <Text style={styles.actionPillBtnText}>Exportar Excel</Text>
+            <Text style={styles.actionPillBtnText}>Excel (.xlsx)</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.actionPillBtn, { backgroundColor: '#b91c1c' }]} onPress={handleExportToPdf}>
+            <Download size={14} color="white" style={{ marginRight: 6 }} />
+            <Text style={styles.actionPillBtnText}>PDF</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.actionPillBtn, { backgroundColor: '#ef4444' }]} onPress={handleClearQuarter}>

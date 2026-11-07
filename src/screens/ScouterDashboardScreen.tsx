@@ -27,12 +27,14 @@ import { colors } from '../theme/colors';
 import { Calendar as RNCalendar, DateData } from 'react-native-calendars';
 import {
   Users, ChevronDown, ChevronUp,
-  Calendar, Calendar as CalendarIcon, LogOut, Trash2, Plus, Flag, X, Moon, Sun, Compass, Camera, ShieldCheck, Ban, CheckCircle, ImageOff, BookOpen, Palette, FileText, Music, Sparkles, Award
+  Calendar, Calendar as CalendarIcon, LogOut, Trash2, Plus, Flag, X, Moon, Sun, Compass, Camera, ShieldCheck, Ban, CheckCircle, ImageOff, BookOpen, Palette, FileText, Music, Sparkles, Award, Receipt
 } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
 import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
+import { InsigniasExportBar } from '../components/InsigniasExportBar';
+import { MembershipRecordsModal } from '../components/MembershipRecordsModal';
 import { todayLocal, defaultMembershipDate } from '../utils/dateLocal';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
@@ -433,6 +435,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
   // Membership management
   const [showMembershipModal, setShowMembershipModal] = useState(false);
   const [selectedScoutForMembership, setSelectedScoutForMembership] = useState<any>(null);
+  const [recordsScout, setRecordsScout] = useState<any>(null);
   const [membershipDateInput, setMembershipDateInput] = useState('');
   const [showMembershipDatePicker, setShowMembershipDatePicker] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -741,6 +744,16 @@ export default function ScouterDashboardScreen({ navigation }: any) {
         <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
       ) : (
         <ScrollView style={styles.scroll} contentContainerStyle={{ padding: 16, paddingBottom: 30 }}>
+          {scouts.length > 0 && (
+            <View style={{ marginBottom: 16 }}>
+              <InsigniasExportBar
+                members={scouts.map(s => ({ id: s.id, name: s.name, unit: s.unit, birth_date: s.birth_date }))}
+                groupName={user?.group_name || 'Grupo Scout'}
+                scopeLabel={(user?.unit || 'Unidad').charAt(0).toUpperCase() + (user?.unit || 'unidad').slice(1)}
+              />
+            </View>
+          )}
+
           {/* DIRECTORIO HORIZONTAL DE ROVERS (SI LA UNIDAD ES CLAN) */}
           {user?.unit?.toLowerCase() === 'clan' && (
             <View style={{ marginBottom: 20 }}>
@@ -883,6 +896,15 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                         </Text>
                       </View>
                       <View style={{ flexDirection: 'row', gap: 6 }}>
+                        {/* Comprobante de pago e historial */}
+                        <TouchableOpacity
+                          style={{ backgroundColor: '#0f766e', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8 }}
+                          onPress={() => setRecordsScout(scout)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Comprobante e historial de membresía de ${scout.name}`}
+                        >
+                          <Receipt size={14} color="white" />
+                        </TouchableOpacity>
                         {/* Asignar / Modificar fecha */}
                         <TouchableOpacity
                           style={{ backgroundColor: '#7c3aed', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8 }}
@@ -902,7 +924,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                             <TouchableOpacity
                               style={{ backgroundColor: '#22c55e', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8 }}
                               onPress={async () => {
-                                await dataService.approveMembershipDate(scout.id);
+                                await dataService.approveMembershipDate(scout.id, mDate, user?.name);
                                 showAlert('✅ Membresía Aprobada', `La membresía de ${scout.name} fue aprobada hasta el ${mDate}.`);
                                 loadScouts();
                               }}
@@ -943,6 +965,13 @@ export default function ScouterDashboardScreen({ navigation }: any) {
           </View>
         </ScrollView>
       )}
+
+      <MembershipRecordsModal
+        visible={!!recordsScout}
+        onClose={() => setRecordsScout(null)}
+        member={recordsScout}
+        mode="leader"
+      />
 
       {/* MODAL ASIGNAR / EDITAR FECHA DE MEMBRESÍA */}
       <Modal visible={showMembershipModal} transparent animationType="fade" onRequestClose={() => setShowMembershipModal(false)}>
@@ -1000,7 +1029,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                   }
                   if (user?.role === 'jefe_grupo') {
                     await dataService.proposeMembershipDate(selectedScoutForMembership.id, finalDate);
-                    await dataService.approveMembershipDate(selectedScoutForMembership.id);
+                    await dataService.approveMembershipDate(selectedScoutForMembership.id, finalDate, user?.name);
                     notificationService.sendNotification({
                       senderId: user?.id,
                       receiverId: selectedScoutForMembership.id,
@@ -1100,7 +1129,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                     showAlert('Campo Obligatorio', 'Debes indicar el motivo del rechazo.');
                     return;
                   }
-                  await dataService.rejectMembershipDate(selectedScoutForMembership.id, rejectReason.trim());
+                  await dataService.rejectMembershipDate(selectedScoutForMembership.id, rejectReason.trim(), selectedScoutForMembership.membership_expires_at, user?.name);
                   showAlert('Membresía Rechazada', `Se notificó a ${selectedScoutForMembership?.name} con el motivo especificado.`);
                   setShowRejectModal(false);
                   loadScouts();

@@ -149,7 +149,7 @@ export const CarnetScoutModal: React.FC<CarnetScoutModalProps> = ({
                 {/* Columna QR & Extravío */}
                 <View style={{ width: '45%', alignItems: 'center' }}>
                   <View style={styles.qrImg}>
-                    <ScoutQRCode value={`ASV_SCOUT_${user.id}`} size={85} />
+                    <ScoutQRCode value={`https://scoutplan.vercel.app/verificar/${user.id}`} size={100} />
                   </View>
                   <Text style={styles.lostText}>
                     Se agradece en caso de extravío notificarlo a través de:{'\n'}
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
 
   carnetTopPattern: { height: 8, backgroundColor: '#612499' },
   carnetReverseBody: { flexDirection: 'row', padding: 10, flex: 1, alignItems: 'center' },
-  qrImg: { width: 85, height: 85 },
+  qrImg: { width: 100, height: 100 },
   lostText: { fontSize: 7, color: '#4b5563', marginTop: 4, textAlign: 'center', lineHeight: 9 },
 
   accreditationText: { fontSize: 8, color: '#1f2937', lineHeight: 11 },

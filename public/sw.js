@@ -105,6 +105,8 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (url.pathname.startsWith('/api/')) return;
+  // Verificación pública del carnet: página propia, siempre de la red (no es la app)
+  if (url.pathname === '/verificar' || url.pathname.startsWith('/verificar/') || url.pathname === '/verificar.html') return;
 
   // B. Guías PDF: si están descargadas se abren sin internet (también dentro del visor/iframe)
   if (DOC_PATH.test(url.pathname)) {

@@ -4,11 +4,13 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { dataService } from '../lib/dataService';
+import { formatDateEs } from '../utils/dateLocal';
 import { supabase } from '../lib/supabaseClient';
 import { colors } from '../theme/colors';
 import { ChevronRight } from 'lucide-react-native';
 import { StageBadgeIcon } from '../components/StageBadgeIcon';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
+import { getStagesForUnit } from '../data/unitTemplates';
 
 const STAGE_COLORS: Record<string, string> = {
   'precursor':      '#ffb300',
@@ -37,6 +39,7 @@ export default function PlanProgresivoScreen({ navigation }: any) {
 
     // Con copia offline: sin red se mantiene la etapa real (no se bloquea todo)
       const statusMap: Record<string, string> = await dataService.getAllStageStatuses(user!.id);
+    const dates = await dataService.getStageDates(user!.id).catch(() => ({} as Record<string, string>));
 
     let prevApproved = true;
     const enriched = progressData.map(stage => {
@@ -54,7 +57,7 @@ export default function PlanProgresivoScreen({ navigation }: any) {
       }
 
       prevApproved = dbStatus === 'Aprobada';
-      return { ...stage, displayStatus };
+      return { ...stage, displayStatus, approvedAt: dbStatus === 'Aprobada' ? dates[stage.id] : undefined };
     });
 
     setStages(enriched);
@@ -80,6 +83,18 @@ export default function PlanProgresivoScreen({ navigation }: any) {
           <NotificationHeaderBell />
         </View>
       </View>
+
+      {(() => {
+        const tpl = getStagesForUnit(user?.role === 'scout' ? user?.unit : null);
+        if (!tpl.isFallback || !tpl.unit) return null;
+        return (
+          <View style={[styles.templateNotice, { backgroundColor: isDarkMode ? '#1e1b4b' : '#eff6ff', borderColor: isDarkMode ? '#3730a3' : '#bfdbfe' }]}>
+            <Text style={[styles.templateNoticeText, { color: isDarkMode ? '#c7d2fe' : '#1e3a8a' }]}>
+              La plantilla de etapas de la {tpl.unit.label} ({tpl.unit.minAge}–{tpl.unit.maxAge} años) aún no está cargada. Mientras tanto ves las etapas del Clan; tu avance se conserva.
+            </Text>
+          </View>
+        );
+      })()}
 
       <View style={styles.listContainer}>
         {stages.map((stage) => {
@@ -139,7 +154,7 @@ export default function PlanProgresivoScreen({ navigation }: any) {
 
               {isApproved && (
                 <View style={[styles.approvedBanner, isDarkMode && { backgroundColor: '#064e3b' }]}>
-                  <Text style={[styles.approvedBannerText, isDarkMode && { color: '#6ee7b7' }]}>🏅 Etapa completada y aprobada • Toca para ver tus requisitos cumplidos</Text>
+                  <Text style={[styles.approvedBannerText, isDarkMode && { color: '#6ee7b7' }]}>🏅 {stage.approvedAt ? `Aprobada el ${formatDateEs(stage.approvedAt.slice(0, 10))}` : 'Etapa completada y aprobada'} • Toca para ver lo que registraste</Text>
                 </View>
               )}
 
@@ -157,6 +172,8 @@ export default function PlanProgresivoScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
+  templateNotice: { marginHorizontal: 16, marginTop: 14, borderWidth: 1, borderRadius: 12, padding: 12 },
+  templateNoticeText: { fontSize: 13, lineHeight: 19 },
   container: { flex: 1 },
   header: { padding: 20, borderBottomWidth: 1 },
   title: { fontSize: 24, fontWeight: 'bold' },

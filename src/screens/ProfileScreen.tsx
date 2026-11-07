@@ -8,10 +8,11 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
 import { colors } from '../theme/colors';
-import { Edit2, ShieldCheck, AlertTriangle, Plus, Camera, CheckCircle, ArrowLeft } from 'lucide-react-native';
+import { Edit2, ShieldCheck, AlertTriangle, Plus, Camera, CheckCircle, ArrowLeft, Receipt } from 'lucide-react-native';
 import { UserScoutAvatar } from '../components/UserScoutAvatar';
 import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import { CarnetScoutModal } from '../components/CarnetScoutModal';
+import { MembershipRecordsModal } from '../components/MembershipRecordsModal';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { dataService } from '../lib/dataService';
 import { showAlert } from '../utils/alert';
@@ -200,6 +201,7 @@ export default function ProfileScreen({ navigation }: any) {
   const [membershipExpiresAt, setMembershipExpiresAt] = useState('');
   const [membershipStatus,    setMembershipStatus]    = useState('');
   const [membershipRejectedReason, setMembershipRejectedReason] = useState('');
+  const [showMembershipRecords, setShowMembershipRecords] = useState(false);
 
   const [scoutAvatarUrl, setScoutAvatarUrl] = useState(user?.avatar_url || '');
   const [customAvatarUrl, setCustomAvatarUrl] = useState(user?.custom_avatar_url || '');
@@ -579,6 +581,24 @@ export default function ProfileScreen({ navigation }: any) {
             </Text>
           </View>
         )}
+
+        <TouchableOpacity
+          style={[styles.membershipRecordsBtn, { borderColor: isDarkMode ? '#c084fc' : colors.primary }]}
+          onPress={() => setShowMembershipRecords(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Comprobante de pago e historial de membresía"
+        >
+          <Receipt size={16} color={isDarkMode ? '#c084fc' : colors.primary} />
+          <Text style={{ color: isDarkMode ? '#c084fc' : colors.primary, fontWeight: '700', fontSize: 13 }}>
+            Comprobante de pago e historial
+          </Text>
+        </TouchableOpacity>
+        <MembershipRecordsModal
+          visible={showMembershipRecords}
+          onClose={() => setShowMembershipRecords(false)}
+          member={user ? { id: user.id, name: user.name } : null}
+          mode="self"
+        />
       </View>
 
       {/* SECCIÓN 3: DATOS PERSONALES */}
@@ -723,6 +743,7 @@ const styles = StyleSheet.create({
   },
   cardAvailableBox: { padding: 14, borderRadius: 12, borderWidth: 1, marginTop: 4 },
   cardMissingBox: { padding: 14, borderRadius: 12, borderWidth: 1, marginTop: 4 },
+  membershipRecordsBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderRadius: 12, minHeight: 44, marginTop: 12 },
   savingOverlay: {
     position: 'absolute', top: 0, bottom: 0, left: 0, right: 0,
     backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center',
