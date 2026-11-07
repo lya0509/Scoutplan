@@ -69,7 +69,9 @@ module.exports = async function handler(req, res) {
       checked_at: new Date().toISOString(),
     });
   } catch (e) {
-    console.error('verificar:', e && e.message);
-    return res.status(500).json({ error: 'server_error' });
+    console.error('verificar:', e && (e.code || ''), e && e.message);
+    // Solo el código técnico (sin datos) para poder diagnosticar desde fuera.
+    const code = String((e && (e.code || e.status || e.name)) || 'unknown').slice(0, 20);
+    return res.status(500).json({ error: 'server_error', code });
   }
 };
