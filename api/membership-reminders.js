@@ -6,7 +6,7 @@
 //   - si quien vence es un Scouter, al Jefe de Grupo.
 // Si se ejecuta dos veces el mismo día no repite avisos (se revisa lo ya enviado en 20 h).
 const webpush = require('web-push');
-const { getAdminSupabase } = require('./_auth');
+const { getAdminSupabase, serviceKeyStatus } = require('./_auth');
 
 const DAYS = [30, 7];
 const VAPID_PUBLIC = process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY;
@@ -71,8 +71,10 @@ module.exports = async function handler(req, res) {
   if (secret && req.headers.authorization !== `Bearer ${secret}`) {
     return res.status(401).json({ error: 'unauthorized' });
   }
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return res.status(503).json({ error: 'not_configured' });
+  const keyStatus = serviceKeyStatus();
+  if (keyStatus !== 'ok') {
+    // missing: falta la variable; anon: se pegó la clave pública en vez de la service_role
+    return res.status(503).json({ error: keyStatus === 'anon' ? 'wrong_key_type' : 'not_configured' });
   }
 
   const db = getAdminSupabase();

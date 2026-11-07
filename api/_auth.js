@@ -54,4 +54,20 @@ function parseBody(req) {
   return typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
 }
 
-module.exports = { getSupabase, getAdminSupabase, setCors, requireUser, parseBody };
+// ¿Qué clave de servidor hay? 'missing' | 'anon' (pegaron la pública por error) | 'ok'.
+// Solo lee el campo "role" del token (no revela la clave).
+function serviceKeyStatus() {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) return 'missing';
+  if (key.startsWith('eyJ')) {
+    try {
+      const payload = JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString('utf8'));
+      if (payload.role && payload.role !== 'service_role') return 'anon';
+    } catch {}
+  } else if (key.startsWith('sb_publishable_')) {
+    return 'anon';
+  }
+  return 'ok';
+}
+
+module.exports = { getSupabase, getAdminSupabase, setCors, requireUser, parseBody, serviceKeyStatus };

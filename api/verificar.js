@@ -1,7 +1,7 @@
 // Verificación pública del carnet: GET /api/verificar?id=<uuid>
 // Quien escanea el QR del carnet ve SOLO nombre, grupo, rama/cargo y estado de la membresía.
 // Nunca devuelve cédula, teléfono, foto, correo ni datos médicos.
-const { getAdminSupabase } = require('./_auth');
+const { getAdminSupabase, serviceKeyStatus } = require('./_auth');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -30,9 +30,10 @@ module.exports = async function handler(req, res) {
   const id = String((req.query && req.query.id) || '').trim();
   if (!UUID_RE.test(id)) return res.status(400).json({ error: 'invalid_id' });
 
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    // Sin la clave de servidor no se pueden leer perfiles (RLS cerrado a visitantes).
-    return res.status(503).json({ error: 'not_configured' });
+  const keyStatus = serviceKeyStatus();
+  if (keyStatus !== 'ok') {
+    // missing: falta la variable; anon: se pegó la clave pública en vez de la service_role
+    return res.status(503).json({ error: keyStatus === 'anon' ? 'wrong_key_type' : 'not_configured' });
   }
 
   try {
