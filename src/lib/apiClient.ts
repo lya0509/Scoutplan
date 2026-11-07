@@ -30,3 +30,14 @@ export async function postApi<T = any>(path: string, body: unknown): Promise<T> 
   if (!res.ok) throw new Error(`Error ${res.status} en ${path}`);
   return res.json();
 }
+
+/** GET a una función de /api con el token de sesión. Devuelve el estado y el cuerpo (sin lanzar por 4xx). */
+export async function getApi<T = any>(path: string): Promise<{ status: number; body: T }> {
+  const { data } = await supabase.auth.getSession();
+  const token = data?.session?.access_token;
+  if (!token) return { status: 401, body: { error: 'login_required' } as any };
+  const res = await fetch(apiUrl(path), { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } });
+  let body: any = null;
+  try { body = await res.json(); } catch {}
+  return { status: res.status, body };
+}

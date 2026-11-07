@@ -5,6 +5,7 @@ import { presenceService } from '../services/presenceService';
 import { Profile } from '../types/progression';
 import { isRetryableError } from '../lib/offline/net';
 import { dataService } from '../lib/dataService';
+import { resolveFileUrl, clearFileCache } from '../lib/fileUrl';
 
 const CACHED_PROFILE_KEY = '@scout_cached_profile';
 const CACHED_SESSION_KEY = '@scout_cached_session';
@@ -164,7 +165,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         const sign = (data?.medical_data as any)?.signatureUrl;
         [resolvedScoutAvatar, resolvedCustomAvatar, sign]
           .filter((u: any) => typeof u === 'string' && u.startsWith('http'))
-          .forEach((u: string) => { fetch(u, { mode: 'cors' }).catch(() => {}); });
+          .forEach((u: string) => { resolveFileUrl(u).then(s => fetch(s, { mode: 'cors' })).catch(() => {}); });
       }
 
       // Si no existía el registro en profiles o faltaban campos, sincronizarlo en segundo plano
@@ -256,6 +257,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       }
 
       await AsyncStorage.removeItem(CACHED_PROFILE_KEY).catch(() => {});
+      await clearFileCache().catch(() => {});
       await AsyncStorage.removeItem(CACHED_SESSION_KEY).catch(() => {});
 
       if (typeof window !== 'undefined' && window.localStorage) {

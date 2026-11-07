@@ -2,6 +2,7 @@ import JSZip from 'jszip';
 import { ProgramaScout } from '../types/programa';
 import { SDG_LIST } from '../data/sdgData';
 import { GROWTH_AREAS, GrowthAreaKey } from '../data/achievementIndicatorsData';
+import { resolveFileUrl } from './fileUrl';
 
 function escapeXml(str: string): string {
   if (!str) return '';
@@ -35,7 +36,7 @@ export const docxProgramaGenerator = {
       let relsXml = (await zip.file(relsPath)?.async('string')) || '';
       const injectImage = async (oldTarget: string, url: string) => {
         try {
-          const res = await fetch(url);
+          const res = await fetch(await resolveFileUrl(url));
           if (!res.ok) return;
           const buf = new Uint8Array(await res.arrayBuffer());
           const isPng = buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;

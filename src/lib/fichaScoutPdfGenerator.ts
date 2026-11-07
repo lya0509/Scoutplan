@@ -3,6 +3,7 @@
 
 import type { PDFFont, PDFPage, PDFImage } from 'pdf-lib';
 import { downloadBytes } from '../utils/reportTable';
+import { resolveFileUrl } from './fileUrl';
 
 const loadPdfLib = () => import('pdf-lib/dist/pdf-lib.min.js');
 
@@ -63,7 +64,7 @@ function wrap(text: string, font: PDFFont, size: number, width: number): string[
 async function loadImage(doc: any, url?: string | null): Promise<PDFImage | null> {
   if (!url) return null;
   try {
-    const res = await fetch(url);
+    const res = await fetch(await resolveFileUrl(url));
     if (!res.ok) return null;
     const bytes = new Uint8Array(await res.arrayBuffer());
     if (bytes[0] === 0x89 && bytes[1] === 0x50) return await doc.embedPng(bytes);

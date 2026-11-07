@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { resolveFileUrl } from '../lib/fileUrl';
 
 // Convert Data URL / Base64 to Uint8Array
 function dataURLToUint8Array(dataUrl: string): Uint8Array | null {
@@ -51,7 +52,7 @@ export async function exportDocxInBrowser(
         sigBytes = dataURLToUint8Array(images.signatureUrl);
       } else if (images.signatureUrl.startsWith('http')) {
         try {
-          const resp = await fetch(images.signatureUrl);
+          const resp = await fetch(await resolveFileUrl(images.signatureUrl));
           if (resp.ok) {
             const buf = await resp.arrayBuffer();
             sigBytes = new Uint8Array(buf);
@@ -81,7 +82,7 @@ export async function exportDocxInBrowser(
         photoBytes = dataURLToUint8Array(images.photoUrl);
       } else if (images.photoUrl.startsWith('http')) {
         try {
-          const resp = await fetch(images.photoUrl);
+          const resp = await fetch(await resolveFileUrl(images.photoUrl));
           if (resp.ok) {
             const buf = await resp.arrayBuffer();
             photoBytes = new Uint8Array(buf);

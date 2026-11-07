@@ -21,6 +21,7 @@ import { showAlert } from '../utils/alert';
 import { exportDocxInBrowser } from '../utils/docxExporter';
 import { navigateBackOrHome } from '../utils/navigationHelper';
 import { pickImageUniversal } from '../utils/filePicker';
+import { SecureImage } from '../components/SecureImage';
 
 export default function CurriculumScoutScreen({ route, navigation }: any) {
   const { user } = useAuth();
@@ -535,7 +536,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
             <View style={styles.photoUploadCard}>
               <View style={styles.photoBox}>
                 {photoUrl ? (
-                  <Image source={{ uri: photoUrl }} style={styles.photoImg} />
+                  <SecureImage source={{ uri: photoUrl }} style={styles.photoImg} />
                 ) : (
                   <User size={32} color="#a1a1aa" />
                 )}

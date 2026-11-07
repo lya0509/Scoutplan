@@ -41,6 +41,7 @@ import { showAlert } from '../utils/alert';
 import { checkProfileCompletion } from '../utils/profileGuard';
 import { OnboardingGuideModal } from './OnboardingGuideModal';
 import { pickImageUniversal } from '../utils/filePicker';
+import { SecureImage } from './SecureImage';
 
 interface FAQItem {
   id: string;
@@ -445,7 +446,7 @@ export default function HelpFloatingFAB() {
                       <Text style={{ fontSize: 11, color: colors.primary, fontWeight: 'bold' }}>Video de evidencia listo</Text>
                     </View>
                   ) : (
-                    <Image source={{ uri: bugMediaUrl }} style={styles.mediaPreviewImg} resizeMode="contain" />
+                    <SecureImage source={{ uri: bugMediaUrl }} style={styles.mediaPreviewImg} resizeMode="contain" />
                   )}
                 </View>
               )}

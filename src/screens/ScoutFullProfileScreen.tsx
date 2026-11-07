@@ -25,6 +25,8 @@ import { colors } from '../theme/colors';
 import { Trash2, AlertTriangle, Award, CheckCircle, Mail, MapPin, Shield, Download, X, Maximize2, ArrowLeft } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 import { navigateBackOrHome } from '../utils/navigationHelper';
+import { SecureImage } from '../components/SecureImage';
+import { resolveFileUrl } from '../lib/fileUrl';
 
 export default function ScoutFullProfileScreen({ route, navigation }: any) {
   const { scoutId } = route.params;
@@ -120,7 +122,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
     }
   };
 
-  const handleDownloadCertificate = (cert: any) => {
+  const handleDownloadCertificate = async (cert: any) => {
     if (cert?.file_url && !isSafeFileUrl(cert.file_url)) {
       showAlert('Enlace no válido', 'El archivo de este certificado no es una imagen o enlace web válido, por seguridad no se abrirá.');
       return;
@@ -132,7 +134,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
 
     if (Platform.OS === 'web') {
       const link = document.createElement('a');
-      link.href = cert.file_url;
+      link.href = await resolveFileUrl(cert.file_url);
       link.download = `${cert.title ? cert.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'certificado'}_acreditacion.jpg`;
       document.body.appendChild(link);
       link.click();
@@ -401,7 +403,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
 
                 {cert.file_url ? (
                   <View style={styles.certImgWrapper}>
-                    <Image source={{ uri: cert.file_url }} style={styles.certImg} resizeMode="cover" />
+                    <SecureImage source={{ uri: cert.file_url }} style={styles.certImg} resizeMode="cover" />
                     <View style={styles.zoomHintOverlay}>
                       <Maximize2 size={14} color="white" style={{ marginRight: 4 }} />
                       <Text style={styles.zoomHintText}>Toca para ver completo y descargar</Text>
@@ -435,7 +437,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
             <ScrollView style={{ padding: 16 }}>
               {viewModalCert?.file_url ? (
                 <View style={viewerStyles.fullImageWrapper}>
-                  <Image
+                  <SecureImage
                     source={{ uri: viewModalCert.file_url }}
                     style={viewerStyles.fullImage}
                     resizeMode="contain"

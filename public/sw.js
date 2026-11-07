@@ -80,20 +80,25 @@ self.addEventListener('fetch', (event) => {
 
   // A. Otros dominios
   if (url.origin !== self.location.origin) {
-    // Fotos públicas de Supabase Storage (avatares, certificados, firmas). Se guardan solo
-    // respuestas legibles (CORS) para que sirvan tanto a <img> como a la exportación a Word.
-    const isStorageFile = url.hostname.endsWith('supabase.co') && url.pathname.includes('/storage/v1/object/public/');
+    // Archivos de Supabase Storage (avatares, certificados, firmas, comprobantes). El bucket
+    // es privado: la app pide enlaces firmados (/object/sign/...?token=...) que cambian cada
+    // hora. Se guardan por su RUTA sin el token (clave canónica /object/public/...), así la
+    // copia local sigue sirviendo sin internet aunque el enlace haya cambiado.
+    const isStorageFile = url.hostname.endsWith('supabase.co') &&
+      (url.pathname.includes('/storage/v1/object/public/') || url.pathname.includes('/storage/v1/object/sign/'));
     if (isStorageFile) {
+      const key = url.origin + url.pathname.replace('/storage/v1/object/sign/', '/storage/v1/object/public/');
       event.respondWith((async () => {
-        const cached = await caches.match(request.url, { ignoreVary: true });
+        const cached = await caches.match(key, { ignoreVary: true });
         if (cached) return cached;
-        const res = await fetch(request);
+        // Petición CORS para obtener una respuesta legible y poder guardarla
+        const res = await fetch(request.url, { mode: 'cors', credentials: 'omit' }).catch(() => fetch(request));
         if (res && res.ok && res.type !== 'opaque') {
           const cache = await caches.open(RUNTIME_CACHE);
-          cache.put(request.url, res.clone()).then(() => trimCache(RUNTIME_CACHE, RUNTIME_MAX_ENTRIES)).catch(() => {});
+          cache.put(key, res.clone()).then(() => trimCache(RUNTIME_CACHE, RUNTIME_MAX_ENTRIES)).catch(() => {});
         }
         return res;
-      })().catch(() => caches.match(request.url, { ignoreVary: true }).then(r => r || new Response('', { status: 504 }))));
+      })().catch(() => caches.match(key, { ignoreVary: true }).then(r => r || new Response('', { status: 504 }))));
       return;
     }
     // QR del carnet (imagen sin CORS)
@@ -105,8 +110,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (url.pathname.startsWith('/api/')) return;
-  // Verificación pública del carnet: página propia, siempre de la red (no es la app)
-  if (url.pathname === '/verificar' || url.pathname.startsWith('/verificar/') || url.pathname === '/verificar.html') return;
 
   // B. Guías PDF: si están descargadas se abren sin internet (también dentro del visor/iframe)
   if (DOC_PATH.test(url.pathname)) {

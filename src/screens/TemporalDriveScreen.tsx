@@ -23,6 +23,7 @@ import { useModalBackHandler } from '../hooks/useBackHandler';
 import { showAlert } from '../utils/alert';
 import { checkProfileCompletion } from '../utils/profileGuard';
 import { pickFilesUniversal } from '../utils/filePicker';
+import { SecureImage } from '../components/SecureImage';
 
 interface DrivePhoto {
   id: string;
@@ -377,7 +378,7 @@ export default function TemporalDriveScreen({ navigation }: any) {
                         <Text style={{ fontSize: 10, color: 'white', fontWeight: 'bold', marginTop: 4 }}>VIDEO</Text>
                       </View>
                     ) : (
-                      <Image source={{ uri: photo.url }} style={styles.photoThumb} />
+                      <SecureImage source={{ uri: photo.url }} style={styles.photoThumb} />
                     )}
                     <View style={styles.photoInfoOverlay}>
                       <Text style={styles.photoUploader} numberOfLines={1}>
@@ -414,7 +415,7 @@ export default function TemporalDriveScreen({ navigation }: any) {
                 >
                   <View style={styles.albumCoverMini}>
                     {alb.photos.length > 0 ? (
-                      <Image source={{ uri: alb.photos[0].url }} style={{ width: '100%', height: '100%' }} />
+                      <SecureImage source={{ uri: alb.photos[0].url }} style={{ width: '100%', height: '100%' }} />
                     ) : (
                       <ImageIcon size={24} color="white" />
                     )}
@@ -611,7 +612,7 @@ export default function TemporalDriveScreen({ navigation }: any) {
                   </View>
                 )
               ) : (
-                <Image source={{ uri: showPhotoModal.url }} style={modalStyles.fullPhotoImage} resizeMode="contain" />
+                <SecureImage source={{ uri: showPhotoModal.url }} style={modalStyles.fullPhotoImage} resizeMode="contain" />
               )}
 
               <View style={modalStyles.fullPhotoFooter}>

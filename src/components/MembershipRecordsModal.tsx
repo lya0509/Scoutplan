@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Modal,
   Image,
-  Linking,
 } from 'react-native';
 import { Receipt, X, Camera, Trash2, CheckCircle2, XCircle, CloudOff, History, ImageIcon } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
@@ -18,6 +17,8 @@ import { dataService, MembershipReceipt, MembershipHistoryEntry } from '../lib/d
 import { pickImageUniversal } from '../utils/filePicker';
 import { showAlert } from '../utils/alert';
 import { formatDateEs } from '../utils/dateLocal';
+import { SecureImage } from './SecureImage';
+import { openFileUrl } from '../lib/fileUrl';
 
 interface Props {
   visible: boolean;
@@ -129,10 +130,7 @@ export function MembershipRecordsModal({ visible, onClose, member, mode }: Props
     ]);
   };
 
-  const openImage = (url: string) => {
-    if (typeof window !== 'undefined' && window.open) window.open(url, '_blank', 'noopener');
-    else Linking.openURL(url).catch(() => {});
-  };
+  const openImage = (url: string) => { openFileUrl(url); };
 
   const inputStyle = [styles.input, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }];
   const placeholderColor = isDarkMode ? '#71717a' : '#94a3b8';
@@ -289,7 +287,7 @@ export function MembershipRecordsModal({ visible, onClose, member, mode }: Props
                     <View key={r.id} style={[styles.receiptRow, { backgroundColor: theme.inputBg }]}>
                       {r.imageUrl ? (
                         <TouchableOpacity onPress={() => openImage(r.imageUrl)} accessibilityRole="imagebutton" accessibilityLabel="Ver comprobante completo">
-                          <Image source={{ uri: r.imageUrl }} style={[styles.thumb, { borderColor: theme.border }]} />
+                          <SecureImage source={{ uri: r.imageUrl }} style={[styles.thumb, { borderColor: theme.border }]} />
                         </TouchableOpacity>
                       ) : (
                         <View style={[styles.thumb, styles.thumbEmpty, { borderColor: theme.border }]}>

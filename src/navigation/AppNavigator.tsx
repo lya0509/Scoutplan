@@ -29,6 +29,7 @@ import DocumentosScreen from '../screens/DocumentosScreen';
 import ProgramaScoutScreen from '../screens/ProgramaScoutScreen';
 import ProgramaScoutEditorScreen from '../screens/ProgramaScoutEditorScreen';
 import EspecialidadesScreen from '../screens/EspecialidadesScreen';
+import VerificarCarnetScreen from '../screens/VerificarCarnetScreen';
 
 import DrawerNavigator from './DrawerNavigator';
 
@@ -82,6 +83,7 @@ const linking: any = {
       Especialidades: 'especialidades-catalogo',
       ProgramaScout: 'programas-actividades',
       ProgramaScoutEditor: 'programa-editor',
+      VerificarCarnet: 'verificar/:id',
     }
   }
 };
@@ -105,10 +107,59 @@ const DRAWER_SUBROUTES = new Set([
   'Calendario',
 ]);
 
+// Verificación de carnet abierta sin sesión (/verificar/<id>): se recuerda el código y,
+// al iniciar sesión, se abre la verificación. Sin sesión no se muestra nada.
+const PENDING_VERIFY_KEY = '@pending_verify_id';
+const VERIFY_PATH = /^\/verificar\/([0-9a-f-]{36})\/?$/i;
+
+function rememberPendingVerify() {
+  try {
+    if (typeof window === 'undefined' || !window.location) return;
+    const m = VERIFY_PATH.exec(window.location.pathname);
+    if (m) window.sessionStorage.setItem(PENDING_VERIFY_KEY, m[1]);
+  } catch {}
+}
+
+function takePendingVerify(): string | null {
+  try {
+    if (typeof window === 'undefined') return null;
+    const id = window.sessionStorage.getItem(PENDING_VERIFY_KEY);
+    if (id) window.sessionStorage.removeItem(PENDING_VERIFY_KEY);
+    return id;
+  } catch {
+    return null;
+  }
+}
+
+export function hasPendingVerify(): boolean {
+  try { return typeof window !== 'undefined' && !!window.sessionStorage.getItem(PENDING_VERIFY_KEY); } catch { return false; }
+}
+
 export default function AppNavigator() {
   const { user, isLoading } = useAuth();
   const { isDarkMode, primaryColor, toggleDarkMode, setPrimaryColor } = useTheme();
   const navigationRef = React.useRef<any>(null);
+
+  // Sin sesión: guardar el código del QR para después del inicio de sesión
+  if (!user) rememberPendingVerify();
+
+  useEffect(() => {
+    if (!user) return;
+    const id = takePendingVerify();
+    if (!id) return;
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries++;
+      const nav = navigationRef.current;
+      if (nav?.isReady?.()) {
+        clearInterval(timer);
+        if (nav.getCurrentRoute?.()?.name !== 'VerificarCarnet') nav.navigate('VerificarCarnet', { id });
+      } else if (tries > 40) {
+        clearInterval(timer);
+      }
+    }, 150);
+    return () => clearInterval(timer);
+  }, [user]);
 
   useEffect(() => {
     updateGraphifyRuntimeState({
@@ -215,6 +266,7 @@ export default function AppNavigator() {
             <Stack.Screen name="Especialidades" component={EspecialidadesScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ProgramaScout" component={ProgramaScoutScreen} options={{ headerShown: true, title: 'Programas de Actividades' }} />
             <Stack.Screen name="ProgramaScoutEditor" component={ProgramaScoutEditorScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="VerificarCarnet" component={VerificarCarnetScreen} options={{ headerShown: false, title: 'Verificar carnet' }} />
           </Stack.Group>
         )}
       </Stack.Navigator>

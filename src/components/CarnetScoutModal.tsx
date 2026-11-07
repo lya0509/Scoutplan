@@ -16,6 +16,7 @@ import { useModalBackHandler } from '../hooks/useBackHandler';
 import { colors } from '../theme/colors';
 import { showAlert } from '../utils/alert';
 import { ScoutQRCode } from './ScoutQRCode';
+import { SecureImage } from './SecureImage';
 
 interface CarnetScoutModalProps {
   visible: boolean;
@@ -104,7 +105,7 @@ export const CarnetScoutModal: React.FC<CarnetScoutModalProps> = ({
                 {/* Cuadro de Foto */}
                 <View style={styles.photoContainer}>
                   {carnetPhoto ? (
-                    <Image source={{ uri: carnetPhoto }} style={styles.photoImg} onError={() => setPhotoFailed(true)} />
+                    <SecureImage source={{ uri: carnetPhoto }} style={styles.photoImg} onError={() => setPhotoFailed(true)} />
                   ) : (
                     <View style={styles.photoPlaceholder}>
                       <Text style={{ fontSize: 10, color: '#6b7280', fontWeight: 'bold' }}>FOTO</Text>

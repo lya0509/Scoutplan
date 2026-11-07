@@ -14,6 +14,7 @@ import { UserScoutAvatar } from './UserScoutAvatar';
 import { useTheme } from '../context/ThemeContext';
 import { showAlert } from '../utils/alert';
 import { pickImageUniversal } from '../utils/filePicker';
+import { SecureImage } from './SecureImage';
 
 interface Props {
   scoutAvatarUrl?: string | null;
@@ -175,7 +176,7 @@ export function DualProfileAvatar({
           {uploading ? (
             <ActivityIndicator size="small" color={primaryColor} />
           ) : currentPhotoUrl ? (
-            <Image
+            <SecureImage
               key={activeTab + (currentPhotoUrl || '')}
               source={{ uri: currentPhotoUrl }}
               style={{ width: size - 6, height: size - 6, borderRadius: (size - 6) / 2 }}
@@ -351,7 +352,7 @@ export function DualProfileAvatar({
             </TouchableOpacity>
 
             {currentPhotoUrl ? (
-              <Image
+              <SecureImage
                 key={activeTab + (currentPhotoUrl || '')}
                 source={{ uri: currentPhotoUrl }}
                 style={styles.zoomImage}

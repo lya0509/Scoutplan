@@ -147,6 +147,20 @@ export default function LoginScreen({ navigation }: any) {
           <Text style={styles.appSubtitle}>Asociación de Scouts de Venezuela</Text>
         </View>
 
+        {/* Llegó escaneando el QR de un carnet sin sesión iniciada */}
+        {(() => {
+          let pending = false;
+          try { pending = typeof window !== 'undefined' && !!window.sessionStorage.getItem('@pending_verify_id'); } catch {}
+          if (!pending) return null;
+          return (
+            <View style={[styles.verifyNotice, { backgroundColor: isDarkMode ? '#1e1b4b' : '#eff6ff', borderColor: isDarkMode ? '#3730a3' : '#bfdbfe' }]}>
+              <Text style={{ color: isDarkMode ? '#c7d2fe' : '#1e3a8a', fontSize: 13, lineHeight: 19 }}>
+                Para verificar un carnet tienes que iniciar sesión con tu cuenta de la app. Al entrar verás el resultado.
+              </Text>
+            </View>
+          );
+        })()}
+
         {/* FORMULARIO */}
         <View style={styles.formContainer}>
           
@@ -287,6 +301,7 @@ export default function LoginScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
+  verifyNotice: { borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 16 },
   screenWrapper: {
     flex: 1,
     justifyContent: 'center',

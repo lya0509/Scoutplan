@@ -30,6 +30,7 @@ import { showAlert } from '../utils/alert';
 import { checkProfileCompletion } from '../utils/profileGuard';
 import { navigateBackOrHome } from '../utils/navigationHelper';
 import { formatDateEs, humanDuration } from '../utils/dateLocal';
+import { SecureImage } from '../components/SecureImage';
 
 export default function StageDetailScreen({ route, navigation }: any) {
   const { stageId } = route.params || { stageId: 'precursor' };
@@ -1061,7 +1062,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                             activeOpacity={usedIn ? 1 : 0.8}
                           >
                             {certImg ? (
-                              <Image source={{ uri: certImg }} style={modalStyles.gridCertImage} resizeMode="cover" />
+                              <SecureImage source={{ uri: certImg }} style={modalStyles.gridCertImage} resizeMode="cover" />
                             ) : (
                               <View style={[modalStyles.gridCertFallback, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
                                 <Award size={28} color={colors.primary} />

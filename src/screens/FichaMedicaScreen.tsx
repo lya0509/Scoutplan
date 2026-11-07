@@ -25,6 +25,7 @@ import { navigateBackOrHome } from '../utils/navigationHelper';
 import { pickImageUniversal } from '../utils/filePicker';
 import FichaMedicaOrion84Form from '../components/FichaMedicaOrion84Form';
 import { todayLocal } from '../utils/dateLocal';
+import { SecureImage } from '../components/SecureImage';
 
 type FichaTab = 'scout' | 'orion84';
 const FICHA_TABS: { key: FichaTab; label: string }[] = [
@@ -766,7 +767,7 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10 }}>
               <View style={[styles.signaturePreviewBox, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
                 {signatureUrl ? (
-                  <Image source={{ uri: signatureUrl }} style={{ width: '100%', height: '100%', resizeMode: 'contain' }} />
+                  <SecureImage source={{ uri: signatureUrl }} style={{ width: '100%', height: '100%', resizeMode: 'contain' }} />
                 ) : (
                   <Text style={{ fontSize: 10, color: theme.subText, textAlign: 'center' }}>Sin firma cargada</Text>
                 )}

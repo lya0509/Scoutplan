@@ -33,19 +33,6 @@
           "value": "public, max-age=86400"
         }
       ]
-    },
-    {
-      "source": "/verificar(.*)",
-      "headers": [
-        {
-          "key": "X-Robots-Tag",
-          "value": "noindex"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "no-cache"
-        }
-      ]
     }
   ],
   "rewrites": [
@@ -56,14 +43,6 @@
     {
       "source": "/asv-pdf/(.*)",
       "destination": "https://scouts.org.ve/wp-content/uploads/$1"
-    },
-    {
-      "source": "/verificar",
-      "destination": "/verificar.html"
-    },
-    {
-      "source": "/verificar/(.*)",
-      "destination": "/verificar.html"
     },
     {
       "source": "/(.*)",

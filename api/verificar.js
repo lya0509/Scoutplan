@@ -1,7 +1,8 @@
-// Verificación pública del carnet: GET /api/verificar?id=<uuid>
-// Quien escanea el QR del carnet ve SOLO nombre, grupo, rama/cargo y estado de la membresía.
-// Nunca devuelve cédula, teléfono, foto, correo ni datos médicos.
-const { getAdminSupabase, serviceKeyStatus } = require('./_auth');
+// Verificación del carnet: GET /api/verificar?id=<uuid>  (requiere sesión iniciada)
+// Quien escanea el QR del carnet, con su cuenta de la app, ve SOLO nombre, grupo,
+// rama/cargo y estado de la membresía. Sin sesión: 401. Nunca devuelve cédula, teléfono,
+// foto, correo ni datos médicos.
+const { getAdminSupabase, serviceKeyStatus, requireUser } = require('./_auth');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -27,6 +28,10 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'method_not_allowed' });
   }
 
+  // Sin sesión no se muestra nada (ni siquiera si el carnet existe)
+  const auth = await requireUser(req).catch(() => null);
+  if (!auth) return res.status(401).json({ error: 'login_required' });
+
   const id = String((req.query && req.query.id) || '').trim();
   if (!UUID_RE.test(id)) return res.status(400).json({ error: 'invalid_id' });
 
@@ -44,7 +49,7 @@ module.exports = async function handler(req, res) {
       .maybeSingle();
     if (error) throw error;
     if (!data) {
-      res.setHeader('Cache-Control', 'public, s-maxage=60');
+      res.setHeader('Cache-Control', 'private, no-store');
       return res.status(404).json({ error: 'not_found' });
     }
 
@@ -60,7 +65,7 @@ module.exports = async function handler(req, res) {
       ? (data.unit ? String(data.unit).charAt(0).toUpperCase() + String(data.unit).slice(1) : 'Joven Scout')
       : ROLE_LABEL[data.role] || 'Miembro';
 
-    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
+    res.setHeader('Cache-Control', 'private, no-store');
     return res.status(200).json({
       name: data.name || 'Miembro ASV',
       group: data.group_name || null,
