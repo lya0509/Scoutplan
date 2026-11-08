@@ -205,7 +205,6 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
 
     // Si es una recarga de fondo y hay cambios locales activos, NO sobreescribir
     if (!force && isDirtyRef.current) {
-      console.log('[QuarterlyPlan] Omitiendo recarga de fondo porque hay cambios locales activos sin guardar.');
       return;
     }
 
@@ -403,7 +402,6 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
           // PROTECCIÓN CRÍTICA: Si el usuario tiene cambios activos en pantalla,
           // JAMÁS sobreescribir sus campos en segundo plano
           if (isDirtyRef.current) {
-            console.log('[Realtime] Cambio detectado en Supabase, pero el usuario está editando activamente.');
             return;
           }
           const rec = payload.new as any;

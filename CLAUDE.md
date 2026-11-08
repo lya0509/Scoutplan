@@ -2,7 +2,7 @@
 
 ## 1. Agent Role Division & Protocolo Graphy
 - **Antigravity (Backend, Offline Engine & Core Architecture Brain)**: Owns the Supabase PostgreSQL schema & RLS migrations ([`supabase_master_fix_all_tables.sql`](file:///home/lya/proyectos/plan-progresivo/supabase_master_fix_all_tables.sql)), Offline-First Sync Queue & Progression Engine ([`src/lib/dataService.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/dataService.ts)), Programa Scout CRUD & OpenXML `.docx` Generator ([`src/lib/programaService.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/programaService.ts), [`src/lib/docxProgramaGenerator.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/docxProgramaGenerator.ts)), Realtime Presence ([`src/services/presenceService.ts`](file:///home/lya/proyectos/plan-progresivo/src/services/presenceService.ts)), VAPID Web Push ([`src/services/webPushService.ts`](file:///home/lya/proyectos/plan-progresivo/src/services/webPushService.ts), [`api/send-push.js`](file:///home/lya/proyectos/plan-progresivo/api/send-push.js)), and the Runtime Graphify Bridge ([`src/lib/graphifyBridge.ts`](file:///home/lya/proyectos/plan-progresivo/src/lib/graphifyBridge.ts)).
-- **Claude Code (Frontend Design, Visual Polish & E2E Testing Agent)**: Owns UI/UX polish, responsive layout inspection, component styling, and E2E verification across all **25 screens** and **21 reusable components** using the **Full-System Graphify** artifacts and `window.__SCOUT_GRAPHIFY__`.
+- **Claude Code (Frontend Design, Visual Polish & E2E Testing Agent)**: Owns UI/UX polish, responsive layout inspection, component styling, and E2E verification across all **29 screens** and **29 reusable components** using the **Full-System Graphify** artifacts and `window.__SCOUT_GRAPHIFY__`.
 - **Sincronización Incremental Obligatoria (Alta y Poda)**:
   - Antes de crear, modificar o refactorizar cualquier función, parámetro o pantalla, consulta **[`SYSTEM_GRAPH.md`](file:///home/lya/proyectos/plan-progresivo/SYSTEM_GRAPH.md)** y **[`graphify-out/GRAPH_REPORT.md`](file:///home/lya/proyectos/plan-progresivo/graphify-out/GRAPH_REPORT.md)**.
   - Al agregar o eliminar parámetros, funciones, pantallas o tablas, actualiza [`SYSTEM_GRAPH.md`](file:///home/lya/proyectos/plan-progresivo/SYSTEM_GRAPH.md) y ejecuta `npm run graphify`.
@@ -12,13 +12,17 @@
 ## 2. Always Start With the Full-System Graphify Artifacts
 Before running broad file searches, read the pre-indexed Full-System Graphify suite:
 1. **[`SYSTEM_GRAPH.md`](file:///home/lya/proyectos/plan-progresivo/SYSTEM_GRAPH.md)**: Master Mermaid architecture diagram, interface contracts, role matrix, and incremental synchronization log (Protocolo Graphy).
-2. **[`graphify-out/GRAPH_REPORT.md`](file:///home/lya/proyectos/plan-progresivo/graphify-out/GRAPH_REPORT.md)**: Exhaustive architectural manual covering all **8 system communities**, **25 screens**, **21 components**, **3 contexts**, **16 services**, **9 static catalogs**, **11 database tables**, and **10 QA suites**.
-3. **[`graphify-out/graph.json`](file:///home/lya/proyectos/plan-progresivo/graphify-out/graph.json)**: Machine-readable knowledge graph (`120 nodes`, `107 directed edges`, `4 hyperedges`) with exact exports, imports, Supabase tables touched, storage buckets, and AsyncStorage keys per file.
-4. **[`graphify-out/qa_matrix.json`](file:///home/lya/proyectos/plan-progresivo/graphify-out/qa_matrix.json)**: Complete 10-suite E2E & Visual QA test matrix (`QA-01` through `QA-10`) with exact programmatic navigation commands.
+2. **[`graphify-out/GRAPH_REPORT.md`](file:///home/lya/proyectos/plan-progresivo/graphify-out/GRAPH_REPORT.md)**: Exhaustive architectural manual covering all **8 system communities**, **29 screens**, **29 components**, **3 contexts**, **24 services**, **11 static catalogs**, **11 database tables**, and **14 QA suites**.
+3. **[`graphify-out/graph.json`](file:///home/lya/proyectos/plan-progresivo/graphify-out/graph.json)**: Machine-readable knowledge graph (`121 nodes`, `107 directed edges`, `4 hyperedges`) with exact exports, imports, Supabase tables touched, storage buckets, and AsyncStorage keys per file.
+4. **[`graphify-out/qa_matrix.json`](file:///home/lya/proyectos/plan-progresivo/graphify-out/qa_matrix.json)**: Complete 14-suite E2E & Visual QA test matrix (`QA-01` through `QA-14`) with exact programmatic navigation commands.
 5. **[`graphify-out/graph.html`](file:///home/lya/proyectos/plan-progresivo/graphify-out/graph.html)**: Interactive visual knowledge graph & QA matrix explorer.
 6. **Regenerate / Verify Graph Anytime**:
    ```bash
    npm run graphify
+   ```
+7. **Database security tests** (run before handing ANY `supabase_*.sql` to the user; new SQL files must be added to the run order in [`tests/sql/run.mjs`](file:///home/lya/proyectos/plan-progresivo/tests/sql/run.mjs)):
+   ```bash
+   npm run test:sql
    ```
 
 ---

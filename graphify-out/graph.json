@@ -2,11 +2,11 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-08T20:58:55.055Z",
+    "generatedAt": "2026-11-08T22:15:18.579Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
-      "totalNodes": 120,
+      "totalNodes": 121,
       "totalEdges": 107,
       "totalHyperedges": 4,
       "totalScreens": 29,
@@ -15,7 +15,7 @@
       "totalServices": 24,
       "totalCatalogs": 11,
       "totalDatabaseTables": 11,
-      "totalQaSuites": 10
+      "totalQaSuites": 14
     }
   },
   "communities": [
@@ -129,8 +129,8 @@
       "file": "src/navigation/AppNavigator.tsx",
       "role": "Routes unauthenticated users to Login/Register and authenticated users by role (scout -> DrawerNavigator, scouter -> ScouterDashboard, jefe_grupo -> JefeDashboard, comisionados/nacional/admin -> ComisionadoDashboard) plus shared screens.",
       "exists": true,
-      "lines": 288,
-      "bytes": 12981,
+      "lines": 292,
+      "bytes": 13345,
       "exports": [
         "hasPendingVerify",
         "AppNavigator"
@@ -268,8 +268,8 @@
       "file": "src/context/ThemeContext.tsx",
       "role": "Persists app_dark_mode and app_primary_color in AsyncStorage and provides dynamic theme tokens across all screens.",
       "exists": true,
-      "lines": 115,
-      "bytes": 3417,
+      "lines": 128,
+      "bytes": 4080,
       "exports": [
         "THEME_COLOR_PRESETS",
         "ThemeProvider",
@@ -296,8 +296,8 @@
       "file": "src/context/NotificationContext.tsx",
       "role": "Polls & subscribes to scout_notifications/notifications, manages unread badge counts, triggers LiveNotificationToast, and registers Web Push subscriptions.",
       "exists": true,
-      "lines": 198,
-      "bytes": 6515,
+      "lines": 197,
+      "bytes": 6440,
       "exports": [
         "NotificationProvider",
         "useNotifications"
@@ -434,8 +434,8 @@
       "file": "src/lib/dataService.ts",
       "role": "Async data layer on top of the offline outbox (@scout_outbox_v1) with cached reads: stage/requirement progress, stage/requirement progress, stage review/approval, certificates + curriculum auto-sync, quarterly plans, CIP events, nights log, vida de grupo log, and membership dates.",
       "exists": true,
-      "lines": 2224,
-      "bytes": 99814,
+      "lines": 2208,
+      "bytes": 99752,
       "exports": [
         "MembershipReceipt",
         "MembershipHistoryEntry",
@@ -462,7 +462,6 @@
         "profiles",
         "certificates",
         "scout_notifications",
-        "calendar_events",
         "cip_oficiales",
         "quarterly_plans",
         "scout_groups",
@@ -579,8 +578,8 @@
       "file": "src/lib/programaService.ts",
       "role": "Manages scout_programas table and @scout_programas_list local cache with getProgramas, savePrograma, deletePrograma, and duplicatePrograma.",
       "exists": true,
-      "lines": 437,
-      "bytes": 17303,
+      "lines": 435,
+      "bytes": 17130,
       "exports": [
         "programaService"
       ],
@@ -814,8 +813,8 @@
       "file": "src/services/notificationService.ts",
       "role": "Dispatches in-app, browser, and Web Push notifications to users, units, groups, or roles via scout_notifications.",
       "exists": true,
-      "lines": 619,
-      "bytes": 23679,
+      "lines": 582,
+      "bytes": 21643,
       "exports": [
         "AppNotification",
         "OFFICIAL_SYSTEM_ANNOUNCEMENTS",
@@ -833,7 +832,7 @@
       ],
       "supabaseBuckets": [],
       "realtimeChannels": [
-        "scout_realtime_notifications_hub"
+        "avisos_${userId}"
       ],
       "storageKeys": [
         "@scout_notifications_storage_global_all"
@@ -847,8 +846,8 @@
       "file": "src/services/presenceService.ts",
       "role": "Tracks online/offline status of scouts and scouters via Supabase Realtime channel scout_presence_global and updates profiles.updated_at.",
       "exists": true,
-      "lines": 196,
-      "bytes": 5966,
+      "lines": 201,
+      "bytes": 6222,
       "exports": [
         "presenceService"
       ],
@@ -861,7 +860,7 @@
       ],
       "supabaseBuckets": [],
       "realtimeChannels": [
-        "scout_presence_global"
+        "presencia:${user.group_name}"
       ],
       "storageKeys": []
     },
@@ -896,8 +895,8 @@
       "file": "src/services/webPushService.ts",
       "role": "Registers Service Worker PushManager subscriptions in push_subscriptions and invokes /api/send-push.",
       "exists": true,
-      "lines": 173,
-      "bytes": 5643,
+      "lines": 171,
+      "bytes": 5470,
       "exports": [
         "VAPID_PUBLIC_KEY",
         "PushSubscriptionData",
@@ -990,8 +989,8 @@
       "route": "Resumen",
       "role": "Main Scout home dashboard: ScoutUserIcon greeting badge, progression summary, active stage progress bar, unit Rovers directory (directorio_grupo RPC), quick access cards, CarnetScoutModal, OnboardingGuideModal, and HelpFloatingFAB.",
       "exists": true,
-      "lines": 824,
-      "bytes": 36484,
+      "lines": 850,
+      "bytes": 38610,
       "exports": [
         "ScoutDashboardScreen"
       ],
@@ -1069,8 +1068,8 @@
       "route": "StageDetail",
       "role": "Interactive checklist of stage requirements, linking to CatalogSelectorScreen, NochesAireLibreModal, VidaGrupoModal, CertificateUploadScreen, and stage review submission.",
       "exists": true,
-      "lines": 1329,
-      "bytes": 60324,
+      "lines": 1286,
+      "bytes": 57961,
       "exports": [
         "StageDetailScreen"
       ],
@@ -1176,8 +1175,8 @@
       "route": "Perfil",
       "role": "Scout & Scouter personal profile editor: dual avatars (Uniformado/Casual), cédula, dates (birth, promise, join), membership expiration proposal, and digital Carnet Scout.",
       "exists": true,
-      "lines": 782,
-      "bytes": 34960,
+      "lines": 783,
+      "bytes": 35011,
       "exports": [
         "ProfileScreen"
       ],
@@ -1195,6 +1194,7 @@
         "../components/CarnetScoutModal",
         "../components/MembershipRecordsModal",
         "../components/DeleteAccountModal",
+        "../data/territory",
         "../components/NotificationHeaderBell",
         "../lib/dataService",
         "../utils/alert",
@@ -1259,8 +1259,8 @@
       "route": "ScouterDashboard",
       "role": "Unit leader dashboard: lists unit scouts with online presence, pending stage reviews, quarterly plan feedback, unit programs, and profile photo moderation.",
       "exists": true,
-      "lines": 1478,
-      "bytes": 73009,
+      "lines": 1296,
+      "bytes": 64391,
       "exports": [
         "ScouterDashboardScreen"
       ],
@@ -1508,8 +1508,8 @@
       "route": "QuarterlyPlan",
       "role": "Quarterly planner (Trimestres I-IV) supporting individual Rover plans and shared unit plans linked to ProgramaScoutEditor.",
       "exists": true,
-      "lines": 2226,
-      "bytes": 110730,
+      "lines": 2224,
+      "bytes": 110504,
       "exports": [
         "QuarterlyPlanScreen"
       ],
@@ -1660,7 +1660,7 @@
       "role": "Two-tab medical record: \"Ficha Médica Scout\" (ASV form, Word .docx export) and \"Ficha Médica Orión 84\" (FichaMedicaOrion84Form, PDF export). Both live in profiles.medical_data (Orión 84 under medical_data.orion84; saves merge, never overwrite each other).",
       "exists": true,
       "lines": 847,
-      "bytes": 42162,
+      "bytes": 42184,
       "exports": [
         "FichaMedicaScreen"
       ],
@@ -2827,7 +2827,7 @@
       "role": "GET /api/verificar?id=<uuid> requires a logged-in user (401 otherwise); with the service role returns only name, group, unit/role and membership status/expiry; Cache-Control private, no-store.",
       "exists": true,
       "lines": 85,
-      "bytes": 3538,
+      "bytes": 3471,
       "exports": [],
       "imports": [],
       "supabaseTables": [
@@ -3143,7 +3143,7 @@
       "role": "Youth view of a CIP requirement: credited CIPs (badge «anterior a la app»), own requests with status, form to request a pre-app CIP with Scout Law confirmation. Replaces the old self-selection modal in StageDetail.",
       "exists": true,
       "lines": 224,
-      "bytes": 13317,
+      "bytes": 13396,
       "exports": [
         "CipStageModal"
       ],
@@ -3157,6 +3157,28 @@
         "../utils/alert",
         "../utils/dateLocal",
         "../lib/cipLogic"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "run.mjs",
+      "label": "tests/sql/run.mjs (Database security tests)",
+      "type": "code_file",
+      "community": "database_catalogs_pwa",
+      "file": "tests/sql/run.mjs",
+      "role": "npm run test:sql — in-memory Postgres (PGlite) with Supabase stubs (auth.uid, roles, storage, realtime); runs every supabase_*.sql twice in production order and ~78 permission checks (cross-group, self-approval, CIP, history, deletion, notifications, private presence).",
+      "exists": true,
+      "lines": 246,
+      "bytes": 23348,
+      "exports": [],
+      "imports": [
+        "@electric-sql/pglite",
+        "fs",
+        "path",
+        "url"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],

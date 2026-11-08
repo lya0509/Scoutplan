@@ -21,9 +21,14 @@ class PresenceService {
       this.channel = null;
     }
 
+    // «En línea» por grupo y en canal PRIVADO: solo entran los miembros aprobados de ese grupo
+    // (regla presencia_grupo_* en realtime.messages). Antes era un canal público global.
+    if (!user.group_name) return;
+
     try {
-      this.channel = supabase.channel('scout_presence_global', {
+      this.channel = supabase.channel(`presencia:${user.group_name}`, {
         config: {
+          private: true,
           presence: { key: user.id }
         }
       });

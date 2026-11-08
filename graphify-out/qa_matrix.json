@@ -116,6 +116,53 @@
         "Verify ScouterDashboardScreen displays unit scouts, online presence dots, and pending reviews.",
         "Verify JefeGrupoScreen membership expiration approval/rejection and ComisionadoDashboardScreen territorial drill-down."
       ]
+    },
+    {
+      "id": "QA-11",
+      "screenOrModule": "AdministracionScreen (Roles y miembros / Administración)",
+      "file": "src/screens/AdministracionScreen.tsx",
+      "navigateCommand": "window.__SCOUT_GRAPHIFY__.navigate('Administracion')",
+      "focus": "Group & role administration per scope (Jefe: own group; Comisionado: territory; admin: country), history tab",
+      "steps": [
+        "As Jefe de Grupo: name a Scouter of a unit and revert; own row must be locked (no self role change) and show «Borrar mi cuenta».",
+        "As Comisionado: create a group in own district, move a member between groups of the district, deactivate the group.",
+        "Historial tab lists the changes with author; a youth account must not see it."
+      ]
+    },
+    {
+      "id": "QA-12",
+      "screenOrModule": "CIP: CipManagerModal (Scouter/Jefe) & CipStageModal (youth)",
+      "file": "src/components/CipManagerModal.tsx",
+      "navigateCommand": "window.__SCOUT_GRAPHIFY__.navigate('StageDetail', { stageId: 'expedicionario' })",
+      "focus": "Official CIP catalog, attendance marked by the Scouter, pre-app CIP requests under the Scout Law",
+      "steps": [
+        "Scouter: «🚩 Gestionar CIP» → Nuevo CIP → mark a youth; the row says «Contará para <etapa> · n/m» before and «Asistencia marcada» after.",
+        "Youth: open the CIP requirement, request a pre-app CIP (Ley Scout checkbox required); Scouter approves/rejects in «Solicitudes».",
+        "A youth must NOT be able to insert/delete cip_sel_* rows (DB trigger message «Tu Scouter es quien marca…»)."
+      ]
+    },
+    {
+      "id": "QA-13",
+      "screenOrModule": "Cuentas: RegisterScreen, CuentaEnRevisionScreen, NuevaContrasenaScreen, DeleteAccountModal",
+      "file": "src/screens/CuentaEnRevisionScreen.tsx",
+      "navigateCommand": "window.__SCOUT_GRAPHIFY__.navigate('Login')",
+      "focus": "Pending approval gate, password recovery link (#type=recovery), self account deletion",
+      "steps": [
+        "New sign-up lands on «Tu cuenta está en revisión» and sees no group data until a leader approves it.",
+        "Open /#access_token=…&type=recovery → «Crea tu contraseña nueva»; an expired link shows the red notice on Login.",
+        "«Borrar mi cuenta» requires typing BORRAR; afterwards the account cannot log in and the history shows «Borró su cuenta»."
+      ]
+    },
+    {
+      "id": "QA-14",
+      "screenOrModule": "Base de datos: reglas de seguridad (tests/sql/run.mjs)",
+      "file": "tests/sql/run.mjs",
+      "navigateCommand": "npm run test:sql",
+      "focus": "RLS, triggers and functions of every supabase_*.sql, run on an in-memory Postgres (PGlite)",
+      "steps": [
+        "Run `npm run test:sql` before handing any SQL to the user: every block runs twice and all permission checks must pass.",
+        "Cross-group probes in production with the QA accounts: 0 rows of other groups visible in any table; anon gets [] / 401."
+      ]
     }
   ]
 }

@@ -136,8 +136,13 @@ export interface MembershipHistoryEntry {
   id: string; status: 'approved' | 'rejected'; expiresAt: string; year: string; byName: string; reason: string; decidedAt: string; pending: boolean;
 }
 
+let _lastSeenAt: { id?: string; at: number } = { at: 0 };
+const _certRowsMemo = new Map<string, { at: number; rows: Promise<{ data: any[] | null; error: any }> }>();
+
 // Filas de requisitos por scout, reutilizadas unos segundos por getRequirement.
 const _reqRowsMemo = new Map<string, { at: number; rows: Promise<Map<string, boolean>> }>();
+// Cualquier cambio en la cola de envío (algo se guardó o se sincronizó) invalida las copias cortas
+outbox.subscribe(() => { _certRowsMemo.clear(); _reqRowsMemo.clear(); });
 
 export const dataService = {
   // --- MOTOR DE SINCRONIZACIÓN OFFLINE (ver src/lib/offline/outbox.ts) ---
@@ -748,49 +753,6 @@ export const dataService = {
   // ----------------------------------------------------
   // MÓDULO DE CICLOS INSTITUCIONALES DE PROGRAMA (CIP)
   // ----------------------------------------------------
-  async createCipEvent(event: {
-    title: string;
-    scope: 'distrital' | 'regional' | 'nacional' | 'internacional';
-    unit: string;
-    date: string;
-    description?: string;
-    created_by: string;
-  }) {
-    const row = {
-      id: newId(),
-      title: `[CIP ${event.scope.toUpperCase()}] ${event.title}`,
-      description: event.description || `Ciclo Institucional de Programa (CIP) de alcance ${event.scope}.`,
-      date: event.date,
-      unit: event.unit,
-      created_by: event.created_by
-    };
-    await outbox.run('row.insert', { table: 'calendar_events', row }, { label: `Evento CIP: ${event.title}` });
-    return row;
-  },
-
-  async getCipEvents(unit?: string) {
-    const rows = await cachedQuery<any[]>(`cip_events_${unit || 'all'}`, async () => {
-      let query = supabase
-        .from('calendar_events')
-        .select('*')
-        .or('title.ilike.%[CIP%,title.ilike.%[6P%')
-        .order('date', { ascending: false });
-
-      if (unit) {
-        query = query.in('unit', [unit.toLowerCase(), 'grupo']);
-      }
-      return must(await query) || [];
-    }, []);
-
-    // Eventos creados sin conexión
-    const ids = new Set(rows.map((r: any) => r.id));
-    const pendingRows = (await outbox.pending('row.insert'))
-      .filter(o => o.payload?.table === 'calendar_events' && o.payload.row && !ids.has(o.payload.row.id))
-      .map(o => ({ ...o.payload.row, _pending: true }))
-      .filter((r: any) => !unit || [unit.toLowerCase(), 'grupo'].includes(String(r.unit).toLowerCase()));
-    return [...pendingRows, ...rows];
-  },
-
   // ---------------- CIP oficiales (catálogo) y asistencia marcada por el Scouter ----------------
 
   /** Catálogo de CIP visibles para el usuario. `missingTable` = falta supabase_cip_oficiales.sql. */
@@ -847,6 +809,7 @@ export const dataService = {
 
   /** Recalcula si el requisito de CIP quedó completo según las asistencias acreditadas. */
   async _syncCipRequirement(scoutId: string, stageId: string, reqId: string, required: number) {
+    _certRowsMemo.delete(scoutId);
     const rows = must(await supabase.from('certificates').select('id')
       .eq('scout_id', scoutId).eq('category', `cip_sel_${stageId}_${reqId}`)) || [];
     await this.toggleRequirement(scoutId, stageId, reqId, rows.length >= required);
@@ -906,6 +869,7 @@ export const dataService = {
     };
     const { error } = await supabase.from('certificates').insert(row);
     if (error) throw new Error(error.message);
+    _certRowsMemo.delete(scout.id);
     notificationService.sendNotification({
       senderId: scout.id, groupName: scout.group_name || undefined, unit: scout.unit || undefined,
       receiverRole: 'scouter', type: 'badge',
@@ -919,6 +883,7 @@ export const dataService = {
   async deleteOldCipRequest(rowId: string) {
     if (!isOnline()) throw new Error('Necesitas conexión a internet.');
     must(await supabase.from('certificates').delete().eq('id', rowId));
+    _certRowsMemo.clear();
   },
 
   /** El Scouter aprueba (pasa a acreditado, con marca «anterior a la app») o rechaza una solicitud. */
@@ -950,6 +915,7 @@ export const dataService = {
       const upd = { ...meta, estado: 'rechazada', motivo: (motivo || '').trim(), revisadoPor: by.name || '' };
       must(await supabase.from('certificates').update({ file_url: JSON.stringify(upd) }).eq('id', reqRow.id));
     }
+    _certRowsMemo.delete(reqRow.scout_id);
     notificationService.sendNotification({
       senderId: by.id, receiverId: reqRow.scout_id, type: 'badge',
       title: approve ? '🚩 CIP anterior aprobado' : 'CIP anterior no aprobado',
@@ -1214,6 +1180,10 @@ export const dataService = {
 
   async updateLastSeen(scoutId: string) {
     if (!isOnline()) return;
+    // Como mucho cada 2 minutos (cada escritura del perfil dispara otras recargas)
+    const now = Date.now();
+    if (_lastSeenAt.id === scoutId && now - _lastSeenAt.at < 120000) return;
+    _lastSeenAt.id = scoutId; _lastSeenAt.at = now;
     try {
       await supabase.from('profiles').update({
         updated_at: new Date().toISOString()
@@ -1516,13 +1486,27 @@ export const dataService = {
 
   // --- REGISTROS GUARDADOS EN `certificates` POR CATEGORÍA (noches, vida de grupo, CIP, vínculos) ---
   // Red primero (así el dirigente ve lo último), con lo pendiente offline encima, y copia local de respaldo.
+  /**
+   * Todas las filas de certificates de un scout, en UNA consulta reutilizada unos segundos.
+   * Las pantallas piden categoría por categoría (noches, vida de grupo, CIP, actividades…):
+   * antes eran ~27 consultas al abrir una etapa.
+   */
+  _allCertRows(scoutId: string): Promise<{ data: any[] | null; error: any }> {
+    const now = Date.now();
+    const memo = _certRowsMemo.get(scoutId);
+    if (memo && now - memo.at < 4000) return memo.rows;
+    const rows = (async () => {
+      const r = await supabase.from('certificates').select('*').eq('scout_id', scoutId).order('created_at', { ascending: false });
+      if (r.error) _certRowsMemo.delete(scoutId);
+      return { data: r.data, error: r.error };
+    })();
+    _certRowsMemo.set(scoutId, { at: now, rows });
+    return rows;
+  },
+
   async _getCategoryRows(scoutId: string, category: string, localKey: string, mapRow: (d: any) => any) {
-    const res = await supabase
-      .from('certificates')
-      .select('*')
-      .eq('scout_id', scoutId)
-      .eq('category', category)
-      .order('created_at', { ascending: false });
+    const all = await this._allCertRows(scoutId);
+    const res = { data: (all.data || []).filter((d: any) => d.category === category), error: all.error };
 
     if (res.error) {
       try {

@@ -78,7 +78,7 @@ module.exports = async function handler(req, res) {
     console.error('verificar:', e && (e.code || ''), e && e.message);
     // Solo el código técnico (sin datos) para poder diagnosticar desde fuera.
     const code = String((e && (e.code || e.status || e.name)) || 'unknown').slice(0, 20);
-    const detail = String((e && e.message) || '').replace(/eyJ[\w.-]+|sb_[\w-]+/g, '[clave]').slice(0, 80);
-    return res.status(500).json({ error: 'server_error', code, detail });
+    console.error('verificar:', e && e.message);
+    return res.status(500).json({ error: 'server_error', code });
   }
 };

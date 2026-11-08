@@ -54,7 +54,6 @@ class WebPushService {
     if (typeof window === 'undefined') return false;
 
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      console.log('ℹ️ Web Push Manager no soportado en este navegador.');
       return false;
     }
 
@@ -105,7 +104,6 @@ class WebPushService {
                 { onConflict: 'endpoint' }
               );
 
-            console.log('✅ Dispositivo suscrito exitosamente a Web Push en segundo plano.');
             return true;
           } catch (dbErr) {
             console.warn('Aviso guardando suscripción en base de datos:', dbErr);

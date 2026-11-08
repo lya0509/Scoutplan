@@ -47,10 +47,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
 
   // Modal para seleccionar Eventos CIP (Ciclos Institucionales de Programa)
   const [showCipModal, setShowCipModal] = useState(false);
-  const [cipEvents, setCipEvents] = useState<any[]>([]);
   const [selectedReqForCip, setSelectedReqForCip] = useState<any>(null);
-  const [loadingCip, setLoadingCip] = useState(false);
-  const [selectedCipList, setSelectedCipList] = useState<any[]>([]);
   const [cipCountMap, setCipCountMap] = useState<Record<string, number>>({});
 
   // Modal para vincular Especialidades / Cursos
@@ -79,11 +76,6 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const [selectedReqForPersonales, setSelectedReqForPersonales] = useState<any>(null);
   const [personalesCountMap, setPersonalesCountMap] = useState<Record<string, number>>({});
 
-  // Formulario rápido para convalidar CIP previo
-  const [showFastCipForm, setShowFastCipForm] = useState(false);
-  const [fastCipName, setFastCipName] = useState('');
-  const [fastCipYear, setFastCipYear] = useState(new Date().getFullYear().toString());
-  const [fastCipScope, setFastCipScope] = useState<'distrital' | 'regional' | 'nacional' | 'internacional'>('distrital');
 
   useModalBackHandler(showCipModal, () => setShowCipModal(false));
   useModalBackHandler(showCertModal, () => setShowCertModal(false));
@@ -213,41 +205,6 @@ export default function StageDetailScreen({ route, navigation }: any) {
     setShowCipModal(true);
   };
 
-  const handleToggleCipEvent = async (event: any) => {
-    if (!user || !selectedReqForCip || isReadOnly) return;
-    const reqCount = selectedReqForCip.requiredCount || 1;
-    const exists = selectedCipList.some(e => e.id === event.id || e.title === event.title);
-
-    let updated: any[];
-    if (exists) {
-      updated = selectedCipList.filter(e => e.id !== event.id && e.title !== event.title);
-    } else {
-      if (selectedCipList.length >= reqCount) {
-        showAlert('Límite alcanzado', `Este requisito pide exactamente ${reqCount} actividad(es). Desmarca una para seleccionar otra.`);
-        return;
-      }
-      updated = [...selectedCipList, event];
-    }
-
-    setSelectedCipList(updated);
-    await dataService.saveCipSelections(user.id, stageId, selectedReqForCip.id, updated);
-    const isDone = updated.length >= reqCount;
-    setChecks(prev => ({ ...prev, [selectedReqForCip.id]: isDone }));
-    setCipCountMap(prev => ({ ...prev, [selectedReqForCip.id]: updated.length }));
-    await dataService.toggleRequirement(user.id, stageId, selectedReqForCip.id, isDone);
-  };
-
-  const handleRemoveSelectedCip = async (eventId: string, eventTitle: string) => {
-    if (!user || !selectedReqForCip || isReadOnly) return;
-    const reqCount = selectedReqForCip.requiredCount || 1;
-    const updated = selectedCipList.filter(e => e.id !== eventId && e.title !== eventTitle);
-    setSelectedCipList(updated);
-    await dataService.saveCipSelections(user.id, stageId, selectedReqForCip.id, updated);
-    const isDone = updated.length >= reqCount;
-    setChecks(prev => ({ ...prev, [selectedReqForCip.id]: isDone }));
-    setCipCountMap(prev => ({ ...prev, [selectedReqForCip.id]: updated.length }));
-    await dataService.toggleRequirement(user.id, stageId, selectedReqForCip.id, isDone);
-  };
 
   const openCertModal = async (req: any) => {
     setSelectedReqForCert(req);

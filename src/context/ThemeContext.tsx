@@ -28,7 +28,19 @@ interface ThemeContextType {
     inputBg: string;
     primary: string;
     primaryLight: string;
+    /** Color de acento legible para TEXTO: en modo oscuro, una versión clara del color del tema. */
+    accentText: string;
   };
+}
+
+/** Mezcla un color hex con blanco (t = 0..1). Para textos de acento sobre fondo oscuro. */
+function lighten(hex: string, t: number): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const mix = (c: number) => Math.round(c + (255 - c) * t);
+  const r = mix((n >> 16) & 255), g = mix((n >> 8) & 255), b = mix(n & 255);
+  return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
 }
 
 const ThemeContext = createContext<ThemeContextType>({} as ThemeContextType);
@@ -94,6 +106,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     inputBg: isDarkMode ? '#27272a' : '#f1f5f9',
     primary: primaryColor,
     primaryLight: primaryColor,
+    accentText: isDarkMode ? lighten(primaryColor, 0.55) : primaryColor,
   };
 
   return (

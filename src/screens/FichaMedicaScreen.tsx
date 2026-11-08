@@ -621,8 +621,8 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
               </View>
             </View>
 
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
-              <View style={{ flex: 1.4 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 8 }}>
+              <View style={{ width: '100%' }}>
                 <Text style={[styles.label, { color: theme.subText }]}>GÉNERO</Text>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
                   <TouchableOpacity

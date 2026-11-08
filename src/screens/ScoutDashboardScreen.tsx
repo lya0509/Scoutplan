@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
@@ -53,13 +53,14 @@ const ONBOARDING_SLIDES = [
 
 export default function ScoutDashboardScreen({ navigation }: any) {
   const { user } = useAuth();
-  const { isDarkMode, theme } = useTheme();
+  const { isDarkMode, theme, primaryColor } = useTheme();
 
   const [loading, setLoading]           = useState(true);
   const [currentStage, setCurrentStage]   = useState<any>(null);
   const [stageStatus, setStageStatus]     = useState<string>('En Progreso');
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [showAllNotifs, setShowAllNotifs] = useState(false);
   const [roversList, setRoversList] = useState<any[]>([]);
 
   // Estados para previsualización interactiva de programas desde Próximas Actividades
@@ -99,9 +100,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
   useEffect(() => {
     if (user) {
-      loadDashboardData();
-
-      // Suscribirse a cambios de presencia en tiempo real
+      // Suscribirse a cambios de presencia en tiempo real (los datos los carga useFocusEffect)
       const unsubPresence = presenceService.subscribe((onlineIds) => {
         setRoversList(prev => prev.map(r => ({
           ...r,
@@ -113,19 +112,24 @@ export default function ScoutDashboardScreen({ navigation }: any) {
         unsubPresence();
       };
     }
-  }, [user]);
+  }, [user?.id]);
 
+  // Recargar al entrar a la pantalla o si cambia la persona; no cada vez que se refresca
+  // el perfil (antes recargaba todo 6-7 veces seguidas al abrir la app).
+  const lastLoadRef = useRef<{ id?: string; at: number }>({ at: 0 });
   useFocusEffect(
     useCallback(() => {
-      if (user) {
-        loadDashboardData();
-      }
-    }, [user])
+      if (!user?.id) return;
+      const now = Date.now();
+      if (lastLoadRef.current.id === user.id && now - lastLoadRef.current.at < 2000) return;
+      lastLoadRef.current = { id: user.id, at: now };
+      loadDashboardData();
+    }, [user?.id])
   );
 
   const loadDashboardData = async () => {
-    setLoading(true);
     if (!user) return;
+    setLoading(true);
 
     // Actualizar estado online del usuario actual
     await dataService.updateLastSeen(user.id);
@@ -334,6 +338,13 @@ export default function ScoutDashboardScreen({ navigation }: any) {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
+  const handleDismissAll = async () => {
+    const ids = notifications.map(n => n.id);
+    setNotifications([]);
+    setShowAllNotifs(false);
+    await Promise.all(ids.map(id => dataService.markNotificationRead(id).catch(() => {})));
+  };
+
   if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: theme.bg }]}>
@@ -348,21 +359,37 @@ export default function ScoutDashboardScreen({ navigation }: any) {
     <View style={{ flex: 1 }}>
       <PullToRefreshScrollView onRefresh={() => loadDashboardData()} style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={styles.content}>
       
-      {/* BANNER DE NOTIFICACIONES */}
-      {notifications.map(notif => (
-        <View key={notif.id} style={styles.notifBanner}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-            <Bell color="#DC2626" size={22} style={{ marginRight: 10 }} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.notifTitle}>{notif.title}</Text>
-              <Text style={styles.notifReason}>{notif.reason}</Text>
+      {/* AVISOS SIN LEER: 2 a la vista; el resto con «Ver todos» (antes se apilaban todos) */}
+      {notifications.slice(0, showAllNotifs ? notifications.length : 2).map(notif => {
+        const negative = /no aprobad|rechaz|devuelt|vencid|removid|no fue/i.test(`${notif.title} ${notif.reason || ''}`);
+        const accent = negative ? '#dc2626' : theme.accentText;
+        return (
+          <View key={notif.id} style={[styles.notifBanner, { backgroundColor: theme.cardBg, borderColor: theme.border, borderLeftColor: accent }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+              <Bell color={accent} size={20} style={{ marginRight: 10 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.notifTitle, { color: theme.text }]}>{notif.title}</Text>
+                {!!notif.reason && <Text style={[styles.notifReason, { color: theme.subText }]}>{notif.reason}</Text>}
+              </View>
             </View>
+            <TouchableOpacity onPress={() => handleDismissNotification(notif.id)} style={{ padding: 8 }} accessibilityRole="button" accessibilityLabel="Marcar aviso como leído">
+              <XCircle color={theme.subText} size={20} />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={() => handleDismissNotification(notif.id)} style={{ padding: 4 }}>
-            <XCircle color="#991B1B" size={20} />
+        );
+      })}
+      {notifications.length > 2 && (
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14, marginTop: -4 }}>
+          <TouchableOpacity onPress={() => setShowAllNotifs(v => !v)} style={{ paddingVertical: 8 }} accessibilityRole="button">
+            <Text style={{ color: theme.accentText, fontWeight: '700', fontSize: 13 }}>
+              {showAllNotifs ? 'Ver menos' : `Ver los ${notifications.length} avisos`}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleDismissAll} style={{ paddingVertical: 8 }} accessibilityRole="button">
+            <Text style={{ color: theme.subText, fontWeight: '700', fontSize: 13 }}>Marcar todos como leídos</Text>
           </TouchableOpacity>
         </View>
-      ))}
+      )}
 
       {/* Saludo */}
       {(() => {
@@ -478,7 +505,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
           <Text style={[styles.progressText, { color: theme.subText }]}>{currentStage.progress}% completado</Text>
 
           <View style={[styles.stageCardFooter, { borderTopColor: theme.border }]}>
-            <Text style={styles.actionLinkText}>Ver requisitos y avanzar</Text>
+            <Text style={[styles.actionLinkText, { color: theme.accentText }]}>Ver requisitos y avanzar</Text>
             <ChevronRight color={colors.primary} size={18} />
           </View>
         </TouchableOpacity>
@@ -734,12 +761,11 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 40 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   notifBanner: {
-    backgroundColor: '#FEE2E2',
-    borderColor: '#FCA5A5',
+    borderLeftWidth: 4,
     borderWidth: 1,
     borderRadius: 12,
     padding: 12,
-    marginBottom: 16,
+    marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between'

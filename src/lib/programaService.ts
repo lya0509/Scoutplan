@@ -95,7 +95,6 @@ class ProgramaService {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'scout_programas' },
           async (payload) => {
-            console.log('[Realtime] Evento recibido en scout_programas:', payload.eventType);
             try {
               const freshList = await this.fetchFromSupabase();
               const currentLocal = this.memoryCache || [];
@@ -109,7 +108,6 @@ class ProgramaService {
           }
         )
         .subscribe((status) => {
-          console.log('[Realtime] Estado del canal scout_programas:', status);
         });
     } catch (e) {
       console.warn('[Realtime] Error inicializando canal:', e);

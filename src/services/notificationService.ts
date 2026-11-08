@@ -162,7 +162,9 @@ class NotificationService {
   }
 
   /**
-   * Suscribe en tiempo real (WebSockets + Broadcast Channel) a las notificaciones dirigidas al usuario.
+   * Avisos en vivo. Llegan por la base de datos (postgres_changes), que aplica las reglas de
+   * seguridad: a cada quien le llegan solo los avisos que puede ver (los suyos y los de su
+   * grupo/rama/rol). Antes se usaba un canal «broadcast» público que cualquiera podía escuchar.
    */
   subscribeToLiveNotifications(
     userId: string,
@@ -173,59 +175,42 @@ class NotificationService {
   ): () => void {
     this.listeners.add(onNotification);
 
+    const deliver = (n: AppNotification) => {
+      if (!n || this.processedIds.has(n.id)) return;
+      this.processedIds.add(n.id);
+      this.saveLocalNotification(userId, n);
+      this.triggerSystemPushNotification(n.title, n.message);
+      this.listeners.forEach(cb => { try { cb(n); } catch (e) {} });
+    };
+
     if (!this.broadcastChannel) {
       try {
         this.broadcastChannel = (supabase as any)
-          .channel('scout_realtime_notifications_hub')
-          .on('broadcast', { event: 'scout_notification' }, ({ payload }: any) => {
-            const newNotif = payload as AppNotification;
-            if (!newNotif || this.processedIds.has(newNotif.id)) return;
-
-            const isGlobal = !newNotif.receiver_id && !newNotif.receiver_role && !newNotif.group_name;
-            const isDirectUser = Boolean(newNotif.receiver_id && newNotif.receiver_id === userId);
-            const isRoleMatch = Boolean(newNotif.receiver_role && role && newNotif.receiver_role.toLowerCase() === role.toLowerCase());
-            const isGroupMatch = !newNotif.receiver_id && Boolean(newNotif.group_name && groupName && newNotif.group_name.toLowerCase() === groupName.toLowerCase());
-            const isUnitMatch = !newNotif.unit || Boolean(unit && newNotif.unit.toLowerCase() === unit.toLowerCase());
-
-            if (isGlobal || isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !newNotif.group_name))) {
-              this.processedIds.add(newNotif.id);
-              this.saveLocalNotification(userId, newNotif);
-              this.triggerSystemPushNotification(newNotif.title, newNotif.message);
-
-              this.listeners.forEach(cb => {
-                try { cb(newNotif); } catch (e) {}
-              });
-            }
+          .channel(`avisos_${userId}`)
+          .on('postgres_changes' as any, { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload: any) => {
+            const n = payload.new as AppNotification;
+            if (!n || n.sender_id === userId) return; // los que envié yo no me avisan
+            deliver(n);
           })
-          .on(
-            'postgres_changes' as any,
-            { event: 'INSERT', schema: 'public', table: 'notifications' },
-            (payload: any) => {
-              const newNotif = payload.new as AppNotification;
-              if (!newNotif || this.processedIds.has(newNotif.id)) return;
-
-              const isGlobal = !newNotif.receiver_id && !newNotif.receiver_role && !newNotif.group_name;
-              const isDirectUser = Boolean(newNotif.receiver_id && newNotif.receiver_id === userId);
-              const isRoleMatch = Boolean(newNotif.receiver_role && role && newNotif.receiver_role.toLowerCase() === role.toLowerCase());
-              const isGroupMatch = !newNotif.receiver_id && Boolean(newNotif.group_name && groupName && newNotif.group_name.toLowerCase() === groupName.toLowerCase());
-              const isUnitMatch = !newNotif.unit || Boolean(unit && newNotif.unit.toLowerCase() === unit.toLowerCase());
-
-              if (isGlobal || isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !newNotif.group_name))) {
-                this.processedIds.add(newNotif.id);
-                this.saveLocalNotification(userId, newNotif);
-                this.triggerSystemPushNotification(newNotif.title, newNotif.message);
-
-                this.listeners.forEach(cb => {
-                  try { cb(newNotif); } catch (e) {}
-                });
-              }
-            }
-          )
-          .subscribe((status: any) => {
-            console.log('📡 [Realtime Hub] Conexión de Notificaciones en Vivo:', status);
-          });
+          .on('postgres_changes' as any, { event: 'INSERT', schema: 'public', table: 'scout_notifications', filter: `scout_id=eq.${userId}` }, (payload: any) => {
+            const r = payload.new || {};
+            deliver({
+              id: `sn_${r.id}`,
+              sender_id: null,
+              receiver_id: r.scout_id,
+              receiver_role: null,
+              title: r.title || 'Aviso',
+              message: r.reason || '',
+              type: 'info',
+              group_name: null,
+              unit: null,
+              read: false,
+              created_at: r.created_at || new Date().toISOString(),
+            } as AppNotification);
+          })
+          .subscribe();
       } catch (err) {
-        console.warn('Aviso inicializando Realtime Channel:', err);
+        console.warn('Aviso iniciando avisos en vivo:', err);
       }
     }
 
@@ -271,29 +256,7 @@ class NotificationService {
     }
     await this.saveLocalNotification('global_all', notifObj);
 
-    // 2. Transmisión Instantánea por WebSocket Broadcast
-    try {
-      if (this.broadcastChannel) {
-        await this.broadcastChannel.send({
-          type: 'broadcast',
-          event: 'scout_notification',
-          payload: notifObj
-        });
-      } else {
-        const tempChannel = supabase.channel('scout_realtime_notifications_hub');
-        tempChannel.subscribe(async (status) => {
-          if (status === 'SUBSCRIBED') {
-            await tempChannel.send({
-              type: 'broadcast',
-              event: 'scout_notification',
-              payload: notifObj
-            });
-          }
-        });
-      }
-    } catch (e) {
-      console.warn('Aviso enviando broadcast en vivo:', e);
-    }
+    // 2. En vivo: lo entrega la base de datos al insertar (postgres_changes con reglas de seguridad)
 
     // 3. Persistir en base de datos Supabase
     try {

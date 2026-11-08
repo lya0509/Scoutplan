@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, ActivityIndicator, Platform, BackHandler } from 'react-native';
 
@@ -205,6 +205,10 @@ export default function AppNavigator() {
     <NavigationContainer
       ref={navigationRef}
       linking={linking}
+      // Encabezados y fondos de navegación según el modo claro/oscuro de la app
+      theme={isDarkMode
+        ? { ...DarkTheme, colors: { ...DarkTheme.colors, primary: primaryColor, background: '#000000', card: '#121214', border: '#27272a' } }
+        : { ...DefaultTheme, colors: { ...DefaultTheme.colors, primary: primaryColor } }}
       onStateChange={() => {
         const current = navigationRef.current?.getCurrentRoute?.();
         if (current?.name) {

@@ -14,6 +14,7 @@ import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import { CarnetScoutModal } from '../components/CarnetScoutModal';
 import { MembershipRecordsModal } from '../components/MembershipRecordsModal';
 import { DeleteAccountButton } from '../components/DeleteAccountModal';
+import { regionLabel, districtLabel } from '../data/territory';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { dataService } from '../lib/dataService';
 import { showAlert } from '../utils/alert';
@@ -502,13 +503,13 @@ export default function ProfileScreen({ navigation }: any) {
 
         <EditRow
           label="Región"
-          value={user?.region ? user.region.toUpperCase() : ''}
+          value={user?.region ? regionLabel(user.region) : ''}
           readonly
           isDarkMode={isDarkMode}
         />
         <EditRow
           label="Distrito Scout"
-          value={user?.district ? user.district.toUpperCase() : 'GUARENAS GUATIRE'}
+          value={user?.district ? districtLabel(user.district) : '—'}
           readonly
           isDarkMode={isDarkMode}
         />

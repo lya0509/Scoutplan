@@ -91,7 +91,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       user.unit || null,
       user.role || null,
       (newNotif) => {
-        console.log('🔔 [Live Notification Received]:', newNotif.title);
         knownIdsRef.current.add(newNotif.id);
 
         // Agregar a la lista

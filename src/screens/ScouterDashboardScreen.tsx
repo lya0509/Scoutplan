@@ -428,14 +428,6 @@ export default function ScouterDashboardScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [stats, setStats]   = useState({ total: 0, inReview: 0, approved: 0 });
 
-  // Modal para agregar Evento CIP (Ciclos Institucionales de Programa)
-  const [showCipModal, setShowCipModal] = useState(false);
-  const [cipTitle, setCipTitle] = useState('');
-  const [cipScope, setCipScope] = useState<'distrital' | 'regional' | 'nacional' | 'internacional'>('distrital');
-  const [cipDate, setCipDate] = useState(todayLocal());
-  const [showCipDatePicker, setShowCipDatePicker] = useState(false);
-  const [cipDesc, setCipDesc] = useState('');
-  const [savingCip, setSavingCip] = useState(false);
 
   // Membership management
   const [showMembershipModal, setShowMembershipModal] = useState(false);
@@ -450,7 +442,6 @@ export default function ScouterDashboardScreen({ navigation }: any) {
   const [photoRejectScout, setPhotoRejectScout] = useState<any>(null);
 
   // Soporte universal para gestos de retroceso en Android, iOS y PWA
-  useModalBackHandler(showCipModal, () => setShowCipModal(false));
   useModalBackHandler(showMembershipModal, () => setShowMembershipModal(false));
   useModalBackHandler(showRejectModal, () => setShowRejectModal(false));
   useModalBackHandler(showPhotoRejectModal, () => setShowPhotoRejectModal(false));
@@ -508,34 +499,6 @@ export default function ScouterDashboardScreen({ navigation }: any) {
     setLoading(false);
   };
 
-  const handleSaveCip = async () => {
-    if (!cipTitle.trim()) {
-      showAlert('Campo obligatorio', 'Debes ingresar un título para el Ciclo CIP.');
-      return;
-    }
-    if (!user) return;
-
-    setSavingCip(true);
-    try {
-      await dataService.createCipEvent({
-        title: cipTitle.trim(),
-        scope: cipScope,
-        unit: user.unit ? user.unit.toLowerCase() : 'tropa',
-        date: cipDate,
-        description: cipDesc.trim(),
-        created_by: user.id
-      });
-
-      showAlert('¡Ciclo CIP Registrado!', `El evento con alcance ${cipScope.toUpperCase()} fue guardado correctamente.`);
-      setShowCipModal(false);
-      setCipTitle('');
-      setCipDesc('');
-    } catch (e: any) {
-      showAlert('Error al guardar', e?.message || 'No se pudo guardar el evento CIP.');
-    } finally {
-      setSavingCip(false);
-    }
-  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
@@ -1194,151 +1157,6 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Eliminar Foto</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* MODAL PARA CREAR CICLO INSTITUCIONAL CIP / EVENTO CIP */}
-      <Modal visible={showCipModal} transparent animationType="slide" onRequestClose={() => setShowCipModal(false)}>
-        <View style={modalStyles.overlay}>
-          <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
-            <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Flag color={colors.primary} size={20} style={{ marginRight: 8 }} />
-                <Text style={[modalStyles.title, { color: theme.text }]}>Registrar Ciclo Institucional (CIP)</Text>
-              </View>
-              <TouchableOpacity onPress={() => setShowCipModal(false)} style={{ padding: 6 }}>
-                <X color={isDarkMode ? '#a1a1aa' : '#64748b'} size={24} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={{ padding: 20 }}>
-              <Text style={[modalStyles.label, { color: theme.subText }]}>TÍTULO DEL CICLO INSTITUCIONAL (CIP) *</Text>
-              <TextInput
-                style={[modalStyles.input, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
-                placeholder="Ej: I Campamento Distrital / Indaba Regional 2026"
-                placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
-                value={cipTitle}
-                onChangeText={setCipTitle}
-              />
-
-              <Text style={[modalStyles.label, { color: theme.subText }]}>ALCANCE / CATEGORÍA DEL CIP *</Text>
-              <View style={modalStyles.scopeRow}>
-                {(['distrital', 'regional', 'nacional', 'internacional'] as const).map((sc) => (
-                  <TouchableOpacity
-                    key={sc}
-                    style={[
-                      modalStyles.scopeChip,
-                      { backgroundColor: theme.inputBg, borderColor: theme.border },
-                      cipScope === sc && { backgroundColor: colors.primary, borderColor: colors.primary }
-                    ]}
-                    onPress={() => setCipScope(sc)}
-                  >
-                    <Text style={[
-                      modalStyles.scopeChipText,
-                      { color: theme.subText },
-                      cipScope === sc && { color: 'white', fontWeight: 'bold' }
-                    ]}>
-                      CIP {sc.toUpperCase()}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={[modalStyles.label, { color: theme.subText }]}>FECHA DEL CICLO / EVENTO *</Text>
-              <TouchableOpacity
-                style={[
-                  modalStyles.input,
-                  {
-                    backgroundColor: theme.inputBg,
-                    borderColor: theme.border,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingVertical: 12,
-                    paddingHorizontal: 14,
-                    marginBottom: 10
-                  }
-                ]}
-                onPress={() => setShowCipDatePicker(true)}
-                activeOpacity={0.8}
-              >
-                <CalendarIcon size={18} color={primaryColor} style={{ marginRight: 10 }} />
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: theme.text, fontSize: 13, fontWeight: 'bold' }}>
-                    {formatDateWithDayOfWeek(cipDate || todayLocal())}
-                  </Text>
-                  <Text style={{ color: theme.subText, fontSize: 11 }}>
-                    Toca para abrir el calendario y ver días exactos (Sábados/Domingos)
-                  </Text>
-                </View>
-              </TouchableOpacity>
-
-              <Text style={[modalStyles.label, { color: theme.subText }]}>DESCRIPCIÓN Y DETALLES (OPCIONAL)</Text>
-              <TextInput
-                style={[modalStyles.input, { height: 70, backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
-                placeholder="Detalles sobre la participación y objetivos..."
-                placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
-                multiline
-                value={cipDesc}
-                onChangeText={setCipDesc}
-              />
-
-              <TouchableOpacity
-                style={modalStyles.saveBtn}
-                onPress={handleSaveCip}
-                disabled={savingCip}
-              >
-                {savingCip ? <ActivityIndicator color="white" /> : <Text style={modalStyles.saveBtnText}>Guardar Ciclo CIP</Text>}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={{ alignItems: 'center', paddingVertical: 12, marginBottom: 20 }}
-                onPress={() => setShowCipModal(false)}
-              >
-                <Text style={{ color: theme.subText, fontWeight: 'bold', fontSize: 14 }}>Cancelar y Volver</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* MODAL PICKER DE CALENDARIO PARA EVENTOS CIP */}
-      <Modal visible={showCipDatePicker} transparent animationType="fade" onRequestClose={() => setShowCipDatePicker(false)}>
-        <View style={modalStyles.overlay}>
-          <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', padding: 18, borderRadius: 20, maxWidth: 380, width: '92%' }]}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Flag size={18} color={primaryColor} style={{ marginRight: 6 }} />
-                <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.text }}>
-                  Seleccionar Fecha del Evento CIP
-                </Text>
-              </View>
-              <TouchableOpacity onPress={() => setShowCipDatePicker(false)} style={{ padding: 4 }}>
-                <X size={20} color={isDarkMode ? '#a1a1aa' : '#64748b'} />
-              </TouchableOpacity>
-            </View>
-
-            <RNCalendar
-              current={cipDate || todayLocal()}
-              markedDates={{
-                [cipDate || '']: { selected: true, selectedColor: primaryColor }
-              }}
-              onDayPress={(day: DateData) => {
-                setCipDate(day.dateString);
-                setShowCipDatePicker(false);
-              }}
-              theme={{
-                calendarBackground: isDarkMode ? '#18181b' : '#ffffff',
-                textSectionTitleColor: isDarkMode ? '#a1a1aa' : '#64748b',
-                selectedDayBackgroundColor: primaryColor,
-                todayTextColor: primaryColor,
-                dayTextColor: isDarkMode ? '#ffffff' : '#1e293b',
-                arrowColor: primaryColor,
-                monthTextColor: isDarkMode ? '#ffffff' : primaryColor,
-                textDayFontWeight: 'bold',
-                textMonthFontWeight: 'bold',
-              }}
-            />
           </View>
         </View>
       </Modal>
