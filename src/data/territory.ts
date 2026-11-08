@@ -73,9 +73,15 @@ export function registerDistricts(list: DistrictRow[] = []) {
   list.forEach(d => d?.id && dbDistricts.set(d.id, d));
 }
 
+// Regiones que vienen de la base de datos (scout_regions), p. ej. regiones de prueba.
+const dbRegions = new Map<string, string>();
+export function registerRegions(list: { id: string; name: string }[] = []) {
+  list.forEach(r => r?.id && r.name && dbRegions.set(r.id, r.name));
+}
+
 export function regionLabel(id?: string | null): string {
   if (!id) return 'Sin región';
-  return REGIONS.find(r => r.id === id)?.label || id;
+  return REGIONS.find(r => r.id === id)?.label || dbRegions.get(id) || id;
 }
 
 export function districtLabel(id?: string | null): string {

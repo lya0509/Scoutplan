@@ -31,6 +31,7 @@ import {
   exportCensoExcel, exportCensoPdf, exportPadronMedicoExcel, exportPadronMedicoPdf, exportMembresiasExcel, exportMembresiasPdf, MemberRecord
 } from '../utils/exportHelpers';
 import { todayLocal, defaultMembershipDate } from '../utils/dateLocal';
+import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
   if (!dateStr) return 'Seleccionar fecha en el calendario';
@@ -635,7 +636,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ paddingBottom: 40 }}>
+      <PullToRefreshScrollView onRefresh={() => loadStatsAndMembers()} style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ paddingBottom: 40 }}>
       
         {/* CABECERA JEFE DE GRUPO */}
         <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : primaryColor }]}>
@@ -919,7 +920,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
           </View>
         )}
-      </ScrollView>
+      </PullToRefreshScrollView>
 
       {/* ========================================================================= */}
       {/* MODAL 1: CENSO Y NÓMINA OFICIAL DEL GRUPO                                */}

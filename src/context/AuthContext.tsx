@@ -6,6 +6,7 @@ import { Profile } from '../types/progression';
 import { isRetryableError } from '../lib/offline/net';
 import { dataService } from '../lib/dataService';
 import { resolveFileUrl, clearFileCache } from '../lib/fileUrl';
+import { readRecoveryLink, setRecoveryFlag, hasRecoveryFlag } from '../lib/authRecovery';
 
 const CACHED_PROFILE_KEY = '@scout_cached_profile';
 const CACHED_SESSION_KEY = '@scout_cached_session';
@@ -17,6 +18,12 @@ interface AuthContextData {
   isLoading: boolean;
   refreshProfile: () => Promise<void>;
   updateUserProfile: (updates: Partial<Profile>, opts?: { localOnly?: boolean }) => Promise<void>;
+  /** Entró con el enlace de «¿Olvidaste tu contraseña?»: debe crear una contraseña nueva. */
+  recoveryMode: boolean;
+  endRecovery: () => void;
+  /** Mensaje si el enlace del correo venció o no es válido (lo muestra la pantalla de ingreso). */
+  recoveryError: string | null;
+  clearRecoveryError: () => void;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -25,8 +32,18 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   const [user, setUser] = useState<Profile | null>(null);
   const [session, setSession] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [recoveryMode, setRecoveryMode] = useState<boolean>(() => hasRecoveryFlag());
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
+
+  const endRecovery = () => { setRecoveryFlag(false); setRecoveryMode(false); };
+  const clearRecoveryError = () => setRecoveryError(null);
 
   useEffect(() => {
+    // Enlace de recuperación de contraseña en la URL (se lee y se borra de la barra)
+    const recovery = readRecoveryLink();
+    if (recovery?.error) setRecoveryError(recovery.error);
+    if (recovery?.tokens) { setRecoveryFlag(true); setRecoveryMode(true); }
+
     // 0. Timeout de seguridad máximo (800ms): NUNCA permitir que la app se quede en pantalla de carga
     const safetyTimer = setTimeout(() => {
       setIsLoading(false);
@@ -34,6 +51,11 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 
     // 1. Restaurar perfil local inmediatamente (0-10ms) para inicio instantáneo y soporte offline
     const loadCachedAuth = async () => {
+      if (recovery?.tokens) {
+        // Puede ser otra cuenta distinta a la guardada en este equipo: no mostrar la anterior
+        await AsyncStorage.multiRemove([CACHED_PROFILE_KEY, CACHED_SESSION_KEY]).catch(() => {});
+        return;
+      }
       try {
         const cachedProfileRaw = await AsyncStorage.getItem(CACHED_PROFILE_KEY);
         const cachedSessionRaw = await AsyncStorage.getItem(CACHED_SESSION_KEY);
@@ -55,7 +77,17 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     loadCachedAuth();
 
     // 2. Obtener sesión de Supabase en segundo plano sin bloquear la UI
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+    const sessionPromise = recovery?.tokens
+      ? supabase.auth.setSession(recovery.tokens).then(res => {
+          if (res.error || !res.data.session) {
+            setRecoveryFlag(false);
+            setRecoveryMode(false);
+            setRecoveryError('El enlace para cambiar la contraseña ya venció o ya se usó. Pide uno nuevo con «¿Olvidaste tu contraseña?».');
+          }
+          return { data: { session: res.data.session } };
+        })
+      : supabase.auth.getSession();
+    sessionPromise.then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       if (currentSession?.user) {
         AsyncStorage.setItem(CACHED_SESSION_KEY, JSON.stringify(currentSession)).catch(() => {});
@@ -282,6 +314,8 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       setUser(null);
       setSession(null);
       setIsLoading(false);
+      setRecoveryFlag(false);
+      setRecoveryMode(false);
 
       if (typeof window !== 'undefined' && window.location) {
         if (window.location.pathname !== '/' && window.location.pathname !== '/ingresar') {
@@ -292,7 +326,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, signOut, isLoading, refreshProfile, updateUserProfile }}>
+    <AuthContext.Provider value={{ user, session, signOut, isLoading, refreshProfile, updateUserProfile, recoveryMode, endRecovery, recoveryError, clearRecoveryError }}>
       {children}
     </AuthContext.Provider>
   );

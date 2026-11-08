@@ -17,8 +17,11 @@ import { colors } from '../theme/colors';
 import { useTheme } from '../context/ThemeContext';
 import { useModalBackHandler } from '../hooks/useBackHandler';
 import { showAlert } from '../utils/alert';
+import { useAuth } from '../context/AuthContext';
+import { recoveryRedirectUrl } from '../lib/authRecovery';
 
 export default function LoginScreen({ navigation }: any) {
+  const { recoveryError, clearRecoveryError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -83,7 +86,7 @@ export default function LoginScreen({ navigation }: any) {
     }
 
     setResetLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(targetEmail);
+    const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, { redirectTo: recoveryRedirectUrl() });
     setResetLoading(false);
 
     if (error) {
@@ -146,6 +149,18 @@ export default function LoginScreen({ navigation }: any) {
           <Text style={[styles.appTitle, dynamicStyles.title]}>PLAN PROGRESIVO</Text>
           <Text style={styles.appSubtitle}>Asociación de Scouts de Venezuela</Text>
         </View>
+
+        {/* Enlace de recuperación vencido o inválido */}
+        {recoveryError && (
+          <TouchableOpacity
+            onPress={clearRecoveryError}
+            accessibilityRole="button"
+            accessibilityLabel="Cerrar aviso"
+            style={[styles.verifyNotice, { backgroundColor: isDarkMode ? '#2a1215' : '#fef2f2', borderColor: isDarkMode ? '#7f1d1d' : '#fecaca' }]}
+          >
+            <Text style={{ color: isDarkMode ? '#fca5a5' : '#991b1b', fontSize: 13, lineHeight: 19 }}>{recoveryError}</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Llegó escaneando el QR de un carnet sin sesión iniciada */}
         {(() => {

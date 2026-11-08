@@ -62,11 +62,15 @@ module.exports = async (req, res) => {
     // Quién envía: su propio perfil se lee con su token (lo permite RLS).
     const { data: sender } = await getSupabase(auth.accessToken)
       .from('profiles')
-      .select('id, role, group_name, district, region')
+      .select('id, role, group_name, district, region, account_status')
       .eq('id', auth.user.id)
       .single();
     if (!sender) {
       return res.status(403).json({ error: 'Perfil no encontrado' });
+    }
+    // Una cuenta sin aprobar (o rechazada) no envía avisos a nadie.
+    if (sender.account_status && sender.account_status !== 'approved') {
+      return res.status(403).json({ error: 'Cuenta sin aprobar' });
     }
     const isNational = NATIONAL_ROLES.includes(sender.role);
 
@@ -89,6 +93,10 @@ module.exports = async (req, res) => {
         .eq('user_id', receiverId);
       subs = directSubs || [];
     } else {
+      // Un joven solo puede avisar en masa a sus dirigentes (p. ej. «etapa enviada a revisión»).
+      if ((!sender.role || sender.role === 'scout') && !['scouter', 'jefe_grupo'].includes(receiverRole)) {
+        return res.status(403).json({ error: 'No puedes enviar avisos a todo el grupo' });
+      }
       let userQuery = supabase.from('profiles').select('id');
       if (receiverRole) userQuery = userQuery.eq('role', receiverRole);
       if (isNational) {

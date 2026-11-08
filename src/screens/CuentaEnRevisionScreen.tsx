@@ -4,6 +4,7 @@ import { Hourglass, RefreshCw, LogOut, XCircle } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { showAlert } from '../utils/alert';
+import { DeleteAccountButton } from '../components/DeleteAccountModal';
 
 /**
  * Lo único que ve una cuenta recién registrada hasta que su Scouter o la Jefatura la
@@ -63,6 +64,9 @@ export default function CuentaEnRevisionScreen() {
           <LogOut size={17} color={theme.subText} />
           <Text style={{ color: theme.subText, fontWeight: '700' }}>Cerrar sesión</Text>
         </TouchableOpacity>
+        <View style={{ width: '100%', marginTop: 10 }}>
+          <DeleteAccountButton />
+        </View>
       </View>
     </ScrollView>
   );

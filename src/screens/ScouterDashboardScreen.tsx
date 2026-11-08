@@ -37,6 +37,7 @@ import { InsigniasExportBar } from '../components/InsigniasExportBar';
 import { MembershipRecordsModal } from '../components/MembershipRecordsModal';
 import { PendingAccountsCard } from '../components/PendingAccountsCard';
 import { daysUntil, defaultMembershipDate, formatDateEs, todayLocal } from '../utils/dateLocal';
+import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
   if (!dateStr) return 'Seleccionar fecha en el calendario';
@@ -749,7 +750,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
       {loading ? (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
       ) : (
-        <ScrollView style={styles.scroll} contentContainerStyle={{ padding: 16, paddingBottom: 30 }}>
+        <PullToRefreshScrollView onRefresh={() => loadScouts()} style={styles.scroll} contentContainerStyle={{ padding: 16, paddingBottom: 30 }}>
           {pendingAccounts.length > 0 && (
             <View style={{ marginBottom: 16 }}>
               <PendingAccountsCard members={pendingAccounts} groupName={user?.group_name} onChanged={loadScouts} />
@@ -975,7 +976,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
               )}
             </View>
           </View>
-        </ScrollView>
+        </PullToRefreshScrollView>
       )}
 
       <MembershipRecordsModal

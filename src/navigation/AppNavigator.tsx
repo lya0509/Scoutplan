@@ -32,6 +32,7 @@ import EspecialidadesScreen from '../screens/EspecialidadesScreen';
 import VerificarCarnetScreen from '../screens/VerificarCarnetScreen';
 import CuentaEnRevisionScreen from '../screens/CuentaEnRevisionScreen';
 import AdministracionScreen from '../screens/AdministracionScreen';
+import NuevaContrasenaScreen from '../screens/NuevaContrasenaScreen';
 
 import DrawerNavigator from './DrawerNavigator';
 
@@ -139,7 +140,7 @@ export function hasPendingVerify(): boolean {
 }
 
 export default function AppNavigator() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, recoveryMode } = useAuth();
   const { isDarkMode, primaryColor, toggleDarkMode, setPrimaryColor } = useTheme();
   const navigationRef = React.useRef<any>(null);
 
@@ -224,6 +225,9 @@ export default function AppNavigator() {
             <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Ingresar' }} />
             <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: true, title: 'Registro' }} />
           </Stack.Group>
+        ) : recoveryMode ? (
+          // Entró con el enlace de «¿Olvidaste tu contraseña?»: primero la contraseña nueva
+          <Stack.Screen name="NuevaContrasena" component={NuevaContrasenaScreen} options={{ title: 'Contraseña nueva' }} />
         ) : (user.account_status === 'pending' || user.account_status === 'rejected') ? (
           // Cuenta nueva sin aprobar: no ve nada del grupo hasta que la aprueben
           <Stack.Screen name="CuentaEnRevision" component={CuentaEnRevisionScreen} options={{ title: 'Cuenta en revisión' }} />

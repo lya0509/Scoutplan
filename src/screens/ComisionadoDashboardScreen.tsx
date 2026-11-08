@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Modal, TextInput, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
@@ -17,7 +17,9 @@ import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
 import {
   exportCensoExcel, exportCensoPdf, exportPadronMedicoExcel, exportPadronMedicoPdf, exportMembresiasExcel, exportMembresiasPdf, MemberRecord
 } from '../utils/exportHelpers';
-import { REGIONS } from '../data/territory';
+import { REGIONS, regionLabel, districtLabel, registerDistricts, registerRegions } from '../data/territory';
+import { dataService } from '../lib/dataService';
+import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
 
 // Todas las regiones de la ASV (misma lista que el registro)
 const REGIONS_DATA = REGIONS;
@@ -59,6 +61,18 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
       loadTerritorialData();
     }, [user?.role, user?.region, user?.district])
   );
+
+  // Nombres de regiones y distritos desde la base de datos (para no mostrar el código)
+  const [, setNamesTick] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    dataService.getScoutGroups().then(g => {
+      registerDistricts(g.districts || []);
+      registerRegions(g.regions || []);
+      if (alive) setNamesTick(t => t + 1);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   const loadTerritorialData = async () => {
     setLoading(true);
@@ -161,15 +175,15 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
     if (isRegional) {
       return {
         icon: <MapPin size={18} color="#ffffff" />,
-        title: `COMISIÓN REGIONAL: ${(user?.region || 'MIRANDA').toUpperCase()}`,
+        title: `COMISIÓN REGIONAL: ${regionLabel(user?.region).replace(/^Región /, '').toUpperCase()}`,
         subtitle: 'Supervisión de Distritos y Grupos Scouts Regionales',
         themeColor: '#059669'
       };
     }
     return {
       icon: <Compass size={18} color="#ffffff" />,
-      title: `COMISIÓN DISTRITAL: ${(user?.district || 'DISTRITO').toUpperCase()}`,
-      subtitle: `Región ${(user?.region || 'Miranda').toUpperCase()} • Supervisión de Grupos`,
+      title: `COMISIÓN DISTRITAL: ${districtLabel(user?.district).replace(/^Distrito /, '').toUpperCase()}`,
+      subtitle: `${regionLabel(user?.region)} • Supervisión de Grupos`,
       themeColor: '#d97706'
     };
   };
@@ -179,7 +193,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg }}>
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      <PullToRefreshScrollView onRefresh={() => loadTerritorialData()} style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
         
         {/* CABECERA TERRITORIAL */}
         <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : levelInfo.themeColor }]}>
@@ -432,7 +446,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
 
           </View>
         )}
-      </ScrollView>
+      </PullToRefreshScrollView>
 
       {/* ========================================================================= */}
       {/* MODAL: CENSO TERRITORIAL (Excel + PDF)                                   */}

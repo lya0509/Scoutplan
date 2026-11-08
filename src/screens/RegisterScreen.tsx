@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { CheckCircle, Eye, EyeOff, AlertCircle } from 'lucide-react-native';
 import { supabase } from '../lib/supabaseClient';
-import { notificationService } from '../services/notificationService';
+import { postApi } from '../lib/apiClient';
 import { colors } from '../theme/colors';
 import { validateEmail } from '../utils/emailValidator';
 import { useTheme } from '../context/ThemeContext';
@@ -275,15 +275,11 @@ export default function RegisterScreen({ navigation }: any) {
           await supabase.from('profiles').upsert(profilePayload);
           await supabase.from('profiles').update(profilePayload).eq('id', signUpData.user.id);
 
-          // Enviar notificación instantánea a Jefatura y Scouters
-          notificationService.sendNotification({
-            senderId: signUpData.user.id,
-            groupName: assignedGroup,
-            unit: assignedUnit,
-            title: '🎉 ¡Nuevo Miembro Registrado!',
-            message: `${name.trim()} se ha registrado en el ${assignedGroup} (Rama: ${assignedUnit.toUpperCase()}).`,
-            type: 'membership'
-          }).catch(() => {});
+          // Aviso a la Jefatura y al Scouter de la rama: la campanita la crea la base de datos
+          // (avisar_cuenta_pendiente); aquí solo se pide el aviso al teléfono.
+          if (signUpData.session) {
+            postApi('/api/pending-push', {}).catch(() => {});
+          }
         } catch (e) {
           console.warn('Aviso guardando perfil inicial:', e);
         }

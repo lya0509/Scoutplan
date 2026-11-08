@@ -13,6 +13,7 @@ import { UserScoutAvatar } from '../components/UserScoutAvatar';
 import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import { CarnetScoutModal } from '../components/CarnetScoutModal';
 import { MembershipRecordsModal } from '../components/MembershipRecordsModal';
+import { DeleteAccountButton } from '../components/DeleteAccountModal';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { dataService } from '../lib/dataService';
 import { showAlert } from '../utils/alert';
@@ -717,6 +718,11 @@ export default function ProfileScreen({ navigation }: any) {
         user={user ? { ...user, cedula } : null}
         onClose={() => setShowCarnetModal(false)}
       />
+
+      {/* Zona de cuenta: borrar la cuenta y los datos personales */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 }}>
+        <DeleteAccountButton />
+      </View>
     </ScrollView>
   );
 }

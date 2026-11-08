@@ -3,15 +3,17 @@ import {
   View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Modal, ActivityIndicator,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Search, Plus, X, ShieldCheck, Users, Building2, UserCheck, UserX, AlertTriangle } from 'lucide-react-native';
+import { Search, Plus, X, ShieldCheck, Users, Building2, UserCheck, UserX, AlertTriangle, History } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { dataService } from '../lib/dataService';
 import { showAlert } from '../utils/alert';
+import { DeleteAccountButton } from '../components/DeleteAccountModal';
 import {
   REGIONS, ROLE_LABELS, OTHER_DISTRICT, ScoutGroup,
-  assignableRoles, canMoveMembers, canCreateGroups, districtsFor, regionLabel, districtLabel, slugDistrict, registerDistricts,
+  assignableRoles, canMoveMembers, canCreateGroups, districtsFor, regionLabel, districtLabel, slugDistrict, registerDistricts, registerRegions,
 } from '../data/territory';
+import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
 
 const UNITS = [
   { id: 'manada', label: 'Manada', color: '#ffb300' },
@@ -49,7 +51,7 @@ export default function AdministracionScreen() {
   const canGroups = canCreateGroups(myRole);
   const isAdmin = myRole === 'admin' || myRole === 'nacional';
 
-  const [tab, setTab] = useState<'personas' | 'grupos'>('personas');
+  const [tab, setTab] = useState<'personas' | 'grupos' | 'historial'>('personas');
   const [loading, setLoading] = useState(true);
   const [people, setPeople] = useState<Person[]>([]);
   const [groups, setGroups] = useState<ScoutGroup[]>([]);
@@ -67,6 +69,7 @@ export default function AdministracionScreen() {
         canGroups ? dataService.getScoutGroups() : Promise.resolve({ groups: [], districts: [], missingTable: false }),
       ]);
       registerDistricts(g.districts || []);
+      registerRegions((g as any).regions || []);
       setPeople(p || []);
       setGroups(g.groups || []);
       setMissingTable(g.missingTable);
@@ -115,7 +118,7 @@ export default function AdministracionScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg }}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <PullToRefreshScrollView onRefresh={() => load()} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={[styles.scope, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
           <ShieldCheck size={20} color={primaryColor} />
           <View style={{ flex: 1 }}>
@@ -133,24 +136,24 @@ export default function AdministracionScreen() {
           </View>
         )}
 
-        {canGroups && (
-          <View style={[styles.tabs, { backgroundColor: theme.inputBg }]}>
-            {(['personas', 'grupos'] as const).map(t => (
-              <TouchableOpacity
-                key={t}
-                style={[styles.tab, tab === t && { backgroundColor: theme.cardBg }]}
-                onPress={() => setTab(t)}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: tab === t }}
-              >
-                {t === 'personas' ? <Users size={16} color={tab === t ? primaryColor : theme.subText} /> : <Building2 size={16} color={tab === t ? primaryColor : theme.subText} />}
-                <Text style={[styles.tabText, { color: tab === t ? theme.text : theme.subText }]}>
-                  {t === 'personas' ? `Personas (${people.length})` : `Grupos (${myGroups.length})`}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
+        <View style={[styles.tabs, { backgroundColor: theme.inputBg }]}>
+          {([
+            ['personas', `Personas (${people.length})`, Users],
+            ...(canGroups ? [['grupos', `Grupos (${myGroups.length})`, Building2]] : []),
+            ['historial', 'Historial', History],
+          ] as [typeof tab, string, any][]).map(([t, label, Icon]) => (
+            <TouchableOpacity
+              key={t}
+              style={[styles.tab, tab === t && { backgroundColor: theme.cardBg }]}
+              onPress={() => setTab(t)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: tab === t }}
+            >
+              <Icon size={16} color={tab === t ? primaryColor : theme.subText} />
+              <Text style={[styles.tabText, { color: tab === t ? theme.text : theme.subText }]} numberOfLines={1}>{label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {loading ? (
           <ActivityIndicator style={{ marginTop: 40 }} color={primaryColor} />
@@ -215,6 +218,8 @@ export default function AdministracionScreen() {
               </TouchableOpacity>
             ))}
           </>
+        ) : tab === 'historial' ? (
+          <HistoryTab />
         ) : (
           <GroupsTab
             groups={myGroups}
@@ -224,7 +229,7 @@ export default function AdministracionScreen() {
             missingTable={missingTable}
           />
         )}
-      </ScrollView>
+      </PullToRefreshScrollView>
 
       {editing && (
         <EditPersonModal
@@ -379,6 +384,12 @@ function EditPersonModal({ person, roles, canMove, groups, onClose, onSaved }: {
             )}
           </ScrollView>
 
+          {isSelf && (
+            <View style={{ marginTop: 14 }}>
+              <DeleteAccountButton />
+            </View>
+          )}
+
           {editable && (
             <TouchableOpacity style={[styles.primary, { backgroundColor: primaryColor, marginTop: 14 }]} onPress={() => save()} disabled={saving} accessibilityRole="button">
               {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Guardar cambios</Text>}
@@ -387,6 +398,52 @@ function EditPersonModal({ person, roles, canMove, groups, onClose, onSaved }: {
         </View>
       </View>
     </Modal>
+  );
+}
+
+// ─────────────────────────────── Historial ───────────────────────────────
+
+const ACTION_ICON: Record<string, string> = {
+  rol: '🛡️', cuenta: '✅', grupo: '🔀', rama: '🏕️', registro: '📝', cuenta_borrada: '🗑️', grupo_creado: '🏢', grupo_estado: '⏸️',
+};
+
+function HistoryTab() {
+  const { theme, primaryColor } = useTheme();
+  const [rows, setRows] = useState<any[] | null>(null);
+  const [missing, setMissing] = useState(false);
+
+  useFocusEffect(useCallback(() => {
+    let alive = true;
+    dataService.getAuditLog().then(r => { if (alive) { setRows(r.rows); setMissing(r.missingTable); } });
+    return () => { alive = false; };
+  }, []));
+
+  if (!rows) return <ActivityIndicator style={{ marginTop: 30 }} color={primaryColor} />;
+  if (missing) return <Text style={[styles.empty, { color: theme.subText }]}>Falta activar el historial en la base de datos (supabase_historial_borrado.sql).</Text>;
+  if (!rows.length) return <Text style={[styles.empty, { color: theme.subText }]}>Todavía no hay cambios registrados.</Text>;
+
+  const fmt = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
+      d.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  return (
+    <View style={{ gap: 8 }}>
+      <Text style={[styles.hint, { color: theme.subText, marginTop: 0 }]}>Últimos {rows.length} cambios de roles, cuentas y grupos. Nadie puede editar ni borrar este registro.</Text>
+      {rows.map(r => (
+        <View key={r.id} style={[styles.row, { backgroundColor: theme.cardBg, borderColor: theme.border, alignItems: 'flex-start' }]}>
+          <Text style={{ fontSize: 18 }}>{ACTION_ICON[r.action] || '•'}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.name, { color: theme.text, fontSize: 14 }]}>{r.detail}</Text>
+            <Text style={[styles.meta, { color: theme.subText }]} numberOfLines={2}>
+              {[r.target_name, r.group_name].filter(Boolean).join(' · ')}
+            </Text>
+            <Text style={[styles.meta, { color: theme.subText }]}>Por {r.actor_name || '—'} · {fmt(r.at)}</Text>
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }
 

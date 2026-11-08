@@ -135,6 +135,9 @@ export interface MembershipHistoryEntry {
   id: string; status: 'approved' | 'rejected'; expiresAt: string; year: string; byName: string; reason: string; decidedAt: string; pending: boolean;
 }
 
+// Filas de requisitos por scout, reutilizadas unos segundos por getRequirement.
+const _reqRowsMemo = new Map<string, { at: number; rows: Promise<Map<string, boolean>> }>();
+
 export const dataService = {
   // --- MOTOR DE SINCRONIZACIÓN OFFLINE (ver src/lib/offline/outbox.ts) ---
   async getSyncQueue() {
@@ -240,29 +243,28 @@ export const dataService = {
     return Array.from(byKey.values());
   },
 
+  /**
+   * ¿Requisito cumplido? Las pantallas lo llaman requisito por requisito (decenas de veces),
+   * así que todas las filas del scout se piden UNA vez y se reutilizan unos segundos
+   * (antes era una consulta por requisito: el perfil tardaba ~10 s). Incluye los cambios
+   * pendientes de la cola y la copia offline (getRequirementRows).
+   */
   async getRequirement(scoutId: string, stageId: string, reqId: string): Promise<boolean> {
-    const localKey = `@scout_req_${scoutId}_${stageId}_${reqId}`;
-    const pending = await pendingRequirementMap(scoutId);
-    if (pending.has(`${stageId}:${reqId}`)) return pending.get(`${stageId}:${reqId}`)!;
-
-    const res = await supabase
-      .from('requirement_progress')
-      .select('completed')
-      .eq('scout_id', scoutId)
-      .eq('stage_id', stageId)
-      .eq('requirement_id', reqId)
-      .maybeSingle();
-
-    if (!res.error) {
-      if (res.data && res.data.completed !== undefined && res.data.completed !== null) {
-        AsyncStorage.setItem(localKey, String(res.data.completed)).catch(() => {});
-        return res.data.completed;
-      }
-      AsyncStorage.removeItem(localKey).catch(() => {});
-      return false;
+    const now = Date.now();
+    let memo = _reqRowsMemo.get(scoutId);
+    if (!memo || now - memo.at > 4000) {
+      memo = {
+        at: now,
+        rows: this.getRequirementRows(scoutId).then(rows => {
+          const m = new Map<string, boolean>();
+          rows.forEach(r => m.set(`${r.stage_id}:${r.requirement_id}`, !!r.completed));
+          return m;
+        }),
+      };
+      _reqRowsMemo.set(scoutId, memo);
     }
-    const local = await AsyncStorage.getItem(localKey).catch(() => null);
-    return local === 'true';
+    const map = await memo.rows;
+    return map.get(`${stageId}:${reqId}`) === true;
   },
 
   async getCompletedCatalogActivityIds(scoutId: string): Promise<string[]> {
@@ -320,6 +322,7 @@ export const dataService = {
   },
 
   async toggleRequirement(scoutId: string, stageId: string, reqId: string, completed: boolean) {
+    _reqRowsMemo.delete(scoutId);
     const localKey = `@scout_req_${scoutId}_${stageId}_${reqId}`;
     // 1. Guardar de inmediato en el dispositivo (respuesta instantánea, funciona sin red)
     await AsyncStorage.setItem(localKey, String(completed)).catch(() => {});
@@ -328,6 +331,7 @@ export const dataService = {
       dedupeKey: reqDedupeKey(scoutId, stageId, reqId),
       label: completed ? 'Requisito completado' : 'Requisito desmarcado',
     });
+    _reqRowsMemo.delete(scoutId);
   },
 
   async submitStageForReview(scoutId: string, stageId: string, notifyScouters?: any) {
@@ -1195,25 +1199,27 @@ export const dataService = {
    * Grupos del catálogo `scout_groups` (columnas region_id / district_id) y distritos de
    * `scout_districts`. `missingTable` = falta ejecutar supabase_administracion.sql.
    */
-  async getScoutGroups(): Promise<{ groups: any[]; districts: any[]; missingTable: boolean }> {
+  async getScoutGroups(): Promise<{ groups: any[]; districts: any[]; regions?: any[]; missingTable: boolean }> {
     try {
-      const [gr, dr] = await Promise.all([
+      const [gr, dr, rr] = await Promise.all([
         supabase.from('scout_groups').select('id,name,region_id,district_id,active').order('name'),
         supabase.from('scout_districts').select('id,region_id,name').order('name'),
+        supabase.from('scout_regions').select('id,name'),
       ]);
       if (gr.error) {
         const missing = ['42P01', '42703', 'PGRST204', 'PGRST205'].includes(gr.error.code) || /active|scout_groups/.test(gr.error.message || '');
         if (!missing) throw gr.error;
         const cached = (await readCached<any>('admin_groups_v2')) || {};
-        return { groups: cached.groups || [], districts: cached.districts || [], missingTable: true };
+        return { groups: cached.groups || [], districts: cached.districts || [], regions: cached.regions || [], missingTable: true };
       }
       const groups = (gr.data || []).map((g: any) => ({ id: g.id, name: g.name, region: g.region_id, district: g.district_id, active: g.active }));
       const districts = dr.error ? [] : (dr.data || []);
-      writeCached('admin_groups_v2', { groups, districts });
-      return { groups, districts, missingTable: false };
+      const regions = rr.error ? [] : (rr.data || []);
+      writeCached('admin_groups_v2', { groups, districts, regions });
+      return { groups, districts, regions, missingTable: false };
     } catch {
       const cached = (await readCached<any>('admin_groups_v2')) || {};
-      return { groups: cached.groups || [], districts: cached.districts || [], missingTable: false };
+      return { groups: cached.groups || [], districts: cached.districts || [], regions: cached.regions || [], missingTable: false };
     }
   },
 
@@ -1240,6 +1246,27 @@ export const dataService = {
   async setScoutGroupActive(id: string, active: boolean) {
     if (!isOnline()) throw new Error('Necesitas conexión a internet.');
     must(await supabase.from('scout_groups').update({ active }).eq('id', id));
+  },
+
+  /** Historial de cambios (audit_log). La base de datos ya limita qué filas ve cada rol. */
+  async getAuditLog(limit = 150): Promise<{ rows: any[]; missingTable: boolean }> {
+    try {
+      const { data, error } = await supabase
+        .from('audit_log')
+        .select('id,at,actor_name,action,target_name,group_name,detail')
+        .order('at', { ascending: false })
+        .limit(limit);
+      if (error) {
+        if (['42P01', 'PGRST205'].includes(error.code) || /audit_log/.test(error.message || '')) {
+          return { rows: [], missingTable: true };
+        }
+        throw error;
+      }
+      writeCached('admin_audit', data || []);
+      return { rows: data || [], missingTable: false };
+    } catch {
+      return { rows: (await readCached<any[]>('admin_audit')) || [], missingTable: false };
+    }
   },
 
   /** Personas que este usuario puede administrar (la base de datos ya limita por territorio). */

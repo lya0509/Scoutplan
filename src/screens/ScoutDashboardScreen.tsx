@@ -17,6 +17,7 @@ import { ProgramaPdfPreviewModal } from '../components/ProgramaPdfPreviewModal';
 import { ProgramaScout } from '../types/programa';
 import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, Target, FileText, CheckCircle, Info, Eye, ShieldAlert, ShieldCheck, Clock } from 'lucide-react-native';
 import { todayLocal, daysUntil, formatDateEs } from '../utils/dateLocal';
+import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
 
 const UNIT_COLORS: Record<string, string> = {
   'manada': '#ffb300',
@@ -345,7 +346,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={styles.content}>
+      <PullToRefreshScrollView onRefresh={() => loadDashboardData()} style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={styles.content}>
       
       {/* BANNER DE NOTIFICACIONES */}
       {notifications.map(notif => (
@@ -720,7 +721,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
         </View>
       </Modal>
 
-      </ScrollView>
+      </PullToRefreshScrollView>
 
       {/* BOTÓN FLOTANTE DE AYUDA Y REPORTES */}
       <HelpFloatingFAB />

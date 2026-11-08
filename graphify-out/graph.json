@@ -2,17 +2,17 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-08T18:58:08.305Z",
+    "generatedAt": "2026-11-08T19:43:33.388Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
-      "totalNodes": 111,
-      "totalEdges": 93,
+      "totalNodes": 117,
+      "totalEdges": 102,
       "totalHyperedges": 4,
-      "totalScreens": 28,
-      "totalComponents": 25,
+      "totalScreens": 29,
+      "totalComponents": 27,
       "totalContexts": 3,
-      "totalServices": 20,
+      "totalServices": 23,
       "totalCatalogs": 11,
       "totalDatabaseTables": 11,
       "totalQaSuites": 10
@@ -129,8 +129,8 @@
       "file": "src/navigation/AppNavigator.tsx",
       "role": "Routes unauthenticated users to Login/Register and authenticated users by role (scout -> DrawerNavigator, scouter -> ScouterDashboard, jefe_grupo -> JefeDashboard, comisionados/nacional/admin -> ComisionadoDashboard) plus shared screens.",
       "exists": true,
-      "lines": 284,
-      "bytes": 12644,
+      "lines": 288,
+      "bytes": 12981,
       "exports": [
         "hasPendingVerify",
         "AppNavigator"
@@ -168,6 +168,7 @@
         "../screens/VerificarCarnetScreen",
         "../screens/CuentaEnRevisionScreen",
         "../screens/AdministracionScreen",
+        "../screens/NuevaContrasenaScreen",
         "./DrawerNavigator"
       ],
       "supabaseTables": [],
@@ -232,8 +233,8 @@
       "file": "src/context/AuthContext.tsx",
       "role": "Restores @scout_cached_profile in <10ms with 800ms safety timeout, syncs Supabase Auth session & profiles table, initializes presenceService, and exposes updateUserProfile/refreshProfile/signOut.",
       "exists": true,
-      "lines": 302,
-      "bytes": 11767,
+      "lines": 336,
+      "bytes": 13594,
       "exports": [
         "AuthProvider",
         "useAuth"
@@ -246,7 +247,8 @@
         "../types/progression",
         "../lib/offline/net",
         "../lib/dataService",
-        "../lib/fileUrl"
+        "../lib/fileUrl",
+        "../lib/authRecovery"
       ],
       "supabaseTables": [
         "profiles"
@@ -432,8 +434,8 @@
       "file": "src/lib/dataService.ts",
       "role": "Async data layer on top of the offline outbox (@scout_outbox_v1) with cached reads: stage/requirement progress, stage/requirement progress, stage review/approval, certificates + curriculum auto-sync, quarterly plans, CIP events, nights log, vida de grupo log, and membership dates.",
       "exists": true,
-      "lines": 2004,
-      "bytes": 88173,
+      "lines": 2049,
+      "bytes": 90671,
       "exports": [
         "MembershipReceipt",
         "MembershipHistoryEntry",
@@ -461,7 +463,10 @@
         "scout_notifications",
         "calendar_events",
         "quarterly_plans",
-        "scout_groups"
+        "scout_groups",
+        "scout_districts",
+        "scout_regions",
+        "audit_log"
       ],
       "supabaseBuckets": [],
       "realtimeChannels": [],
@@ -918,8 +923,8 @@
       "route": "Login",
       "role": "Email/password authentication, password recovery modal, and link to RegisterScreen.",
       "exists": true,
-      "lines": 532,
-      "bytes": 16051,
+      "lines": 547,
+      "bytes": 16827,
       "exports": [
         "LoginScreen"
       ],
@@ -931,7 +936,9 @@
         "../theme/colors",
         "../context/ThemeContext",
         "../hooks/useBackHandler",
-        "../utils/alert"
+        "../utils/alert",
+        "../context/AuthContext",
+        "../lib/authRecovery"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -950,7 +957,7 @@
       "role": "Multi-role user registration (Scout, Scouter, Jefe de Grupo, Comisionado) with Region, District, Group, and Unit selectors.",
       "exists": true,
       "lines": 758,
-      "bytes": 29910,
+      "bytes": 29920,
       "exports": [
         "RegisterScreen"
       ],
@@ -959,7 +966,7 @@
         "react-native",
         "lucide-react-native",
         "../lib/supabaseClient",
-        "../services/notificationService",
+        "../lib/apiClient",
         "../theme/colors",
         "../utils/emailValidator",
         "../context/ThemeContext",
@@ -981,8 +988,8 @@
       "route": "Resumen",
       "role": "Main Scout home dashboard: ScoutUserIcon greeting badge, progression summary, active stage progress bar, unit Rovers directory (directorio_grupo RPC), quick access cards, CarnetScoutModal, OnboardingGuideModal, and HelpFloatingFAB.",
       "exists": true,
-      "lines": 823,
-      "bytes": 36343,
+      "lines": 824,
+      "bytes": 36484,
       "exports": [
         "ScoutDashboardScreen"
       ],
@@ -1005,7 +1012,8 @@
         "../components/ProgramaPdfPreviewModal",
         "../types/programa",
         "lucide-react-native",
-        "../utils/dateLocal"
+        "../utils/dateLocal",
+        "../components/PullToRefreshScrollView"
       ],
       "supabaseTables": [
         "calendar_events",
@@ -1165,8 +1173,8 @@
       "route": "Perfil",
       "role": "Scout & Scouter personal profile editor: dual avatars (Uniformado/Casual), cédula, dates (birth, promise, join), membership expiration proposal, and digital Carnet Scout.",
       "exists": true,
-      "lines": 776,
-      "bytes": 34690,
+      "lines": 782,
+      "bytes": 34960,
       "exports": [
         "ProfileScreen"
       ],
@@ -1183,6 +1191,7 @@
         "../components/DualProfileAvatar",
         "../components/CarnetScoutModal",
         "../components/MembershipRecordsModal",
+        "../components/DeleteAccountModal",
         "../components/NotificationHeaderBell",
         "../lib/dataService",
         "../utils/alert",
@@ -1247,8 +1256,8 @@
       "route": "ScouterDashboard",
       "role": "Unit leader dashboard: lists unit scouts with online presence, pending stage reviews, quarterly plan feedback, unit programs, and profile photo moderation.",
       "exists": true,
-      "lines": 1470,
-      "bytes": 72554,
+      "lines": 1471,
+      "bytes": 72688,
       "exports": [
         "ScouterDashboardScreen"
       ],
@@ -1278,7 +1287,8 @@
         "../components/InsigniasExportBar",
         "../components/MembershipRecordsModal",
         "../components/PendingAccountsCard",
-        "../utils/dateLocal"
+        "../utils/dateLocal",
+        "../components/PullToRefreshScrollView"
       ],
       "supabaseTables": [
         "calendar_events",
@@ -1330,8 +1340,8 @@
       "route": "JefeDashboard",
       "role": "Group Chief dashboard: supervises all units (Manada, Tropa, Caminantes, Clan), approves/rejects membership expiration dates, moderates photos, and manages group calendar.",
       "exists": true,
-      "lines": 1933,
-      "bytes": 90969,
+      "lines": 1934,
+      "bytes": 91112,
       "exports": [
         "JefeGrupoScreen"
       ],
@@ -1361,7 +1371,8 @@
         "../components/PendingAccountsCard",
         "../data/unitTemplates",
         "../utils/exportHelpers",
-        "../utils/dateLocal"
+        "../utils/dateLocal",
+        "../components/PullToRefreshScrollView"
       ],
       "supabaseTables": [
         "profiles",
@@ -1380,8 +1391,8 @@
       "route": "ComisionadoDashboard",
       "role": "Territorial hierarchy dashboard (Distrital, Regional, Nacional, Admin) with drill-down metrics by Region -> District -> Group -> Unit.",
       "exists": true,
-      "lines": 689,
-      "bytes": 35651,
+      "lines": 703,
+      "bytes": 36358,
       "exports": [
         "ComisionadoDashboardScreen"
       ],
@@ -1398,7 +1409,9 @@
         "../utils/alert",
         "../components/ThemeCustomizerModal",
         "../utils/exportHelpers",
-        "../data/territory"
+        "../data/territory",
+        "../lib/dataService",
+        "../components/PullToRefreshScrollView"
       ],
       "supabaseTables": [
         "profiles"
@@ -2788,8 +2801,8 @@
       "file": "api/send-push.js",
       "role": "Dispatches encrypted RFC 8030 Web Push payloads using web-push and VAPID keys.",
       "exists": true,
-      "lines": 164,
-      "bytes": 5644,
+      "lines": 172,
+      "bytes": 6185,
       "exports": [],
       "imports": [],
       "supabaseTables": [
@@ -2827,8 +2840,8 @@
       "file": "src/screens/CuentaEnRevisionScreen.tsx",
       "role": "Only screen for accounts with account_status pending/rejected (AppNavigator gate): explains the review, re-check button (refreshProfile) and sign out. Shows no group data.",
       "exists": true,
-      "lines": 84,
-      "bytes": 4670,
+      "lines": 88,
+      "bytes": 4848,
       "exports": [
         "CuentaEnRevisionScreen"
       ],
@@ -2838,7 +2851,8 @@
         "lucide-react-native",
         "../context/AuthContext",
         "../context/ThemeContext",
-        "../utils/alert"
+        "../utils/alert",
+        "../components/DeleteAccountModal"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -2853,8 +2867,8 @@
       "file": "src/screens/AdministracionScreen.tsx",
       "role": "Route Administracion (/administracion). Jefe de Grupo: people of own group (Scout/Scouter/Jefe, unit, approve). Comisionados: also create groups (scout_groups) and move people inside their territory. Admin/Nacional: whole country, all roles. Rules mirrored by proteger_perfil.",
       "exists": true,
-      "lines": 624,
-      "bytes": 32894,
+      "lines": 690,
+      "bytes": 36178,
       "exports": [
         "AdministracionScreen"
       ],
@@ -2867,7 +2881,9 @@
         "../context/ThemeContext",
         "../lib/dataService",
         "../utils/alert",
-        "../data/territory"
+        "../components/DeleteAccountModal",
+        "../data/territory",
+        "../components/PullToRefreshScrollView"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -2882,8 +2898,8 @@
       "file": "src/data/territory.ts",
       "role": "Single source for REGIONS, static districts/groups (fallback), districtsFor/groupsFor (merge scout_groups), ROLE_LABELS, assignableRoles, canMoveMembers. Used by Register, Comisionado dashboard and Administracion.",
       "exists": true,
-      "lines": 158,
-      "bytes": 6003,
+      "lines": 175,
+      "bytes": 6873,
       "exports": [
         "Option",
         "REGIONS",
@@ -2892,6 +2908,9 @@
         "STATIC_DISTRICTS",
         "STATIC_GROUPS",
         "ScoutGroup",
+        "DistrictRow",
+        "registerDistricts",
+        "registerRegions",
         "regionLabel",
         "districtLabel",
         "districtsFor",
@@ -2905,6 +2924,149 @@
       ],
       "imports": [],
       "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "NuevaContrasenaScreen.tsx",
+      "label": "NuevaContrasenaScreen.tsx (Set new password)",
+      "type": "screen",
+      "community": "scout_progression_screens",
+      "file": "src/screens/NuevaContrasenaScreen.tsx",
+      "role": "Gate shown while AuthContext.recoveryMode (entered via the «¿Olvidaste tu contraseña?» email link): supabase.auth.updateUser({password}), min 8 chars, then endRecovery().",
+      "exists": true,
+      "lines": 119,
+      "bytes": 6239,
+      "exports": [
+        "NuevaContrasenaScreen"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "lucide-react-native",
+        "../lib/supabaseClient",
+        "../context/AuthContext",
+        "../context/ThemeContext",
+        "../utils/alert"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "authRecovery.ts",
+      "label": "authRecovery.ts (Password recovery link)",
+      "type": "service",
+      "community": "backend_offline_services",
+      "file": "src/lib/authRecovery.ts",
+      "role": "detectSessionInUrl is false, so this reads #access_token…&type=recovery (or #error_code) once, wipes it from the URL, keeps a sessionStorage flag across reloads; recoveryRedirectUrl() for resetPasswordForEmail.",
+      "exists": true,
+      "lines": 69,
+      "bytes": 2553,
+      "exports": [
+        "RecoveryLink",
+        "readRecoveryLink",
+        "setRecoveryFlag",
+        "hasRecoveryFlag",
+        "recoveryRedirectUrl"
+      ],
+      "imports": [],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": [
+        "@pw_recovery"
+      ]
+    },
+    {
+      "id": "DeleteAccountModal.tsx",
+      "label": "DeleteAccountModal.tsx (Delete my account)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/components/DeleteAccountModal.tsx",
+      "role": "DeleteAccountButton + typed confirmation (BORRAR) → POST /api/delete-account → signOut. Used in ProfileScreen, CuentaEnRevisionScreen and the own row of AdministracionScreen.",
+      "exists": true,
+      "lines": 133,
+      "bytes": 7019,
+      "exports": [
+        "DeleteAccountButton",
+        "DeleteAccountModal"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "lucide-react-native",
+        "../context/AuthContext",
+        "../context/ThemeContext",
+        "../lib/supabaseClient",
+        "../lib/apiClient",
+        "../utils/alert"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "PullToRefreshScrollView.tsx",
+      "label": "PullToRefreshScrollView.tsx (Pull to refresh)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/components/PullToRefreshScrollView.tsx",
+      "role": "ScrollView with pull-to-refresh: native RefreshControl; on web custom touch handling (react-native-web has no gesture). Used by Inicio, Jefe, Scouter, Comisionado and Administracion.",
+      "exists": true,
+      "lines": 124,
+      "bytes": 4562,
+      "exports": [],
+      "imports": [
+        "react",
+        "react-native",
+        "lucide-react-native",
+        "../context/ThemeContext"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "delete-account.js",
+      "label": "api/delete-account.js (Self account deletion)",
+      "type": "service",
+      "community": "backend_offline_services",
+      "file": "api/delete-account.js",
+      "role": "requireUser + confirm BORRAR; service role: archivos_de_usuario → storage remove, borrar_datos_de_cuenta (personal data; group content kept without author; audit row), auth.admin.deleteUser.",
+      "exists": true,
+      "lines": 51,
+      "bytes": 2433,
+      "exports": [],
+      "imports": [],
+      "supabaseTables": [],
+      "supabaseBuckets": [
+        "scout-files"
+      ],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "pending-push.js",
+      "label": "api/pending-push.js (Push for accounts to approve)",
+      "type": "service",
+      "community": "backend_offline_services",
+      "file": "api/pending-push.js",
+      "role": "Called after sign-up: only if caller is pending, pushes to the recipients the avisar_cuenta_pendiente trigger already notified in the last 15 min (tag pending_<id>, no stacking).",
+      "exists": true,
+      "lines": 67,
+      "bytes": 3313,
+      "exports": [],
+      "imports": [],
+      "supabaseTables": [
+        "profiles",
+        "scout_notifications",
+        "push_subscriptions"
+      ],
       "supabaseBuckets": [],
       "realtimeChannels": [],
       "storageKeys": []
@@ -3272,6 +3434,51 @@
       "from": "RegisterScreen.tsx",
       "to": "territory.ts",
       "relation": "imports"
+    },
+    {
+      "from": "AppNavigator.tsx",
+      "to": "NuevaContrasenaScreen.tsx",
+      "relation": "gates_recovery"
+    },
+    {
+      "from": "AuthContext.tsx",
+      "to": "authRecovery.ts",
+      "relation": "reads_recovery_link"
+    },
+    {
+      "from": "LoginScreen.tsx",
+      "to": "authRecovery.ts",
+      "relation": "redirect_to"
+    },
+    {
+      "from": "ProfileScreen.tsx",
+      "to": "DeleteAccountModal.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "AdministracionScreen.tsx",
+      "to": "DeleteAccountModal.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "DeleteAccountModal.tsx",
+      "to": "delete-account.js",
+      "relation": "calls_api"
+    },
+    {
+      "from": "RegisterScreen.tsx",
+      "to": "pending-push.js",
+      "relation": "calls_api"
+    },
+    {
+      "from": "JefeGrupoScreen.tsx",
+      "to": "PullToRefreshScrollView.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "ScouterDashboardScreen.tsx",
+      "to": "PullToRefreshScrollView.tsx",
+      "relation": "renders"
     },
     {
       "from": "DualProfileAvatar.tsx",
