@@ -119,7 +119,7 @@ export default function CipStageModal({ visible, onClose, stageId, req, isReadOn
                   );
                 })}
 
-                {!isReadOnly && credited.length < required && (
+                {!isReadOnly && credited.length + requests.filter(r => parseCipMeta(r.file_url).estado !== 'rechazada').length < required && (
                   showForm
                     ? <OldCipForm stageId={stageId} req={req!} nivel={nivel} onDone={() => { setShowForm(false); load(); }} onCancel={() => setShowForm(false)} />
                     : (
