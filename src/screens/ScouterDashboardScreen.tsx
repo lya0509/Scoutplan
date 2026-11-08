@@ -38,6 +38,7 @@ import { MembershipRecordsModal } from '../components/MembershipRecordsModal';
 import { PendingAccountsCard } from '../components/PendingAccountsCard';
 import { daysUntil, defaultMembershipDate, formatDateEs, todayLocal } from '../utils/dateLocal';
 import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
+import CipManagerModal from '../components/CipManagerModal';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
   if (!dateStr) return 'Seleccionar fecha en el calendario';
@@ -246,7 +247,7 @@ function ActivitiesPanel({ unitFilter, isDarkMode, theme, onAddCip }: { unitFilt
             }}
           >
             <Plus size={15} color="white" style={{ marginRight: 4 }} />
-            <Text style={[panelStyles.addCipBtnText, { fontSize: 12 }]}>+ Registrar Evento CIP</Text>
+            <Text style={[panelStyles.addCipBtnText, { fontSize: 12 }]}>🚩 Gestionar CIP</Text>
           </TouchableOpacity>
 
           {loaded && (
@@ -422,6 +423,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
 
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [scouts, setScouts] = useState<any[]>([]);
+  const [showCipManager, setShowCipManager] = useState(false);
   const [pendingAccounts, setPendingAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats]   = useState({ total: 0, inReview: 0, approved: 0 });
@@ -862,7 +864,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
             unitFilter={user?.unit?.toLowerCase() || ''} 
             isDarkMode={isDarkMode}
             theme={theme}
-            onAddCip={() => setShowCipModal(true)}
+            onAddCip={() => setShowCipManager(true)}
           />
 
           {/* PANEL DE GESTIÓN DE MEMBRESÍA SCOUT */}
@@ -1353,6 +1355,11 @@ export default function ScouterDashboardScreen({ navigation }: any) {
       <ThemeCustomizerModal
         visible={showCustomizer}
         onClose={() => setShowCustomizer(false)}
+      />
+      <CipManagerModal
+        visible={showCipManager}
+        onClose={() => setShowCipManager(false)}
+        members={scouts.map((m: any) => ({ id: m.id, name: m.name, unit: m.unit }))}
       />
     </View>
   );

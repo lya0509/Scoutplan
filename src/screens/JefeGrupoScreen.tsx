@@ -32,6 +32,7 @@ import {
 } from '../utils/exportHelpers';
 import { todayLocal, defaultMembershipDate } from '../utils/dateLocal';
 import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
+import CipManagerModal from '../components/CipManagerModal';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
   if (!dateStr) return 'Seleccionar fecha en el calendario';
@@ -57,6 +58,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [allMembers, setAllMembers] = useState<any[]>([]);
+  const [showCipManager, setShowCipManager] = useState(false);
   const [pendingAccounts, setPendingAccounts] = useState<any[]>([]);
 
   const [stats, setStats] = useState({
@@ -554,6 +556,17 @@ export default function JefeGrupoScreen({ navigation }: any) {
       >
         <ShieldCheck size={18} color="#2563eb" />
         <Text style={[styles.quickToolBtnText, { color: theme.text }]}>🛡️ Roles y miembros</Text>
+      </TouchableOpacity>
+
+      {/* CIP: catálogo y asistencia de los jóvenes del grupo */}
+      <TouchableOpacity
+        style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+        onPress={() => setShowCipManager(true)}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+      >
+        <Flag size={18} color="#7c3aed" />
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>🚩 CIP</Text>
       </TouchableOpacity>
 
       {/* 2. PADRÓN DE EMERGENCIA MÉDICA */}
@@ -1669,6 +1682,11 @@ export default function JefeGrupoScreen({ navigation }: any) {
       <ThemeCustomizerModal
         visible={showCustomizer}
         onClose={() => setShowCustomizer(false)}
+      />
+      <CipManagerModal
+        visible={showCipManager}
+        onClose={() => setShowCipManager(false)}
+        members={allMembers.filter((m: any) => (m.role || 'scout') === 'scout').map((m: any) => ({ id: m.id, name: m.name, unit: m.unit }))}
       />
     </View>
   );

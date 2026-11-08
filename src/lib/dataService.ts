@@ -10,6 +10,7 @@ import { must, isDuplicateError, isRetryableError, isOnline, newId } from './off
 import { cachedQuery, readCached, writeCached } from './offline/readCache';
 import { isSafeFileUrl } from '../utils/safeUrl';
 import { todayLocal } from '../utils/dateLocal';
+import { cipRequirement } from './cipLogic';
 
 const SYNC_QUEUE_KEY = '@scout_offline_sync_queue'; // cola antigua: outbox.ts la migra sola
 
@@ -790,6 +791,174 @@ export const dataService = {
     return [...pendingRows, ...rows];
   },
 
+  // ---------------- CIP oficiales (catálogo) y asistencia marcada por el Scouter ----------------
+
+  /** Catálogo de CIP visibles para el usuario. `missingTable` = falta supabase_cip_oficiales.sql. */
+  async getCipCatalog(): Promise<{ rows: any[]; missingTable: boolean }> {
+    try {
+      const { data, error } = await supabase.from('cip_oficiales').select('*').order('fecha', { ascending: false, nullsFirst: false });
+      if (error) {
+        if (['42P01', 'PGRST205'].includes(error.code) || /cip_oficiales/.test(error.message || '')) return { rows: [], missingTable: true };
+        throw error;
+      }
+      writeCached('cip_catalog', data || []);
+      return { rows: data || [], missingTable: false };
+    } catch {
+      return { rows: (await readCached<any[]>('cip_catalog')) || [], missingTable: false };
+    }
+  },
+
+  /** Crea un CIP. Jefatura/Scouter: queda para su grupo. Comisionados: para su territorio. */
+  async createCipOficial(c: { nombre: string; fecha: string; lugar?: string; nivel: string }, user: any) {
+    if (!isOnline()) throw new Error('Necesitas conexión a internet para crear un CIP.');
+    const role = user?.role || '';
+    const isGroup = role === 'jefe_grupo' || role === 'scouter';
+    const row = {
+      nombre: c.nombre.trim(),
+      fecha: c.fecha || null,
+      lugar: (c.lugar || '').trim() || null,
+      nivel: c.nivel,
+      group_name: isGroup ? user.group_name : null,
+      region: user?.region || null,
+      district: user?.district || null,
+      created_by: user?.id,
+      created_by_name: user?.name || null,
+    };
+    const { data, error } = await supabase.from('cip_oficiales').insert(row).select().single();
+    if (error) throw new Error(error.code === '42501' ? 'No tienes permiso para crear un CIP de ese nivel.' : error.message);
+    return data;
+  },
+
+  async setCipOficialActive(id: string, active: boolean) {
+    if (!isOnline()) throw new Error('Necesitas conexión a internet.');
+    must(await supabase.from('cip_oficiales').update({ active }).eq('id', id));
+  },
+
+  /** Todas las filas de CIP (acreditados cip_sel_* y solicitudes cip_sol_*) de varios jóvenes. */
+  async getCipRowsForScouts(scoutIds: string[]): Promise<any[]> {
+    if (!scoutIds.length) return [];
+    return cachedQuery<any[]>(`cip_rows_${scoutIds.slice().sort().join(',').slice(0, 300)}`, async () =>
+      must(await supabase
+        .from('certificates')
+        .select('id, scout_id, category, title, level, file_url, created_at')
+        .in('scout_id', scoutIds)
+        .or('category.like.cip_sel_*,category.like.cip_sol_*')) || [], []);
+  },
+
+  /** Recalcula si el requisito de CIP quedó completo según las asistencias acreditadas. */
+  async _syncCipRequirement(scoutId: string, stageId: string, reqId: string, required: number) {
+    const rows = must(await supabase.from('certificates').select('id')
+      .eq('scout_id', scoutId).eq('category', `cip_sel_${stageId}_${reqId}`)) || [];
+    await this.toggleRequirement(scoutId, stageId, reqId, rows.length >= required);
+    AsyncStorage.removeItem(`@scout_cip_selections_${scoutId}_${stageId}_${reqId}`).catch(() => {});
+  },
+
+  /** El Scouter marca que el joven asistió a un CIP del catálogo. */
+  async markCipAttendance(cip: any, scout: { id: string; name?: string }, target: { stageId: string; stageName: string; reqId: string; reqText: string; required: number }, by: { id?: string; name?: string }) {
+    if (!isOnline()) throw new Error('Necesitas conexión a internet para marcar la asistencia.');
+    const row = {
+      id: newId(),
+      scout_id: scout.id,
+      category: `cip_sel_${target.stageId}_${target.reqId}`,
+      title: cip.nombre,
+      level: cip.nivel,
+      file_url: JSON.stringify({
+        eventId: cip.id, date: cip.fecha || '', location: cip.lugar || '',
+        marcadoPor: by.name || '', marcadoPorId: by.id || null,
+      }),
+    };
+    const { error } = await supabase.from('certificates').insert(row);
+    if (error) throw new Error(error.message);
+    await this._syncCipRequirement(scout.id, target.stageId, target.reqId, target.required);
+    notificationService.sendNotification({
+      senderId: by.id, receiverId: scout.id, type: 'badge',
+      title: '🚩 CIP acreditado',
+      message: `${cip.nombre} cuenta para ${target.stageName} · ${target.reqText}.`,
+    }).catch(() => {});
+    return row;
+  },
+
+  /** Quita una asistencia marcada por error. */
+  async unmarkCipAttendance(rowId: string, scoutId: string, target: { stageId: string; reqId: string; required: number }) {
+    if (!isOnline()) throw new Error('Necesitas conexión a internet.');
+    must(await supabase.from('certificates').delete().eq('id', rowId));
+    await this._syncCipRequirement(scoutId, target.stageId, target.reqId, target.required);
+  },
+
+  /** El joven pide que le acrediten un CIP anterior a la app (bajo la Ley Scout). */
+  async requestOldCip(
+    scout: { id: string; name?: string; group_name?: string | null; unit?: string | null },
+    target: { stageId: string; reqId: string },
+    d: { nombre: string; year: string; nivel: string; scouterEntonces?: string; nota?: string }
+  ) {
+    if (!isOnline()) throw new Error('Necesitas conexión a internet para enviar la solicitud.');
+    const row = {
+      id: newId(),
+      scout_id: scout.id,
+      category: `cip_sol_${target.stageId}_${target.reqId}`,
+      title: d.nombre.trim(),
+      level: d.nivel,
+      file_url: JSON.stringify({
+        historico: true, year: d.year, scouterEntonces: (d.scouterEntonces || '').trim(),
+        stageId: target.stageId, reqId: target.reqId,
+        nota: (d.nota || '').trim(), leyAceptada: true, estado: 'pendiente', fechaSolicitud: todayLocal(),
+      }),
+    };
+    const { error } = await supabase.from('certificates').insert(row);
+    if (error) throw new Error(error.message);
+    notificationService.sendNotification({
+      senderId: scout.id, groupName: scout.group_name || undefined, unit: scout.unit || undefined,
+      receiverRole: 'scouter', type: 'badge',
+      title: '🚩 Solicitud de CIP anterior a la app',
+      message: `${scout.name || 'Un joven'} pide que le acrediten «${d.nombre.trim()}» (${d.year}). Revísalo en Gestionar CIP.`,
+    }).catch(() => {});
+    return row;
+  },
+
+  /** El joven retira una solicitud pendiente o rechazada. */
+  async deleteOldCipRequest(rowId: string) {
+    if (!isOnline()) throw new Error('Necesitas conexión a internet.');
+    must(await supabase.from('certificates').delete().eq('id', rowId));
+  },
+
+  /** El Scouter aprueba (pasa a acreditado, con marca «anterior a la app») o rechaza una solicitud. */
+  async reviewOldCip(reqRow: any, approve: boolean, by: { id?: string; name?: string }, motivo?: string) {
+    if (!isOnline()) throw new Error('Necesitas conexión a internet.');
+    const meta = (() => { try { return JSON.parse(reqRow.file_url || '{}'); } catch { return {}; } })();
+    // cip_sol_<etapa>_<requisito>; la etapa y el requisito también van en meta
+    const parsedStage = String(reqRow.category).startsWith('cip_sol_rover_ciudadano_') ? 'rover_ciudadano' : String(reqRow.category).split('_')[2];
+    const stageId: string = meta.stageId || parsedStage;
+    const reqId: string = meta.reqId || String(reqRow.category).slice(`cip_sol_${stageId}_`.length);
+    if (approve) {
+      const target = cipRequirement(stageId, reqRow.level);
+      const row = {
+        id: newId(),
+        scout_id: reqRow.scout_id,
+        category: `cip_sel_${stageId}_${reqId}`,
+        title: reqRow.title,
+        level: reqRow.level,
+        file_url: JSON.stringify({
+          historico: true, year: meta.year || '', scouterEntonces: meta.scouterEntonces || '', nota: meta.nota || '',
+          leyAceptada: !!meta.leyAceptada, marcadoPor: by.name || '', marcadoPorId: by.id || null, date: meta.year ? `${meta.year}` : '',
+        }),
+      };
+      const { error } = await supabase.from('certificates').insert(row);
+      if (error) throw new Error(error.message);
+      must(await supabase.from('certificates').delete().eq('id', reqRow.id));
+      await this._syncCipRequirement(reqRow.scout_id, stageId, reqId, target?.required || 1);
+    } else {
+      const upd = { ...meta, estado: 'rechazada', motivo: (motivo || '').trim(), revisadoPor: by.name || '' };
+      must(await supabase.from('certificates').update({ file_url: JSON.stringify(upd) }).eq('id', reqRow.id));
+    }
+    notificationService.sendNotification({
+      senderId: by.id, receiverId: reqRow.scout_id, type: 'badge',
+      title: approve ? '🚩 CIP anterior aprobado' : 'CIP anterior no aprobado',
+      message: approve
+        ? `Tu Scouter aprobó «${reqRow.title}». Ya cuenta para tu etapa.`
+        : `Tu Scouter no aprobó «${reqRow.title}»${motivo ? `: ${motivo}` : '.'}`,
+    }).catch(() => {});
+  },
+
   // ----------------------------------------------------
   // MÓDULO DE PLANES TRIMESTRALES (Q1 - Q4)
   // ----------------------------------------------------
@@ -1379,6 +1548,8 @@ export const dataService = {
    */
   async _rescueLocalOnlyRows(scoutId: string, category: string, localKey: string, remoteRows: any[]) {
     const flagKey = `@scout_rescued_v1_${localKey}`;
+    // Los CIP acreditados (cip_sel_*) ahora los registra solo el Scouter: no se suben desde el teléfono del joven
+    if (category.startsWith('cip_sel_')) return;
     try {
       if (await AsyncStorage.getItem(flagKey)) return;
       const raw = await AsyncStorage.getItem(localKey);
@@ -1716,11 +1887,15 @@ export const dataService = {
       }
       return {
         id: meta.eventId || d.id,
+        rowId: d.id,
         title: d.title,
         scope: d.level || 'distrital',
         date: meta.date || (d.created_at ? d.created_at.split('T')[0] : ''),
         location: meta.location || '',
-        description: meta.description || ''
+        description: meta.description || '',
+        historico: !!meta.historico,
+        year: meta.year || '',
+        marcadoPor: meta.marcadoPor || '',
       };
     });
   },

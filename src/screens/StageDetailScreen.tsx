@@ -31,6 +31,7 @@ import { checkProfileCompletion } from '../utils/profileGuard';
 import { navigateBackOrHome } from '../utils/navigationHelper';
 import { formatDateEs, humanDuration } from '../utils/dateLocal';
 import { SecureImage } from '../components/SecureImage';
+import CipStageModal from '../components/CipStageModal';
 
 export default function StageDetailScreen({ route, navigation }: any) {
   const { stageId } = route.params || { stageId: 'precursor' };
@@ -210,14 +211,6 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const openCipModal = async (req: any) => {
     setSelectedReqForCip(req);
     setShowCipModal(true);
-    setLoadingCip(true);
-    const events = await dataService.getCipEvents(user?.unit || undefined);
-    setCipEvents(events);
-    if (user?.id) {
-      const sels = await dataService.getCipSelections(user.id, stageId, req.id);
-      setSelectedCipList(sels || []);
-    }
-    setLoadingCip(false);
   };
 
   const handleToggleCipEvent = async (event: any) => {
@@ -655,10 +648,10 @@ export default function StageDetailScreen({ route, navigation }: any) {
                   <View style={{ marginTop: 4 }}>
                     <Text style={[styles.reqBadge, { color: colors.primary, fontWeight: 'bold' }]}>
                       🚩 {(cipCountMap[req.id] || 0) > 0
-                        ? `${cipCountMap[req.id]} / ${req.requiredCount || 1} actividades seleccionadas`
+                        ? `${cipCountMap[req.id]} / ${req.requiredCount || 1} CIP acreditados`
                         : isChecked
-                        ? `${req.requiredCount || 1} / ${req.requiredCount || 1} actividades convalidadas`
-                        : `0 / ${req.requiredCount || 1} actividades seleccionadas`} (Toca para seleccionar o agregar)
+                        ? `${req.requiredCount || 1} / ${req.requiredCount || 1} CIP acreditados`
+                        : `0 / ${req.requiredCount || 1} CIP acreditados`} (Toca para ver o pedir uno anterior)
                     </Text>
                   </View>
                 )}
@@ -1186,256 +1179,14 @@ export default function StageDetailScreen({ route, navigation }: any) {
         </View>
       </Modal>
 
-      {/* MODAL SELECCIÓN EVENTOS CIP (CICLOS INSTITUCIONALES DE PROGRAMA) */}
-      <Modal visible={showCipModal} transparent animationType="slide" onRequestClose={() => setShowCipModal(false)}>
-        <View style={modalStyles.overlay}>
-          <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
-            <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                <Flag color={colors.primary} size={20} style={{ marginRight: 8 }} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[modalStyles.title, { color: theme.text }]}>Ciclos Institucionales (CIP)</Text>
-                  {selectedReqForCip && (
-                    <Text style={{ fontSize: 11, color: colors.primary, fontWeight: 'bold' }}>
-                      {selectedCipList.length} / {selectedReqForCip.requiredCount || 1} seleccionados
-                    </Text>
-                  )}
-                </View>
-              </View>
-              <TouchableOpacity onPress={() => setShowCipModal(false)}>
-                <X color={isDarkMode ? '#a1a1aa' : '#64748b'} size={22} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={{ padding: 20 }}>
-              {/* Chips de eventos ya seleccionados */}
-              {selectedCipList.length > 0 && (
-                <View style={{ marginBottom: 16 }}>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary, marginBottom: 8 }}>
-                    ✅ ACTIVIDADES SELECCIONADAS ({selectedCipList.length} / {selectedReqForCip?.requiredCount || 1})
-                  </Text>
-                  {selectedCipList.map((evt, idx) => (
-                    <View key={evt.id || idx} style={{
-                      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                      backgroundColor: 'rgba(99,102,241,0.1)', borderRadius: 10, padding: 10, marginBottom: 6, borderWidth: 1, borderColor: colors.primary
-                    }}>
-                      <Text style={{ flex: 1, fontSize: 13, fontWeight: 'bold', color: colors.primary }}>{evt.title}</Text>
-                      <TouchableOpacity onPress={() => handleRemoveSelectedCip(evt.id, evt.title)}>
-                        <X size={16} color="#ef4444" />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </View>
-              )}
-
-              {/* BOTÓN Y FORMULARIO DE CONVALIDACIÓN RÁPIDA DE CIP */}
-              <View
-                style={{
-                  backgroundColor: 'rgba(99, 102, 241, 0.08)',
-                  borderColor: colors.primary,
-                  borderWidth: 1.5,
-                  borderRadius: 14,
-                  padding: 14,
-                  marginBottom: 16
-                }}
-              >
-                <TouchableOpacity
-                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-                  onPress={() => setShowFastCipForm(prev => !prev)}
-                >
-                  <View style={{ flex: 1, paddingRight: 6 }}>
-                    <Text style={{ fontWeight: 'bold', color: colors.primary, fontSize: 13 }}>
-                      ⚡ + Agregar Actividad / Convalidar CIP Previo
-                    </Text>
-                    <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
-                      Escribe el nombre y año del CIP en el que participaste.
-                    </Text>
-                  </View>
-                  <Text style={{ fontWeight: 'bold', color: colors.primary, fontSize: 12 }}>
-                    {showFastCipForm ? 'Ocultar ▲' : 'Escribir ▼'}
-                  </Text>
-                </TouchableOpacity>
-
-                {showFastCipForm && (
-                  <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.border, gap: 10 }}>
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.text }}>
-                      ¿EN QUÉ CIP O EVENTO ESTUVISTE? *
-                    </Text>
-                    <TextInput
-                      style={{
-                        backgroundColor: theme.cardBg,
-                        color: theme.text,
-                        borderColor: theme.border,
-                        borderWidth: 1,
-                        borderRadius: 10,
-                        padding: 10,
-                        fontSize: 13
-                      }}
-                      placeholder="Ej: I Campamento Distrital / Indaba Regional"
-                      placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
-                      value={fastCipName}
-                      onChangeText={setFastCipName}
-                    />
-
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.text, marginTop: 4 }}>
-                      ¿EN QUÉ AÑO PARTICIPASTE? *
-                    </Text>
-                    <TextInput
-                      style={{
-                        backgroundColor: theme.cardBg,
-                        color: theme.text,
-                        borderColor: theme.border,
-                        borderWidth: 1,
-                        borderRadius: 10,
-                        padding: 10,
-                        fontSize: 13
-                      }}
-                      placeholder="Ej: 2024"
-                      placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
-                      value={fastCipYear}
-                      keyboardType="numeric"
-                      onChangeText={setFastCipYear}
-                    />
-
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.text, marginTop: 4 }}>
-                      ALCANCE DEL EVENTO
-                    </Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                      {(['distrital', 'regional', 'nacional', 'internacional'] as const).map(sc => (
-                        <TouchableOpacity
-                          key={sc}
-                          style={{
-                            paddingHorizontal: 8,
-                            paddingVertical: 5,
-                            borderRadius: 8,
-                            borderWidth: 1,
-                            borderColor: fastCipScope === sc ? colors.primary : theme.border,
-                            backgroundColor: fastCipScope === sc ? colors.primary : theme.cardBg
-                          }}
-                          onPress={() => setFastCipScope(sc)}
-                        >
-                          <Text style={{ fontSize: 10, fontWeight: 'bold', color: fastCipScope === sc ? 'white' : theme.subText }}>
-                            {sc.toUpperCase()}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-
-                    <TouchableOpacity
-                      style={{
-                        backgroundColor: colors.primary,
-                        paddingVertical: 12,
-                        borderRadius: 10,
-                        alignItems: 'center',
-                        marginTop: 10
-                      }}
-                      onPress={async () => {
-                        if (!user || !selectedReqForCip) return;
-                        if (!fastCipName.trim()) {
-                          showAlert('Campo requerido', 'Ingresa el nombre del CIP en el que participaste.');
-                          return;
-                        }
-                        const yearStr = fastCipYear.trim() || new Date().getFullYear().toString();
-                        const fullTitle = `${fastCipName.trim()} (${yearStr})`;
-
-                        try {
-                          const newEvt = await dataService.createCipEvent({
-                            title: fullTitle,
-                            scope: fastCipScope,
-                            unit: user.unit ? user.unit.toLowerCase() : 'clan',
-                            date: `${yearStr}-01-01`,
-                            description: `Convalidado por ${user.name || 'Scout'} para ${selectedReqForCip.text}`,
-                            created_by: user.id
-                          });
-
-                          // Agregar automáticamente a la lista de seleccionados
-                          const newEvtObj = { id: newEvt?.id || fullTitle, title: fullTitle, scope: fastCipScope, date: `${yearStr}-01-01` };
-                          const updated = [...selectedCipList, newEvtObj];
-                          setSelectedCipList(updated);
-                          await dataService.saveCipSelections(user.id, stageId, selectedReqForCip.id, updated);
-                          const reqCount = selectedReqForCip.requiredCount || 1;
-                          const isDone = updated.length >= reqCount;
-                          setChecks(prev => ({ ...prev, [selectedReqForCip.id]: isDone }));
-                          setCipCountMap(prev => ({ ...prev, [selectedReqForCip.id]: updated.length }));
-                          await dataService.toggleRequirement(user.id, stageId, selectedReqForCip.id, isDone);
-
-                          showAlert('¡Actividad Agregada!', `"${fullTitle}" ha sido registrada y seleccionada.`);
-                          setFastCipName('');
-                          setShowFastCipForm(false);
-                        } catch (e: any) {
-                          showAlert('Error', e?.message || 'No se pudo agregar la actividad.');
-                        }
-                      }}
-                    >
-                      <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>
-                        Agregar y Seleccionar Actividad
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-
-              <Text style={[modalStyles.subtitle, { color: theme.subText }]}>
-                O selecciona un evento CIP publicado por tus dirigentes (puedes seleccionar varios):
-              </Text>
-
-              {loadingCip ? (
-                <ActivityIndicator color={colors.primary} style={{ marginVertical: 30 }} />
-              ) : cipEvents.length === 0 ? (
-                <View style={[modalStyles.emptyCard, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
-                  <Text style={[modalStyles.emptyText, { color: theme.subText }]}>
-                    No hay Ciclos Institucionales de Programa (CIP) registrados por los dirigentes de tu unidad aún. Usa el botón superior para agregar y convalidar.
-                  </Text>
-                </View>
-              ) : (
-                cipEvents.map((evt) => {
-                  const displayTitle = (evt.title || '').replace(/\[6P\s*/gi, '[CIP ').replace(/\b6P\b/gi, 'CIP');
-                  const displayDesc  = evt.description ? evt.description.replace(/\b6P\b/gi, 'CIP') : '';
-                  const isSelected = selectedCipList.some(e => e.id === evt.id || e.title === evt.title);
-
-                  return (
-                    <TouchableOpacity
-                      key={evt.id}
-                      style={[
-                        modalStyles.eventCard,
-                        {
-                          backgroundColor: isSelected ? (isDarkMode ? '#1e1b4b' : 'rgba(99,102,241,0.06)') : theme.cardBg,
-                          borderColor: isSelected ? colors.primary : theme.border,
-                          borderWidth: isSelected ? 1.5 : 1
-                        }
-                      ]}
-                      onPress={() => handleToggleCipEvent(evt)}
-                    >
-                      <View style={{ flex: 1 }}>
-                        <Text style={[modalStyles.eventTitle, { color: isSelected ? colors.primary : theme.text }]}>{displayTitle}</Text>
-                        {displayDesc ? <Text style={[modalStyles.eventDesc, { color: theme.subText }]}>{displayDesc}</Text> : null}
-                        <Text style={modalStyles.eventDate}>Fecha: {evt.date}</Text>
-                      </View>
-                      {isSelected ? (
-                        <CheckCircle size={22} color={colors.primary} />
-                      ) : (
-                        <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: theme.border }} />
-                      )}
-                    </TouchableOpacity>
-                  );
-                })
-              )}
-            </ScrollView>
-
-            {/* Botón de confirmar selección */}
-            <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: theme.border }}>
-              <TouchableOpacity
-                style={[modalStyles.btnPrimary, { paddingVertical: 14 }]}
-                onPress={() => setShowCipModal(false)}
-              >
-                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>
-                  Confirmar Selección ({selectedCipList.length} / {selectedReqForCip?.requiredCount || 1})
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* CIP: lo acredita el Scouter; el joven puede pedir uno anterior a la app (Ley Scout) */}
+      <CipStageModal
+        visible={showCipModal}
+        onClose={() => { setShowCipModal(false); loadData(); }}
+        stageId={stageId}
+        req={selectedReqForCip}
+        isReadOnly={isReadOnly}
+      />
 
       {/* MODAL DE CONFIRMACIÓN */}
 

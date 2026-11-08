@@ -248,7 +248,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                       <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>
                         {isExpanded
                           ? 'Ocultar actividades CIP'
-                          : `Ver actividades CIP (${reqCipSelections.length > 0 ? `${reqCipSelections.length} de ${req.requiredCount || 1} seleccionadas` : isChecked ? 'convalidadas' : '0 seleccionadas'})`}
+                          : `Ver CIP (${reqCipSelections.length} de ${req.requiredCount || 1} acreditados)`}
                       </Text>
                       {isExpanded ? <ChevronUp size={14} color={colors.primary} style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color={colors.primary} style={{ marginLeft: 2 }} />}
                     </TouchableOpacity>
@@ -361,7 +361,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
               {isCipReq && isExpanded && (
                 <View style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.border, borderRadius: 12, padding: 12, marginTop: -4, marginLeft: 10, marginRight: 10 }}>
                   <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text, marginBottom: 8 }}>
-                    Actividades CIP seleccionadas por {scoutName} ({reqCipSelections.length} de {req.requiredCount || 1}):
+                    CIP acreditados a {scoutName} ({reqCipSelections.length} de {req.requiredCount || 1}):
                   </Text>
                   {reqCipSelections.length === 0 ? (
                     <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic' }}>
@@ -382,6 +382,12 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                             <Text style={{ fontSize: 10, color: theme.subText, fontStyle: 'italic', marginTop: 1 }}>
                               {cip.description.replace(/\b6P\b/gi, 'CIP')}
                             </Text>
+                          ) : null}
+                          {cip.marcadoPor ? (
+                            <Text style={{ fontSize: 10.5, color: theme.subText, marginTop: 1 }}>Marcado por {cip.marcadoPor}</Text>
+                          ) : null}
+                          {cip.historico ? (
+                            <Text style={{ fontSize: 10.5, color: '#b45309', fontWeight: 'bold', marginTop: 2 }}>Registro anterior a la app (bajo la Ley Scout)</Text>
                           ) : null}
                         </View>
                       </View>

@@ -2,17 +2,17 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-08T19:43:33.388Z",
+    "generatedAt": "2026-11-08T20:58:55.055Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
-      "totalNodes": 117,
-      "totalEdges": 102,
+      "totalNodes": 120,
+      "totalEdges": 107,
       "totalHyperedges": 4,
       "totalScreens": 29,
-      "totalComponents": 27,
+      "totalComponents": 29,
       "totalContexts": 3,
-      "totalServices": 23,
+      "totalServices": 24,
       "totalCatalogs": 11,
       "totalDatabaseTables": 11,
       "totalQaSuites": 10
@@ -434,8 +434,8 @@
       "file": "src/lib/dataService.ts",
       "role": "Async data layer on top of the offline outbox (@scout_outbox_v1) with cached reads: stage/requirement progress, stage/requirement progress, stage review/approval, certificates + curriculum auto-sync, quarterly plans, CIP events, nights log, vida de grupo log, and membership dates.",
       "exists": true,
-      "lines": 2049,
-      "bytes": 90671,
+      "lines": 2224,
+      "bytes": 99814,
       "exports": [
         "MembershipReceipt",
         "MembershipHistoryEntry",
@@ -453,7 +453,8 @@
         "./offline/net",
         "./offline/readCache",
         "../utils/safeUrl",
-        "../utils/dateLocal"
+        "../utils/dateLocal",
+        "./cipLogic"
       ],
       "supabaseTables": [
         "stage_progress",
@@ -462,6 +463,7 @@
         "certificates",
         "scout_notifications",
         "calendar_events",
+        "cip_oficiales",
         "quarterly_plans",
         "scout_groups",
         "scout_districts",
@@ -1067,8 +1069,8 @@
       "route": "StageDetail",
       "role": "Interactive checklist of stage requirements, linking to CatalogSelectorScreen, NochesAireLibreModal, VidaGrupoModal, CertificateUploadScreen, and stage review submission.",
       "exists": true,
-      "lines": 1578,
-      "bytes": 73582,
+      "lines": 1329,
+      "bytes": 60324,
       "exports": [
         "StageDetailScreen"
       ],
@@ -1093,7 +1095,8 @@
         "../utils/profileGuard",
         "../utils/navigationHelper",
         "../utils/dateLocal",
-        "../components/SecureImage"
+        "../components/SecureImage",
+        "../components/CipStageModal"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1256,8 +1259,8 @@
       "route": "ScouterDashboard",
       "role": "Unit leader dashboard: lists unit scouts with online presence, pending stage reviews, quarterly plan feedback, unit programs, and profile photo moderation.",
       "exists": true,
-      "lines": 1471,
-      "bytes": 72688,
+      "lines": 1478,
+      "bytes": 73009,
       "exports": [
         "ScouterDashboardScreen"
       ],
@@ -1288,7 +1291,8 @@
         "../components/MembershipRecordsModal",
         "../components/PendingAccountsCard",
         "../utils/dateLocal",
-        "../components/PullToRefreshScrollView"
+        "../components/PullToRefreshScrollView",
+        "../components/CipManagerModal"
       ],
       "supabaseTables": [
         "calendar_events",
@@ -1307,8 +1311,8 @@
       "route": "ScouterReview",
       "role": "Detailed requirement-by-requirement verification screen for a Scout with Approve/Reject stage actions and notification dispatch.",
       "exists": true,
-      "lines": 540,
-      "bytes": 29245,
+      "lines": 546,
+      "bytes": 29594,
       "exports": [
         "ScouterReviewScreen"
       ],
@@ -1340,8 +1344,8 @@
       "route": "JefeDashboard",
       "role": "Group Chief dashboard: supervises all units (Manada, Tropa, Caminantes, Clan), approves/rejects membership expiration dates, moderates photos, and manages group calendar.",
       "exists": true,
-      "lines": 1934,
-      "bytes": 91112,
+      "lines": 1952,
+      "bytes": 91959,
       "exports": [
         "JefeGrupoScreen"
       ],
@@ -1372,7 +1376,8 @@
         "../data/unitTemplates",
         "../utils/exportHelpers",
         "../utils/dateLocal",
-        "../components/PullToRefreshScrollView"
+        "../components/PullToRefreshScrollView",
+        "../components/CipManagerModal"
       ],
       "supabaseTables": [
         "profiles",
@@ -2541,8 +2546,8 @@
       "file": "src/data/progressionTemplate.ts",
       "role": "Defines Precursor, Expedicionario, Descubridor, and Fundador stage requirements.",
       "exists": true,
-      "lines": 103,
-      "bytes": 7352,
+      "lines": 104,
+      "bytes": 7479,
       "exports": [
         "stagesData"
       ],
@@ -2593,8 +2598,8 @@
       "file": "src/data/activitiesCatalog.ts",
       "role": "Full catalog of ASV activities mapped to stages and requirement types.",
       "exists": true,
-      "lines": 2307,
-      "bytes": 59333,
+      "lines": 2174,
+      "bytes": 53963,
       "exports": [
         "CatalogActivity",
         "activitiesCatalog"
@@ -3072,6 +3077,93 @@
       "storageKeys": []
     },
     {
+      "id": "cipLogic.ts",
+      "label": "cipLogic.ts (CIP rules)",
+      "type": "service",
+      "community": "backend_offline_services",
+      "file": "src/lib/cipLogic.ts",
+      "role": "currentStageId (first non-approved stage), cipRequirement/cipTargetFor (stage + nivel → <x>_cip_<nivel> requirement), stagesWithCip, parseCipMeta, LEY_CONFIANZA text, NIVEL_LABEL.",
+      "exists": true,
+      "lines": 57,
+      "bytes": 2115,
+      "exports": [
+        "CipNivel",
+        "NIVEL_LABEL",
+        "LEY_CONFIANZA",
+        "CipTarget",
+        "currentStageId",
+        "cipRequirement",
+        "cipTargetFor",
+        "stagesWithCip",
+        "parseCipMeta"
+      ],
+      "imports": [
+        "../data/progressionTemplate"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "CipManagerModal.tsx",
+      "label": "CipManagerModal.tsx (Gestionar CIP)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/components/CipManagerModal.tsx",
+      "role": "Scouter/Jefatura: catalog of official CIPs (cip_oficiales: create, list), mark attendance per youth (cip_sel_* in certificates, counts to the current stage requirement of that level), review old-CIP requests (cip_sol_*) made under the Scout Law.",
+      "exists": true,
+      "lines": 366,
+      "bytes": 20816,
+      "exports": [
+        "CipManagerModal"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "lucide-react-native",
+        "../context/AuthContext",
+        "../context/ThemeContext",
+        "../lib/dataService",
+        "../utils/alert",
+        "../utils/dateLocal",
+        "../lib/cipLogic"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "CipStageModal.tsx",
+      "label": "CipStageModal.tsx (Youth CIP view)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/components/CipStageModal.tsx",
+      "role": "Youth view of a CIP requirement: credited CIPs (badge «anterior a la app»), own requests with status, form to request a pre-app CIP with Scout Law confirmation. Replaces the old self-selection modal in StageDetail.",
+      "exists": true,
+      "lines": 224,
+      "bytes": 13317,
+      "exports": [
+        "CipStageModal"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "lucide-react-native",
+        "../context/AuthContext",
+        "../context/ThemeContext",
+        "../lib/dataService",
+        "../utils/alert",
+        "../utils/dateLocal",
+        "../lib/cipLogic"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
       "id": "VerificarCarnetScreen.tsx",
       "label": "VerificarCarnetScreen.tsx (In-app carnet verification /verificar/:id)",
       "type": "screen",
@@ -3469,6 +3561,31 @@
       "from": "RegisterScreen.tsx",
       "to": "pending-push.js",
       "relation": "calls_api"
+    },
+    {
+      "from": "ScouterDashboardScreen.tsx",
+      "to": "CipManagerModal.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "JefeGrupoScreen.tsx",
+      "to": "CipManagerModal.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "StageDetailScreen.tsx",
+      "to": "CipStageModal.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "CipManagerModal.tsx",
+      "to": "cipLogic.ts",
+      "relation": "imports"
+    },
+    {
+      "from": "dataService.ts",
+      "to": "cipLogic.ts",
+      "relation": "imports"
     },
     {
       "from": "JefeGrupoScreen.tsx",
