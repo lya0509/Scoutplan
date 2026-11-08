@@ -55,14 +55,22 @@ export const STATIC_GROUPS: Record<string, Option[]> = {
   ],
 };
 
-/** Grupo tal como lo guarda la tabla scout_groups. */
+/** Grupo del catálogo scout_groups (region = region_id, district = district_id). */
 export interface ScoutGroup {
   id?: string;
   name: string;
   region?: string | null;
   district?: string | null;
+  district_name?: string | null;
   active?: boolean;
-  created_at?: string;
+}
+
+export interface DistrictRow { id: string; region_id: string; name: string }
+
+// Distritos que vienen de la base de datos (scout_districts), para mostrar su nombre.
+const dbDistricts = new Map<string, DistrictRow>();
+export function registerDistricts(list: DistrictRow[] = []) {
+  list.forEach(d => d?.id && dbDistricts.set(d.id, d));
 }
 
 export function regionLabel(id?: string | null): string {
@@ -77,15 +85,18 @@ export function districtLabel(id?: string | null): string {
     if (hit) return hit.label;
   }
   if (id === OTHER_DISTRICT.id) return OTHER_DISTRICT.label;
-  return id;
+  return dbDistricts.get(id)?.name || id;
 }
 
 /** Distritos de una región: los fijos + los que aparecen en grupos creados desde la app. */
 export function districtsFor(regionId: string, groups: ScoutGroup[] = []): Option[] {
   const out: Option[] = [...(STATIC_DISTRICTS[regionId] || [])];
+  dbDistricts.forEach(d => {
+    if (d.region_id === regionId && !out.some(o => o.id === d.id)) out.push({ id: d.id, label: d.name });
+  });
   groups.forEach(g => {
     if (g.region === regionId && g.district && !out.some(d => d.id === g.district) && g.district !== OTHER_DISTRICT.id) {
-      out.push({ id: g.district, label: districtLabel(g.district) });
+      out.push({ id: g.district, label: g.district_name || districtLabel(g.district) });
     }
   });
   return [...out, OTHER_DISTRICT];

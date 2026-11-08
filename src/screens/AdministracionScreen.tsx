@@ -10,7 +10,7 @@ import { dataService } from '../lib/dataService';
 import { showAlert } from '../utils/alert';
 import {
   REGIONS, ROLE_LABELS, OTHER_DISTRICT, ScoutGroup,
-  assignableRoles, canMoveMembers, canCreateGroups, districtsFor, regionLabel, districtLabel, slugDistrict,
+  assignableRoles, canMoveMembers, canCreateGroups, districtsFor, regionLabel, districtLabel, slugDistrict, registerDistricts,
 } from '../data/territory';
 
 const UNITS = [
@@ -64,8 +64,9 @@ export default function AdministracionScreen() {
     try {
       const [p, g] = await Promise.all([
         dataService.getAdminPeople({ role: myRole, region: user?.region, district: user?.district, group_name: user?.group_name }),
-        canGroups ? dataService.getScoutGroups() : Promise.resolve({ groups: [], missingTable: false }),
+        canGroups ? dataService.getScoutGroups() : Promise.resolve({ groups: [], districts: [], missingTable: false }),
       ]);
+      registerDistricts(g.districts || []);
       setPeople(p || []);
       setGroups(g.groups || []);
       setMissingTable(g.missingTable);
@@ -416,9 +417,15 @@ function GroupsTab({ groups, people, onChanged, onShowPeople, missingTable }: {
     const finalDistrict = fixedDistrict || (district === '__new' ? slugDistrict(newDistrict) : district);
     if (name.trim().length < 3) { showAlert('Falta el nombre', 'Escribe el nombre del grupo (por ejemplo: Grupo Scout Kanaima #12).'); return; }
     if (!finalDistrict) { showAlert('Falta el distrito', 'Elige el distrito del grupo o escribe uno nuevo.'); return; }
+    if (district === '__new' && newDistrict.trim().length < 3) { showAlert('Falta el distrito', 'Escribe el nombre del distrito nuevo.'); return; }
     setSaving(true);
     try {
-      await dataService.createScoutGroup({ name, region: fixedRegion || region, district: finalDistrict }, user?.id);
+      await dataService.createScoutGroup({
+        name,
+        region: fixedRegion || region,
+        district: finalDistrict,
+        newDistrictName: !fixedDistrict && district === '__new' ? newDistrict.trim() : undefined,
+      }, user?.id);
       setName(''); setNewDistrict(''); setShowForm(false);
       showAlert('Grupo creado', `${name.trim()} ya está en el catálogo. Ahora asigna su Jefatura desde Personas.`);
       onChanged();
@@ -500,9 +507,11 @@ function GroupsTab({ groups, people, onChanged, onShowPeople, missingTable }: {
                     <Text style={chipText(district === d.id)}>{d.label}</Text>
                   </TouchableOpacity>
                 ))}
-                <TouchableOpacity style={chip(district === '__new')} onPress={() => setDistrict('__new')}>
-                  <Text style={chipText(district === '__new')}>+ Otro distrito</Text>
-                </TouchableOpacity>
+                {(isAdmin || isRegional) && (
+                  <TouchableOpacity style={chip(district === '__new')} onPress={() => setDistrict('__new')}>
+                    <Text style={chipText(district === '__new')}>+ Distrito nuevo</Text>
+                  </TouchableOpacity>
+                )}
               </View>
               {district === '__new' && (
                 <TextInput

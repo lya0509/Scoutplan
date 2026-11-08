@@ -1191,26 +1191,44 @@ export const dataService = {
   // Se hace en línea (no por la cola): son cambios de permisos y la base de datos puede
   // rechazarlos (regla proteger_perfil); el dirigente tiene que ver el motivo al momento.
 
-  /** Grupos del catálogo `scout_groups`. `missingTable` = falta ejecutar supabase_administracion.sql. */
-  async getScoutGroups(): Promise<{ groups: any[]; missingTable: boolean }> {
+  /**
+   * Grupos del catálogo `scout_groups` (columnas region_id / district_id) y distritos de
+   * `scout_districts`. `missingTable` = falta ejecutar supabase_administracion.sql.
+   */
+  async getScoutGroups(): Promise<{ groups: any[]; districts: any[]; missingTable: boolean }> {
     try {
-      const { data, error } = await supabase.from('scout_groups').select('*').order('name');
-      if (error) {
-        const missing = error.code === '42P01' || error.code === 'PGRST205' || /scout_groups/.test(error.message || '');
-        if (!missing) throw error;
-        return { groups: (await readCached<any[]>('admin_groups')) || [], missingTable: true };
+      const [gr, dr] = await Promise.all([
+        supabase.from('scout_groups').select('id,name,region_id,district_id,active').order('name'),
+        supabase.from('scout_districts').select('id,region_id,name').order('name'),
+      ]);
+      if (gr.error) {
+        const missing = ['42P01', '42703', 'PGRST204', 'PGRST205'].includes(gr.error.code) || /active|scout_groups/.test(gr.error.message || '');
+        if (!missing) throw gr.error;
+        const cached = (await readCached<any>('admin_groups_v2')) || {};
+        return { groups: cached.groups || [], districts: cached.districts || [], missingTable: true };
       }
-      writeCached('admin_groups', data || []);
-      return { groups: data || [], missingTable: false };
+      const groups = (gr.data || []).map((g: any) => ({ id: g.id, name: g.name, region: g.region_id, district: g.district_id, active: g.active }));
+      const districts = dr.error ? [] : (dr.data || []);
+      writeCached('admin_groups_v2', { groups, districts });
+      return { groups, districts, missingTable: false };
     } catch {
-      return { groups: (await readCached<any[]>('admin_groups')) || [], missingTable: false };
+      const cached = (await readCached<any>('admin_groups_v2')) || {};
+      return { groups: cached.groups || [], districts: cached.districts || [], missingTable: false };
     }
   },
 
-  async createScoutGroup(g: { name: string; region: string; district: string }, createdBy?: string) {
+  /** Crea un grupo. Si `newDistrictName` viene, crea antes el distrito (Comisionado Regional / admin). */
+  async createScoutGroup(g: { name: string; region: string; district: string; newDistrictName?: string }, createdBy?: string) {
     if (!isOnline()) throw new Error('Necesitas conexión a internet para crear un grupo.');
-    const row = { name: g.name.trim(), region: g.region, district: g.district, active: true, created_by: createdBy || null };
-    const { data, error } = await supabase.from('scout_groups').insert(row).select().single();
+    if (g.newDistrictName) {
+      const { error: de } = await supabase.from('scout_districts')
+        .insert({ id: g.district, region_id: g.region, name: g.newDistrictName.trim() });
+      if (de && !isDuplicateError(de)) {
+        throw new Error(de.code === '42501' ? 'Solo un Comisionado Regional o el admin puede crear distritos nuevos.' : de.message);
+      }
+    }
+    const row = { name: g.name.trim(), region_id: g.region, district_id: g.district, active: true, created_by: createdBy || null };
+    const { data, error } = await supabase.from('scout_groups').insert(row).select('id,name,region_id,district_id,active').single();
     if (error) {
       if (isDuplicateError(error)) throw new Error('Ya existe un grupo con ese nombre.');
       if (error.code === '42501') throw new Error('Solo puedes crear grupos dentro de tu territorio.');

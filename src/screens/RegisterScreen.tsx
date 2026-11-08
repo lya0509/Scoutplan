@@ -9,7 +9,7 @@ import { notificationService } from '../services/notificationService';
 import { colors } from '../theme/colors';
 import { validateEmail } from '../utils/emailValidator';
 import { useTheme } from '../context/ThemeContext';
-import { REGIONS, districtsFor, groupsFor, ScoutGroup } from '../data/territory';
+import { REGIONS, districtsFor, groupsFor, registerDistricts, ScoutGroup } from '../data/territory';
 
 const UNITS = [
   { id: 'manada',    label: 'Manada',     color: '#ffb300' },
@@ -204,7 +204,11 @@ export default function RegisterScreen({ navigation }: any) {
   useEffect(() => {
     let alive = true;
     supabase.rpc('grupos_registro').then(({ data, error }: any) => {
-      if (alive && !error && Array.isArray(data)) setDbGroups(data);
+      if (alive && !error && Array.isArray(data)) {
+        registerDistricts(data.filter((g: any) => g.district && g.district_name)
+          .map((g: any) => ({ id: g.district, region_id: g.region, name: g.district_name })));
+        setDbGroups(data);
+      }
     }, () => {});
     return () => { alive = false; };
   }, []);
