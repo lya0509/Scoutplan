@@ -17,20 +17,10 @@ import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
 import {
   exportCensoExcel, exportCensoPdf, exportPadronMedicoExcel, exportPadronMedicoPdf, exportMembresiasExcel, exportMembresiasPdf, MemberRecord
 } from '../utils/exportHelpers';
+import { REGIONS } from '../data/territory';
 
-const REGIONS_DATA: { id: string; label: string }[] = [
-  { id: 'miranda', label: 'Región Miranda' },
-  { id: 'capital', label: 'Región Capital' },
-  { id: 'aragua', label: 'Región Aragua' },
-  { id: 'carabobo', label: 'Región Carabobo' },
-  { id: 'zulia', label: 'Región Zulia' },
-  { id: 'lara', label: 'Región Lara' },
-  { id: 'bolivar', label: 'Región Bolívar' },
-  { id: 'anzoategui', label: 'Región Anzoátegui' },
-  { id: 'tachira', label: 'Región Táchira' },
-  { id: 'merida', label: 'Región Mérida' },
-  { id: 'nueva_esparta', label: 'Región Nueva Esparta' },
-];
+// Todas las regiones de la ASV (misma lista que el registro)
+const REGIONS_DATA = REGIONS;
 
 export default function ComisionadoDashboardScreen({ navigation }: any) {
   const { user, signOut } = useAuth();
@@ -202,6 +192,9 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
           </View>
 
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Administracion')} accessibilityRole="button" accessibilityLabel="Administración de grupos y roles">
+              <ShieldCheck color="#ffffff" size={20} />
+            </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => setShowCustomizer(true)}>
               <Palette color="#ffffff" size={20} />
             </TouchableOpacity>

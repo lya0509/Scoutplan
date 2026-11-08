@@ -31,6 +31,7 @@ import ProgramaScoutEditorScreen from '../screens/ProgramaScoutEditorScreen';
 import EspecialidadesScreen from '../screens/EspecialidadesScreen';
 import VerificarCarnetScreen from '../screens/VerificarCarnetScreen';
 import CuentaEnRevisionScreen from '../screens/CuentaEnRevisionScreen';
+import AdministracionScreen from '../screens/AdministracionScreen';
 
 import DrawerNavigator from './DrawerNavigator';
 
@@ -71,6 +72,7 @@ const linking: any = {
       ScouterDashboard: 'scouter',
       ScouterReview: 'scouter-revision',
       JefeDashboard: 'jefe-grupo',
+      Administracion: 'administracion',
       CatalogSelector: 'catalogo',
       CertificateUpload: 'mis-certificados',
       ScoutFullProfile: 'perfil-completo',
@@ -246,6 +248,7 @@ export default function AppNavigator() {
               <>
                 <Stack.Screen name="JefeDashboard" component={JefeGrupoScreen} />
                 <Stack.Screen name="CalendarStandalone" component={CalendarScreen} options={{ headerShown: true, title: 'Calendario de Grupo' }} />
+                <Stack.Screen name="Administracion" component={AdministracionScreen} options={{ headerShown: true, title: 'Roles y miembros' }} />
               </>
             )}
 
@@ -253,6 +256,7 @@ export default function AppNavigator() {
               <>
                 <Stack.Screen name="ComisionadoDashboard" component={ComisionadoDashboardScreen} />
                 <Stack.Screen name="CalendarStandalone" component={CalendarScreen} options={{ headerShown: true, title: 'Calendario Territorial' }} />
+                <Stack.Screen name="Administracion" component={AdministracionScreen} options={{ headerShown: true, title: 'Administración' }} />
               </>
             )}
 

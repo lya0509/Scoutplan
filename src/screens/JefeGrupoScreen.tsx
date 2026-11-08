@@ -544,6 +544,17 @@ export default function JefeGrupoScreen({ navigation }: any) {
         <Text style={[styles.quickToolBtnText, { color: theme.text }]}>📊 Censo y Nómina</Text>
       </TouchableOpacity>
 
+      {/* ROLES Y MIEMBROS (nombrar Scouters, aprobar cuentas) */}
+      <TouchableOpacity
+        style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+        onPress={() => navigation.navigate('Administracion')}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+      >
+        <ShieldCheck size={18} color="#2563eb" />
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>🛡️ Roles y miembros</Text>
+      </TouchableOpacity>
+
       {/* 2. PADRÓN DE EMERGENCIA MÉDICA */}
       <TouchableOpacity
         style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}

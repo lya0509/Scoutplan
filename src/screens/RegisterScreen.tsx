@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, TouchableOpacity, TextInput, 
   ScrollView, ActivityIndicator, Modal, FlatList
@@ -9,62 +9,7 @@ import { notificationService } from '../services/notificationService';
 import { colors } from '../theme/colors';
 import { validateEmail } from '../utils/emailValidator';
 import { useTheme } from '../context/ThemeContext';
-
-const REGIONS_LIST = [
-  { id: 'miranda', label: 'Región Miranda' },
-  { id: 'capital', label: 'Región Capital' },
-  { id: 'amazonas', label: 'Región Amazonas' },
-  { id: 'anzoategui', label: 'Región Anzoátegui' },
-  { id: 'apure', label: 'Región Apure' },
-  { id: 'aragua', label: 'Región Aragua' },
-  { id: 'barinas', label: 'Región Barinas' },
-  { id: 'bolivar', label: 'Región Bolívar' },
-  { id: 'carabobo', label: 'Región Carabobo' },
-  { id: 'cojedes', label: 'Región Cojedes' },
-  { id: 'delta_amacuro', label: 'Región Delta Amacuro' },
-  { id: 'falcon', label: 'Región Falcón' },
-  { id: 'guarico', label: 'Región Guárico' },
-  { id: 'lara', label: 'Región Lara' },
-  { id: 'merida', label: 'Región Mérida' },
-  { id: 'monagas', label: 'Región Monagas' },
-  { id: 'nueva_esparta', label: 'Región Nueva Esparta' },
-  { id: 'portuguesa', label: 'Región Portuguesa' },
-  { id: 'sucre', label: 'Región Sucre' },
-  { id: 'tachira', label: 'Región Táchira' },
-  { id: 'trujillo', label: 'Región Trujillo' },
-  { id: 'vargas', label: 'Región Vargas (La Guaira)' },
-  { id: 'yaracuy', label: 'Región Yaracuy' },
-  { id: 'zulia', label: 'Región Zulia' },
-];
-
-const DISTRICTS_DATA: Record<string, { id: string; label: string }[]> = {
-  miranda: [
-    { id: 'guarenas_guatire', label: 'Distrito Guarenas-Guatire' },
-    { id: 'altos_mirandinos', label: 'Distrito Altos Mirandinos' },
-    { id: 'otro_distrito', label: 'Otro Distrito' },
-  ],
-};
-
-const DEFAULT_DISTRICTS = [
-  { id: 'otro_distrito', label: 'Otro Distrito' },
-];
-
-const GROUPS_DATA: Record<string, { id: string; label: string }[]> = {
-  guarenas_guatire: [
-    { id: 'Grupo Orión #84', label: 'Grupo Scout Orión #84' },
-    { id: 'Grupo Alianza', label: 'Grupo Scout Alianza' },
-    { id: 'Grupo Mafeking', label: 'Grupo Scout Mafeking' },
-    { id: 'Grupo Gamma', label: 'Grupo Scout Gamma' },
-    { id: 'Grupo Sirio', label: 'Grupo Scout Sirio' },
-    { id: 'Grupo Aquatiri', label: 'Grupo Scout Aquatiri' },
-    { id: 'Otro Grupo Scout', label: 'Otro Grupo Scout' },
-  ],
-};
-
-const DEFAULT_GROUPS = [
-  { id: 'Grupo Orión #84', label: 'Grupo Scout Orión #84' },
-  { id: 'Otro Grupo Scout', label: 'Otro Grupo Scout' },
-];
+import { REGIONS, districtsFor, groupsFor, ScoutGroup } from '../data/territory';
 
 const UNITS = [
   { id: 'manada',    label: 'Manada',     color: '#ffb300' },
@@ -253,8 +198,19 @@ export default function RegisterScreen({ navigation }: any) {
     setFormError(null);
   };
 
-  const districtOptions = selectedRegion ? (DISTRICTS_DATA[selectedRegion] || DEFAULT_DISTRICTS) : [];
-  const groupOptions    = selectedDistrict ? (GROUPS_DATA[selectedDistrict] || DEFAULT_GROUPS) : [];
+  // Grupos creados desde Administración (solo si la Asociación activó la lista en el registro;
+  // si no, queda la lista fija de la app).
+  const [dbGroups, setDbGroups] = useState<ScoutGroup[]>([]);
+  useEffect(() => {
+    let alive = true;
+    supabase.rpc('grupos_registro').then(({ data, error }: any) => {
+      if (alive && !error && Array.isArray(data)) setDbGroups(data);
+    }, () => {});
+    return () => { alive = false; };
+  }, []);
+
+  const districtOptions = selectedRegion ? districtsFor(selectedRegion, dbGroups) : [];
+  const groupOptions    = selectedDistrict ? groupsFor(selectedDistrict, dbGroups) : [];
 
   const confirmDate = () => {
     const mm = String(pickerMonth).padStart(2, '0');
@@ -530,7 +486,7 @@ export default function RegisterScreen({ navigation }: any) {
         {/* SELECCIÓN DE REGIÓN */}
         <View style={styles.formGroup}>
           <Text style={[styles.label, dynamicStyles.label]}>Región Scout <Text style={styles.required}>*</Text></Text>
-          <SelectorGrid options={REGIONS_LIST} selected={selectedRegion} onSelect={handleRegionChange} isDarkMode={isDarkMode} />
+          <SelectorGrid options={REGIONS} selected={selectedRegion} onSelect={handleRegionChange} isDarkMode={isDarkMode} />
         </View>
 
         {/* SELECCIÓN DE DISTRITO */}

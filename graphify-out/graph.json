@@ -2,18 +2,18 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-07T20:48:54.467Z",
+    "generatedAt": "2026-11-08T18:58:08.305Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
-      "totalNodes": 109,
-      "totalEdges": 87,
+      "totalNodes": 111,
+      "totalEdges": 93,
       "totalHyperedges": 4,
-      "totalScreens": 27,
+      "totalScreens": 28,
       "totalComponents": 25,
       "totalContexts": 3,
       "totalServices": 20,
-      "totalCatalogs": 10,
+      "totalCatalogs": 11,
       "totalDatabaseTables": 11,
       "totalQaSuites": 10
     }
@@ -129,8 +129,8 @@
       "file": "src/navigation/AppNavigator.tsx",
       "role": "Routes unauthenticated users to Login/Register and authenticated users by role (scout -> DrawerNavigator, scouter -> ScouterDashboard, jefe_grupo -> JefeDashboard, comisionados/nacional/admin -> ComisionadoDashboard) plus shared screens.",
       "exists": true,
-      "lines": 280,
-      "bytes": 12243,
+      "lines": 284,
+      "bytes": 12644,
       "exports": [
         "hasPendingVerify",
         "AppNavigator"
@@ -167,6 +167,7 @@
         "../screens/EspecialidadesScreen",
         "../screens/VerificarCarnetScreen",
         "../screens/CuentaEnRevisionScreen",
+        "../screens/AdministracionScreen",
         "./DrawerNavigator"
       ],
       "supabaseTables": [],
@@ -431,8 +432,8 @@
       "file": "src/lib/dataService.ts",
       "role": "Async data layer on top of the offline outbox (@scout_outbox_v1) with cached reads: stage/requirement progress, stage/requirement progress, stage review/approval, certificates + curriculum auto-sync, quarterly plans, CIP events, nights log, vida de grupo log, and membership dates.",
       "exists": true,
-      "lines": 1929,
-      "bytes": 84019,
+      "lines": 2004,
+      "bytes": 88173,
       "exports": [
         "MembershipReceipt",
         "MembershipHistoryEntry",
@@ -459,7 +460,8 @@
         "certificates",
         "scout_notifications",
         "calendar_events",
-        "quarterly_plans"
+        "quarterly_plans",
+        "scout_groups"
       ],
       "supabaseBuckets": [],
       "realtimeChannels": [],
@@ -947,8 +949,8 @@
       "route": "Register",
       "role": "Multi-role user registration (Scout, Scouter, Jefe de Grupo, Comisionado) with Region, District, Group, and Unit selectors.",
       "exists": true,
-      "lines": 802,
-      "bytes": 31621,
+      "lines": 758,
+      "bytes": 29910,
       "exports": [
         "RegisterScreen"
       ],
@@ -960,7 +962,8 @@
         "../services/notificationService",
         "../theme/colors",
         "../utils/emailValidator",
-        "../context/ThemeContext"
+        "../context/ThemeContext",
+        "../data/territory"
       ],
       "supabaseTables": [
         "profiles"
@@ -1327,8 +1330,8 @@
       "route": "JefeDashboard",
       "role": "Group Chief dashboard: supervises all units (Manada, Tropa, Caminantes, Clan), approves/rejects membership expiration dates, moderates photos, and manages group calendar.",
       "exists": true,
-      "lines": 1922,
-      "bytes": 90465,
+      "lines": 1933,
+      "bytes": 90969,
       "exports": [
         "JefeGrupoScreen"
       ],
@@ -1377,8 +1380,8 @@
       "route": "ComisionadoDashboard",
       "role": "Territorial hierarchy dashboard (Distrital, Regional, Nacional, Admin) with drill-down metrics by Region -> District -> Group -> Unit.",
       "exists": true,
-      "lines": 696,
-      "bytes": 35822,
+      "lines": 689,
+      "bytes": 35651,
       "exports": [
         "ComisionadoDashboardScreen"
       ],
@@ -1394,7 +1397,8 @@
         "lucide-react-native",
         "../utils/alert",
         "../components/ThemeCustomizerModal",
-        "../utils/exportHelpers"
+        "../utils/exportHelpers",
+        "../data/territory"
       ],
       "supabaseTables": [
         "profiles"
@@ -2842,6 +2846,70 @@
       "storageKeys": []
     },
     {
+      "id": "AdministracionScreen.tsx",
+      "label": "AdministracionScreen.tsx (Groups & roles admin)",
+      "type": "screen",
+      "community": "leadership_territorial_screens",
+      "file": "src/screens/AdministracionScreen.tsx",
+      "role": "Route Administracion (/administracion). Jefe de Grupo: people of own group (Scout/Scouter/Jefe, unit, approve). Comisionados: also create groups (scout_groups) and move people inside their territory. Admin/Nacional: whole country, all roles. Rules mirrored by proteger_perfil.",
+      "exists": true,
+      "lines": 624,
+      "bytes": 32894,
+      "exports": [
+        "AdministracionScreen"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "@react-navigation/native",
+        "lucide-react-native",
+        "../context/AuthContext",
+        "../context/ThemeContext",
+        "../lib/dataService",
+        "../utils/alert",
+        "../data/territory"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "territory.ts",
+      "label": "territory.ts (Regions, districts, groups & role labels)",
+      "type": "catalog",
+      "community": "database_catalogs_pwa",
+      "file": "src/data/territory.ts",
+      "role": "Single source for REGIONS, static districts/groups (fallback), districtsFor/groupsFor (merge scout_groups), ROLE_LABELS, assignableRoles, canMoveMembers. Used by Register, Comisionado dashboard and Administracion.",
+      "exists": true,
+      "lines": 158,
+      "bytes": 6003,
+      "exports": [
+        "Option",
+        "REGIONS",
+        "OTHER_DISTRICT",
+        "OTHER_GROUP",
+        "STATIC_DISTRICTS",
+        "STATIC_GROUPS",
+        "ScoutGroup",
+        "regionLabel",
+        "districtLabel",
+        "districtsFor",
+        "groupsFor",
+        "slugDistrict",
+        "AppRole",
+        "ROLE_LABELS",
+        "assignableRoles",
+        "canMoveMembers",
+        "canCreateGroups"
+      ],
+      "imports": [],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
       "id": "VerificarCarnetScreen.tsx",
       "label": "VerificarCarnetScreen.tsx (In-app carnet verification /verificar/:id)",
       "type": "screen",
@@ -3174,6 +3242,36 @@
       "from": "AppNavigator.tsx",
       "to": "CuentaEnRevisionScreen.tsx",
       "relation": "gates_unapproved"
+    },
+    {
+      "from": "AppNavigator.tsx",
+      "to": "AdministracionScreen.tsx",
+      "relation": "routes_leaders"
+    },
+    {
+      "from": "JefeGrupoScreen.tsx",
+      "to": "AdministracionScreen.tsx",
+      "relation": "navigates"
+    },
+    {
+      "from": "ComisionadoDashboardScreen.tsx",
+      "to": "AdministracionScreen.tsx",
+      "relation": "navigates"
+    },
+    {
+      "from": "AdministracionScreen.tsx",
+      "to": "dataService.ts",
+      "relation": "admin_groups_roles"
+    },
+    {
+      "from": "AdministracionScreen.tsx",
+      "to": "territory.ts",
+      "relation": "imports"
+    },
+    {
+      "from": "RegisterScreen.tsx",
+      "to": "territory.ts",
+      "relation": "imports"
     },
     {
       "from": "DualProfileAvatar.tsx",

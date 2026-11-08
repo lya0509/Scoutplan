@@ -1187,6 +1187,81 @@ export const dataService = {
     }, { dedupeKey: `membership:${scoutId}`, label: 'Membresía devuelta' }).catch(e => console.warn('Aviso rechazando membresía:', e));
   },
 
+  // ───────────────────────── Administración de grupos y roles ─────────────────────────
+  // Se hace en línea (no por la cola): son cambios de permisos y la base de datos puede
+  // rechazarlos (regla proteger_perfil); el dirigente tiene que ver el motivo al momento.
+
+  /** Grupos del catálogo `scout_groups`. `missingTable` = falta ejecutar supabase_administracion.sql. */
+  async getScoutGroups(): Promise<{ groups: any[]; missingTable: boolean }> {
+    try {
+      const { data, error } = await supabase.from('scout_groups').select('*').order('name');
+      if (error) {
+        const missing = error.code === '42P01' || error.code === 'PGRST205' || /scout_groups/.test(error.message || '');
+        if (!missing) throw error;
+        return { groups: (await readCached<any[]>('admin_groups')) || [], missingTable: true };
+      }
+      writeCached('admin_groups', data || []);
+      return { groups: data || [], missingTable: false };
+    } catch {
+      return { groups: (await readCached<any[]>('admin_groups')) || [], missingTable: false };
+    }
+  },
+
+  async createScoutGroup(g: { name: string; region: string; district: string }, createdBy?: string) {
+    if (!isOnline()) throw new Error('Necesitas conexión a internet para crear un grupo.');
+    const row = { name: g.name.trim(), region: g.region, district: g.district, active: true, created_by: createdBy || null };
+    const { data, error } = await supabase.from('scout_groups').insert(row).select().single();
+    if (error) {
+      if (isDuplicateError(error)) throw new Error('Ya existe un grupo con ese nombre.');
+      if (error.code === '42501') throw new Error('Solo puedes crear grupos dentro de tu territorio.');
+      throw new Error(error.message);
+    }
+    return data;
+  },
+
+  async setScoutGroupActive(id: string, active: boolean) {
+    if (!isOnline()) throw new Error('Necesitas conexión a internet.');
+    must(await supabase.from('scout_groups').update({ active }).eq('id', id));
+  },
+
+  /** Personas que este usuario puede administrar (la base de datos ya limita por territorio). */
+  async getAdminPeople(scope: { role?: string; region?: string | null; district?: string | null; group_name?: string | null }) {
+    return cachedQuery<any[]>(`admin_people_${scope.role}_${scope.region || ''}_${scope.district || ''}_${scope.group_name || ''}`, async () => {
+      let q = supabase
+        .from('profiles')
+        .select('id,name,email,cedula,role,unit,group_name,region,district,account_status,birth_date,created_at')
+        .order('name');
+      if (scope.role === 'jefe_grupo' && scope.group_name) q = q.eq('group_name', scope.group_name);
+      else if (scope.role === 'comisionado_regional' && scope.region) q = q.eq('region', scope.region);
+      else if ((scope.role === 'comisionado_distrital' || scope.role === 'comisionado') && scope.district) q = q.eq('district', scope.district);
+      return must(await q) as any[];
+    }, []);
+  },
+
+  /**
+   * Cambia rol, rama, grupo o estado de una persona y le avisa. `changes` solo lleva lo que cambió.
+   * Errores de la regla proteger_perfil llegan con su mensaje en español.
+   */
+  async updateMemberAdmin(
+    member: { id: string; name?: string },
+    changes: { role?: string; unit?: string; group_name?: string; region?: string | null; district?: string | null; account_status?: string },
+    notice?: { senderId?: string; text: string }
+  ) {
+    if (!isOnline()) throw new Error('Necesitas conexión a internet para cambiar roles o grupos.');
+    const { data, error } = await supabase.from('profiles').update(changes).eq('id', member.id).select('id');
+    if (error) throw new Error(error.message || 'No se pudo guardar.');
+    if (!data || !data.length) throw new Error('No tienes permiso para modificar a esta persona.');
+    if (notice?.text) {
+      notificationService.sendNotification({
+        senderId: notice.senderId,
+        receiverId: member.id,
+        title: '🛡️ Cambio en tu cuenta',
+        message: notice.text,
+        type: 'info',
+      }).catch(() => {});
+    }
+  },
+
   /** Scouter / Jefatura aprueban o rechazan una cuenta nueva (account_status). */
   async setAccountStatus(memberId: string, status: 'approved' | 'rejected', groupName?: string | null) {
     await outbox.run('row.update', {
