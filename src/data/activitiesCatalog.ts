@@ -78,13 +78,6 @@ export const activitiesCatalog: CatalogActivity[] = [
     subArea: "PRECURSOR"
   },
   {
-    id: "act_11",
-    text: "CONCURSO DE ACCIÓN COMUNITARIA (BUENAS ACCIONES)",
-    superArea: "CUADRO DE ADELANTOS",
-    area: "",
-    subArea: "PRECURSOR"
-  },
-  {
     id: "act_12",
     text: "ACTIVIDADES BÁSICAS (12 Cualquier área)",
     superArea: "CUADRO DE ADELANTOS",
@@ -108,13 +101,6 @@ export const activitiesCatalog: CatalogActivity[] = [
   {
     id: "act_15",
     text: "ESPECIALIDADES (1 PLATA)",
-    superArea: "CUADRO DE ADELANTOS",
-    area: "",
-    subArea: "EXPEDICIONARIO"
-  },
-  {
-    id: "act_16",
-    text: "ACCIÓN COMUNITARIA (4 CRÉDITOS)",
     superArea: "CUADRO DE ADELANTOS",
     area: "",
     subArea: "EXPEDICIONARIO"
@@ -176,20 +162,6 @@ export const activitiesCatalog: CatalogActivity[] = [
     subArea: "EXPEDICIONARIO"
   },
   {
-    id: "act_25",
-    text: "CONCURSO DE VIDA AL AIRE LIBRE (NIVEL BRONCE)",
-    superArea: "CUADRO DE ADELANTOS",
-    area: "",
-    subArea: "EXPEDICIONARIO"
-  },
-  {
-    id: "act_26",
-    text: "CONCURSO DE ACCIÓN COMUNITARIA (NIVEL BRONCE)",
-    superArea: "CUADRO DE ADELANTOS",
-    area: "",
-    subArea: "EXPEDICIONARIO"
-  },
-  {
     id: "act_27",
     text: "ACTIVIDADES BÁSICAS (9 Cualquier área)",
     superArea: "CUADRO DE ADELANTOS",
@@ -213,13 +185,6 @@ export const activitiesCatalog: CatalogActivity[] = [
   {
     id: "act_30",
     text: "ESPECIALIDADES (1 PLATA)",
-    superArea: "CUADRO DE ADELANTOS",
-    area: "",
-    subArea: "DESCUBRIDOR"
-  },
-  {
-    id: "act_31",
-    text: "ACCIÓN COMUNITARIA (8 CRÉDITOS)",
     superArea: "CUADRO DE ADELANTOS",
     area: "",
     subArea: "DESCUBRIDOR"
@@ -281,20 +246,6 @@ export const activitiesCatalog: CatalogActivity[] = [
     subArea: "DESCUBRIDOR"
   },
   {
-    id: "act_40",
-    text: "CONCURSO DE VIDA AL AIRE LIBRE (NIVEL PLATA)",
-    superArea: "CUADRO DE ADELANTOS",
-    area: "",
-    subArea: "DESCUBRIDOR"
-  },
-  {
-    id: "act_41",
-    text: "CONCURSO DE ACCIÓN COMUNITARIA (NIVEL PLATA)",
-    superArea: "CUADRO DE ADELANTOS",
-    area: "",
-    subArea: "DESCUBRIDOR"
-  },
-  {
     id: "act_42",
     text: "ACTIVIDADES BÁSICAS (9 Cualquier área)",
     superArea: "CUADRO DE ADELANTOS",
@@ -325,13 +276,6 @@ export const activitiesCatalog: CatalogActivity[] = [
   {
     id: "act_46",
     text: "ESPECIALIDADES (1 ORO)",
-    superArea: "CUADRO DE ADELANTOS",
-    area: "",
-    subArea: "FUNDADOR"
-  },
-  {
-    id: "act_47",
-    text: "ACCIÓN COMUNITARIA (10 CRÉDITOS)",
     superArea: "CUADRO DE ADELANTOS",
     area: "",
     subArea: "FUNDADOR"
@@ -393,20 +337,6 @@ export const activitiesCatalog: CatalogActivity[] = [
     subArea: "FUNDADOR"
   },
   {
-    id: "act_56",
-    text: "CONCURSO DE VIDA AL AIRE LIBRE (NIVEL ORO)",
-    superArea: "CUADRO DE ADELANTOS",
-    area: "",
-    subArea: "FUNDADOR"
-  },
-  {
-    id: "act_57",
-    text: "CONCURSO DE ACCIÓN COMUNITARIA (NIVEL ORO)",
-    superArea: "CUADRO DE ADELANTOS",
-    area: "",
-    subArea: "FUNDADOR"
-  },
-  {
     id: "act_58",
     text: "ACTIVIDADES OPCIONALES (9 Cualquier área)",
     superArea: "CUADRO DE ADELANTOS",
@@ -423,13 +353,6 @@ export const activitiesCatalog: CatalogActivity[] = [
   {
     id: "act_60",
     text: "ESPECIALIDADES (2 ORO)",
-    superArea: "CUADRO DE ADELANTOS",
-    area: "",
-    subArea: "ROVER CIUDADANO"
-  },
-  {
-    id: "act_61",
-    text: "ACCIÓN COMUNITARIA (16 CRÉDITOS)",
     superArea: "CUADRO DE ADELANTOS",
     area: "",
     subArea: "ROVER CIUDADANO"
@@ -486,20 +409,6 @@ export const activitiesCatalog: CatalogActivity[] = [
   {
     id: "act_69",
     text: "NOCHES DE VIDA AL AIRE LIBRE (15 NOCHES)",
-    superArea: "CUADRO DE ADELANTOS",
-    area: "",
-    subArea: "ROVER CIUDADANO"
-  },
-  {
-    id: "act_70",
-    text: "CONCURSO DE VIDA AL AIRE LIBRE (NIVEL ORO)",
-    superArea: "CUADRO DE ADELANTOS",
-    area: "",
-    subArea: "ROVER CIUDADANO"
-  },
-  {
-    id: "act_71",
-    text: "CONCURSO DE ACCIÓN COMUNITARIA (NIVEL ORO)",
     superArea: "CUADRO DE ADELANTOS",
     area: "",
     subArea: "ROVER CIUDADANO"
@@ -2206,27 +2115,6 @@ export const activitiesCatalog: CatalogActivity[] = [
     subArea: "ROVER CIUDADANO"
   },
   {
-    id: "act_315",
-    text: "BRONCE",
-    superArea: "CONCURSO DE VIDA AL AIRE LIBRE",
-    area: "DESARROLLO PERSONAL",
-    subArea: "ROVER CIUDADANO"
-  },
-  {
-    id: "act_316",
-    text: "PLATA",
-    superArea: "CONCURSO DE VIDA AL AIRE LIBRE",
-    area: "DESARROLLO PERSONAL",
-    subArea: "ROVER CIUDADANO"
-  },
-  {
-    id: "act_317",
-    text: "ORO",
-    superArea: "CONCURSO DE VIDA AL AIRE LIBRE",
-    area: "DESARROLLO PERSONAL",
-    subArea: "ROVER CIUDADANO"
-  },
-  {
     id: "act_318",
     text: "ACTIVIDADES A NIVEL DE GRUPO",
     superArea: "CICLOS INSTITUCIONALES",
@@ -2265,27 +2153,6 @@ export const activitiesCatalog: CatalogActivity[] = [
     id: "act_323",
     text: "TOTAL",
     superArea: "CICLOS INSTITUCIONALES",
-    area: "DESARROLLO PERSONAL",
-    subArea: "ROVER CIUDADANO"
-  },
-  {
-    id: "act_324",
-    text: "BRONCE",
-    superArea: "CONCURSO DE ACCIÓN COMUNITARIA",
-    area: "DESARROLLO PERSONAL",
-    subArea: "ROVER CIUDADANO"
-  },
-  {
-    id: "act_325",
-    text: "PLATA",
-    superArea: "CONCURSO DE ACCIÓN COMUNITARIA",
-    area: "DESARROLLO PERSONAL",
-    subArea: "ROVER CIUDADANO"
-  },
-  {
-    id: "act_326",
-    text: "ORO",
-    superArea: "CONCURSO DE ACCIÓN COMUNITARIA",
     area: "DESARROLLO PERSONAL",
     subArea: "ROVER CIUDADANO"
   },

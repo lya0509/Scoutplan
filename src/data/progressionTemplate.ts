@@ -53,6 +53,7 @@ export const stagesData: StageTemplate[] = [
       { id: 'des_vg_proyecto', text: 'Vida de Grupo (1 Proyecto de Servicio)', type: 'vida_grupo', requiredCount: 1 },
       { id: 'des_cip_distrital', text: 'Ciclos Institucionales (2 Actividades Distritales)', type: 'ciclos', requiredCount: 2 },
       { id: 'des_cip_regional', text: 'Ciclos Institucionales (2 Actividades Regionales)', type: 'ciclos', requiredCount: 2 },
+      { id: 'des_cip_nacional', text: 'Ciclos Institucionales (2 Actividades Nacionales)', type: 'ciclos', requiredCount: 2 },
       { id: 'des_cursos', text: 'Cursos y Talleres (Remo en Plata)', type: 'cursos' },
       { id: 'des_noches', text: 'Noches de Vida al Aire Libre (10 noches)', type: 'aire_libre', requiredCount: 10 }
     ]
