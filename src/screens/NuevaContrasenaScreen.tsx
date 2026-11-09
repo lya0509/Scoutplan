@@ -58,7 +58,8 @@ export default function NuevaContrasenaScreen() {
         </Text>
 
         <Text style={[styles.label, { color: theme.subText }]}>Contraseña nueva</Text>
-        <View style={styles.row}>
+        {/* El ojito va DENTRO del campo: así los dos campos miden lo mismo */}
+        <View style={styles.inputWrap}>
           <TextInput
             value={pass}
             onChangeText={setPass}
@@ -66,7 +67,7 @@ export default function NuevaContrasenaScreen() {
             autoCapitalize="none"
             autoComplete="new-password"
             textContentType="newPassword"
-            style={[input, { flex: 1 }]}
+            style={[input, { paddingRight: 48 }]}
             accessibilityLabel="Contraseña nueva"
           />
           <TouchableOpacity onPress={() => setShow(v => !v)} style={styles.eye} accessibilityRole="button" accessibilityLabel={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
@@ -108,9 +109,9 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: '800', textAlign: 'center' },
   sub: { fontSize: 14, textAlign: 'center', marginTop: 6, marginBottom: 14, lineHeight: 20 },
   label: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 10, marginBottom: 6 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  inputWrap: { position: 'relative', justifyContent: 'center' },
   input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, minHeight: 46, fontSize: 16 },
-  eye: { width: 44, height: 46, alignItems: 'center', justifyContent: 'center' },
+  eye: { position: 'absolute', right: 2, top: 0, bottom: 0, width: 44, alignItems: 'center', justifyContent: 'center' },
   error: { color: '#dc2626', fontSize: 13.5, marginTop: 12, lineHeight: 19 },
   primary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 12, minHeight: 48, marginTop: 18 },
   primaryText: { color: '#fff', fontWeight: '700', fontSize: 15 },
