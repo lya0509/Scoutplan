@@ -630,7 +630,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
                   <Text style={[styles.eventTitle, { color: theme.text, flex: 1 }]}>{displayTitle}</Text>
                   {hasPrograma && (
                     <View style={{ backgroundColor: isDarkMode ? '#581c87' : '#f3e8ff', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#d8b4fe' }}>
-                      <Text style={{ fontSize: 9, color: '#9333ea', fontWeight: 'bold' }}>📄 Ficha Oficial</Text>
+                      <Text style={{ fontSize: 9, color: isDarkMode ? '#f3e8ff' : '#7e22ce', fontWeight: 'bold' }}>📄 Ficha Oficial</Text>
                     </View>
                   )}
                 </View>

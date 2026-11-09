@@ -1257,7 +1257,7 @@ const styles = StyleSheet.create({
   reqBadge: { fontSize: 11, color: '#9333ea', fontWeight: 'bold', marginTop: 4 },
   footerAction: { padding: 16, paddingBottom: 40 },
   sendReviewBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 14 },
-  sendReviewBtnDisabled: { backgroundColor: '#94a3b8' },
+  sendReviewBtnDisabled: { backgroundColor: '#64748b' },
   sendReviewBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 }
 });
 

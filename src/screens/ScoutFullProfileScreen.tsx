@@ -373,7 +373,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
               >
                 <View style={styles.certCardHeader}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.catBadge}>{catObj?.name || 'ACREDITACIÓN'}</Text>
+                    <Text style={[styles.catBadge, { color: theme.accentText }]}>{catObj?.name || 'ACREDITACIÓN'}</Text>
                     <Text style={[styles.certTitleText, { color: theme.text }]}>{cert.title}</Text>
                     {levelObj && (
                       <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold', marginTop: 2 }}>

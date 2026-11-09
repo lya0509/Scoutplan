@@ -1277,7 +1277,7 @@ const styles = StyleSheet.create({
   certCard: { borderRadius: 16, padding: 18, marginBottom: 14, borderWidth: 1, elevation: 2 },
   certCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   catBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-  catBadgeText: { fontSize: 10, fontWeight: 'bold', color: colors.primary, backgroundColor: colors.primaryLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  catBadgeText: { fontSize: 10, fontWeight: 'bold', color: '#ffffff', backgroundColor: colors.primaryLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
   levelBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
   levelBadgeText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
   certTitle: { fontSize: 16, fontWeight: 'bold', marginTop: 2 },
