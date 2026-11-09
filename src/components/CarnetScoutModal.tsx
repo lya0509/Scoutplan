@@ -38,8 +38,8 @@ export const CarnetScoutModal: React.FC<CarnetScoutModalProps> = ({
 
   if (!user) return null;
 
-  // Foto del carnet: la scout con uniforme; si no hay (o no carga), la personal
-  const carnetPhoto = (!photoFailed && user.avatar_url) || user.custom_avatar_url || null;
+  // Foto del carnet: SOLO la foto scout (institucional). La personal no la reemplaza.
+  const carnetPhoto = (!photoFailed && user.avatar_url) || null;
 
   const isMembershipApproved = user.membership_status === 'approved' && !!user.membership_expires_at;
   // La anualidad la cobra la ASV; aquí solo se muestra si la fecha registrada ya pasó.
@@ -112,7 +112,8 @@ export const CarnetScoutModal: React.FC<CarnetScoutModalProps> = ({
                     <SecureImage source={{ uri: carnetPhoto }} style={styles.photoImg} onError={() => setPhotoFailed(true)} />
                   ) : (
                     <View style={styles.photoPlaceholder}>
-                      <Text style={{ fontSize: 10, color: '#6b7280', fontWeight: 'bold' }}>FOTO</Text>
+                      <Text style={{ fontSize: 10, color: '#6b7280', fontWeight: 'bold', textAlign: 'center' }}>FOTO SCOUT</Text>
+                      <Text style={{ fontSize: 8, color: '#9ca3af', textAlign: 'center', marginTop: 2 }}>Súbela en tu Perfil</Text>
                     </View>
                   )}
                 </View>

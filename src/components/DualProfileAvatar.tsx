@@ -41,21 +41,12 @@ export function DualProfileAvatar({
 }: Props) {
   const { isDarkMode, primaryColor } = useTheme();
 
-  // Inicializar en la foto disponible (preferir la que esté cargada si la otra está vacía)
-  const [activeTab, setActiveTab] = useState<'scout' | 'custom'>(() => {
-    if (!scoutAvatarUrl && customAvatarUrl) return 'custom';
-    return 'scout';
-  });
+  // Siempre empieza en la foto scout (la institucional). La personal solo en su pestaña.
+  const [activeTab, setActiveTab] = useState<'scout' | 'custom'>('scout');
   const [uploading, setUploading] = useState(false);
   const [showZoomModal, setShowZoomModal] = useState(false);
   const touchStartX = useRef(0);
 
-  // Sincronizar pestaña si los props llegan asíncronamente desde Supabase
-  useEffect(() => {
-    if (!scoutAvatarUrl && customAvatarUrl && activeTab === 'scout') {
-      setActiveTab('custom');
-    }
-  }, [scoutAvatarUrl, customAvatarUrl]);
 
   // Fotos cuya URL falló al cargar (archivo borrado, sin red y sin copia): se tratan como vacías
   const [failedUrls, setFailedUrls] = useState<Record<string, boolean>>({});
@@ -65,11 +56,10 @@ export function DualProfileAvatar({
     if (url) setFailedUrls(prev => (prev[url] ? prev : { ...prev, [url]: true }));
   };
 
-  // En el perfil editable cada pestaña muestra SU foto. En las listas (no editable), si
-  // falta la foto scout se muestra la personal (y viceversa) en vez de un círculo vacío.
-  const currentPhotoUrl = editable
-    ? (activeTab === 'scout' ? scoutOk : customOk)
-    : (activeTab === 'scout' ? (scoutOk || customOk) : (customOk || scoutOk));
+  // Cada pestaña muestra SOLO su foto. En las listas (Resumen, Rovers, paneles) se ve la foto
+  // scout; si no la hay, el ícono scout. Antes la personal ocupaba el lugar de la scout en las
+  // listas y hasta en la pestaña «Foto Scout» del perfil completo.
+  const currentPhotoUrl = activeTab === 'scout' ? scoutOk : customOk;
   const hasBothPhotos = !!(scoutOk && customOk);
 
   // Mostrar pestañas en el perfil principal o cuando se solicite explícitamente (size >= 70)
