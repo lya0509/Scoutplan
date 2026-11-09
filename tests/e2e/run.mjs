@@ -2,7 +2,7 @@
 //
 //   npm run test:e2e            → compila (expo export + sw.js) y prueba
 //   node tests/e2e/run.mjs      → prueba el dist/ que ya existe
-//   node tests/e2e/run.mjs --only=scout   (o scouter, jefe_grupo, comisionado_distrital, offline)
+//   node tests/e2e/run.mjs --only=scout   (o scouter, jefe_grupo, comisionado_distrital, editor, offline)
 //
 // No toca la base de datos real: Supabase está simulado (tests/e2e/mockSupabase.mjs).
 // Por cada rol abre sus pantallas y revisa:
@@ -231,6 +231,48 @@ async function checkOffline(browser, base) {
   }
 }
 
+/** Editor de Programas: calendario de fecha e indicadores (modales separados del archivo). */
+async function checkProgramaEditor(browser, base) {
+  console.log('\n▶ Editor de Programas (Scouter): fecha e indicadores');
+  const { context } = await newContext(browser, PROFILES.scouter);
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', e => errors.push(e.message.split('\n')[0]));
+  page.on('dialog', d => d.dismiss().catch(() => {}));
+  try {
+    await page.goto(`${base}/programa-editor`);
+    const st = await settle(page, /Buscar en Catálogo Oficial ASV/);
+    if (!st.found) { bad('el editor no abrió'); await shot(page, 'editor-abrir'); return; }
+
+    // Fecha: abrir el calendario y elegir «Próx. Sábado»
+    await page.getByText(/^(\d{4}-\d{2}-\d{2}|Seleccionar fecha\.\.\.)$/).first().click();
+    await page.getByText('Seleccionar Fecha', { exact: true }).waitFor({ timeout: 5000 });
+    await page.getByText('⚜️ Próx. Sábado').click();
+    const d = new Date(); d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7));
+    const sat = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    await page.getByText(sat, { exact: true }).first().waitFor({ timeout: 5000 })
+      .then(() => ok(`calendario: «Próx. Sábado» puso ${sat}`), async () => { bad('calendario: la fecha no cambió'); await shot(page, 'editor-fecha'); });
+
+    // Indicadores: abrir el catálogo, marcar el primero y cerrar
+    await page.getByText('Buscar en Catálogo Oficial ASV').first().click();
+    const firstStage = page.getByText(/^Etapa /).first();
+    await firstStage.waitFor({ timeout: 5000 });
+    const indicatorText = await firstStage.evaluate(el => el.nextElementSibling?.textContent || el.parentElement?.lastElementChild?.textContent || '');
+    await firstStage.click();
+    await page.getByText('Listo', { exact: true }).click();
+    await sleep(500);
+    const shown = indicatorText && await page.getByText(indicatorText.trim()).count();  // en la lista va con «• » delante
+    if (shown) ok(`indicadores: se agregó «${indicatorText.slice(0, 40)}…»`);
+    else { bad('indicadores: el indicador elegido no aparece en la lista'); await shot(page, 'editor-indicador'); }
+    if (errors.length) bad(`editor: error de JavaScript: ${errors[0]}`);
+  } catch (e) {
+    bad(`editor: ${e.message.split('\n')[0]}`);
+    await shot(page, 'editor-error');
+  } finally {
+    await context.close();
+  }
+}
+
 // ---------- Principal ----------
 if (args.includes('--build') || !fs.existsSync(path.join(DIST, 'index.html'))) {
   console.log('Compilando la app (npm run build:web)…');
@@ -245,6 +287,7 @@ try {
   for (const role of Object.keys(PLAN)) {
     if (!only || only === role) await checkRoutes(browser, role, base);
   }
+  if (!only || only === 'editor') await checkProgramaEditor(browser, base);
   if (!only || only === 'offline') await checkOffline(browser, base);
 } finally {
   await browser.close();

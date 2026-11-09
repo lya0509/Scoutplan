@@ -1,0 +1,65 @@
+// Estilos de NudosManualScreen (separados para que la pantalla sea más fácil de leer).
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  container: { flex: 1 },
+  header: { padding: 16, borderBottomWidth: 1 },
+  badgePill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, borderWidth: 1 },
+  badgePillText: { fontSize: 9.5, fontWeight: '900', letterSpacing: 0.5 },
+  title: { fontSize: 19, fontWeight: 'bold' },
+  subTitle: { fontSize: 12, marginTop: 2 },
+  searchBox: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, marginTop: 12, height: 42 },
+  searchInput: { flex: 1, fontSize: 13 },
+  sectionTabsContainer: { paddingHorizontal: 14, paddingVertical: 10, gap: 8 },
+  sectionTabBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    backgroundColor: '#ffffff'
+  },
+  sectionTabText: { fontSize: 12 },
+  manualCard: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 16, borderWidth: 1, marginBottom: 10 },
+  manualIconBox: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  manualName: { fontSize: 14, fontWeight: 'bold', flex: 1 },
+  manualSummary: { fontSize: 12, marginTop: 2, lineHeight: 16 },
+  catTagBadge: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 },
+  diffBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, marginLeft: 6 },
+  diffBadgeText: { fontSize: 9, fontWeight: 'bold' },
+  miniFeaturePill: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 },
+  miniFeatureText: { fontSize: 9, fontWeight: 'bold' }
+});
+
+export const modalStyles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
+  sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, maxHeight: '92%', height: '88%' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1 },
+  title: { fontSize: 16, fontWeight: 'bold' },
+  tabBar: { flexDirection: 'row', borderBottomWidth: 1 },
+  tabBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12 },
+  tabBtnText: { fontSize: 12 },
+  sectionLabel: { fontSize: 10, fontWeight: '900', letterSpacing: 0.5, marginBottom: 4 },
+  useText: { fontSize: 13, lineHeight: 19 },
+  stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
+  stepText: { fontSize: 13, flex: 1, lineHeight: 19 },
+  tipBox: { padding: 12, borderRadius: 10, borderWidth: 1, marginTop: 12 },
+  visualStepPill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#cbd5e1', backgroundColor: '#ffffff' },
+  visualStepPillText: { fontSize: 11, fontWeight: 'bold' },
+  stepDetailCard: { padding: 12, borderRadius: 12, borderWidth: 1, marginTop: 10 },
+  videoCard: { padding: 12, borderRadius: 14, borderWidth: 1, marginTop: 6 },
+  videoThumbBox: { height: 160, borderRadius: 12, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center', marginBottom: 10, position: 'relative' },
+  videoPlayBtn: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#ef4444', justifyContent: 'center', alignItems: 'center', elevation: 4 },
+  durationBadge: { position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  actionVideoBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  actionVideoBtnText: { color: '#ffffff', fontSize: 11, fontWeight: 'bold' },
+  imageCard: { borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
+  imageThumb: { width: '100%', height: 180, backgroundColor: '#ffffff' },
+  imageCaptionBox: { padding: 10 },
+  imageFallbackBox: { padding: 24, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', alignItems: 'center', marginTop: 10 },
+  lightboxOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', justifyContent: 'center', alignItems: 'center' },
+  lightboxCloseBtn: { position: 'absolute', top: 40, right: 20, zIndex: 10, padding: 8 },
+  lightboxImage: { width: '90%', height: '80%' }
+});
