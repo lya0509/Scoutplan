@@ -1164,6 +1164,7 @@ export default function NudosManualScreen({ navigation }: any) {
                 key={sec.id}
                 style={[
                   styles.sectionTabBtn,
+                  { backgroundColor: theme.cardBg, borderColor: theme.border },
                   isActive && { backgroundColor: primaryColor, borderColor: primaryColor }
                 ]}
                 onPress={() => {
@@ -1563,6 +1564,7 @@ export default function NudosManualScreen({ navigation }: any) {
                         <TouchableOpacity
                           style={[
                             modalStyles.visualStepPill,
+                            { backgroundColor: theme.cardBg, borderColor: theme.border },
                             visualStepIndex === 0 && { backgroundColor: primaryColor, borderColor: primaryColor }
                           ]}
                           onPress={() => setVisualStepIndex(0)}
@@ -1588,6 +1590,7 @@ export default function NudosManualScreen({ navigation }: any) {
                               key={vs.stepNumber}
                               style={[
                                 modalStyles.visualStepPill,
+                                { backgroundColor: theme.cardBg, borderColor: theme.border },
                                 isActive && { backgroundColor: primaryColor, borderColor: primaryColor }
                               ]}
                               onPress={() => setVisualStepIndex(vs.stepNumber)}

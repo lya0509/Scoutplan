@@ -46,6 +46,8 @@ const add = abs => { if (fs.existsSync(abs) && fs.statSync(abs).isFile()) files.
 walk(path.join(DIST, '_expo')).forEach(add);
 walk(path.join(DIST, 'assets')).forEach(add);
 walk(path.join(DIST, 'nudos')).forEach(add);
+// Visor de PDF dentro de la app (pdf.js, ~1,5 MB): para ver guías guardadas sin conexión
+walk(path.join(DIST, 'pdfjs')).filter(f => f.endsWith('.js')).forEach(add);
 fs.readdirSync(DIST)
   .filter(n => /\.(png|ico|docx|pdf|json)$/i.test(n) && n !== 'metadata.json')
   .forEach(n => add(path.join(DIST, n)));

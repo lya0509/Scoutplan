@@ -560,21 +560,24 @@ export default function StageDetailScreen({ route, navigation }: any) {
               style={[
                 styles.reqRow,
                 { backgroundColor: isDarkMode ? '#18181b' : 'white', borderColor: theme.border },
-                isChecked && { borderColor: colors.primary, backgroundColor: isDarkMode ? '#1e1b4b' : 'rgba(99, 102, 241, 0.04)' }
+                // Marcado: en modo oscuro, fondo apenas teñido y borde suave (antes un azul-morado intenso que «brillaba»)
+                isChecked && (isDarkMode
+                  ? { borderColor: '#3f3550', backgroundColor: '#1c1824' }
+                  : { borderColor: colors.primary, backgroundColor: 'rgba(99, 102, 241, 0.04)' })
               ]}
               onPress={() => handleRequirementClick(req)}
               activeOpacity={0.7}
             >
               <View style={{ marginRight: 12, marginTop: 2 }}>
                 {isChecked ? (
-                  <CheckSquare color={colors.primary} size={22} />
+                  <CheckSquare color={isDarkMode ? theme.accentText : colors.primary} size={22} />
                 ) : (
                   <Square color={isDarkMode ? '#52525b' : '#cbd5e1'} size={22} />
                 )}
               </View>
 
               <View style={{ flex: 1 }}>
-                <Text style={[styles.reqText, { color: theme.text }, isChecked && styles.reqTextChecked]}>
+                <Text style={[styles.reqText, { color: theme.text }, isChecked && styles.reqTextChecked, isChecked && isDarkMode && { color: theme.text }]}>
                   {req.text}
                 </Text>
 

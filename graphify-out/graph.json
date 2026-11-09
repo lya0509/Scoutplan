@@ -2,15 +2,15 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-09T01:00:26.983Z",
+    "generatedAt": "2026-11-09T01:40:30.839Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
-      "totalNodes": 122,
-      "totalEdges": 107,
+      "totalNodes": 123,
+      "totalEdges": 108,
       "totalHyperedges": 4,
       "totalScreens": 29,
-      "totalComponents": 29,
+      "totalComponents": 30,
       "totalContexts": 3,
       "totalServices": 25,
       "totalCatalogs": 11,
@@ -1069,8 +1069,8 @@
       "route": "StageDetail",
       "role": "Interactive checklist of stage requirements, linking to CatalogSelectorScreen, NochesAireLibreModal, VidaGrupoModal, CertificateUploadScreen, and stage review submission.",
       "exists": true,
-      "lines": 1286,
-      "bytes": 58245,
+      "lines": 1289,
+      "bytes": 58537,
       "exports": [
         "StageDetailScreen"
       ],
@@ -1509,8 +1509,8 @@
       "route": "QuarterlyPlan",
       "role": "Quarterly planner (Trimestres I-IV) supporting individual Rover plans and shared unit plans linked to ProgramaScoutEditor.",
       "exists": true,
-      "lines": 2224,
-      "bytes": 110504,
+      "lines": 2236,
+      "bytes": 111453,
       "exports": [
         "QuarterlyPlanScreen"
       ],
@@ -1551,8 +1551,8 @@
       "route": "CalendarStandalone",
       "role": "Interactive calendar (react-native-calendars) for unit, group, district, and CIP events with event creation and reminders.",
       "exists": true,
-      "lines": 690,
-      "bytes": 30556,
+      "lines": 763,
+      "bytes": 35326,
       "exports": [
         "CalendarScreen"
       ],
@@ -1572,7 +1572,8 @@
         "@react-navigation/native",
         "../hooks/useBackHandler",
         "../utils/alert",
-        "../utils/dateLocal"
+        "../utils/dateLocal",
+        "../lib/dataService"
       ],
       "supabaseTables": [
         "calendar_events",
@@ -1621,8 +1622,8 @@
       "route": "TemporalDrive",
       "role": "Photo evidence albums organized by activity/date, backed by Supabase Storage scout-files and @scout_temporal_drive_albums cache.",
       "exists": true,
-      "lines": 698,
-      "bytes": 32900,
+      "lines": 708,
+      "bytes": 33732,
       "exports": [
         "TemporalDriveScreen"
       ],
@@ -1640,7 +1641,9 @@
         "../utils/alert",
         "../utils/profileGuard",
         "../utils/filePicker",
-        "../components/SecureImage"
+        "../components/SecureImage",
+        "../lib/offline/net",
+        "../utils/dateLocal"
       ],
       "supabaseTables": [
         "calendar_events"
@@ -1772,8 +1775,8 @@
       "route": "NudosManual",
       "role": "100% offline interactive manual of Scout knots, lashings (amarres), camping techniques, and visual SVG diagrams (ManualVisualDiagram).",
       "exists": true,
-      "lines": 1906,
-      "bytes": 88103,
+      "lines": 1909,
+      "bytes": 88367,
       "exports": [
         "ManualSectionKey",
         "ModalTabKey",
@@ -1836,8 +1839,8 @@
       "route": "Documentos",
       "role": "Digital library of official ASV & WOSM PDF manuals and Mundialito guides stored in public/documentos/.",
       "exists": true,
-      "lines": 1054,
-      "bytes": 37918,
+      "lines": 1046,
+      "bytes": 37725,
       "exports": [
         "DocumentosScreen"
       ],
@@ -1854,7 +1857,8 @@
         "../utils/navigationHelper",
         "../components/HelpFloatingFAB",
         "../lib/offline/offlineDocs",
-        "../lib/offline/net"
+        "../lib/offline/net",
+        "../components/PdfViewer"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -3172,8 +3176,8 @@
       "file": "tests/sql/run.mjs",
       "role": "npm run test:sql — in-memory Postgres (PGlite) with Supabase stubs (auth.uid, roles, storage, realtime); runs every supabase_*.sql twice in production order and ~78 permission checks (cross-group, self-approval, CIP, history, deletion, notifications, private presence).",
       "exists": true,
-      "lines": 264,
-      "bytes": 25309,
+      "lines": 286,
+      "bytes": 28166,
       "exports": [],
       "imports": [
         "@electric-sql/pglite",
@@ -3198,6 +3202,30 @@
       "bytes": 3433,
       "exports": [],
       "imports": [],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "PdfViewer.tsx",
+      "label": "PdfViewer.tsx (In-app PDF viewer)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/components/PdfViewer.tsx",
+      "role": "Renders PDF pages to canvas with pdf.js (public/pdfjs, Apache-2.0, loaded on demand, precached for offline) because Android browsers do not show PDFs inside an iframe. Zoom 100–300 %, fallback «Abrir en otra aplicación». Used by DocumentosScreen.",
+      "exists": true,
+      "lines": 173,
+      "bytes": 7613,
+      "exports": [
+        "PdfViewer"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "lucide-react-native",
+        "../context/ThemeContext"
+      ],
       "supabaseTables": [],
       "supabaseBuckets": [],
       "realtimeChannels": [],
@@ -3626,6 +3654,11 @@
       "from": "dataService.ts",
       "to": "cipLogic.ts",
       "relation": "imports"
+    },
+    {
+      "from": "DocumentosScreen.tsx",
+      "to": "PdfViewer.tsx",
+      "relation": "renders"
     },
     {
       "from": "JefeGrupoScreen.tsx",

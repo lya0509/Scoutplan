@@ -51,6 +51,7 @@ import {
   saveDocsOffline,
 } from '../lib/offline/offlineDocs';
 import { isOnline } from '../lib/offline/net';
+import PdfViewer from '../components/PdfViewer';
 
 const CATEGORIES = [
   { id: 'todos', label: 'Todos los Documentos', icon: Layers },
@@ -664,16 +665,7 @@ export default function DocumentosScreen({ navigation, route }: any) {
             {/* Contenido / Vista Previa del PDF */}
             <View style={[styles.viewerContent, { backgroundColor: isDarkMode ? '#09090b' : '#f8fafc' }]}>
               {Platform.OS === 'web' && selectedDoc ? (
-                <iframe
-                  src={appPdfUrl(selectedDoc.pdfUrl)}
-                  title={selectedDoc.title}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    border: 'none',
-                    borderRadius: 12,
-                  }}
-                />
+                <PdfViewer url={appPdfUrl(selectedDoc.pdfUrl)} title={selectedDoc.title} />
               ) : (
                 <View style={styles.nativeFallbackBox}>
                   <Text style={{ fontSize: 44, marginBottom: 12 }}>{selectedDoc?.badgeIcon}</Text>

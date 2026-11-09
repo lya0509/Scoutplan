@@ -71,11 +71,13 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
   const isYouthUnit = userUnitStr === 'clan' || userUnitStr === 'tropa' || userUnitStr === 'manada' || userUnitStr === 'comunidad' || userUnitStr === 'caminantes';
   const defaultUnit = route?.params?.unit || (isYouthUnit ? (userUnitStr === 'caminantes' ? 'comunidad' : userUnitStr) : 'clan');
 
-  const [selectedQuarter, setSelectedQuarter] = useState<string>(route?.params?.quarter || 'Q1');
+  // Abre en el trimestre actual (antes siempre en Q1, aunque fuera noviembre)
+  const [selectedQuarter, setSelectedQuarter] = useState<string>(route?.params?.quarter || `Q${Math.floor(new Date().getMonth() / 3) + 1}`);
   // Año actual en tiempo real en todo momento
   const [selectedYear, setSelectedYear] = useState<number>(route?.params?.year || new Date().getFullYear());
   const [unitFilter, setUnitFilter] = useState<string>(defaultUnit);
   const [loading, setLoading] = useState(true);
+  const [remoteLoading, setRemoteLoading] = useState(false);
 
   // Selector de Vista: Edición (edit) o Previsualización Oficial (preview)
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
@@ -264,8 +266,11 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
         return await dataService.getQuarterlyPlan(user.id, selectedQuarter, selectedYear);
       })();
 
-      const timeoutPromise = new Promise<null>((res) => setTimeout(() => res(null), 3500));
-      const remotePlan: any = await Promise.race([fetchPromise, timeoutPromise]);
+      // Antes se esperaba solo 3,5 s y, si la red tardaba más, se mostraba un plan vacío con el
+      // nombre de quien lo abría como autor. Ahora se espera la respuesta (getUnitSharedQuarterlyPlan
+      // ya cae a la copia guardada si no hay red) mientras se ve el aviso «Cargando…».
+      setRemoteLoading(true);
+      const remotePlan: any = await fetchPromise.finally(() => setRemoteLoading(false));
 
       hasLoadedOnceRef.current = true;
 
@@ -294,7 +299,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
         // Si el plan compartido en la nube tiene elaborado_by, ESE es el autor legítimo del Scouter.
         // JAMÁS reemplazarlo por user.name si otro usuario simplemente está visualizando o editando.
         const officialElaboratedBy = remotePlan?.elaborated_by || chosenData.elaborated_by || chosenData.elaboratedBy || '';
-        setElaboratedBy(officialElaboratedBy || (isScouter ? (user.name || '') : 'Jefatura de Unidad'));
+        setElaboratedBy(officialElaboratedBy || '');
         setGeneralObjective(chosenData.general_objectives || chosenData.generalObjective || chosenData.goals || '');
         setTrimestreGoalsList(parseStringToList(chosenData.trimestre_goals || chosenData.trimestreGoalsList));
         setSpecificObjectivesList(parseStringToList(chosenData.specific_objectives || chosenData.specificObjectivesList));
@@ -326,7 +331,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
       } else if (!foundLocal) {
         // Inicializar limpio si no existe plan ni borrador
         setScoutPlan(null);
-        setElaboratedBy(isScouter ? (user.name || '') : '');
+        setElaboratedBy('');
         setGeneralObjective('');
         setTrimestreGoalsList(['']);
         setSpecificObjectivesList(['']);
@@ -340,7 +345,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
       try {
         const localDraft: any = await autoSaveService.loadDraft(draftKey);
         if (localDraft) {
-          setElaboratedBy(localDraft.elaboratedBy || user.name || '');
+          setElaboratedBy(localDraft.elaboratedBy || '');
           setGeneralObjective(localDraft.generalObjective || '');
           setTrimestreGoalsList(localDraft.trimestreGoalsList || ['']);
           setSpecificObjectivesList(localDraft.specificObjectivesList || ['']);
@@ -512,7 +517,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
       sections: [{
         name: 'Plan trimestral',
         notes: [
-          `Elaborado por: ${elaboratedBy || user?.name || ''}`,
+          `Elaborado por: ${elaboratedBy || scoutPlan?.elaborated_by || '—'}`,
           `Metas del trimestre: ${goals.length ? goals.join('. ') : 'Sin definir'}`,
           `Objetivo del trimestre: ${generalObjective || 'Sin definir'}`,
           `Objetivos específicos: ${specifics.length ? specifics.join('. ') : 'Sin definir'}`,
@@ -549,7 +554,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
     let text = `*ASOCIACIÓN DE SCOUTS DE VENEZUELA*\n`;
     text += `*REGIÓN MIRANDA / DISTRITO GUARENAS-GUATIRE • GRUPO SCOUT ORIÓN #84*\n`;
     text += `⚜️ *TRIMESTRE DE ${unitName} — ${qName.toUpperCase()} (${selectedYear})*\n\n`;
-    text += `👤 *Elaborado por:* ${elaboratedBy || user?.name}\n`;
+    text += `👤 *Elaborado por:* ${elaboratedBy || scoutPlan?.elaborated_by || '—'}\n`;
     text += `📅 *Meses:* ${activeQuarterObj?.months}\n\n`;
 
     text += `🎯 *OBJETIVO GENERAL DEL TRIMESTRE:*\n`;
@@ -1230,7 +1235,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                   </View>
                 </View>
                 <Text style={{ fontSize: 12, color: theme.subText, marginTop: 4 }}>
-                  ✍️ Creado / Modificado por: <Text style={{ fontWeight: 'bold', color: theme.text }}>{elaboratedBy || user?.name || 'Unidad Scout'}</Text>
+                  ✍️ Creado / Modificado por: <Text style={{ fontWeight: 'bold', color: theme.text }}>{elaboratedBy || scoutPlan?.elaborated_by || (remoteLoading ? 'cargando…' : 'todavía no hay plan guardado')}</Text>
                 </Text>
               </View>
 
@@ -1263,6 +1268,13 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                   <TouchableOpacity onPress={() => setScouterEditUnlocked(false)}>
                     <Text style={{ color: '#ef4444', fontWeight: 'bold', fontSize: 12 }}>Bloquear</Text>
                   </TouchableOpacity>
+                </View>
+              )}
+
+              {remoteLoading && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: 10, marginBottom: 10, backgroundColor: theme.inputBg }} accessibilityLiveRegion="polite">
+                  <ActivityIndicator size="small" color={theme.accentText} />
+                  <Text style={{ color: theme.subText, fontSize: 13, flex: 1 }}>Cargando el plan de la unidad… no lo edites hasta que termine.</Text>
                 </View>
               )}
 
@@ -1617,7 +1629,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
 
               <View style={[styles.previewInfoGrid, { borderColor: theme.border }]}>
                 <Text style={{ color: theme.text, fontSize: 13 }}>
-                  <Text style={{ fontWeight: 'bold' }}>Elaborado por: </Text>{elaboratedBy || user?.name || 'Scout'}
+                  <Text style={{ fontWeight: 'bold' }}>Elaborado por: </Text>{elaboratedBy || scoutPlan?.elaborated_by || '—'}
                 </Text>
                 <Text style={{ color: theme.text, fontSize: 13 }}>
                   <Text style={{ fontWeight: 'bold' }}>Meses: </Text>{activeQuarterObj?.months}

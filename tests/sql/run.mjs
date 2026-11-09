@@ -71,6 +71,8 @@ CREATE TABLE public.certificates (id serial PRIMARY KEY, scout_id uuid REFERENCE
 CREATE TABLE public.stage_progress (id serial PRIMARY KEY, scout_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE, stage_id text, status text);
 CREATE TABLE public.calendar_events (id serial PRIMARY KEY, title text, group_name text, created_by uuid REFERENCES public.profiles(id) ON DELETE CASCADE);
 CREATE TABLE public.push_subscriptions (id serial PRIMARY KEY, user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE, endpoint text);
+CREATE TABLE public.quarterly_plans (id serial PRIMARY KEY, scout_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE, group_name text, unit text, quarter text, year int, elaborated_by text);
+ALTER TABLE public.quarterly_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.calendar_events ENABLE ROW LEVEL SECURITY;
 GRANT USAGE ON SCHEMA public TO authenticated, anon, service_role;
@@ -258,6 +260,26 @@ const regAnon = await asRole('anon', `SELECT count(*)::int n FROM public.grupos_
 !regAnon.err ? ok('El formulario de registro sigue viendo los grupos (grupos_registro)') : bad('grupos_registro dejó de funcionar: ' + regAnon.err);
 const abiertas = await db.query(`SELECT count(*)::int n FROM pg_policies WHERE schemaname='public' AND (roles @> ARRAY['anon']::name[] OR roles @> ARRAY['public']::name[])`);
 abiertas.rows[0].n === 0 ? ok('No queda ninguna regla para anon/public') : bad('Quedan reglas abiertas: ' + abiertas.rows[0].n);
+
+// ───────────────────────── Plan Trimestral de la unidad ─────────────────────────
+section('supabase_plan_unidad_visible.sql');
+await db.exec(`CREATE POLICY planes_trimestrales ON public.quarterly_plans FOR ALL TO authenticated
+    USING ((scout_id IS NOT NULL AND public.puede_gestionar(scout_id::text)) OR (scout_id IS NULL AND group_name = public.mi_grupo()))
+    WITH CHECK ((scout_id IS NOT NULL AND public.puede_gestionar(scout_id::text)) OR (scout_id IS NULL AND group_name = public.mi_grupo()));
+  INSERT INTO public.profiles (id, name, role, unit, group_name, region, district) VALUES ('${U(11)}', 'Otro Rover Orión', 'scout', 'clan', 'Grupo Orión #84', 'miranda', 'guarenas_guatire');
+  INSERT INTO public.quarterly_plans (scout_id, group_name, unit, quarter, year, elaborated_by) VALUES
+    ('${U(2)}', 'Grupo Orión #84', 'clan', 'Q4', 2026, 'Scouter Orión'),
+    ('${U(11)}', 'Grupo Orión #84', 'clan', 'Q4', 2026, 'Plan personal de otro Rover');`);
+const antesPlan = await rowsAs(U(3), `SELECT elaborated_by FROM public.quarterly_plans`);
+!antesPlan.some(r => r.elaborated_by === 'Scouter Orión') ? ok('Antes: el Rover no veía el plan de su unidad (reproduce el error)') : bad('La simulación no reproduce el error');
+for (let k = 0; k < 2; k++) await run('supabase_plan_unidad_visible.sql', sqlFile('supabase_plan_unidad_visible.sql'));
+const vRover = (await rowsAs(U(3), `SELECT elaborated_by FROM public.quarterly_plans`)).map(r => r.elaborated_by);
+vRover.includes('Scouter Orión') ? ok('Ahora el Rover ve el plan de su unidad') : bad('El Rover sigue sin ver el plan de la unidad');
+!vRover.includes('Plan personal de otro Rover') ? ok('El Rover NO ve el plan personal de otro Rover') : bad('El Rover ve planes personales ajenos');
+(await rowsAs(U(4), `SELECT count(*)::int n FROM public.quarterly_plans`))[0].n === 0 ? ok('Otro grupo no ve los planes de Orión') : bad('Otro grupo ve planes de Orión');
+(await rowsAs(U(9), `SELECT count(*)::int n FROM public.quarterly_plans`))[0].n === 0 ? ok('Una cuenta en revisión no ve los planes') : bad('Cuenta en revisión ve planes');
+await as(U(3), 'El Rover intenta modificar el plan de la unidad', `UPDATE public.quarterly_plans SET elaborated_by='hackeado' WHERE elaborated_by='Scouter Orión'`, true);
+(await db.query(`SELECT count(*)::int n FROM public.quarterly_plans WHERE elaborated_by='hackeado'`)).rows[0].n === 0 ? ok('…pero no cambia nada (solo lectura)') : bad('El Rover pudo modificar el plan de la unidad');
 
 console.log(fails ? `\n✘ ${fails} prueba(s) fallaron` : '\n✔ Todas las pruebas pasaron');
 process.exit(fails ? 1 : 0);

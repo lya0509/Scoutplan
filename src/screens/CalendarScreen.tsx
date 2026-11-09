@@ -14,6 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useModalBackHandler } from '../hooks/useBackHandler';
 import { showAlert } from '../utils/alert';
 import { todayLocal } from '../utils/dateLocal';
+import { dataService } from '../lib/dataService';
 
 interface CalendarEvent {
   id: string;
@@ -37,6 +38,18 @@ const MONTH_MAP: Record<string, string> = {
   noviembre: '11',
   diciembre: '12'
 };
+
+/** «Octubre», «octubre 2026», «Oct.», «Setiembre» → '10'. Antes solo el nombre exacto. */
+function monthNumber(raw: string): string | undefined {
+  const w = (raw || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().split(/[\s.,/-]+/)[0];
+  if (!w) return undefined;
+  if (MONTH_MAP[w]) return MONTH_MAP[w];
+  if (w === 'setiembre') return '09';
+  const byPrefix = Object.keys(MONTH_MAP).find(k => w.length >= 3 && k.startsWith(w.slice(0, 3)));
+  if (byPrefix) return MONTH_MAP[byPrefix];
+  const n = parseInt(w, 10);
+  return n >= 1 && n <= 12 ? String(n).padStart(2, '0') : undefined;
+}
 
 function formatDateWithDayOfWeek(dateStr: string): string {
   if (!dateStr) return 'Seleccionar fecha en el calendario';
@@ -67,6 +80,8 @@ export default function CalendarScreen() {
 
   const [selectedDate, setSelectedDate] = useState<string>(todayLocal());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  // Qué mostrar debajo del calendario: el día tocado, el trimestre, lo próximo o los CIP
+  const [viewMode, setViewMode] = useState<'dia' | 'trimestre' | 'proximas' | 'cip'>('dia');
   const [loading, setLoading] = useState(true);
   const [unitFilter, setUnitFilter] = useState<string>('all');
 
@@ -104,7 +119,8 @@ export default function CalendarScreen() {
 
     // 1. Cargar eventos manuales y eventos CIP de calendar_events
     try {
-      let query = supabase.from('calendar_events').select('*').order('date', { ascending: true });
+      // Los álbumes del Drive de fotos también viven en calendar_events: no son actividades
+      let query = supabase.from('calendar_events').select('*').neq('unit', 'drive_album').order('date', { ascending: true });
       if (isScout) {
         query = query.in('unit', [userUnit, 'grupo']);
       }
@@ -136,8 +152,7 @@ export default function CalendarScreen() {
           const year = qp.year || new Date().getFullYear();
           acts.forEach((act: any) => {
             if (!act.activity || !act.month) return;
-            const mNorm = act.month.trim().toLowerCase();
-            const mNum = MONTH_MAP[mNorm];
+            const mNum = monthNumber(act.month);
             if (!mNum) return;
             const dayNum = parseInt(act.day || '15', 10);
             const dStr = String(isNaN(dayNum) ? 15 : dayNum).padStart(2, '0');
@@ -159,6 +174,23 @@ export default function CalendarScreen() {
       }
     } catch (e) {
       console.warn('Aviso cargando quarterly_plans en calendario:', e);
+    }
+
+    // 2b. CIP del catálogo oficial (cip_oficiales)
+    try {
+      const { rows } = await dataService.getCipCatalog();
+      rows.filter((c: any) => c.active !== false && c.fecha).forEach((c: any) => {
+        anyLoaded = true;
+        combinedEvents.push({
+          id: `cip_${c.id}`,
+          title: `[CIP ${String(c.nivel || '').toUpperCase()}] ${c.nombre}`,
+          date: String(c.fecha).slice(0, 10),
+          unit: 'grupo',
+          description: `CIP ${c.nivel}${c.lugar ? ` • Lugar: ${c.lugar}` : ''}${c.created_by_name ? ` • Lo registró: ${c.created_by_name}` : ''}`,
+        });
+      });
+    } catch (e) {
+      console.warn('Aviso cargando CIP en calendario:', e);
     }
 
     // 3. Cargar programas de actividades (scout_programas)
@@ -324,13 +356,25 @@ export default function CalendarScreen() {
     return marked;
   };
 
-  const filteredEvents = events.filter(evt => {
-    const isDateMatch = evt.date === selectedDate;
-    if (canSeeAllUnits && unitFilter !== 'all') {
-      return isDateMatch && evt.unit?.toLowerCase() === unitFilter.toLowerCase();
+  const unitOk = (evt: CalendarEvent) =>
+    !(canSeeAllUnits && unitFilter !== 'all') || evt.unit?.toLowerCase() === unitFilter.toLowerCase() || evt.unit?.toLowerCase() === 'grupo';
+  const isCipEvent = (evt: CalendarEvent) => /\[(CIP|6P)/i.test(evt.title || '');
+  const todayStr = todayLocal();
+  const selMonth = parseInt(selectedDate.slice(5, 7), 10) || 1;
+  const qStart = Math.floor((selMonth - 1) / 3) * 3 + 1;
+  const quarterLabel = `${['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][qStart - 1]}–${['Mar', 'Jun', 'Sep', 'Dic'][(qStart - 1) / 3]} ${selectedDate.slice(0, 4)}`;
+  const byDate = (a: CalendarEvent, b: CalendarEvent) => a.date.localeCompare(b.date);
+
+  const filteredEvents = (() => {
+    const base = events.filter(unitOk);
+    if (viewMode === 'trimestre') {
+      return base.filter(e => (e.title || '').startsWith('[Plan Trimestral') && e.date.slice(0, 4) === selectedDate.slice(0, 4)
+        && (() => { const m = parseInt(e.date.slice(5, 7), 10); return m >= qStart && m < qStart + 3; })()).sort(byDate);
     }
-    return isDateMatch;
-  });
+    if (viewMode === 'proximas') return base.filter(e => e.date >= todayStr).sort(byDate).slice(0, 40);
+    if (viewMode === 'cip') return base.filter(e => isCipEvent(e) && e.date >= todayStr).sort(byDate);
+    return base.filter(e => e.date === selectedDate);
+  })();
 
   const canAddEvent = isJefe || isScouter;
 
@@ -444,15 +488,36 @@ export default function CalendarScreen() {
 
         {/* Lista de eventos del día seleccionado (SÓLIDA, SIN PARPADEO NI DEGRADADO) */}
         <View style={styles.eventsSection}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
+            {([['dia', '📅 Día'], ['trimestre', '🗓️ Trimestre'], ['proximas', '⏭️ Próximas'], ['cip', '🚩 CIP']] as const).map(([k, label]) => (
+              <TouchableOpacity
+                key={k}
+                onPress={() => setViewMode(k)}
+                style={[styles.viewChip, { borderColor: viewMode === k ? colors.primary : theme.border, backgroundColor: viewMode === k ? colors.primary : theme.cardBg }]}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: viewMode === k }}
+              >
+                <Text style={{ color: viewMode === k ? '#fff' : theme.text, fontWeight: '700', fontSize: 13 }}>{label}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
           <Text style={[styles.eventsTitle, { color: theme.text }]}>
-            Actividades para el {selectedDate.split('-').reverse().join('/')}
+            {viewMode === 'dia' ? `Actividades para el ${selectedDate.split('-').reverse().join('/')}`
+              : viewMode === 'trimestre' ? `Plan Trimestral · ${quarterLabel}`
+              : viewMode === 'proximas' ? 'Próximas actividades'
+              : 'Próximos CIP'}
           </Text>
 
           {loading ? (
             <ActivityIndicator color={colors.primary} style={{ marginTop: 20 }} />
           ) : filteredEvents.length === 0 ? (
             <View style={[styles.emptyCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-              <Text style={[styles.emptyText, { color: theme.subText }]}>No hay actividades programadas para este día.</Text>
+              <Text style={[styles.emptyText, { color: theme.subText }]}>
+                {viewMode === 'dia' ? 'No hay actividades programadas para este día.'
+                  : viewMode === 'trimestre' ? 'No hay actividades del Plan Trimestral en este trimestre. Toca otro mes en el calendario para ver otro trimestre.'
+                  : viewMode === 'proximas' ? 'No hay actividades próximas.'
+                  : 'No hay CIP próximos registrados.'}
+              </Text>
             </View>
           ) : (
             filteredEvents.map(evt => {
@@ -473,7 +538,14 @@ export default function CalendarScreen() {
                   <View style={[styles.unitBar, { backgroundColor: uColor }]} />
                   <View style={styles.eventContent}>
                     <View style={styles.eventHeaderRow}>
-                      <Text style={[styles.eventTitleText, { color: theme.text }]}>{displayTitle}</Text>
+                      <View style={{ flex: 1 }}>
+                        {viewMode !== 'dia' && (
+                          <TouchableOpacity onPress={() => { setSelectedDate(evt.date); setViewMode('dia'); }} accessibilityRole="button">
+                            <Text style={{ color: theme.accentText, fontSize: 12, fontWeight: '700', marginBottom: 2 }}>{formatDateWithDayOfWeek(evt.date)}</Text>
+                          </TouchableOpacity>
+                        )}
+                        <Text style={[styles.eventTitleText, { color: theme.text }]}>{displayTitle}</Text>
+                      </View>
                       <View style={[styles.unitBadge, { backgroundColor: uColor }]}>
                         <Text style={styles.unitBadgeText}>{evt.unit.toUpperCase()}</Text>
                       </View>
@@ -650,6 +722,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 13, marginTop: 2 },
   themeBtn: { padding: 8, borderRadius: 12 },
   filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: '#e2e8f0', marginRight: 8 },
+  viewChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, minHeight: 38, justifyContent: 'center' },
   filterChipActive: { backgroundColor: colors.primary },
   filterChipText: { fontSize: 11, fontWeight: '600', color: '#475569' },
   filterChipTextActive: { color: 'white', fontWeight: 'bold' },

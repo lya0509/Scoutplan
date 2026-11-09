@@ -24,6 +24,8 @@ import { showAlert } from '../utils/alert';
 import { checkProfileCompletion } from '../utils/profileGuard';
 import { pickFilesUniversal } from '../utils/filePicker';
 import { SecureImage } from '../components/SecureImage';
+import { newId } from '../lib/offline/net';
+import { todayLocal } from '../utils/dateLocal';
 
 interface DrivePhoto {
   id: string;
@@ -82,11 +84,12 @@ export default function TemporalDriveScreen({ navigation }: any) {
         setAlbums(localAlbums);
       }
 
+      // Los álbumes viven en calendar_events (unit = 'drive_album'); la base solo deja ver los del
+      // propio grupo. (Antes se filtraba por una columna «end_date» que no existe y nunca cargaba nada.)
       const { data, error } = await supabase
         .from('calendar_events')
         .select('*')
-        .eq('unit', 'drive_album')
-        .gte('end_date', new Date().toISOString());
+        .eq('unit', 'drive_album');
 
       if (!error && data) {
         const remoteAlbums: PhotoAlbum[] = data.map((row: any) => {
@@ -98,9 +101,9 @@ export default function TemporalDriveScreen({ navigation }: any) {
           return {
             id: row.id,
             title: row.title,
-            unit: row.location || 'clan',
+            unit: extra.albumUnit || row.location || 'clan',
             visibility: extra.visibility || 'public',
-            expiresAt: extra.expiresAt || new Date(row.end_date).getTime(),
+            expiresAt: extra.expiresAt || (new Date(row.date || Date.now()).getTime() + 3 * 86400000),
             durationDays: extra.durationDays || 3,
             createdBy: extra.createdBy || 'Scout',
             photos: Array.isArray(extra.photos) ? extra.photos : []
@@ -159,7 +162,7 @@ export default function TemporalDriveScreen({ navigation }: any) {
     const expiresAt = Date.now() + (maxDays * 24 * 60 * 60 * 1000);
 
     const newAlb: PhotoAlbum = {
-      id: `alb_${Date.now()}`,
+      id: newId(),
       title: newTitle.trim(),
       unit: user?.unit || 'clan',
       visibility: visibility,
@@ -173,27 +176,29 @@ export default function TemporalDriveScreen({ navigation }: any) {
     setAlbums(updated);
     AsyncStorage.setItem('@scout_temporal_drive_albums', JSON.stringify(updated)).catch(() => {});
 
-    try {
-      supabase.from('calendar_events').insert({
-        id: newAlb.id,
-        title: newAlb.title,
-        unit: 'drive_album',
-        location: newAlb.unit,
-        start_date: new Date().toISOString(),
-        end_date: new Date(expiresAt).toISOString(),
-        description: JSON.stringify({
-          visibility: newAlb.visibility,
-          expiresAt: newAlb.expiresAt,
-          durationDays: newAlb.durationDays,
-          createdBy: newAlb.createdBy,
-          photos: []
-        }),
-        created_by: user?.id || user?.name || 'Scout',
-        is_cancelled: false
-      }).then(() => {});
-    } catch (e) {
-      console.warn('Aviso guardando álbum en Supabase:', e);
-    }
+    // Guardar en la nube (antes fallaba en silencio por la fecha obligatoria y el álbum quedaba
+    // solo en este teléfono)
+    supabase.from('calendar_events').insert({
+      id: newAlb.id,
+      title: newAlb.title,
+      date: todayLocal(),
+      unit: 'drive_album',
+      group_name: user?.group_name || null,
+      created_by: user?.id,
+      description: JSON.stringify({
+        visibility: newAlb.visibility,
+        expiresAt: newAlb.expiresAt,
+        durationDays: newAlb.durationDays,
+        createdBy: newAlb.createdBy,
+        albumUnit: newAlb.unit,
+        photos: []
+      }),
+    }).then(({ error }: any) => {
+      if (error) {
+        showAlert('Álbum solo en este teléfono', 'No se pudo guardar el álbum en la nube, así que tu grupo no lo verá todavía. Revisa tu conexión y vuelve a crearlo.');
+        console.warn('Aviso guardando álbum en Supabase:', error.message);
+      }
+    });
 
     setNewTitle('');
     setVisibility('public');
@@ -263,9 +268,14 @@ export default function TemporalDriveScreen({ navigation }: any) {
                 expiresAt: toSave.expiresAt,
                 durationDays: toSave.durationDays,
                 createdBy: toSave.createdBy,
+                albumUnit: toSave.unit,
                 photos: toSave.photos
               })
-            }).eq('id', toSave.id).then(() => {});
+            }).eq('id', toSave.id).select('id').then(({ data, error }: any) => {
+              if (error || !data?.length) {
+                showAlert('Fotos solo en este teléfono', 'Las fotos se subieron, pero no se pudo actualizar el álbum en la nube. Revisa tu conexión e inténtalo de nuevo.');
+              }
+            });
           } catch (e) {
             console.warn('Aviso guardando fotos en Supabase:', e);
           }
