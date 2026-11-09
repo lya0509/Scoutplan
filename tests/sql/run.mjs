@@ -241,5 +241,23 @@ await db.exec(`INSERT INTO public.calendar_events (title, group_name, created_by
 (await rowsAs(U(4), `SELECT count(*)::int n FROM public.calendar_events`))[0].n === 0 ? ok('Otro grupo ya no ve los eventos «[CIP…]» de Orión') : bad('Otro grupo ve eventos de Orión');
 (await rowsAs(U(9), `SELECT count(*)::int n FROM public.calendar_events`))[0].n === 0 ? ok('Una cuenta en revisión no ve el calendario') : bad('Cuenta en revisión ve el calendario');
 
+// ───────────────────────── Reglas abiertas (tablas creadas desde el panel) ─────────────────────────
+section('supabase_cerrar_reglas_abiertas.sql');
+await db.exec(`CREATE TABLE public.unit_subgroups (id serial PRIMARY KEY, nombre text);
+  INSERT INTO public.unit_subgroups (nombre) VALUES ('Patrulla Halcones');
+  ALTER TABLE public.unit_subgroups ENABLE ROW LEVEL SECURITY;
+  GRANT SELECT ON public.unit_subgroups TO anon, authenticated;
+  CREATE POLICY "Permitir lectura de todos" ON public.unit_subgroups FOR SELECT USING (true);`);
+const antes = await asRole('anon', `SELECT count(*)::int n FROM public.unit_subgroups`);
+!antes.err && antes.rows[0].n === 1 ? ok('Antes: sin sesión se leía la tabla abierta (simulación del hallazgo)') : bad('La simulación no reprodujo la regla abierta');
+for (let k = 0; k < 2; k++) await run('supabase_cerrar_reglas_abiertas.sql', sqlFile('supabase_cerrar_reglas_abiertas.sql'));
+const despues = await asRole('anon', `SELECT count(*)::int n FROM public.unit_subgroups`);
+despues.err || despues.rows[0].n === 0 ? ok('Después: sin sesión ya no se lee') : bad('Sin sesión todavía se lee la tabla abierta');
+(await rowsAs(U(6), `SELECT count(*)::int n FROM public.unit_subgroups`))[0].n === 1 ? ok('Con sesión se sigue leyendo') : bad('Con sesión dejó de leerse');
+const regAnon = await asRole('anon', `SELECT count(*)::int n FROM public.grupos_registro()`);
+!regAnon.err ? ok('El formulario de registro sigue viendo los grupos (grupos_registro)') : bad('grupos_registro dejó de funcionar: ' + regAnon.err);
+const abiertas = await db.query(`SELECT count(*)::int n FROM pg_policies WHERE schemaname='public' AND (roles @> ARRAY['anon']::name[] OR roles @> ARRAY['public']::name[])`);
+abiertas.rows[0].n === 0 ? ok('No queda ninguna regla para anon/public') : bad('Quedan reglas abiertas: ' + abiertas.rows[0].n);
+
 console.log(fails ? `\n✘ ${fails} prueba(s) fallaron` : '\n✔ Todas las pruebas pasaron');
 process.exit(fails ? 1 : 0);
