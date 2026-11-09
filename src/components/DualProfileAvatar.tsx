@@ -9,12 +9,14 @@ import {
   Modal,
   Platform
 } from 'react-native';
-import { Camera, Sparkles, Maximize2, Trash2, X, ChevronLeft, ChevronRight, Upload, RefreshCw } from 'lucide-react-native';
+import { Camera, Sparkles, Maximize2, Trash2, X, ChevronLeft, ChevronRight, Upload, RefreshCw, Crop } from 'lucide-react-native';
 import { UserScoutAvatar } from './UserScoutAvatar';
 import { useTheme } from '../context/ThemeContext';
 import { showAlert } from '../utils/alert';
 import { pickImageUniversal } from '../utils/filePicker';
 import { SecureImage } from './SecureImage';
+import { PhotoCropModal } from './PhotoCropModal';
+import { resolveFileUrl } from '../lib/fileUrl';
 
 interface Props {
   scoutAvatarUrl?: string | null;
@@ -45,6 +47,8 @@ export function DualProfileAvatar({
   const [activeTab, setActiveTab] = useState<'scout' | 'custom'>('scout');
   const [uploading, setUploading] = useState(false);
   const [showZoomModal, setShowZoomModal] = useState(false);
+  // Foto elegida (o la actual) esperando que la persona la recorte antes de guardarla
+  const [cropTarget, setCropTarget] = useState<{ uri: string; type: 'scout' | 'custom' } | null>(null);
   const touchStartX = useRef(0);
 
 
@@ -74,27 +78,47 @@ export function DualProfileAvatar({
 
   const handlePickImage = (targetType: 'scout' | 'custom' = activeTab) => {
     if (!editable || !onPhotoChange) return;
-
-    setUploading(true);
-    pickImageUniversal(async (compressedDataUrl) => {
-      try {
-        await onPhotoChange(targetType, compressedDataUrl);
-        showAlert(
-          'Foto Actualizada',
-          targetType === 'scout'
-            ? 'Se ha guardado tu Foto Institucional Scout.'
-            : 'Se ha guardado tu Foto Personal.'
-        );
-      } catch (err: any) {
-        showAlert('Error', err?.message || 'No se pudo guardar la foto de perfil.');
-      } finally {
-        setUploading(false);
-      }
+    // Se elige con buena resolución; el recorte final sale de 800 × 800
+    pickImageUniversal((dataUrl) => {
+      setCropTarget({ uri: dataUrl, type: targetType });
     }, {
-      maxWidth: 800,
-      maxHeight: 800,
-      quality: 0.85
+      maxWidth: 1600,
+      maxHeight: 1600,
+      quality: 0.9
     });
+  };
+
+  /** Recortar o mover la foto que ya está guardada. */
+  const handleAdjustCurrent = async () => {
+    if (!editable || !onPhotoChange || !currentPhotoUrl) return;
+    const type = activeTab;
+    setShowZoomModal(false);
+    try {
+      const uri = await resolveFileUrl(currentPhotoUrl);
+      setCropTarget({ uri, type });
+    } catch {
+      showAlert('Sin conexión', 'No se pudo abrir la foto para ajustarla. Intenta de nuevo con internet.');
+    }
+  };
+
+  const handleCropConfirm = async (croppedDataUrl: string) => {
+    if (!cropTarget || !onPhotoChange) return;
+    const targetType = cropTarget.type;
+    setCropTarget(null);
+    setUploading(true);
+    try {
+      await onPhotoChange(targetType, croppedDataUrl);
+      showAlert(
+        'Foto Actualizada',
+        targetType === 'scout'
+          ? 'Se ha guardado tu Foto Institucional Scout.'
+          : 'Se ha guardado tu Foto Personal.'
+      );
+    } catch (err: any) {
+      showAlert('Error', err?.message || 'No se pudo guardar la foto de perfil.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleDeleteCurrentPhoto = async () => {
@@ -419,6 +443,17 @@ export function DualProfileAvatar({
               </TouchableOpacity>
             )}
 
+            {editable && onPhotoChange && !!currentPhotoUrl && (
+              <TouchableOpacity
+                style={[styles.zoomActionBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+                onPress={handleAdjustCurrent}
+                activeOpacity={0.8}
+              >
+                <Crop size={15} color="white" />
+                <Text style={styles.zoomActionBtnText}>Recortar / Ajustar</Text>
+              </TouchableOpacity>
+            )}
+
             {onDeletePhoto && !!currentPhotoUrl && (
               <TouchableOpacity
                 style={[styles.zoomActionBtn, { backgroundColor: '#ef4444' }]}
@@ -440,6 +475,14 @@ export function DualProfileAvatar({
           </View>
         </View>
       </Modal>
+
+      <PhotoCropModal
+        visible={!!cropTarget}
+        source={cropTarget?.uri || null}
+        title={cropTarget?.type === 'custom' ? 'Ajustar foto personal' : 'Ajustar foto scout'}
+        onCancel={() => setCropTarget(null)}
+        onConfirm={handleCropConfirm}
+      />
     </View>
   );
 }

@@ -21,6 +21,7 @@ import { showAlert } from '../utils/alert';
 import { exportDocxInBrowser } from '../utils/docxExporter';
 import { navigateBackOrHome } from '../utils/navigationHelper';
 import { pickImageUniversal } from '../utils/filePicker';
+import { PhotoCropModal } from '../components/PhotoCropModal';
 import { SecureImage } from '../components/SecureImage';
 
 export default function CurriculumScoutScreen({ route, navigation }: any) {
@@ -33,6 +34,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [cropSource, setCropSource] = useState<string | null>(null);
   const [syncingCerts, setSyncingCerts] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const savedStateRef = useRef<string>('');
@@ -204,7 +206,13 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
 
   const handlePickPhoto = () => {
     if (isViewOnlyForScouter) return;
-    pickImageUniversal(async (dataUrl) => {
+    // Primero se elige; se guarda después de recortarla (savePickedPhoto)
+    pickImageUniversal((dataUrl) => setCropSource(dataUrl), { maxWidth: 1600, maxHeight: 1600, quality: 0.9 });
+  };
+
+  const savePickedPhoto = async (dataUrl: string) => {
+    setCropSource(null);
+    {
       setPhotoUrl(dataUrl);
 
       try {
@@ -239,7 +247,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
       }
 
       showAlert('¡Foto Guardada!', 'Tu foto de perfil se ha guardado exitosamente y se estampará en el documento Word.');
-    });
+    }
   };
 
   const handleSyncCertificates = async () => {
@@ -1188,6 +1196,14 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
           </View>
         )}
       </ScrollView>
+
+      <PhotoCropModal
+        visible={!!cropSource}
+        source={cropSource}
+        title="Ajustar foto del currículum"
+        onCancel={() => setCropSource(null)}
+        onConfirm={savePickedPhoto}
+      />
     </View>
   );
 }
