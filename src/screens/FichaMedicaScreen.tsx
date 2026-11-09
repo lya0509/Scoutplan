@@ -518,7 +518,7 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.asociacionBanner}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>
+              <Text style={[styles.asociacionBanner, { color: theme.accentText }]}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>
               <Text style={[styles.title, { color: theme.text }]}>Ficha Médica</Text>
             </View>
           </View>
@@ -566,7 +566,7 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
           <View style={[styles.sheet, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
             
             {/* SECCIÓN 1: DATOS DEL PARTICIPANTE */}
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>1. Datos del Participante</Text>
+            <Text style={[styles.sectionTitle, { color: theme.accentText }]}>1. Datos del Participante</Text>
             
             <Text style={[styles.label, { color: theme.subText }]}>NOMBRES Y APELLIDOS COMPLETOS</Text>
             <TextInput
@@ -668,7 +668,7 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
             </View>
 
             {/* SECCIÓN 2: CONTACTO DE EMERGENCIA */}
-            <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 20 }]}>2. En Caso de Emergencia Avisar A</Text>
+            <Text style={[styles.sectionTitle, { color: theme.accentText, marginTop: 20 }]}>2. En Caso de Emergencia Avisar A</Text>
 
             <Text style={[styles.label, { color: theme.subText }]}>NOMBRE Y APELLIDO DEL CONTACTO DE EMERGENCIA</Text>
             <TextInput
@@ -708,7 +708,7 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
             </View>
 
             {/* SECCIÓN 3: SALUD, SANGRE Y VACUNAS */}
-            <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 20 }]}>3. Datos Clínicos, Sangre y Vacunas</Text>
+            <Text style={[styles.sectionTitle, { color: theme.accentText, marginTop: 20 }]}>3. Datos Clínicos, Sangre y Vacunas</Text>
             
             <Text style={[styles.label, { color: theme.subText }]}>CONSIDERA USTED QUE TIENE BUENA SALUD (EXPLIQUE)</Text>
             <TextInput
@@ -753,10 +753,10 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
             </View>
 
             {/* FIRMA DIGITAL */}
-            <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 20 }]}>4. Firma Digital del Declarante / Representante</Text>
+            <Text style={[styles.sectionTitle, { color: theme.accentText, marginTop: 20 }]}>4. Firma Digital del Declarante / Representante</Text>
             
             <View style={styles.signatureBanner}>
-              <Text style={{ fontSize: 11, fontWeight: 'bold', color: colors.primary }}>
+              <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.accentText }}>
                 💡 Recomendación para una Firma Limpia y Profesional:
               </Text>
               <Text style={{ fontSize: 10, color: theme.subText, marginTop: 2 }}>
@@ -839,7 +839,7 @@ const styles = StyleSheet.create({
   signatureBanner: { backgroundColor: 'rgba(99, 102, 241, 0.08)', padding: 10, borderRadius: 10, marginTop: 6 },
   signaturePreviewBox: { width: 140, height: 60, borderRadius: 8, borderWidth: 1, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
   uploadSigBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
-  saveBtn: { backgroundColor: '#10b981', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
+  saveBtn: { backgroundColor: '#059669', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
   saveBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
   bottomExportBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   bottomExportBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 }

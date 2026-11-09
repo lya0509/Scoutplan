@@ -121,7 +121,7 @@ export default function ActivityCenterScreen({ navigation }: any) {
             style={[styles.tabBtn, activeTab === 'basicas' && styles.tabBtnActive]}
             onPress={() => setActiveTab('basicas')}
           >
-            <Text style={[styles.tabText, activeTab === 'basicas' && styles.tabTextActive]}>
+            <Text style={[styles.tabText, { color: theme.subText }, activeTab === 'basicas' && styles.tabTextActive]}>
               Básicas ({basicas.length})
             </Text>
           </TouchableOpacity>
@@ -130,7 +130,7 @@ export default function ActivityCenterScreen({ navigation }: any) {
             style={[styles.tabBtn, activeTab === 'opcionales' && styles.tabBtnActive]}
             onPress={() => setActiveTab('opcionales')}
           >
-            <Text style={[styles.tabText, activeTab === 'opcionales' && styles.tabTextActive]}>
+            <Text style={[styles.tabText, { color: theme.subText }, activeTab === 'opcionales' && styles.tabTextActive]}>
               Opcionales ({opcionales.length})
             </Text>
           </TouchableOpacity>
@@ -148,7 +148,7 @@ export default function ActivityCenterScreen({ navigation }: any) {
           />
           {searchQuery !== '' && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Text style={{ color: colors.primary, fontSize: 12, fontWeight: 'bold' }}>Borrar</Text>
+              <Text style={{ color: theme.accentText, fontSize: 12, fontWeight: 'bold' }}>Borrar</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -206,7 +206,7 @@ export default function ActivityCenterScreen({ navigation }: any) {
                   </Text>
                 </View>
                 {item.subArea ? (
-                  <Text style={[styles.subAreaText, { color: colors.primary, fontWeight: 'bold' }]}>{item.subArea}</Text>
+                  <Text style={[styles.subAreaText, { color: theme.accentText, fontWeight: 'bold' }]}>{item.subArea}</Text>
                 ) : null}
                 {item.area ? (
                   <Text style={[styles.areaText, { color: theme.subText }]}>• {item.area}</Text>

@@ -210,7 +210,7 @@ export default function AdministracionScreen() {
                 </View>
                 <View style={{ alignItems: 'flex-end', gap: 4 }}>
                   <View style={[styles.badge, { backgroundColor: LEADER_ROLES.includes(p.role || '') ? primaryColor + '22' : theme.inputBg }]}>
-                    <Text style={[styles.badgeText, { color: LEADER_ROLES.includes(p.role || '') ? primaryColor : theme.subText }]}>{ROLE_LABELS[p.role || 'scout'] || p.role}</Text>
+                    <Text style={[styles.badgeText, { color: LEADER_ROLES.includes(p.role || '') ? theme.accentText : theme.subText }]}>{ROLE_LABELS[p.role || 'scout'] || p.role}</Text>
                   </View>
                   {p.account_status === 'pending' && <Text style={styles.pending}>Por aprobar</Text>}
                   {p.account_status === 'rejected' && <Text style={styles.rejected}>Rechazada</Text>}

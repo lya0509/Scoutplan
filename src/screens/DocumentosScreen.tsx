@@ -425,7 +425,7 @@ export default function DocumentosScreen({ navigation, route }: any) {
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
               >
                 <Globe size={13} color={primaryColor} />
-                <Text style={{ fontSize: 11, fontWeight: '700', color: primaryColor }}>Sitio ASV</Text>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.accentText }}>Sitio ASV</Text>
                 <ExternalLink size={11} color={primaryColor} />
               </TouchableOpacity>
             </View>
@@ -539,7 +539,7 @@ export default function DocumentosScreen({ navigation, route }: any) {
                       activeOpacity={0.8}
                     >
                       <Eye size={16} color={primaryColor} style={{ marginRight: 6 }} />
-                      <Text style={[styles.viewBtnText, { color: primaryColor }]}>Visualizar Guía</Text>
+                      <Text style={[styles.viewBtnText, { color: theme.accentText }]}>Visualizar Guía</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -586,7 +586,7 @@ export default function DocumentosScreen({ navigation, route }: any) {
                           { backgroundColor: primaryColor + '18' },
                         ]}
                       >
-                        <Text style={[styles.categoryBadgeText, { color: primaryColor }]}>
+                        <Text style={[styles.categoryBadgeText, { color: theme.accentText }]}>
                           {doc.categoryLabel}
                         </Text>
                       </View>
@@ -624,7 +624,7 @@ export default function DocumentosScreen({ navigation, route }: any) {
                     activeOpacity={0.8}
                   >
                     <Eye size={16} color={primaryColor} style={{ marginRight: 6 }} />
-                    <Text style={[styles.viewBtnText, { color: primaryColor }]}>Visualizar Guía</Text>
+                    <Text style={[styles.viewBtnText, { color: theme.accentText }]}>Visualizar Guía</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity

@@ -278,7 +278,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
             >
               <Text style={{ fontSize: 18, marginRight: 6 }}>📋</Text>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>Ficha Médica</Text>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>Ficha Médica</Text>
                 <Text style={{ fontSize: 10, color: theme.subText }}>Ver y Descargar Word</Text>
               </View>
             </TouchableOpacity>
@@ -289,7 +289,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
             >
               <Text style={{ fontSize: 18, marginRight: 6 }}>📜</Text>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>Currículum Scout</Text>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>Currículum Scout</Text>
                 <Text style={{ fontSize: 10, color: theme.subText }}>Ver y Descargar Word</Text>
               </View>
             </TouchableOpacity>
@@ -334,10 +334,10 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
                 <View style={[styles.barBg, { backgroundColor: isDarkMode ? '#27272a' : '#e2e8f0' }]}>
                   <View style={[styles.barFill, { width: `${st.pct}%` }]} />
                 </View>
-                <Text style={[styles.pctText, { color: colors.primary }]}>{st.pct}%</Text>
+                <Text style={[styles.pctText, { color: theme.accentText }]}>{st.pct}%</Text>
               </View>
               {isScouterOrAdmin && (
-                <Text style={{ fontSize: 11, color: colors.primary, fontWeight: 'bold', marginTop: 4 }}>
+                <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: 'bold', marginTop: 4 }}>
                   Toca para ver desglose de requisitos y actividades ➔
                 </Text>
               )}
@@ -376,7 +376,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
                     <Text style={styles.catBadge}>{catObj?.name || 'ACREDITACIÓN'}</Text>
                     <Text style={[styles.certTitleText, { color: theme.text }]}>{cert.title}</Text>
                     {levelObj && (
-                      <Text style={{ fontSize: 12, color: colors.primary, fontWeight: 'bold', marginTop: 2 }}>
+                      <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold', marginTop: 2 }}>
                         Nivel: {levelObj.name}
                       </Text>
                     )}

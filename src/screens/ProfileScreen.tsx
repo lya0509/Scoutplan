@@ -440,10 +440,10 @@ export default function ProfileScreen({ navigation }: any) {
           />
         </View>
         <Text style={[styles.name, { color: theme.text }]}>{user?.name || 'Scout'}</Text>
-        <Text style={styles.email}>{user?.email}</Text>
+        <Text style={[styles.email, { color: theme.subText }]}>{user?.email}</Text>
         <View style={styles.badgeRow}>
           <View style={styles.unitBadge}>
-            <Text style={styles.unitBadgeText}>
+            <Text style={[styles.unitBadgeText, { color: '#ffffff' }]}>
               {(user?.unit || 'Manada').toUpperCase()}
             </Text>
           </View>

@@ -311,7 +311,7 @@ export function MembershipRecordsModal({ visible, onClose, member, mode }: Props
                         )}
                         {!!r.imageUrl && (
                           <TouchableOpacity onPress={() => openImage(r.imageUrl)} style={{ paddingVertical: 4 }}>
-                            <Text style={{ color: primaryColor, fontWeight: '700', fontSize: 12 }}>Ver imagen completa</Text>
+                            <Text style={{ color: theme.accentText, fontWeight: '700', fontSize: 12 }}>Ver imagen completa</Text>
                           </TouchableOpacity>
                         )}
                       </View>

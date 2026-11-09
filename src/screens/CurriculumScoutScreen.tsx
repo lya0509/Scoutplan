@@ -510,7 +510,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.asociacionBanner}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>
+              <Text style={[styles.asociacionBanner, { color: theme.accentText }]}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>
               <Text style={[styles.title, { color: theme.text }]}>Currículum Scout Joven</Text>
             </View>
           </View>
@@ -583,7 +583,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
             )}
 
             {/* SECCIÓN 1: DATOS PERSONALES */}
-            <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 4 }]}>1. Datos Personales</Text>
+            <Text style={[styles.sectionTitle, { color: theme.accentText, marginTop: 4 }]}>1. Datos Personales</Text>
 
             <Text style={[styles.label, { color: theme.subText }]}>APELLIDOS Y NOMBRES COMPLETOS</Text>
             <TextInput
@@ -856,7 +856,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
             />
 
             {/* SECCIÓN 2: DATOS SCOUTS Y TRAYECTORIA POR UNIDAD */}
-            <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 20 }]}>2. Datos Scouts y Unidades Pertenecidas</Text>
+            <Text style={[styles.sectionTitle, { color: theme.accentText, marginTop: 20 }]}>2. Datos Scouts y Unidades Pertenecidas</Text>
 
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <View style={{ flex: 1 }}>
@@ -916,7 +916,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
             </View>
 
             {/* SECCIÓN 3: CURSOS */}
-            <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 20 }]}>3. Cursos</Text>
+            <Text style={[styles.sectionTitle, { color: theme.accentText, marginTop: 20 }]}>3. Cursos</Text>
 
             {[
               { label: 'Punta de Flecha en Bronce', state: pfBronce, setter: setPfBronce },
@@ -927,7 +927,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
               { label: 'Canoa', state: canoaCert, setter: setCanoaCert }
             ].map((c, idx) => (
               <View key={idx} style={{ backgroundColor: theme.inputBg, padding: 10, borderRadius: 10, marginTop: 8, borderWidth: 1, borderColor: theme.border }}>
-                <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary, marginBottom: 6 }}>{c.label}</Text>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText, marginBottom: 6 }}>{c.label}</Text>
                 <View style={{ gap: 6 }}>
                   <View style={{ flexDirection: 'row', gap: 6 }}>
                     <View style={{ flex: 1, minWidth: 0 }}>
@@ -970,7 +970,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
 
             {/* SECCIÓN 4: TALLERES O CURSOS REALIZADOS */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
-              <Text style={[styles.sectionTitle, { color: colors.primary, marginBottom: 0 }]}>4. Talleres o Cursos Realizados</Text>
+              <Text style={[styles.sectionTitle, { color: theme.accentText, marginBottom: 0 }]}>4. Talleres o Cursos Realizados</Text>
               {!isViewOnlyForScouter && (
                 <TouchableOpacity
                   style={styles.addMiniBtn}
@@ -1022,7 +1022,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
 
             {/* SECCIÓN 5: CONDECORACIONES Y DISTINCIONES */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
-              <Text style={[styles.sectionTitle, { color: colors.primary, marginBottom: 0 }]}>5. Condecoraciones y Distinciones</Text>
+              <Text style={[styles.sectionTitle, { color: theme.accentText, marginBottom: 0 }]}>5. Condecoraciones y Distinciones</Text>
               {!isViewOnlyForScouter && (
                 <TouchableOpacity
                   style={styles.addMiniBtn}
@@ -1062,7 +1062,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
 
             {/* SECCIÓN 6: EVENTOS Y ACTIVIDADES PARTICIPADAS */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
-              <Text style={[styles.sectionTitle, { color: colors.primary, marginBottom: 0 }]}>6. Eventos y Actividades Participadas</Text>
+              <Text style={[styles.sectionTitle, { color: theme.accentText, marginBottom: 0 }]}>6. Eventos y Actividades Participadas</Text>
               {!isViewOnlyForScouter && (
                 <TouchableOpacity
                   style={styles.addMiniBtn}
@@ -1114,7 +1114,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
 
             {/* SECCIÓN 7: PROYECTOS Y PROGRAMAS MUNDIALES */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
-              <Text style={[styles.sectionTitle, { color: colors.primary, marginBottom: 0 }]}>7. Programas Mundiales y Proyectos</Text>
+              <Text style={[styles.sectionTitle, { color: theme.accentText, marginBottom: 0 }]}>7. Programas Mundiales y Proyectos</Text>
               {!isViewOnlyForScouter && (
                 <TouchableOpacity
                   style={styles.addMiniBtn}
@@ -1217,7 +1217,7 @@ const styles = StyleSheet.create({
   swimChip: { flex: 1, height: 38, borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', justifyContent: 'center', alignItems: 'center', marginTop: 4 },
   unitCheckChip: { width: 90, height: 36, borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', justifyContent: 'center', alignItems: 'center' },
   addMiniBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
-  saveBtn: { backgroundColor: '#10b981', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
+  saveBtn: { backgroundColor: '#059669', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
   saveBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
   bottomExportBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   bottomExportBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 }

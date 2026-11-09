@@ -433,7 +433,7 @@ export default function HelpFloatingFAB() {
                 onPress={handlePickBugMedia}
               >
                 <Camera size={18} color={colors.primary} style={{ marginRight: 8 }} />
-                <Text style={{ fontSize: 13, fontWeight: 'bold', color: colors.primary }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.accentText }}>
                   {bugMediaUrl ? '✓ Evidencia Adjunta (Toca para cambiar)' : 'Seleccionar Foto o Video'}
                 </Text>
               </TouchableOpacity>
@@ -443,7 +443,7 @@ export default function HelpFloatingFAB() {
                   {bugMediaType === 'video' ? (
                     <View style={{ alignItems: 'center' }}>
                       <Text style={{ fontSize: 24 }}>🎥</Text>
-                      <Text style={{ fontSize: 11, color: colors.primary, fontWeight: 'bold' }}>Video de evidencia listo</Text>
+                      <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: 'bold' }}>Video de evidencia listo</Text>
                     </View>
                   ) : (
                     <SecureImage source={{ uri: bugMediaUrl }} style={styles.mediaPreviewImg} resizeMode="contain" />
@@ -495,7 +495,7 @@ export default function HelpFloatingFAB() {
               </Text>
 
               <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: theme.border, marginBottom: 14 }}>
-                <Text style={{ fontSize: 11, fontWeight: 'bold', color: colors.primary, marginBottom: 2 }}>IDENTIFICACIÓN DEL REMITENTE</Text>
+                <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.accentText, marginBottom: 2 }}>IDENTIFICACIÓN DEL REMITENTE</Text>
                 <Text style={{ fontSize: 13, color: theme.text, fontWeight: '600' }}>{user?.name || 'Usuario Scout'} • {(user?.role || 'scout').toUpperCase()}</Text>
                 <Text style={{ fontSize: 12, color: theme.subText }}>Grupo: {user?.group_name || (user as any)?.group || 'Sin especificar'} | Unidad: {(user?.unit || 'Sin especificar').toUpperCase()}</Text>
               </View>

@@ -568,7 +568,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
                   </TouchableOpacity>
                   
                   <View style={{ backgroundColor: rover.isOnline ? 'rgba(34, 197, 94, 0.15)' : 'rgba(156, 163, 175, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginTop: 4 }}>
-                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: rover.isOnline ? '#16a34a' : '#6b7280' }}>
+                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: rover.isOnline ? (isDarkMode ? '#4ade80' : '#16a34a') : (isDarkMode ? '#a1a1aa' : '#6b7280') }}>
                       {rover.isOnline ? '🟢 En línea' : '⚪ Desconectado'}
                     </Text>
                   </View>
@@ -584,7 +584,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
                     onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: rover.id })}
                     activeOpacity={0.7}
                   >
-                    <Text style={{ fontSize: 10, color: colors.primary, fontWeight: 'bold' }}>
+                    <Text style={{ fontSize: 10, color: theme.accentText, fontWeight: 'bold' }}>
                       Ver Perfil ⚜️
                     </Text>
                   </TouchableOpacity>
@@ -600,7 +600,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
         <CalendarIcon color={colors.primary} size={20} />
         <Text style={[styles.sectionTitle, { color: theme.text }]}>Próximas Actividades</Text>
         <TouchableOpacity style={{ marginLeft: 'auto' }} onPress={() => navigation.navigate('Calendario')}>
-          <Text style={styles.seeAllText}>Ver todo</Text>
+          <Text style={[styles.seeAllText, { color: theme.accentText }]}>Ver todo</Text>
         </TouchableOpacity>
       </View>
 

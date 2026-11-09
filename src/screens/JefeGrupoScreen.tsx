@@ -54,6 +54,9 @@ function formatDateWithDayOfWeek(dateStr: string): string {
 export default function JefeGrupoScreen({ navigation }: any) {
   const { user, signOut } = useAuth();
   const { isDarkMode, theme, primaryColor, toggleDarkMode } = useTheme();
+  // Morados e índigos fuertes sobre fondo negro casi no se leen: versión clara en modo oscuro
+  const subCatDark = isDarkMode ? { color: '#c084fc' } : null;
+  const indigoText = isDarkMode ? '#a5b4fc' : '#4f46e5';
 
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -470,7 +473,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
               <Text style={[styles.memberName, { color: theme.text }]}>{member.name}</Text>
               {isScouterRole && (
                 <View style={{ backgroundColor: 'rgba(79, 70, 229, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#4f46e5' }}>
-                  <Text style={{ fontSize: 10, color: '#6366f1', fontWeight: 'bold' }}>👔 DIRIGENTE</Text>
+                  <Text style={{ fontSize: 10, color: isDarkMode ? '#a5b4fc' : '#6366f1', fontWeight: 'bold' }}>👔 DIRIGENTE</Text>
                 </View>
               )}
             </View>
@@ -495,7 +498,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
             onPress={() => navigation.navigate('FichaMedica', { targetUserId: member.id })}
           >
             <Text style={{ fontSize: 13, marginRight: 4 }}>📋</Text>
-            <Text style={{ fontSize: 11, fontWeight: 'bold', color: primaryColor }}>Ficha Médica</Text>
+            <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.accentText }}>Ficha Médica</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -503,7 +506,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
             onPress={() => navigation.navigate('CurriculumScout', { targetUserId: member.id })}
           >
             <Text style={{ fontSize: 13, marginRight: 4 }}>📜</Text>
-            <Text style={{ fontSize: 11, fontWeight: 'bold', color: primaryColor }}>Currículum</Text>
+            <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.accentText }}>Currículum</Text>
           </TouchableOpacity>
 
           {isApproved && (
@@ -717,7 +720,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               <View style={[styles.statCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
                 <Shield color="#4f46e5" size={28} />
-                <Text style={[styles.statNumber, { color: '#4f46e5' }]}>{stats.scouters}</Text>
+                <Text style={[styles.statNumber, { color: indigoText }]}>{stats.scouters}</Text>
                 <Text style={[styles.statLabel, { color: theme.subText }]}>Dirigentes & Jefatura</Text>
               </View>
 
@@ -768,21 +771,21 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {expanded.manada && (
                 <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={styles.subCategoryTitle}>👔 Scouters / Dirigentes de Manada ({manadaData.scouters.length})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters / Dirigentes de Manada ({manadaData.scouters.length})</Text>
                   {manadaData.scouters.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay scouters registrados en Manada.</Text>
                   ) : (
                     manadaData.scouters.map(s => renderMemberCard(s, 'Dirigente de Manada / Akela', true))
                   )}
 
-                  <Text style={[styles.subCategoryTitle, { marginTop: 12 }]}>🐺 Lobatos ({manadaData.lobatos?.length || 0})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🐺 Lobatos ({manadaData.lobatos?.length || 0})</Text>
                   {manadaData.lobatos?.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay lobatos registrados.</Text>
                   ) : (
                     manadaData.lobatos?.map(s => renderMemberCard(s, 'Lobato • Manada'))
                   )}
 
-                  <Text style={[styles.subCategoryTitle, { marginTop: 12 }]}>🐺 Lobeznas ({manadaData.lobeznas?.length || 0})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🐺 Lobeznas ({manadaData.lobeznas?.length || 0})</Text>
                   {manadaData.lobeznas?.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay lobeznas registradas.</Text>
                   ) : (
@@ -810,14 +813,14 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {expanded.tropa && (
                 <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={styles.subCategoryTitle}>👔 Scouters de Tropa ({tropaData.scouters.length})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters de Tropa ({tropaData.scouters.length})</Text>
                   {tropaData.scouters.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay scouters registrados en Tropa.</Text>
                   ) : (
                     tropaData.scouters.map(s => renderMemberCard(s, 'Dirigente de Tropa', true))
                   )}
 
-                  <Text style={[styles.subCategoryTitle, { marginTop: 12 }]}>⚜️ Scouts ({tropaData.youth?.length || 0})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>⚜️ Scouts ({tropaData.youth?.length || 0})</Text>
                   {tropaData.youth?.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay scouts registrados en Tropa.</Text>
                   ) : (
@@ -845,14 +848,14 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {expanded.caminantes && (
                 <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={styles.subCategoryTitle}>👔 Scouters de Caminantes ({caminantesData.scouters.length})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters de Caminantes ({caminantesData.scouters.length})</Text>
                   {caminantesData.scouters.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay scouters registrados en Caminantes.</Text>
                   ) : (
                     caminantesData.scouters.map(s => renderMemberCard(s, 'Dirigente de Caminantes', true))
                   )}
 
-                  <Text style={[styles.subCategoryTitle, { marginTop: 12 }]}>🧭 Caminantes ({caminantesData.youth?.length || 0})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🧭 Caminantes ({caminantesData.youth?.length || 0})</Text>
                   {caminantesData.youth?.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay jóvenes registrados en Caminantes.</Text>
                   ) : (
@@ -880,14 +883,14 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {expanded.clan && (
                 <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={styles.subCategoryTitle}>👔 Scouters de Clan ({clanData.scouters.length})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters de Clan ({clanData.scouters.length})</Text>
                   {clanData.scouters.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay scouters registrados en Clan.</Text>
                   ) : (
                     clanData.scouters.map(s => renderMemberCard(s, 'Scouter de Clan / Rover', true))
                   )}
 
-                  <Text style={[styles.subCategoryTitle, { marginTop: 12 }]}>🚩 Rovers ({clanData.youth?.length || 0})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🚩 Rovers ({clanData.youth?.length || 0})</Text>
                   {clanData.youth?.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay rovers registrados en el Clan.</Text>
                   ) : (
@@ -915,7 +918,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {expanded.jefatura && (
                 <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={styles.subCategoryTitle}>👑 Jefes y Subjefes de Grupo ({jefaturaMembers.length})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark]}>👑 Jefes y Subjefes de Grupo ({jefaturaMembers.length})</Text>
                   {jefaturaMembers.map(j => renderMemberCard(j, 'Jefatura de Grupo', true))}
                 </View>
               )}
@@ -928,7 +931,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
               activeOpacity={0.8}
             >
               <LogOut size={18} color="#ef4444" />
-              <Text style={styles.logoutBtnText}>Cerrar Sesión de Jefe de Grupo</Text>
+              <Text style={[styles.logoutBtnText, isDarkMode && { color: '#f87171' }]}>Cerrar Sesión de Jefe de Grupo</Text>
             </TouchableOpacity>
 
           </View>
@@ -1036,7 +1039,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                         <Text style={{ fontSize: 11, color: theme.subText }}>C.I: {m.cedula || 'Sin C.I.'}</Text>
                       </View>
                       <View style={{ flex: 1.5 }}>
-                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: isJefe ? '#9333ea' : primaryColor }}>
+                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: isJefe ? (isDarkMode ? '#c084fc' : '#9333ea') : theme.accentText }}>
                           {isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase()}
                         </Text>
                         <Text style={{ fontSize: 10, color: theme.subText }}>{m.role === 'scouter' ? 'Dirigente' : m.role === 'jefe_grupo' ? 'Jefe Grupo' : 'Scout'}</Text>
@@ -1173,7 +1176,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                       <Text style={[styles.tableIndex, { color: theme.subText }]}>{idx + 1}</Text>
                       <View style={{ flex: 2 }}>
                         <Text style={[styles.tableMainText, { color: theme.text }]}>{m.name}</Text>
-                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: isJefe ? '#9333ea' : theme.subText }}>
+                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: isJefe ? (isDarkMode ? '#c084fc' : '#9333ea') : theme.subText }}>
                           {isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase()}
                         </Text>
                         {isAdult && (
@@ -1202,7 +1205,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                         <Text style={{ fontSize: 11, color: theme.text, fontWeight: 'bold' }}>
                           {med.emergencyContactName ? med.emergencyContactName : (isAdult ? 'Número de Contacto' : 'Representante')}
                         </Text>
-                        <Text style={{ fontSize: 11, color: primaryColor, fontWeight: '500' }}>📞 {contactPhone || 'Sin tlf'}</Text>
+                        <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: '500' }}>📞 {contactPhone || 'Sin tlf'}</Text>
                       </View>
                     </View>
                   );

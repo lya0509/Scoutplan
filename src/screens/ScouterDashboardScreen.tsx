@@ -402,7 +402,7 @@ function OnlineRosterPanel({ unit, groupName, isDarkMode, theme, navigation }: {
                   <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.text, textAlign: 'center' }} numberOfLines={1}>
                     {member.name?.split(' ')[0] || 'Scout'}
                   </Text>
-                  <Text style={{ fontSize: 9, color: member.isOnline ? '#16a34a' : '#9ca3af', marginTop: 2 }}>
+                  <Text style={{ fontSize: 9, color: member.isOnline ? (isDarkMode ? '#4ade80' : '#16a34a') : (isDarkMode ? '#a1a1aa' : '#6b7280'), marginTop: 2 }}>
                     {member.isOnline ? '🟢 En línea' : '⚪ Desconectado'}
                   </Text>
                 </TouchableOpacity>
@@ -699,15 +699,15 @@ export default function ScouterDashboardScreen({ navigation }: any) {
       <View style={styles.statsRow}>
         <View style={[styles.statCard, { borderTopColor: primaryColor, backgroundColor: theme.cardBg }]}>
           <Text style={[styles.statNumber, { color: theme.text }]}>{stats.total}</Text>
-          <Text style={styles.statLabel}>Scouts</Text>
+          <Text style={[styles.statLabel, { color: theme.subText }]}>Scouts</Text>
         </View>
         <View style={[styles.statCard, { borderTopColor: '#f59e0b', backgroundColor: theme.cardBg }]}>
           <Text style={[styles.statNumber, { color: '#f59e0b' }]}>{stats.inReview}</Text>
-          <Text style={styles.statLabel}>En Revisión</Text>
+          <Text style={[styles.statLabel, { color: theme.subText }]}>En Revisión</Text>
         </View>
         <View style={[styles.statCard, { borderTopColor: '#22c55e', backgroundColor: theme.cardBg }]}>
           <Text style={[styles.statNumber, { color: '#22c55e' }]}>{stats.approved}</Text>
-          <Text style={styles.statLabel}>Con Aprobada</Text>
+          <Text style={[styles.statLabel, { color: theme.subText }]}>Con Aprobada</Text>
         </View>
       </View>
 
@@ -791,7 +791,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                         </TouchableOpacity>
 
                         <View style={{ backgroundColor: presenceService.isUserOnline(rover.id, rover.updated_at) ? 'rgba(34, 197, 94, 0.15)' : 'rgba(156, 163, 175, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginTop: 4 }}>
-                          <Text style={{ fontSize: 10, fontWeight: 'bold', color: presenceService.isUserOnline(rover.id, rover.updated_at) ? '#16a34a' : '#6b7280' }}>
+                          <Text style={{ fontSize: 10, fontWeight: 'bold', color: presenceService.isUserOnline(rover.id, rover.updated_at) ? (isDarkMode ? '#4ade80' : '#16a34a') : (isDarkMode ? '#a1a1aa' : '#6b7280') }}>
                             {presenceService.isUserOnline(rover.id, rover.updated_at) ? '🟢 En línea' : '⚪ Desconectado'}
                           </Text>
                         </View>

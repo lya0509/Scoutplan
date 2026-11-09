@@ -86,7 +86,7 @@ export default function VerificarCarnetScreen({ route, navigation }: any) {
               <Text style={[styles.text, { color: theme.text }]}>{result.text}</Text>
               <TouchableOpacity style={[styles.retry, { borderColor: theme.border }]} onPress={check} accessibilityRole="button">
                 <RefreshCw size={16} color={primaryColor} />
-                <Text style={{ color: primaryColor, fontWeight: '700' }}>Reintentar</Text>
+                <Text style={{ color: theme.accentText, fontWeight: '700' }}>Reintentar</Text>
               </TouchableOpacity>
             </>
           )}

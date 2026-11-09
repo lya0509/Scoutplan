@@ -268,7 +268,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
         
         <View style={styles.counterBox}>
           <Text style={[styles.counterText, { color: subTextColor }]}>
-            Seleccionadas: <Text style={styles.counterHighlight}>{selectedIds.length}</Text> / {requiredCount}
+            Seleccionadas: <Text style={[styles.counterHighlight, { color: theme.accentText }]}>{selectedIds.length}</Text> / {requiredCount}
           </Text>
           {selectedIds.length >= requiredCount && (
             <View style={styles.completedBadgeWrapper}>
@@ -365,7 +365,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
                   </Text>
                   
                   <View style={styles.tagRow}>
-                    {act.subArea ? <Text style={[styles.tagText, { color: colors.primary, fontWeight: 'bold' }]}>{act.subArea}</Text> : null}
+                    {act.subArea ? <Text style={[styles.tagText, { color: theme.accentText, fontWeight: 'bold' }]}>{act.subArea}</Text> : null}
                     {act.area ? <Text style={[styles.tagAreaText, { color: subTextColor }]}>• {act.area}</Text> : null}
                     {isDisabled && (
                       <Text style={styles.disabledTagText}>Completada en etapa anterior</Text>

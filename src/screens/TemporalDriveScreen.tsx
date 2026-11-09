@@ -311,7 +311,7 @@ export default function TemporalDriveScreen({ navigation }: any) {
         <View style={styles.headerInner}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View>
-              <Text style={styles.badgeBanner}>⚡ ALMACENAMIENTO A MÁXIMA CALIDAD ORIGINAL</Text>
+              <Text style={[styles.badgeBanner, { color: theme.accentText }]}>⚡ ALMACENAMIENTO A MÁXIMA CALIDAD ORIGINAL</Text>
               <Text style={[styles.headerTitle, { color: theme.text }]}>Drive de Fotos</Text>
               <Text style={[styles.headerSub, { color: theme.subText }]}>
                 Subida de recuerdos en alta resolución de actividades y campamentos.
@@ -333,15 +333,15 @@ export default function TemporalDriveScreen({ navigation }: any) {
           /* DETALLE DE UN ÁLBUM SELECCIONADO */
           <View>
             <TouchableOpacity style={styles.backLinkBtn} onPress={() => setSelectedAlbum(null)}>
-              <Text style={{ color: colors.primary, fontWeight: 'bold', fontSize: 13 }}>← Volver a todos los álbumes</Text>
+              <Text style={{ color: theme.accentText, fontWeight: 'bold', fontSize: 13 }}>← Volver a todos los álbumes</Text>
             </TouchableOpacity>
 
             <View style={[styles.albumHeaderCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text style={[styles.albumHeaderTitle, { color: theme.text }]}>{selectedAlbum.title}</Text>
-                <View style={styles.timerBadge}>
+                <View style={[styles.timerBadge, isDarkMode && { backgroundColor: 'rgba(251, 191, 36, 0.15)' }]}>
                   <Clock size={12} color="#d97706" style={{ marginRight: 4 }} />
-                  <Text style={styles.timerBadgeText}>{getTimeRemaining(selectedAlbum.expiresAt)}</Text>
+                  <Text style={[styles.timerBadgeText, isDarkMode && { color: '#fbbf24' }]}>{getTimeRemaining(selectedAlbum.expiresAt)}</Text>
                 </View>
               </View>
 
@@ -370,7 +370,7 @@ export default function TemporalDriveScreen({ navigation }: any) {
               <View style={[styles.emptyPhotosCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
                 <ImageIcon size={36} color={theme.subText} />
                 <Text style={{ color: theme.subText, marginTop: 8 }}>Aún no hay contenido en este álbum.</Text>
-                <Text style={{ color: colors.primary, fontSize: 12, fontWeight: 'bold', marginTop: 4 }}>
+                <Text style={{ color: theme.accentText, fontSize: 12, fontWeight: 'bold', marginTop: 4 }}>
                   Toca "+ Subir Fotos o Videos" para compartir recuerdos de la actividad.
                 </Text>
               </View>
@@ -436,9 +436,9 @@ export default function TemporalDriveScreen({ navigation }: any) {
                     <Text style={[styles.albumRowSub, { color: theme.subText }]}>
                       {alb.photos.length} fotos • Creado por {alb.createdBy}
                     </Text>
-                    <View style={styles.timerBadgeInline}>
+                    <View style={[styles.timerBadgeInline, isDarkMode && { backgroundColor: 'rgba(251, 191, 36, 0.15)' }]}>
                       <Clock size={11} color="#d97706" style={{ marginRight: 4 }} />
-                      <Text style={styles.timerBadgeText}>{getTimeRemaining(alb.expiresAt)}</Text>
+                      <Text style={[styles.timerBadgeText, isDarkMode && { color: '#fbbf24' }]}>{getTimeRemaining(alb.expiresAt)}</Text>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -582,7 +582,7 @@ export default function TemporalDriveScreen({ navigation }: any) {
                   <Text style={{ fontWeight: 'bold', fontSize: 14, color: theme.text }}>🔒 Álbum Privado (Solo tu Unidad)</Text>
                 </View>
                 <Text style={{ fontSize: 13, color: theme.subText, lineHeight: 18 }}>
-                  Únicamente los miembros registrados en tu misma unidad (ej: <Text style={{ fontWeight: 'bold', color: colors.primary }}>{(user?.unit || 'tu unidad').toUpperCase()}</Text>) tendrán acceso a ver y subir contenido en este álbum.
+                  Únicamente los miembros registrados en tu misma unidad (ej: <Text style={{ fontWeight: 'bold', color: theme.accentText }}>{(user?.unit || 'tu unidad').toUpperCase()}</Text>) tendrán acceso a ver y subir contenido en este álbum.
                 </Text>
               </View>
 

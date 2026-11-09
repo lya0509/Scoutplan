@@ -873,7 +873,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
         {/* 1. SECCIÓN: DATOS GENERALES DEL PROGRAMA */}
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-          <Text style={[styles.sectionHeading, { color: primaryColor }]}>📋 1. Datos Generales de la Actividad</Text>
+          <Text style={[styles.sectionHeading, { color: theme.accentText }]}>📋 1. Datos Generales de la Actividad</Text>
 
           <View style={styles.fieldGroup}>
             <Text style={[styles.fieldLabel, { color: theme.text }]}>Título / Nombre de la Actividad *</Text>
@@ -1011,7 +1011,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
               ) : (
                 /* MODO NORMAL: Tu unidad fijada */
                 <View style={[styles.fixedUnitBox, { backgroundColor: primaryColor + '15', borderColor: primaryColor }]}>
-                  <Text style={[styles.fixedUnitText, { color: primaryColor }]}>
+                  <Text style={[styles.fixedUnitText, { color: theme.accentText }]}>
                     ⚜️ Rama: <Text style={{ fontWeight: 'bold' }}>{unit.toUpperCase()}</Text>
                   </Text>
                   <View style={[styles.fixedUnitBadge, { backgroundColor: primaryColor }]}>
@@ -1023,7 +1023,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
               /* MODO SINODAL: Selección múltiple con tu unidad bloqueada */
               <View style={[styles.sinodalBox, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: '#7c3aed' }]}>
                 <Text style={{ fontSize: 11, color: theme.subText, marginBottom: 8 }}>
-                  Selecciona las otras unidades participantes (tu unidad <Text style={{ fontWeight: 'bold', color: primaryColor }}>{unit.toUpperCase()}</Text> está fija):
+                  Selecciona las otras unidades participantes (tu unidad <Text style={{ fontWeight: 'bold', color: theme.accentText }}>{unit.toUpperCase()}</Text> está fija):
                 </Text>
                 <View style={styles.unitSelectorRow}>
                   {(['manada', 'tropa', 'caminantes', 'clan'] as const).map(u => {
@@ -1073,7 +1073,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
         {/* 2. SECCIÓN: OBJETIVOS Y METAS */}
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-          <Text style={[styles.sectionHeading, { color: primaryColor }]}>🎯 2. Objetivos y Metas</Text>
+          <Text style={[styles.sectionHeading, { color: theme.accentText }]}>🎯 2. Objetivos y Metas</Text>
 
           <View style={styles.fieldGroup}>
             <Text style={[styles.fieldLabel, { color: theme.text }]}>Objetivo General</Text>
@@ -1097,7 +1097,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
               <Text style={[styles.fieldLabel, { color: theme.text }]}>Objetivos Específicos</Text>
               <TouchableOpacity style={styles.addSmallBtn} onPress={handleAddObjective}>
                 <Plus size={14} color={primaryColor} />
-                <Text style={[styles.addSmallBtnText, { color: primaryColor }]}>Agregar</Text>
+                <Text style={[styles.addSmallBtnText, { color: theme.accentText }]}>Agregar</Text>
               </TouchableOpacity>
             </View>
             {specificObjectives.map((obj, index) => (
@@ -1125,7 +1125,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
               <Text style={[styles.fieldLabel, { color: theme.text }]}>Metas Específicas</Text>
               <TouchableOpacity style={styles.addSmallBtn} onPress={handleAddMeta}>
                 <Plus size={14} color={primaryColor} />
-                <Text style={[styles.addSmallBtnText, { color: primaryColor }]}>Agregar</Text>
+                <Text style={[styles.addSmallBtnText, { color: theme.accentText }]}>Agregar</Text>
               </TouchableOpacity>
             </View>
             {specificMetas.map((meta, index) => (
@@ -1151,9 +1151,9 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         {/* 3. SECCIÓN: SELECTOR DE ODS (OBJETIVOS DE DESARROLLO SOSTENIBLE) */}
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
           <View style={styles.labelWithAction}>
-            <Text style={[styles.sectionHeading, { color: primaryColor }]}>🌍 3. Objetivos de Desarrollo Sostenible (ODS)</Text>
+            <Text style={[styles.sectionHeading, { color: theme.accentText }]}>🌍 3. Objetivos de Desarrollo Sostenible (ODS)</Text>
             <View style={[styles.countBadge, { backgroundColor: primaryColor + '20' }]}>
-              <Text style={{ color: primaryColor, fontWeight: 'bold', fontSize: 11 }}>
+              <Text style={{ color: theme.accentText, fontWeight: 'bold', fontSize: 11 }}>
                 {selectedSDGs.length} seleccionados
               </Text>
             </View>
@@ -1188,7 +1188,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         {/* 4. SECCIÓN: INDICADORES DE LOGRO (6 ÁREAS DE CRECIMIENTO) */}
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
           <View style={styles.labelWithAction}>
-            <Text style={[styles.sectionHeading, { color: primaryColor }]}>📊 4. Indicadores de Logro Oficiales</Text>
+            <Text style={[styles.sectionHeading, { color: theme.accentText }]}>📊 4. Indicadores de Logro Oficiales</Text>
             <View style={[styles.countBadge, { backgroundColor: completedAreasCount === 6 ? '#dcfce7' : '#fee2e2' }]}>
               <Text style={{ color: completedAreasCount === 6 ? '#15803d' : '#b91c1c', fontWeight: 'bold', fontSize: 11 }}>
                 {completedAreasCount}/6 Áreas Listas
@@ -1198,7 +1198,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
           <Text style={[styles.subTextHint, { color: theme.subText }]}>
             Selecciona al menos 1 indicador en cada una de las 6 áreas para{' '}
-            <Text style={{ fontWeight: 'bold', color: primaryColor }}>
+            <Text style={{ fontWeight: 'bold', color: theme.accentText }}>
               {isSinodal ? selectedUnits.map(u => u.toUpperCase()).join(' + ') + ' (Sinodal)' : unit.toUpperCase()}
             </Text>{' '}
             (Etapas {activeStages.join(', ')}):
@@ -1276,7 +1276,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         {/* 5. SECCIÓN: CRONOGRAMA / ITINERARIO DE ACTIVIDADES */}
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
           <View style={styles.labelWithAction}>
-            <Text style={[styles.sectionHeading, { color: primaryColor }]}>⏱️ 5. Cronograma de Actividades</Text>
+            <Text style={[styles.sectionHeading, { color: theme.accentText }]}>⏱️ 5. Cronograma de Actividades</Text>
             <TouchableOpacity style={[styles.addScheduleBtn, { backgroundColor: primaryColor }]} onPress={handleAddScheduleRow}>
               <Plus size={14} color="#ffffff" style={{ marginRight: 4 }} />
               <Text style={styles.addScheduleBtnText}>Agregar Actividad</Text>
@@ -1359,7 +1359,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                 {/* Si está en modo activo de reordenamiento por Long Press: barra de ayuda visual */}
                 {isBeingReordered && (
                   <View style={[styles.reorderActiveBar, { backgroundColor: primaryColor + '15', borderColor: primaryColor }]}>
-                    <Text style={{ fontSize: 11, color: primaryColor, fontWeight: 'bold' }}>
+                    <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: 'bold' }}>
                       ✨ Moviendo actividad #{index + 1}
                     </Text>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
@@ -1401,7 +1401,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                         onPress={() => openTimePickerForItem(item)}
                       >
                         <Clock size={11} color={primaryColor} />
-                        <Text style={{ fontSize: 10, color: primaryColor, fontWeight: 'bold' }}>Reloj</Text>
+                        <Text style={{ fontSize: 10, color: theme.accentText, fontWeight: 'bold' }}>Reloj</Text>
                       </TouchableOpacity>
                     </View>
                     <TouchableOpacity
@@ -1484,7 +1484,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
         {/* 6. SECCIÓN: NOTAS IMPORTANTES */}
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-          <Text style={[styles.sectionHeading, { color: primaryColor }]}>📝 6. Notas Importantes / Recomendaciones</Text>
+          <Text style={[styles.sectionHeading, { color: theme.accentText }]}>📝 6. Notas Importantes / Recomendaciones</Text>
           <TextInput
             style={[styles.textArea, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', color: theme.text, borderColor: theme.border }]}
             placeholder="Ej: Cada Rover debe tener dominio del tema. Traer hidratación y uniforme completo..."
@@ -1574,7 +1574,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                         }}
                       >
                         <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 9, color: primaryColor, fontWeight: 'bold' }}>Etapa {item.stage}</Text>
+                          <Text style={{ fontSize: 9, color: theme.accentText, fontWeight: 'bold' }}>Etapa {item.stage}</Text>
                           <Text style={[styles.indicatorOptionText, { color: theme.text }]}>{item.text}</Text>
                         </View>
                         {isAlreadySelected && <CheckCircle size={16} color={primaryColor} style={{ marginLeft: 8 }} />}
@@ -1649,7 +1649,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                         📅 {act.date || 'Sin fecha'} • 📍 {act.location || 'Sin lugar'}
                       </Text>
                     </View>
-                    <Text style={{ color: primaryColor, fontWeight: 'bold', fontSize: 12 }}>Importar →</Text>
+                    <Text style={{ color: theme.accentText, fontWeight: 'bold', fontSize: 12 }}>Importar →</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -1685,7 +1685,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                 style={[styles.quickDateChip, { backgroundColor: primaryColor + '18', borderColor: primaryColor }]}
                 onPress={() => handleSelectQuickDate('today')}
               >
-                <Text style={[styles.quickDateChipText, { color: primaryColor }]}>📅 Hoy</Text>
+                <Text style={[styles.quickDateChipText, { color: theme.accentText }]}>📅 Hoy</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.quickDateChip, { backgroundColor: '#16a34a18', borderColor: '#16a34a' }]}
@@ -1972,7 +1972,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                   <Text style={{ fontSize: 11, color: theme.subText, textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 'bold' }}>
                     {timePickerTab === 'start' ? 'Hora de Inicio' : 'Hora de Fin'}
                   </Text>
-                  <Text style={[styles.largeClockDigits, { color: primaryColor }]}>
+                  <Text style={[styles.largeClockDigits, { color: theme.accentText }]}>
                     {String(timePickerTab === 'start' ? startHour : endHour).padStart(2, '0')}:{String(timePickerTab === 'start' ? startMinute : endMinute).padStart(2, '0')}
                   </Text>
                 </View>
@@ -2117,7 +2117,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                       style={[styles.presetChip, { backgroundColor: primaryColor + '15', borderColor: primaryColor }]}
                       onPress={() => applyPresetDuration(preset.mins)}
                     >
-                      <Text style={[styles.presetChipText, { color: primaryColor }]}>{preset.label}</Text>
+                      <Text style={[styles.presetChipText, { color: theme.accentText }]}>{preset.label}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -2127,7 +2127,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
               <View style={[styles.durationSummaryBox, { backgroundColor: isDarkMode ? '#27272a' : '#f0fdf4', borderColor: '#16a34a' }]}>
                 <Clock size={14} color="#16a34a" />
                 <Text style={{ fontSize: 12, color: theme.text, flex: 1 }}>
-                  Horario: <Text style={{ fontWeight: 'bold', color: primaryColor }}>
+                  Horario: <Text style={{ fontWeight: 'bold', color: theme.accentText }}>
                     {String(startHour).padStart(2, '0')}:{String(startMinute).padStart(2, '0')} {startAmPm} - {String(endHour).padStart(2, '0')}:{String(endMinute).padStart(2, '0')} {endAmPm}
                   </Text> • Duración: <Text style={{ fontWeight: 'bold', color: '#16a34a' }}>{calculateEstimatedDuration()}</Text>
                 </Text>

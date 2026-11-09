@@ -125,7 +125,7 @@ export default function PlanProgresivoScreen({ navigation }: any) {
                   <Text style={[styles.stageName, { color: theme.text }, isLocked && { color: isDarkMode ? '#a1a1aa' : '#475569' }]}>
                     {stage.name}
                   </Text>
-                  <Text style={[styles.statusLabel,
+                  <Text style={[styles.statusLabel, { color: theme.subText },
                     isApproved && { color: '#22c55e', fontWeight: 'bold' },
                     isInReview && { color: '#f59e0b', fontWeight: 'bold' },
                     isLocked   && { color: isDarkMode ? '#94a3b8' : '#64748b' },

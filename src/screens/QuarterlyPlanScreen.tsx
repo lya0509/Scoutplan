@@ -1079,8 +1079,8 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
 
         {/* BANNER DE ASOCIACIÓN */}
         <View style={styles.asociacionBanner}>
-          <Text style={styles.asociacionText}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>
-          <Text style={styles.asociacionSub}>REGIÓN MIRANDA / DISTRITO GUARENAS-GUATIRE • GRUPO SCOUT ORIÓN #84</Text>
+          <Text style={[styles.asociacionText, { color: theme.accentText }]}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>
+          <Text style={[styles.asociacionSub, { color: theme.subText }]}>REGIÓN MIRANDA / DISTRITO GUARENAS-GUATIRE • GRUPO SCOUT ORIÓN #84</Text>
         </View>
 
         {/* TÍTULO Y SELECTOR DE AÑO / HISTÓRICO */}
@@ -1102,14 +1102,14 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
 
             <TouchableOpacity style={[styles.historyBtnHeader, { backgroundColor: 'rgba(99, 102, 241, 0.12)', borderColor: colors.primary }]} onPress={openHistoryModal}>
               <History size={14} color={colors.primary} style={{ marginRight: 4 }} />
-              <Text style={{ color: colors.primary, fontWeight: 'bold', fontSize: 12 }}>Histórico</Text>
+              <Text style={{ color: theme.accentText, fontWeight: 'bold', fontSize: 12 }}>Histórico</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* BARRA DE BOTONES DE ACCIÓN: WHATSAPP, EXCEL, LIMPIEZA Y MODO EDICIÓN/VISTA PREVIA */}
         <View style={styles.actionButtonsRow}>
-          <TouchableOpacity style={[styles.actionPillBtn, { backgroundColor: '#10b981' }]} onPress={handleCopyForWhatsApp}>
+          <TouchableOpacity style={[styles.actionPillBtn, { backgroundColor: '#059669' }]} onPress={handleCopyForWhatsApp}>
             <Copy size={14} color="white" style={{ marginRight: 6 }} />
             <Text style={styles.actionPillBtnText}>Copiar WhatsApp</Text>
           </TouchableOpacity>
@@ -1210,7 +1210,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
         <View style={[styles.quarterInfoCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={[styles.quarterName, { color: theme.text }]}>{activeQuarterObj?.name}</Text>
-            <Text style={[styles.quarterMonths, { color: colors.primary }]}>{activeQuarterObj?.months}</Text>
+            <Text style={[styles.quarterMonths, { color: theme.accentText }]}>{activeQuarterObj?.months}</Text>
           </View>
         </View>
       </View>
@@ -1227,7 +1227,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
               {/* BANNER PLAN COMPARTIDO DE UNIDAD */}
               <View style={{ backgroundColor: isDarkMode ? '#1e1b4b' : 'rgba(99, 102, 241, 0.12)', borderLeftWidth: 4, borderLeftColor: colors.primary, padding: 14, borderRadius: 10, marginBottom: 16 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text style={{ fontWeight: 'bold', fontSize: 13, color: colors.primary }}>
+                  <Text style={{ fontWeight: 'bold', fontSize: 13, color: theme.accentText }}>
                     📌 Plan Trimestral Único de la Unidad ({getActiveUnit().toUpperCase()}) — {selectedQuarter}
                   </Text>
                   <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#10b981' }}>
@@ -1315,7 +1315,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
               )}
 
               {/* SECCIÓN 1: OBJETIVOS Y METAS DEL TRIMESTRE */}
-              <Text style={[styles.sectionTitle, { color: colors.primary }]}>1. Objetivos y Metas del Trimestre</Text>
+              <Text style={[styles.sectionTitle, { color: theme.accentText }]}>1. Objetivos y Metas del Trimestre</Text>
               
               {/* 1. CAMPO: OBJETIVO GENERAL DEL TRIMESTRE */}
               <Text style={[styles.label, { color: theme.subText }]}>OBJETIVO GENERAL DEL TRIMESTRE *</Text>
@@ -1337,7 +1337,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
               <Text style={[styles.label, { color: theme.subText, marginTop: 14 }]}>OBJETIVOS ESPECÍFICOS</Text>
               {specificObjectivesList.map((specItem, idx) => (
                 <View key={idx} style={styles.dynamicRow}>
-                  <Text style={[styles.itemBulletIndex, { color: colors.primary }]}>{idx + 1}.</Text>
+                  <Text style={[styles.itemBulletIndex, { color: theme.accentText }]}>{idx + 1}.</Text>
                   <TextInput
                     style={[styles.input, { flex: 1, backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
                     placeholder={`Objetivo Específico #${idx + 1}...`}
@@ -1356,7 +1356,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
               {scouterEditUnlocked && (
                 <TouchableOpacity style={styles.addDynamicBtn} onPress={() => handleAddListItem(setSpecificObjectivesList)}>
                   <Plus size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                  <Text style={[styles.addDynamicBtnText, { color: colors.primary }]}>+ Agregar otro Objetivo Específico</Text>
+                  <Text style={[styles.addDynamicBtnText, { color: theme.accentText }]}>+ Agregar otro Objetivo Específico</Text>
                 </TouchableOpacity>
               )}
 
@@ -1364,7 +1364,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
               <Text style={[styles.label, { color: theme.subText, marginTop: 14 }]}>METAS DEL TRIMESTRE</Text>
               {trimestreGoalsList.map((goalItem, idx) => (
                 <View key={idx} style={styles.dynamicRow}>
-                  <Text style={[styles.itemBulletIndex, { color: colors.primary }]}>{idx + 1}.</Text>
+                  <Text style={[styles.itemBulletIndex, { color: theme.accentText }]}>{idx + 1}.</Text>
                   <TextInput
                     style={[styles.input, { flex: 1, backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
                     placeholder={`Meta del Trimestre #${idx + 1}...`}
@@ -1383,12 +1383,12 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
               {scouterEditUnlocked && (
                 <TouchableOpacity style={styles.addDynamicBtn} onPress={() => handleAddListItem(setTrimestreGoalsList)}>
                   <Plus size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                  <Text style={[styles.addDynamicBtnText, { color: colors.primary }]}>+ Agregar otra Meta del Trimestre</Text>
+                  <Text style={[styles.addDynamicBtnText, { color: theme.accentText }]}>+ Agregar otra Meta del Trimestre</Text>
                 </TouchableOpacity>
               )}
 
               {/* SECCIÓN 2: OBJETIVOS EDUCATIVOS (6 ÁREAS SCOUT) */}
-              <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 20 }]}>
+              <Text style={[styles.sectionTitle, { color: theme.accentText, marginTop: 20 }]}>
                 2. Objetivos Educativos (6 Áreas de Crecimiento Scout)
               </Text>
 
@@ -1425,7 +1425,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
               </View>
 
               {/* SECCIÓN 3: ACTIVIDADES POR MES */}
-              <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 20 }]}>
+              <Text style={[styles.sectionTitle, { color: theme.accentText, marginTop: 20 }]}>
                 3. Cronograma de Actividades por Mes
               </Text>
 
@@ -1454,11 +1454,11 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                           {act.isModified && (
                             <View style={{ backgroundColor: isDarkMode ? '#451a03' : '#fef3c7', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#fde68a', marginBottom: 8 }}>
                               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#b45309' }}>
+                                <Text style={{ fontSize: 11, fontWeight: 'bold', color: isDarkMode ? '#fbbf24' : '#b45309' }}>
                                   ⚠️ Actividad Modificada (Original: {act.originalActivity})
                                 </Text>
                                 <TouchableOpacity onPress={() => handleRevertModification(act.id)} style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                                  <Text style={{ fontSize: 10, color: '#b45309', fontWeight: 'bold' }}>↩️ Revertir</Text>
+                                  <Text style={{ fontSize: 10, color: isDarkMode ? '#fbbf24' : '#b45309', fontWeight: 'bold' }}>↩️ Revertir</Text>
                                 </TouchableOpacity>
                               </View>
                               {act.modifiedReason ? (
@@ -1520,7 +1520,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                                 style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? '#27272a' : '#fef3c7', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: '#fde68a' }}
                                 onPress={() => handleOpenModifyModal(act)}
                               >
-                                <Text style={{ fontSize: 11, color: '#b45309', fontWeight: 'bold' }}>🔄 Modificar Actividad</Text>
+                                <Text style={{ fontSize: 11, color: isDarkMode ? '#fbbf24' : '#b45309', fontWeight: 'bold' }}>🔄 Modificar Actividad</Text>
                               </TouchableOpacity>
                             )}
 
@@ -1539,7 +1539,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
               })}
 
               {/* SECCIÓN 4: EVALUACIÓN DE CUMPLIMIENTO DE CICLO DE PROGRAMA (CIP) */}
-              <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 26 }]}>
+              <Text style={[styles.sectionTitle, { color: theme.accentText, marginTop: 26 }]}>
                 4. Evaluación de Cumplimiento de Ciclo de Programa (CIP)
               </Text>
 
@@ -1620,8 +1620,8 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
             <View style={[styles.previewSheet, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
               
               <View style={styles.previewHeaderBorder}>
-                <Text style={styles.asociacionText}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>
-                <Text style={styles.asociacionSub}>REGIÓN MIRANDA / DISTRITO GUARENAS-GUATIRE • GRUPO SCOUT ORIÓN #84</Text>
+                <Text style={[styles.asociacionText, { color: theme.accentText }]}>ASOCIACIÓN DE SCOUTS DE VENEZUELA</Text>
+                <Text style={[styles.asociacionSub, { color: theme.subText }]}>REGIÓN MIRANDA / DISTRITO GUARENAS-GUATIRE • GRUPO SCOUT ORIÓN #84</Text>
                 <Text style={[styles.previewTitle, { color: theme.text }]}>
                   TRIMESTRE DE {getActiveUnit().toUpperCase()} — {activeQuarterObj?.name?.toUpperCase()} ({selectedYear})
                 </Text>
@@ -1638,7 +1638,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
 
               {/* OBJETIVO GENERAL PREVIEW */}
               <View style={styles.previewSection}>
-                <Text style={[styles.previewSectionHeading, { color: colors.primary }]}>OBJETIVO GENERAL DEL TRIMESTRE</Text>
+                <Text style={[styles.previewSectionHeading, { color: theme.accentText }]}>OBJETIVO GENERAL DEL TRIMESTRE</Text>
                 <Text style={[styles.previewListItem, { color: theme.text, fontStyle: generalObjective ? 'normal' : 'italic' }]}>
                   {generalObjective || 'Sin objetivo general ingresado.'}
                 </Text>
@@ -1646,7 +1646,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
 
               {/* METAS DEL TRIMESTRE PREVIEW */}
               <View style={styles.previewSection}>
-                <Text style={[styles.previewSectionHeading, { color: colors.primary }]}>METAS DEL TRIMESTRE</Text>
+                <Text style={[styles.previewSectionHeading, { color: theme.accentText }]}>METAS DEL TRIMESTRE</Text>
                 {trimestreGoalsList.filter(s => s.trim()).length === 0 ? (
                   <Text style={{ color: theme.subText, fontStyle: 'italic' }}>Sin metas ingresadas.</Text>
                 ) : (
@@ -1660,7 +1660,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
 
               {/* OBJETIVOS ESPECÍFICOS PREVIEW */}
               <View style={styles.previewSection}>
-                <Text style={[styles.previewSectionHeading, { color: colors.primary }]}>OBJETIVOS ESPECÍFICOS</Text>
+                <Text style={[styles.previewSectionHeading, { color: theme.accentText }]}>OBJETIVOS ESPECÍFICOS</Text>
                 {specificObjectivesList.filter(s => s.trim()).length === 0 ? (
                   <Text style={{ color: theme.subText, fontStyle: 'italic' }}>Sin objetivos específicos ingresados.</Text>
                 ) : (
@@ -1674,7 +1674,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
 
               {/* 6 ÁREAS EDUCATIVAS PREVIEW */}
               <View style={styles.previewSection}>
-                <Text style={[styles.previewSectionHeading, { color: colors.primary }]}>OBJETIVOS EDUCATIVOS (6 ÁREAS DE CRECIMIENTO)</Text>
+                <Text style={[styles.previewSectionHeading, { color: theme.accentText }]}>OBJETIVOS EDUCATIVOS (6 ÁREAS DE CRECIMIENTO)</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
                   {[
                     { key: 'corporalidad', label: 'Corporalidad' },
@@ -1704,13 +1704,13 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
 
               {/* TABLA DE CRONOGRAMA DE ACTIVIDADES PREVIEW */}
               <View style={styles.previewSection}>
-                <Text style={[styles.previewSectionHeading, { color: colors.primary }]}>ACTIVIDADES POR MES</Text>
+                <Text style={[styles.previewSectionHeading, { color: theme.accentText }]}>ACTIVIDADES POR MES</Text>
                 
                 {currentMonths.map(mName => {
                   const mActs = activities.filter(a => a.month === mName);
                   return (
                     <View key={mName} style={{ marginTop: 8 }}>
-                      <Text style={{ fontWeight: 'bold', color: colors.primary, fontSize: 12, marginBottom: 4 }}>
+                      <Text style={{ fontWeight: 'bold', color: theme.accentText, fontSize: 12, marginBottom: 4 }}>
                         {mName.toUpperCase()}
                       </Text>
                       {mActs.length === 0 ? (
@@ -1729,7 +1729,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                             onPress={() => handleNavigateToPrograma(act)}
                             activeOpacity={0.7}
                           >
-                            <Text style={[styles.previewTableDay, { color: colors.primary }]}>Día {act.day || '-'}</Text>
+                            <Text style={[styles.previewTableDay, { color: theme.accentText }]}>Día {act.day || '-'}</Text>
                             <View style={{ flex: 1, paddingRight: 6 }}>
                               <Text style={[styles.previewTableActTitle, { color: theme.text }]}>{act.activity || 'Sin título'}</Text>
                               <Text style={[styles.previewTableActSub, { color: theme.subText }]}>
@@ -1806,7 +1806,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                         </Text>
                       </View>
                       <View style={[styles.statusChip, { backgroundColor: colors.primary + '15', borderColor: colors.primary }]}>
-                        <Text style={[styles.statusChipText, { color: colors.primary }]}>{hp.status || 'Guardado'}</Text>
+                        <Text style={[styles.statusChipText, { color: theme.accentText }]}>{hp.status || 'Guardado'}</Text>
                       </View>
                     </TouchableOpacity>
                   );
@@ -1876,7 +1876,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
               ))}
               {scouterEditUnlocked && (
                 <TouchableOpacity onPress={() => handleAddListItem(setTrimestreGoalsList)} style={{ marginBottom: 12 }}>
-                  <Text style={{ color: colors.primary, fontSize: 12, fontWeight: 'bold' }}>+ Agregar otra Meta</Text>
+                  <Text style={{ color: theme.accentText, fontSize: 12, fontWeight: 'bold' }}>+ Agregar otra Meta</Text>
                 </TouchableOpacity>
               )}
 
@@ -1900,7 +1900,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
               ))}
               {scouterEditUnlocked && (
                 <TouchableOpacity onPress={() => handleAddListItem(setSpecificObjectivesList)} style={{ marginBottom: 12 }}>
-                  <Text style={{ color: colors.primary, fontSize: 12, fontWeight: 'bold' }}>+ Agregar otro Objetivo Específico</Text>
+                  <Text style={{ color: theme.accentText, fontSize: 12, fontWeight: 'bold' }}>+ Agregar otro Objetivo Específico</Text>
                 </TouchableOpacity>
               )}
 
@@ -1911,10 +1911,10 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                 return (
                   <View key={monthName} style={{ marginBottom: 10 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>{monthName.toUpperCase()}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>{monthName.toUpperCase()}</Text>
                       {scouterEditUnlocked && (
                         <TouchableOpacity onPress={() => handleAddActivity(monthName)}>
-                          <Text style={{ fontSize: 11, color: colors.primary, fontWeight: 'bold' }}>+ Agregar</Text>
+                          <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: 'bold' }}>+ Agregar</Text>
                         </TouchableOpacity>
                       )}
                     </View>
@@ -1963,7 +1963,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                     }
                   }}
                 >
-                  <Text style={{ color: colors.primary, fontWeight: 'bold', fontSize: 13 }}>✏️ ¿Deseas modificar las actividades de este Plan Trimestral?</Text>
+                  <Text style={{ color: theme.accentText, fontWeight: 'bold', fontSize: 13 }}>✏️ ¿Deseas modificar las actividades de este Plan Trimestral?</Text>
                 </TouchableOpacity>
               ) : (
                 <View style={{ backgroundColor: '#fef3c7', padding: 10, borderRadius: 10, marginTop: 16 }}>
@@ -2025,7 +2025,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
               <Text style={{ fontSize: 11, color: '#92400e', fontWeight: 'bold' }}>
                 📌 Actividad Planificada Originalmente:
               </Text>
-              <Text style={{ fontSize: 13, color: '#b45309', fontWeight: 'bold', marginTop: 2 }}>
+              <Text style={{ fontSize: 13, color: isDarkMode ? '#fbbf24' : '#b45309', fontWeight: 'bold', marginTop: 2 }}>
                 {actToModify?.originalActivity || actToModify?.activity}
               </Text>
               <Text style={{ fontSize: 11, color: '#92400e', marginTop: 2 }}>

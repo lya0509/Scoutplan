@@ -279,7 +279,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                           onPress={markAllAsRead}
                         >
                           <CheckCheck size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                          <Text style={{ fontSize: 11, color: colors.primary, fontWeight: 'bold' }}>
+                          <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: 'bold' }}>
                             Marcar todo leído
                           </Text>
                         </TouchableOpacity>
@@ -309,7 +309,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                       onPress={() => setActiveTab('test')}
                     >
                       <Play size={14} color={colors.primary} style={{ marginRight: 6 }} />
-                      <Text style={{ fontSize: 12, color: colors.primary, fontWeight: 'bold' }}>
+                      <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold' }}>
                         Ir al Banco de Pruebas para enviar una notificación
                       </Text>
                     </TouchableOpacity>
@@ -374,7 +374,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                             }}
                             style={{ marginTop: 4, alignSelf: 'flex-start' }}
                           >
-                            <Text style={{ fontSize: 11, color: colors.primary, fontWeight: 'bold' }}>
+                            <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: 'bold' }}>
                               {expandedNotifIds.has(notif.id) ? '▲ Mostrar menos' : '▼ Leer comunicado completo'}
                             </Text>
                           </TouchableOpacity>
@@ -414,7 +414,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
               /* BANCO DE PRUEBAS EN VIVO */
               <View style={styles.testSuite}>
                 <View style={[styles.testIntroCard, { backgroundColor: isDarkMode ? '#1e1b4b' : 'rgba(99, 102, 241, 0.12)' }]}>
-                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: colors.primary }}>
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.accentText }}>
                     🧪 Simulador de Notificaciones en Tiempo Real
                   </Text>
                   <Text style={{ fontSize: 11, color: isDarkMode ? '#e4e4e7' : '#4b5563', marginTop: 4, lineHeight: 16 }}>

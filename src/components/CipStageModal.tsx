@@ -64,7 +64,7 @@ export default function CipStageModal({ visible, onClose, stageId, req, isReadOn
             <Flag color={primaryColor} size={20} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.title, { color: theme.text }]}>Ciclos Institucionales (CIP)</Text>
-              {req && <Text style={{ fontSize: 12, color: primaryColor, fontWeight: '700' }}>{req.text} · {credited.length} / {required} acreditados</Text>}
+              {req && <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: '700' }}>{req.text} · {credited.length} / {required} acreditados</Text>}
             </View>
             <TouchableOpacity onPress={onClose} style={styles.close} accessibilityRole="button" accessibilityLabel="Cerrar">
               <X color={theme.subText} size={22} />
@@ -124,7 +124,7 @@ export default function CipStageModal({ visible, onClose, stageId, req, isReadOn
                     ? <OldCipForm stageId={stageId} req={req!} nivel={nivel} onDone={() => { setShowForm(false); load(); }} onCancel={() => setShowForm(false)} />
                     : (
                       <TouchableOpacity style={[styles.outline, { borderColor: primaryColor }]} onPress={() => setShowForm(true)} accessibilityRole="button">
-                        <Text style={{ color: primaryColor, fontWeight: '800' }}>Solicitar un CIP anterior a la app</Text>
+                        <Text style={{ color: theme.accentText, fontWeight: '800' }}>Solicitar un CIP anterior a la app</Text>
                         <Text style={[styles.meta, { color: theme.subText, textAlign: 'center' }]}>Para CIP a los que fuiste antes de usar la app. Lo revisa tu Scouter.</Text>
                       </TouchableOpacity>
                     )

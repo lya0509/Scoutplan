@@ -1036,7 +1036,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                           >
                             <ChevronLeft size={14} color={theme.text} />
                           </TouchableOpacity>
-                          <Text style={{ fontSize: 13, fontWeight: 'bold', color: colors.primary }}>{calYear}</Text>
+                          <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.accentText }}>{calYear}</Text>
                           <TouchableOpacity 
                             onPress={() => setCalYear(prev => prev + 1)}
                             style={{ padding: 4, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderRadius: 6 }}
@@ -1154,7 +1154,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                 activeOpacity={0.8}
               >
                 <ImageIcon size={20} color={colors.primary} style={{ marginRight: 8 }} />
-                <Text style={[modalStyles.deviceFileBtnText, { color: colors.primary }]}>
+                <Text style={[modalStyles.deviceFileBtnText, { color: theme.accentText }]}>
                   📂 Seleccionar Foto/Diploma desde tu Dispositivo
                 </Text>
               </TouchableOpacity>

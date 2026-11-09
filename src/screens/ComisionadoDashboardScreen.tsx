@@ -302,7 +302,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.toolBtn, { backgroundColor: '#d97706' }]}
+              style={[styles.toolBtn, { backgroundColor: '#b45309' }]}
               onPress={() => setShowSemaforoModal(true)}
               activeOpacity={0.8}
             >
@@ -360,7 +360,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
 
               <View style={[styles.kpiCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
                 <Shield color="#4f46e5" size={24} />
-                <Text style={[styles.kpiNumber, { color: '#4f46e5' }]}>{territorialStats.totalLeaders}</Text>
+                <Text style={[styles.kpiNumber, { color: isDarkMode ? '#a5b4fc' : '#4f46e5' }]}>{territorialStats.totalLeaders}</Text>
                 <Text style={[styles.kpiLabel, { color: theme.subText }]}>Dirigentes</Text>
               </View>
 
@@ -494,7 +494,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                     <Text style={{ fontSize: 10, color: theme.subText }}>C.I: {m.cedula || 'N/A'} • {m.group_name}</Text>
                   </View>
                   <View style={{ flex: 1.5 }}>
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: primaryColor }}>{(m.unit || 'General').toUpperCase()}</Text>
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.accentText }}>{(m.unit || 'General').toUpperCase()}</Text>
                     <Text style={{ fontSize: 10, color: theme.subText }}>{m.role}</Text>
                   </View>
                   <View style={{ flex: 1.5, alignItems: 'flex-end' }}>
@@ -561,7 +561,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                     </View>
                     <View style={{ flex: 2, alignItems: 'flex-end' }}>
                       <Text style={{ fontSize: 10, color: theme.text, fontWeight: 'bold' }}>{med.emergencyContactName || 'Representante'}</Text>
-                      <Text style={{ fontSize: 10, color: primaryColor }}>📞 {med.emergencyPhonePersonal || m.phone || 'Sin tlf'}</Text>
+                      <Text style={{ fontSize: 10, color: theme.accentText }}>📞 {med.emergencyPhonePersonal || m.phone || 'Sin tlf'}</Text>
                     </View>
                   </View>
                 );

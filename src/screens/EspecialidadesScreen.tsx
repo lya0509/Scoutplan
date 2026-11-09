@@ -277,7 +277,7 @@ export default function EspecialidadesScreen({ navigation }: any) {
                     activeOpacity={0.8}
                   >
                     <Eye size={16} color={primaryColor} />
-                    <Text style={[styles.actionBtnText, { color: primaryColor }]}>
+                    <Text style={[styles.actionBtnText, { color: theme.accentText }]}>
                       Ver Guía PDF
                     </Text>
                   </TouchableOpacity>

@@ -229,7 +229,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                       }}
                     >
                       <BookOpen size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>
                         {isExpanded ? 'Ocultar actividades realizadas' : `Ver actividades realizadas (${completedActivities.length} de ${req.requiredCount || 0})`}
                       </Text>
                       {isExpanded ? <ChevronUp size={14} color={colors.primary} style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color={colors.primary} style={{ marginLeft: 2 }} />}
@@ -245,7 +245,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                       }}
                     >
                       <Flag size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary }}>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>
                         {isExpanded
                           ? 'Ocultar actividades CIP'
                           : `Ver CIP (${reqCipSelections.length} de ${req.requiredCount || 1} acreditados)`}
@@ -338,7 +338,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                   ) : (
                     completedActivities.map((act, index) => (
                       <View key={act.id} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6 }}>
-                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.primary, marginRight: 6 }}>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText, marginRight: 6 }}>
                           {index + 1}.
                         </Text>
                         <View style={{ flex: 1 }}>

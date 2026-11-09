@@ -905,7 +905,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                             <View style={{ flex: 1 }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                                 <View style={[styles.dayBadgeMini, { backgroundColor: primaryColor + '20' }]}>
-                                  <Text style={{ fontSize: 10, fontWeight: 'bold', color: primaryColor }}>
+                                  <Text style={{ fontSize: 10, fontWeight: 'bold', color: theme.accentText }}>
                                     {act.month ? `${act.month.toUpperCase()} ` : ''}Día {act.day || '-'}
                                   </Text>
                                 </View>

@@ -128,7 +128,7 @@ export function PWAInstallModal({ visible, onClose }: Props) {
                   </TouchableOpacity>
                 ) : isIOS ? (
                   <View style={[styles.iosInstructions, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }]}>
-                    <Text style={[styles.iosTitle, { color: primaryColor }]}>🍎 Pasos para iPhone / iPad (Safari):</Text>
+                    <Text style={[styles.iosTitle, { color: theme.accentText }]}>🍎 Pasos para iPhone / iPad (Safari):</Text>
                     
                     <View style={styles.stepRow}>
                       <View style={[styles.stepNum, { backgroundColor: primaryColor }]}>
@@ -159,7 +159,7 @@ export function PWAInstallModal({ visible, onClose }: Props) {
                   </View>
                 ) : (
                   <View style={[styles.iosInstructions, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }]}>
-                    <Text style={[styles.iosTitle, { color: primaryColor }]}>🤖 Pasos para Android (Chrome / Samsung):</Text>
+                    <Text style={[styles.iosTitle, { color: theme.accentText }]}>🤖 Pasos para Android (Chrome / Samsung):</Text>
                     
                     <View style={styles.stepRow}>
                       <View style={[styles.stepNum, { backgroundColor: primaryColor }]}>

@@ -1286,25 +1286,25 @@ export default function NudosManualScreen({ navigation }: any) {
                 {/* Categoría y Badges multimedia disponibles */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
                   <View style={[styles.catTagBadge, { backgroundColor: primaryColor + '15' }]}>
-                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: primaryColor }}>
+                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: theme.accentText }}>
                       {item.categoryTag}
                     </Text>
                   </View>
 
-                  <View style={styles.miniFeaturePill}>
-                    <FileText size={10} color="#16a34a" />
-                    <Text style={[styles.miniFeatureText, { color: '#16a34a' }]}>Escrito</Text>
+                  <View style={[styles.miniFeaturePill, isDarkMode && { backgroundColor: 'rgba(74, 222, 128, 0.12)' }]}>
+                    <FileText size={10} color={isDarkMode ? '#4ade80' : '#16a34a'} />
+                    <Text style={[styles.miniFeatureText, { color: isDarkMode ? '#4ade80' : '#16a34a' }]}>Escrito</Text>
                   </View>
 
-                  <View style={styles.miniFeaturePill}>
-                    <Eye size={10} color="#0284c7" />
-                    <Text style={[styles.miniFeatureText, { color: '#0284c7' }]}>Visual</Text>
+                  <View style={[styles.miniFeaturePill, isDarkMode && { backgroundColor: 'rgba(56, 189, 248, 0.12)' }]}>
+                    <Eye size={10} color={isDarkMode ? '#38bdf8' : '#0284c7'} />
+                    <Text style={[styles.miniFeatureText, { color: isDarkMode ? '#38bdf8' : '#0284c7' }]}>Visual</Text>
                   </View>
 
                   {!!item.multimedia?.videoEmbedId && (
                     <View style={[styles.miniFeaturePill, { backgroundColor: '#ef444415' }]}>
                       <Video size={10} color="#ef4444" />
-                      <Text style={[styles.miniFeatureText, { color: '#ef4444' }]}>Video</Text>
+                      <Text style={[styles.miniFeatureText, { color: isDarkMode ? '#f87171' : '#ef4444' }]}>Video</Text>
                     </View>
                   )}
                 </View>
@@ -1345,7 +1345,7 @@ export default function NudosManualScreen({ navigation }: any) {
                     <Text style={[modalStyles.title, { color: theme.text }]} numberOfLines={1}>
                       {selectedItem.name}
                     </Text>
-                    <Text style={{ fontSize: 11, color: primaryColor, fontWeight: 'bold' }}>
+                    <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: 'bold' }}>
                       {selectedItem.categoryTag} {selectedItem.difficulty ? `• Nivel ${selectedItem.difficulty}` : ''}
                     </Text>
                   </View>
@@ -1433,14 +1433,14 @@ export default function NudosManualScreen({ navigation }: any) {
                     </View>
 
                     {/* Explicación y Uso */}
-                    <Text style={[modalStyles.sectionLabel, { color: primaryColor }]}>DESCRIPCIÓN Y USO SCOUT</Text>
+                    <Text style={[modalStyles.sectionLabel, { color: theme.accentText }]}>DESCRIPCIÓN Y USO SCOUT</Text>
                     <Text style={[modalStyles.useText, { color: theme.text }]}>{selectedItem.description}</Text>
 
                     {/* Pasos de ejecución con checklist interactivo de práctica */}
                     {selectedItem.steps && selectedItem.steps.length > 0 && (
                       <View style={{ marginTop: 18 }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                          <Text style={[modalStyles.sectionLabel, { color: primaryColor, marginBottom: 0 }]}>
+                          <Text style={[modalStyles.sectionLabel, { color: theme.accentText, marginBottom: 0 }]}>
                             PASO A PASO EXPLICADO
                           </Text>
                           <Text style={{ fontSize: 10, color: theme.subText }}>Toca para marcar tu avance</Text>
@@ -1523,7 +1523,7 @@ export default function NudosManualScreen({ navigation }: any) {
                       onPress={() => setModalTab('visual')}
                     >
                       <Eye size={16} color={primaryColor} />
-                      <Text style={{ fontSize: 13, fontWeight: 'bold', color: primaryColor }}>
+                      <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.accentText }}>
                         Ver Esquema Visual Paso a Paso (Offline)
                       </Text>
                       <ChevronRight size={16} color={primaryColor} />
@@ -1556,7 +1556,7 @@ export default function NudosManualScreen({ navigation }: any) {
 
                     {/* SELECTOR DE PASOS VISUALES */}
                     <View style={{ marginTop: 12 }}>
-                      <Text style={[modalStyles.sectionLabel, { color: primaryColor, marginBottom: 8 }]}>
+                      <Text style={[modalStyles.sectionLabel, { color: theme.accentText, marginBottom: 8 }]}>
                         SELECCIONA LA ETAPA DE CONSTRUCCIÓN:
                       </Text>
 
@@ -1611,7 +1611,7 @@ export default function NudosManualScreen({ navigation }: any) {
                       {/* EXPLICACIÓN ESPECÍFICA DEL PASO SELECCIONADO */}
                       {visualStepIndex > 0 && selectedItem.visualSteps && (
                         <View style={[modalStyles.stepDetailCard, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }]}>
-                          <Text style={{ fontSize: 13, fontWeight: 'bold', color: primaryColor, marginBottom: 4 }}>
+                          <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.accentText, marginBottom: 4 }}>
                             {selectedItem.visualSteps[visualStepIndex - 1]?.title || `Paso ${visualStepIndex}`}
                           </Text>
                           <Text style={{ fontSize: 12, color: theme.text, lineHeight: 18 }}>
@@ -1765,7 +1765,7 @@ export default function NudosManualScreen({ navigation }: any) {
                     </View>
 
                     {/* GALERÍA DE IMÁGENES / ILUSTRACIONES */}
-                    <Text style={[modalStyles.sectionLabel, { color: primaryColor, marginTop: 22 }]}>
+                    <Text style={[modalStyles.sectionLabel, { color: theme.accentText, marginTop: 22 }]}>
                       GALERÍA DE IMÁGENES E ILUSTRACIONES
                     </Text>
 
@@ -1789,7 +1789,7 @@ export default function NudosManualScreen({ navigation }: any) {
                               </Text>
                               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
                                 <Maximize2 size={12} color={primaryColor} />
-                                <Text style={{ fontSize: 10, color: primaryColor, fontWeight: 'bold' }}>
+                                <Text style={{ fontSize: 10, color: theme.accentText, fontWeight: 'bold' }}>
                                   Toca para ampliar imagen
                                 </Text>
                               </View>

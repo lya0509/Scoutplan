@@ -102,7 +102,7 @@ export default function CipManagerModal({ visible, onClose, members }: Props) {
     <View style={{ gap: 8 }}>
       <TouchableOpacity style={styles.back} onPress={() => setSelected(null)} accessibilityRole="button">
         <ChevronLeft size={18} color={primaryColor} />
-        <Text style={{ color: primaryColor, fontWeight: '700' }}>Volver a los CIP</Text>
+        <Text style={{ color: theme.accentText, fontWeight: '700' }}>Volver a los CIP</Text>
       </TouchableOpacity>
       <Text style={[styles.cipName, { color: theme.text }]}>{cip.nombre}</Text>
       <Text style={[styles.meta, { color: theme.subText }]}>
@@ -174,7 +174,7 @@ export default function CipManagerModal({ visible, onClose, members }: Props) {
               <Flag size={16} color={primaryColor} />
               <Text style={[styles.cipName, { color: theme.text, flex: 1 }]} numberOfLines={2}>{c.nombre}</Text>
               <View style={[styles.badge, { backgroundColor: primaryColor + '22' }]}>
-                <Text style={[styles.badgeText, { color: primaryColor }]}>{NIVEL_LABEL[c.nivel]}</Text>
+                <Text style={[styles.badgeText, { color: theme.accentText }]}>{NIVEL_LABEL[c.nivel]}</Text>
               </View>
             </View>
             <Text style={[styles.meta, { color: theme.subText }]}>

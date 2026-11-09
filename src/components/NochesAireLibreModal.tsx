@@ -233,7 +233,7 @@ export function NochesAireLibreModal({
 
                 {showAddForm && (
                   <View style={[styles.formContainer, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: theme?.border || '#e2e8f0' }]}>
-                    <Text style={[styles.formHeader, { color: primaryColor }]}>
+                    <Text style={[styles.formHeader, { color: theme.accentText }]}>
                       🏕️ Nuevo Registro de Pernocta
                     </Text>
 
@@ -270,7 +270,7 @@ export function NochesAireLibreModal({
                         <Text style={[styles.stepperBtnText, { color: theme?.text || '#0f172a' }]}>-</Text>
                       </TouchableOpacity>
 
-                      <Text style={[styles.stepperValue, { color: primaryColor }]}>
+                      <Text style={[styles.stepperValue, { color: theme.accentText }]}>
                         {nightsInput} {nightsInput === 1 ? 'noche' : 'noches'}
                       </Text>
 
@@ -361,7 +361,7 @@ export function NochesAireLibreModal({
 
                       <View style={[styles.nightsPill, { backgroundColor: primaryColor + '20' }]}>
                         <Moon size={11} color={primaryColor} style={{ marginRight: 3 }} />
-                        <Text style={[styles.nightsPillText, { color: primaryColor }]}>
+                        <Text style={[styles.nightsPillText, { color: theme.accentText }]}>
                           {item.nightsCount} {item.nightsCount === 1 ? 'Noche' : 'Noches'}
                         </Text>
                       </View>

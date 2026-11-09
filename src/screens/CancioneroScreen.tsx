@@ -154,7 +154,7 @@ export default function CancioneroScreen({ navigation }: any) {
             <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
               <Text style={[modalStyles.title, { color: theme.text }]}>{selectedSong.title}</Text>
               <TouchableOpacity onPress={() => setSelectedSong(null)}>
-                <Text style={{ color: colors.primary, fontWeight: 'bold' }}>Cerrar</Text>
+                <Text style={{ color: theme.accentText, fontWeight: 'bold' }}>Cerrar</Text>
               </TouchableOpacity>
             </View>
 

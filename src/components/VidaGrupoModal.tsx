@@ -318,7 +318,7 @@ export function VidaGrupoModal({
                     ]}
                   >
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                      <Text style={[styles.formHeaderTitle, { color: colors.primary }]}>
+                      <Text style={[styles.formHeaderTitle, { color: theme.accentText }]}>
                         {isPeregrinaje
                           ? 'Nuevo Peregrinaje'
                           : isCampamento
@@ -488,7 +488,7 @@ export function VidaGrupoModal({
                     </View>
 
                     {!!item.subtype && (
-                      <Text style={{ fontSize: 11, color: colors.primary, fontWeight: 'bold', marginBottom: 2 }}>
+                      <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: 'bold', marginBottom: 2 }}>
                         Tipo: {item.subtype}
                       </Text>
                     )}
