@@ -501,7 +501,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                 ? '#ca8a04'
                 : status === 'Bloqueada'
                 ? (isDarkMode ? '#94a3b8' : '#64748b')
-                : colors.primary
+                : (isDarkMode ? theme.accentText : colors.primary)
             }]}>
               {status === 'Bloqueada' ? '🔒 Bloqueada' : status}
             </Text>
@@ -579,7 +579,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                 </Text>
 
                 {(req.type === 'basica' || req.type === 'opcional') && (
-                  <Text style={styles.reqBadge}>Toca para abrir el catálogo</Text>
+                  <Text style={[styles.reqBadge, isDarkMode && { color: theme.accentText }]}>Toca para abrir el catálogo</Text>
                 )}
 
                 {(req.type === 'cursos' || req.type === 'especialidad') && (
@@ -592,18 +592,18 @@ export default function StageDetailScreen({ route, navigation }: any) {
                         </Text>
                       </View>
                     ) : isChecked ? (
-                      <Text style={[styles.reqBadge, { color: colors.primary, fontWeight: 'bold' }]}>
+                      <Text style={[styles.reqBadge, { color: isDarkMode ? theme.accentText : colors.primary, fontWeight: 'bold' }]}>
                         ✓ Requisito convalidado en etapa aprobada (Toca para vincular certificado)
                       </Text>
                     ) : (
-                      <Text style={styles.reqBadge}>Toca para vincular especialidad / certificado</Text>
+                      <Text style={[styles.reqBadge, isDarkMode && { color: theme.accentText }]}>Toca para vincular especialidad / certificado</Text>
                     )}
                   </View>
                 )}
 
                 {isCiclos && (
                   <View style={{ marginTop: 4 }}>
-                    <Text style={[styles.reqBadge, { color: colors.primary, fontWeight: 'bold' }]}>
+                    <Text style={[styles.reqBadge, { color: isDarkMode ? theme.accentText : colors.primary, fontWeight: 'bold' }]}>
                       🚩 {(cipCountMap[req.id] || 0) > 0
                         ? `${cipCountMap[req.id]} / ${req.requiredCount || 1} CIP acreditados`
                         : isChecked
@@ -615,7 +615,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
 
                 {isVidaGrupo && (
                   <View style={{ marginTop: 4 }}>
-                    <Text style={[styles.reqBadge, { color: '#8b5cf6', fontWeight: 'bold' }]}>
+                    <Text style={[styles.reqBadge, { color: isDarkMode ? theme.accentText : '#8b5cf6', fontWeight: 'bold' }]}>
                       🏕️ {(vidaGrupoCountMap[req.id] || 0) > 0
                         ? `${vidaGrupoCountMap[req.id]} / ${req.requiredCount || 1} registros guardados`
                         : isChecked
@@ -627,7 +627,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
 
                 {req.type === 'personales' && (
                   <View style={{ marginTop: 4 }}>
-                    <Text style={[styles.reqBadge, { color: '#d97706', fontWeight: 'bold' }]}>
+                    <Text style={[styles.reqBadge, { color: isDarkMode ? theme.accentText : '#d97706', fontWeight: 'bold' }]}>
                       💡 {(personalesCountMap[req.id] || 0) > 0
                         ? `${personalesCountMap[req.id]} / ${req.requiredCount || 3} actividades registradas`
                         : isChecked
@@ -639,7 +639,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
 
                 {(req.type === 'aire_libre' || req.text.toLowerCase().includes('noche')) && (
                   <View style={{ marginTop: 4 }}>
-                    <Text style={[styles.reqBadge, { color: '#0ea5e9', fontWeight: 'bold' }]}>
+                    <Text style={[styles.reqBadge, { color: isDarkMode ? theme.accentText : '#0ea5e9', fontWeight: 'bold' }]}>
                       🏕️ {(nochesCountMap[req.id] || 0) > 0
                         ? `${nochesCountMap[req.id]} / ${req.requiredCount || 10} noches registradas`
                         : isChecked

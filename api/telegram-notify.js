@@ -1,6 +1,6 @@
 // Envía sugerencias y reportes de error al chat de Telegram del equipo.
 // El token del bot vive SOLO en las variables de entorno de Vercel.
-const { setCors, requireUser, parseBody } = require('./_auth');
+const { setCors, requireUser, parseBody, getSupabase } = require('./_auth');
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -19,6 +19,13 @@ module.exports = async (req, res) => {
 
   const auth = await requireUser(req);
   if (!auth) return res.status(401).json({ error: 'No autorizado' });
+
+  // Solo cuentas aprobadas (una cuenta recién registrada no puede enviar mensajes al equipo)
+  const { data: me } = await getSupabase(auth.accessToken)
+    .from('profiles').select('account_status').eq('id', auth.user.id).single();
+  if (!me || (me.account_status && me.account_status !== 'approved')) {
+    return res.status(403).json({ error: 'Cuenta sin aprobar' });
+  }
 
   try {
     const { text, photoUrl, photoDataUrl } = parseBody(req);

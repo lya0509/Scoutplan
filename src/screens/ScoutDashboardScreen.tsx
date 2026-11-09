@@ -18,6 +18,7 @@ import { ProgramaScout } from '../types/programa';
 import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, Target, FileText, CheckCircle, Info, Eye, ShieldAlert, ShieldCheck, Clock } from 'lucide-react-native';
 import { todayLocal, daysUntil, formatDateEs } from '../utils/dateLocal';
 import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
+import { useNotifications } from '../context/NotificationContext';
 
 const UNIT_COLORS: Record<string, string> = {
   'manada': '#ffb300',
@@ -59,7 +60,9 @@ export default function ScoutDashboardScreen({ navigation }: any) {
   const [currentStage, setCurrentStage]   = useState<any>(null);
   const [stageStatus, setStageStatus]     = useState<string>('En Progreso');
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  // Avisos sin leer: la misma lista que la campanita (se actualiza sola cuando llega uno en vivo)
+  const { notifications: allNotifs, markAsRead } = useNotifications();
+  const notifications = allNotifs.filter(n => !n.read);
   const [showAllNotifs, setShowAllNotifs] = useState(false);
   const [roversList, setRoversList] = useState<any[]>([]);
 
@@ -142,8 +145,6 @@ export default function ScoutDashboardScreen({ navigation }: any) {
     }));
     setRoversList(enrichedRovers);
 
-    const unreadNotifs = await dataService.getUnreadNotifications(user.id);
-    setNotifications(unreadNotifs);
 
     const progressData = await dataService.getProgressForAllStages(user.id);
 
@@ -334,15 +335,13 @@ export default function ScoutDashboardScreen({ navigation }: any) {
   };
 
   const handleDismissNotification = async (id: string) => {
-    await dataService.markNotificationRead(id);
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    await markAsRead(id);
   };
 
   const handleDismissAll = async () => {
     const ids = notifications.map(n => n.id);
-    setNotifications([]);
     setShowAllNotifs(false);
-    await Promise.all(ids.map(id => dataService.markNotificationRead(id).catch(() => {})));
+    for (const id of ids) await markAsRead(id).catch(() => {});
   };
 
   if (loading) {
@@ -361,7 +360,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
       
       {/* AVISOS SIN LEER: 2 a la vista; el resto con «Ver todos» (antes se apilaban todos) */}
       {notifications.slice(0, showAllNotifs ? notifications.length : 2).map(notif => {
-        const negative = /no aprobad|rechaz|devuelt|vencid|removid|no fue/i.test(`${notif.title} ${notif.reason || ''}`);
+        const negative = /no aprobad|rechaz|devuelt|vencid|removid|no fue/i.test(`${notif.title} ${notif.message || ''}`);
         const accent = negative ? '#dc2626' : theme.accentText;
         return (
           <View key={notif.id} style={[styles.notifBanner, { backgroundColor: theme.cardBg, borderColor: theme.border, borderLeftColor: accent }]}>
@@ -369,7 +368,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
               <Bell color={accent} size={20} style={{ marginRight: 10 }} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.notifTitle, { color: theme.text }]}>{notif.title}</Text>
-                {!!notif.reason && <Text style={[styles.notifReason, { color: theme.subText }]}>{notif.reason}</Text>}
+                {!!(notif.message || (notif as any).reason) && <Text style={[styles.notifReason, { color: theme.subText }]}>{notif.message || (notif as any).reason}</Text>}
               </View>
             </View>
             <TouchableOpacity onPress={() => handleDismissNotification(notif.id)} style={{ padding: 8 }} accessibilityRole="button" accessibilityLabel="Marcar aviso como leído">

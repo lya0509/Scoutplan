@@ -195,7 +195,7 @@ class NotificationService {
           .on('postgres_changes' as any, { event: 'INSERT', schema: 'public', table: 'scout_notifications', filter: `scout_id=eq.${userId}` }, (payload: any) => {
             const r = payload.new || {};
             deliver({
-              id: `sn_${r.id}`,
+              id: `legacy_${r.id}`,
               sender_id: null,
               receiver_id: r.scout_id,
               receiver_role: null,
@@ -263,16 +263,8 @@ class NotificationService {
       await supabase.from('notifications').insert(notifObj);
     } catch (e) {}
 
-    try {
-      if (params.receiverId) {
-        await supabase.from('scout_notifications').insert({
-          scout_id: params.receiverId,
-          title: params.title,
-          reason: params.message,
-          is_read: false
-        });
-      }
-    } catch (e) {}
+    // (Antes también se copiaba en scout_notifications y cada aviso salía DOS veces en la
+    //  campanita. scout_notifications queda para los avisos que crea la base de datos.)
 
     // 4. Despacho de Web Push en Segundo Plano (Despierta teléfonos y PCs con app cerrada)
     try {
@@ -363,7 +355,12 @@ class NotificationService {
           const isGroupMatch = !item.receiver_id && Boolean(item.group_name && groupName && item.group_name.toLowerCase() === groupName.toLowerCase());
           const isUnitMatch = !item.unit || Boolean(unit && item.unit.toLowerCase() === unit.toLowerCase());
 
-          if (isGlobal || isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !item.group_name))) {
+          // Lo que yo envié a otras personas no es un aviso para mí; si va dirigido a un rol
+          // (p. ej. a los Scouters), solo lo ve quien tiene ese rol
+          const sentByMeToOthers = item.sender_id === userId && item.receiver_id !== userId;
+          const forMe = !sentByMeToOthers && (isDirectUser
+            || (item.receiver_role ? (isRoleMatch && (isGroupMatch || !item.group_name)) : (isGlobal || (isGroupMatch && isUnitMatch))));
+          if (forMe) {
             const isRead = item.read || readIdsSet.has(item.id) || (combinedMap.has(item.id) && combinedMap.get(item.id)!.read);
             combinedMap.set(item.id, { ...item, read: Boolean(isRead) });
           }
@@ -388,7 +385,12 @@ class NotificationService {
           const isGroupMatch = !item.receiver_id && Boolean(item.group_name && groupName && item.group_name.toLowerCase() === groupName.toLowerCase());
           const isUnitMatch = !item.unit || Boolean(unit && item.unit.toLowerCase() === unit.toLowerCase());
 
-          if (isGlobal || isDirectUser || (isGroupMatch && isUnitMatch) || (isRoleMatch && (isGroupMatch || !item.group_name))) {
+          // Lo que yo envié a otras personas no es un aviso para mí; si va dirigido a un rol
+          // (p. ej. a los Scouters), solo lo ve quien tiene ese rol
+          const sentByMeToOthers = item.sender_id === userId && item.receiver_id !== userId;
+          const forMe = !sentByMeToOthers && (isDirectUser
+            || (item.receiver_role ? (isRoleMatch && (isGroupMatch || !item.group_name)) : (isGlobal || (isGroupMatch && isUnitMatch))));
+          if (forMe) {
             const isRead = item.read || readIdsSet.has(item.id) || (combinedMap.has(item.id) && combinedMap.get(item.id)!.read);
             combinedMap.set(item.id, { ...item, read: Boolean(isRead) });
           }
@@ -406,9 +408,15 @@ class NotificationService {
         .limit(50);
 
       if (legacyData && legacyData.length > 0) {
+        // Avisos viejos que se guardaron en las dos tablas: mostrar solo una vez
+        const fromMain = Array.from(combinedMap.values());
+        const isDuplicate = (item: any) => fromMain.some(n =>
+          n.title === (item.title || '') && (n.message || '') === (item.reason || item.message || '') &&
+          Math.abs(new Date(n.created_at).getTime() - new Date(item.created_at).getTime()) < 120000);
         legacyData.forEach((item: any) => {
           const legacyId = `legacy_${item.id}`;
           if (deletedIdsSet.has(legacyId)) return;
+          if (isDuplicate(item)) return;
           if (!combinedMap.has(legacyId)) {
             const isRead = Boolean(item.is_read) || readIdsSet.has(legacyId);
             combinedMap.set(legacyId, {

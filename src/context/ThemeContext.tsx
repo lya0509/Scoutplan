@@ -16,7 +16,10 @@ export const THEME_COLOR_PRESETS = [
 interface ThemeContextType {
   isDarkMode: boolean;
   toggleDarkMode: () => void;
+  /** Color de acento para usar en pantalla (en modo oscuro, aclarado para que se lea). */
   primaryColor: string;
+  /** Color que eligió la persona (sin ajustar); lo usa el personalizador del tema. */
+  basePrimaryColor: string;
   setPrimaryColor: (hex: string) => Promise<void>;
   resetToDefaultColor: () => Promise<void>;
   theme: {
@@ -61,8 +64,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const savedColor = await AsyncStorage.getItem('app_primary_color');
         if (savedColor) {
           setPrimaryColorState(savedColor);
-          defaultColors.primary = savedColor;
-          defaultColors.purple = savedColor;
         }
       } catch (e) {
         console.error('Error cargando preferencias de tema:', e);
@@ -84,8 +85,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setPrimaryColor = async (hex: string) => {
     if (!hex) return;
     setPrimaryColorState(hex);
-    defaultColors.primary = hex;
-    defaultColors.purple = hex;
     try {
       await AsyncStorage.setItem('app_primary_color', hex);
     } catch (e) {
@@ -97,6 +96,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     await setPrimaryColor('#612499');
   };
 
+  // En modo oscuro el morado se aclara un 30 %: el texto morado sobre negro pasa de un
+  // contraste 2,2 a 4,8, y las letras blancas sobre los botones siguen legibles (4,4).
+  const effectivePrimary = isDarkMode ? lighten(primaryColor, 0.3) : primaryColor;
+  // colors.primary lo leen muchas pantallas al dibujarse: se mantiene igual al color efectivo
+  defaultColors.primary = effectivePrimary;
+  defaultColors.purple = effectivePrimary;
+
   const theme = {
     bg: isDarkMode ? '#000000' : '#f8fafc',
     cardBg: isDarkMode ? '#18181b' : '#ffffff',
@@ -104,8 +110,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     subText: isDarkMode ? '#a1a1aa' : '#64748b',
     border: isDarkMode ? '#27272a' : '#e2e8f0',
     inputBg: isDarkMode ? '#27272a' : '#f1f5f9',
-    primary: primaryColor,
-    primaryLight: primaryColor,
+    primary: effectivePrimary,
+    primaryLight: effectivePrimary,
     accentText: isDarkMode ? lighten(primaryColor, 0.55) : primaryColor,
   };
 
@@ -113,7 +119,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     <ThemeContext.Provider value={{
       isDarkMode,
       toggleDarkMode,
-      primaryColor,
+      primaryColor: effectivePrimary,
+      basePrimaryColor: primaryColor,
       setPrimaryColor,
       resetToDefaultColor,
       theme

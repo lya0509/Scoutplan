@@ -2,7 +2,7 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-08T22:15:18.579Z",
+    "generatedAt": "2026-11-09T00:45:55.815Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
@@ -268,8 +268,8 @@
       "file": "src/context/ThemeContext.tsx",
       "role": "Persists app_dark_mode and app_primary_color in AsyncStorage and provides dynamic theme tokens across all screens.",
       "exists": true,
-      "lines": 128,
-      "bytes": 4080,
+      "lines": 135,
+      "bytes": 4637,
       "exports": [
         "THEME_COLOR_PRESETS",
         "ThemeProvider",
@@ -813,8 +813,8 @@
       "file": "src/services/notificationService.ts",
       "role": "Dispatches in-app, browser, and Web Push notifications to users, units, groups, or roles via scout_notifications.",
       "exists": true,
-      "lines": 582,
-      "bytes": 21643,
+      "lines": 590,
+      "bytes": 22707,
       "exports": [
         "AppNotification",
         "OFFICIAL_SYSTEM_ANNOUNCEMENTS",
@@ -989,8 +989,8 @@
       "route": "Resumen",
       "role": "Main Scout home dashboard: ScoutUserIcon greeting badge, progression summary, active stage progress bar, unit Rovers directory (directorio_grupo RPC), quick access cards, CarnetScoutModal, OnboardingGuideModal, and HelpFloatingFAB.",
       "exists": true,
-      "lines": 850,
-      "bytes": 38610,
+      "lines": 849,
+      "bytes": 38644,
       "exports": [
         "ScoutDashboardScreen"
       ],
@@ -1014,7 +1014,8 @@
         "../types/programa",
         "lucide-react-native",
         "../utils/dateLocal",
-        "../components/PullToRefreshScrollView"
+        "../components/PullToRefreshScrollView",
+        "../context/NotificationContext"
       ],
       "supabaseTables": [
         "calendar_events",
@@ -1069,7 +1070,7 @@
       "role": "Interactive checklist of stage requirements, linking to CatalogSelectorScreen, NochesAireLibreModal, VidaGrupoModal, CertificateUploadScreen, and stage review submission.",
       "exists": true,
       "lines": 1286,
-      "bytes": 57961,
+      "bytes": 58245,
       "exports": [
         "StageDetailScreen"
       ],
@@ -2095,7 +2096,7 @@
       "role": "Modal allowing users to customize primary accent color and dark/light theme.",
       "exists": true,
       "lines": 293,
-      "bytes": 8678,
+      "bytes": 8708,
       "exports": [
         "ThemeCustomizerModal"
       ],

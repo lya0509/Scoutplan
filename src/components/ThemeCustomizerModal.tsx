@@ -19,8 +19,8 @@ interface Props {
 }
 
 export function ThemeCustomizerModal({ visible, onClose }: Props) {
-  const { isDarkMode, theme, primaryColor, setPrimaryColor, resetToDefaultColor } = useTheme();
-  const [customHex, setCustomHex] = useState(primaryColor);
+  const { isDarkMode, theme, primaryColor, basePrimaryColor, setPrimaryColor, resetToDefaultColor } = useTheme();
+  const [customHex, setCustomHex] = useState(basePrimaryColor);
 
   // Soporte universal para gestos de retroceso en Android, iOS y PWA
   useModalBackHandler(visible, onClose);
@@ -78,7 +78,7 @@ export function ThemeCustomizerModal({ visible, onClose }: Props) {
               <View style={styles.previewRow}>
                 <View style={[styles.colorBubble, { backgroundColor: primaryColor }]} />
                 <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={[styles.previewHex, { color: theme.text }]}>{primaryColor.toUpperCase()}</Text>
+                  <Text style={[styles.previewHex, { color: theme.text }]}>{basePrimaryColor.toUpperCase()}</Text>
                   <Text style={[styles.previewSub, { color: theme.subText }]}>Color primario de botones, insignias y cabeceras</Text>
                 </View>
               </View>
@@ -88,7 +88,7 @@ export function ThemeCustomizerModal({ visible, onClose }: Props) {
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Paleta Scout Predeterminada</Text>
             <View style={styles.presetGrid}>
               {THEME_COLOR_PRESETS.map((preset) => {
-                const isSelected = primaryColor.toLowerCase() === preset.hex.toLowerCase();
+                const isSelected = basePrimaryColor.toLowerCase() === preset.hex.toLowerCase();
                 return (
                   <TouchableOpacity
                     key={preset.id}
