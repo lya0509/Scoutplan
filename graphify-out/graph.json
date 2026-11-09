@@ -2,18 +2,18 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-09T02:05:15.996Z",
+    "generatedAt": "2026-11-09T22:30:00.074Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
-      "totalNodes": 125,
-      "totalEdges": 110,
+      "totalNodes": 132,
+      "totalEdges": 120,
       "totalHyperedges": 4,
       "totalScreens": 29,
-      "totalComponents": 30,
+      "totalComponents": 33,
       "totalContexts": 3,
-      "totalServices": 27,
-      "totalCatalogs": 11,
+      "totalServices": 29,
+      "totalCatalogs": 12,
       "totalDatabaseTables": 11,
       "totalQaSuites": 14
     }
@@ -233,8 +233,8 @@
       "file": "src/context/AuthContext.tsx",
       "role": "Restores @scout_cached_profile in <10ms with 800ms safety timeout, syncs Supabase Auth session & profiles table, initializes presenceService, and exposes updateUserProfile/refreshProfile/signOut.",
       "exists": true,
-      "lines": 336,
-      "bytes": 13594,
+      "lines": 355,
+      "bytes": 14572,
       "exports": [
         "AuthProvider",
         "useAuth"
@@ -248,7 +248,8 @@
         "../lib/offline/net",
         "../lib/dataService",
         "../lib/fileUrl",
-        "../lib/authRecovery"
+        "../lib/authRecovery",
+        "../lib/offline/warmup"
       ],
       "supabaseTables": [
         "profiles"
@@ -389,8 +390,8 @@
       "file": "src/lib/supabaseClient.ts",
       "role": "Configures @supabase/supabase-js with AsyncStorage session persistence.",
       "exists": true,
-      "lines": 77,
-      "bytes": 3235,
+      "lines": 152,
+      "bytes": 6518,
       "exports": [
         "supabase"
       ],
@@ -434,8 +435,8 @@
       "file": "src/lib/dataService.ts",
       "role": "Async data layer on top of the offline outbox (@scout_outbox_v1) with cached reads: stage/requirement progress, stage/requirement progress, stage review/approval, certificates + curriculum auto-sync, quarterly plans, CIP events, nights log, vida de grupo log, and membership dates.",
       "exists": true,
-      "lines": 2208,
-      "bytes": 99752,
+      "lines": 2220,
+      "bytes": 100626,
       "exports": [
         "MembershipReceipt",
         "MembershipHistoryEntry",
@@ -990,7 +991,7 @@
       "role": "Main Scout home dashboard: ScoutUserIcon greeting badge, progression summary, active stage progress bar, unit Rovers directory (directorio_grupo RPC), quick access cards, CarnetScoutModal, OnboardingGuideModal, and HelpFloatingFAB.",
       "exists": true,
       "lines": 849,
-      "bytes": 38644,
+      "bytes": 38756,
       "exports": [
         "ScoutDashboardScreen"
       ],
@@ -1036,7 +1037,7 @@
       "role": "Displays the 4 Rover/Clan progression stages (Precursor, Expedicionario, Descubridor, Fundador) with completion percentages and lock status.",
       "exists": true,
       "lines": 210,
-      "bytes": 9542,
+      "bytes": 9568,
       "exports": [
         "PlanProgresivoScreen"
       ],
@@ -1113,7 +1114,7 @@
       "role": "Searchable selector for official ASV catalog activities (básicas, opcionales, especialidades, cursos, ciclos) filtered by stage and requirement type.",
       "exists": true,
       "lines": 474,
-      "bytes": 20777,
+      "bytes": 20810,
       "exports": [
         "CatalogSelectorScreen"
       ],
@@ -1147,7 +1148,7 @@
       "role": "Interactive catalog of Scout Specialties across 6 categories and 3 levels (Bronce, Plata, Oro).",
       "exists": true,
       "lines": 681,
-      "bytes": 21048,
+      "bytes": 21052,
       "exports": [
         "EspecialidadesScreen"
       ],
@@ -1177,7 +1178,7 @@
       "role": "Scout & Scouter personal profile editor: dual avatars (Uniformado/Casual), cédula, dates (birth, promise, join), membership expiration proposal, and digital Carnet Scout.",
       "exists": true,
       "lines": 783,
-      "bytes": 35011,
+      "bytes": 35063,
       "exports": [
         "ProfileScreen"
       ],
@@ -1219,7 +1220,7 @@
       "role": "360-degree view of a Scout profile for Scouters/Jefes: progression stages, certificates, medical record summary, curriculum, and membership status.",
       "exists": true,
       "lines": 583,
-      "bytes": 25952,
+      "bytes": 25993,
       "exports": [
         "ScoutFullProfileScreen"
       ],
@@ -1261,7 +1262,7 @@
       "role": "Unit leader dashboard: lists unit scouts with online presence, pending stage reviews, quarterly plan feedback, unit programs, and profile photo moderation.",
       "exists": true,
       "lines": 1296,
-      "bytes": 64391,
+      "bytes": 64583,
       "exports": [
         "ScouterDashboardScreen"
       ],
@@ -1313,7 +1314,7 @@
       "role": "Detailed requirement-by-requirement verification screen for a Scout with Approve/Reject stage actions and notification dispatch.",
       "exists": true,
       "lines": 546,
-      "bytes": 29594,
+      "bytes": 29600,
       "exports": [
         "ScouterReviewScreen"
       ],
@@ -1345,8 +1346,8 @@
       "route": "JefeDashboard",
       "role": "Group Chief dashboard: supervises all units (Manada, Tropa, Caminantes, Clan), approves/rejects membership expiration dates, moderates photos, and manages group calendar.",
       "exists": true,
-      "lines": 1952,
-      "bytes": 91959,
+      "lines": 1698,
+      "bytes": 86430,
       "exports": [
         "JefeGrupoScreen"
       ],
@@ -1378,7 +1379,8 @@
         "../utils/exportHelpers",
         "../utils/dateLocal",
         "../components/PullToRefreshScrollView",
-        "../components/CipManagerModal"
+        "../components/CipManagerModal",
+        "./jefeGrupo/styles"
       ],
       "supabaseTables": [
         "profiles",
@@ -1398,7 +1400,7 @@
       "role": "Territorial hierarchy dashboard (Distrital, Regional, Nacional, Admin) with drill-down metrics by Region -> District -> Group -> Unit.",
       "exists": true,
       "lines": 703,
-      "bytes": 36358,
+      "bytes": 36391,
       "exports": [
         "ComisionadoDashboardScreen"
       ],
@@ -1436,7 +1438,7 @@
       "role": "Lists unit & sinodal Scout Activity Programs with filters by unit, duplicate/delete actions, PDF preview modal, and Word .docx export.",
       "exists": true,
       "lines": 1180,
-      "bytes": 48235,
+      "bytes": 48239,
       "exports": [
         "ProgramaScoutScreen"
       ],
@@ -1471,8 +1473,8 @@
       "route": "ProgramaScoutEditor",
       "role": "Full editor for ProgramaScout: metadata, unit/sinodal selector, objectives, SDGs (17 ODS), 6 Growth Area achievement indicators, time-table schedule, and autoSaveService integration.",
       "exists": true,
-      "lines": 2838,
-      "bytes": 116896,
+      "lines": 1915,
+      "bytes": 90356,
       "exports": [
         "ProgramaScoutEditorScreen"
       ],
@@ -1493,7 +1495,10 @@
         "../components/ProgramaPdfPreviewModal",
         "../services/notificationService",
         "../utils/alert",
-        "../utils/dateLocal"
+        "../utils/dateLocal",
+        "./programaEditor/styles",
+        "./programaEditor/DatePickerModal",
+        "./programaEditor/IndicatorPickerModal"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1509,8 +1514,8 @@
       "route": "QuarterlyPlan",
       "role": "Quarterly planner (Trimestres I-IV) supporting individual Rover plans and shared unit plans linked to ProgramaScoutEditor.",
       "exists": true,
-      "lines": 2236,
-      "bytes": 111453,
+      "lines": 2116,
+      "bytes": 103560,
       "exports": [
         "QuarterlyPlanScreen"
       ],
@@ -1533,7 +1538,8 @@
         "../utils/alert",
         "../utils/navigationHelper",
         "../utils/exportHelpers",
-        "../utils/reportTable"
+        "../utils/reportTable",
+        "./quarterlyPlan/styles"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1551,8 +1557,8 @@
       "route": "CalendarStandalone",
       "role": "Interactive calendar (react-native-calendars) for unit, group, district, and CIP events with event creation and reminders.",
       "exists": true,
-      "lines": 763,
-      "bytes": 35326,
+      "lines": 606,
+      "bytes": 29106,
       "exports": [
         "CalendarScreen"
       ],
@@ -1563,23 +1569,17 @@
         "lucide-react-native",
         "../context/AuthContext",
         "../context/ThemeContext",
-        "../lib/supabaseClient",
         "../lib/offline/outbox",
         "../lib/offline/net",
-        "../lib/offline/readCache",
         "../components/NotificationHeaderBell",
         "../theme/colors",
         "@react-navigation/native",
         "../hooks/useBackHandler",
         "../utils/alert",
         "../utils/dateLocal",
-        "../lib/dataService"
+        "../lib/calendarData"
       ],
-      "supabaseTables": [
-        "calendar_events",
-        "quarterly_plans",
-        "scout_programas"
-      ],
+      "supabaseTables": [],
       "supabaseBuckets": [],
       "realtimeChannels": [],
       "storageKeys": []
@@ -1594,7 +1594,7 @@
       "role": "Hub for CIP events, unit activities, and direct launch of activity programs.",
       "exists": true,
       "lines": 284,
-      "bytes": 11186,
+      "bytes": 11242,
       "exports": [
         "ActivityCenterScreen"
       ],
@@ -1623,7 +1623,7 @@
       "role": "Photo evidence albums organized by activity/date, backed by Supabase Storage scout-files and @scout_temporal_drive_albums cache.",
       "exists": true,
       "lines": 708,
-      "bytes": 33732,
+      "bytes": 33975,
       "exports": [
         "TemporalDriveScreen"
       ],
@@ -1664,7 +1664,7 @@
       "role": "Two-tab medical record: \"Ficha Médica Scout\" (ASV form, Word .docx export) and \"Ficha Médica Orión 84\" (FichaMedicaOrion84Form, PDF export). Both live in profiles.medical_data (Orión 84 under medical_data.orion84; saves merge, never overwrite each other).",
       "exists": true,
       "lines": 847,
-      "bytes": 42184,
+      "bytes": 42225,
       "exports": [
         "FichaMedicaScreen"
       ],
@@ -1702,8 +1702,8 @@
       "route": "CurriculumScout",
       "role": "Official Scout Curriculum Vitae form auto-synced with uploaded certificates, awards, and progression stages, with Word .docx export.",
       "exists": true,
-      "lines": 1225,
-      "bytes": 63170,
+      "lines": 1241,
+      "bytes": 63800,
       "exports": [
         "CurriculumScoutScreen"
       ],
@@ -1721,6 +1721,7 @@
         "../utils/docxExporter",
         "../utils/navigationHelper",
         "../utils/filePicker",
+        "../components/PhotoCropModal",
         "../components/SecureImage"
       ],
       "supabaseTables": [],
@@ -1738,7 +1739,7 @@
       "role": "Uploads and categorizes Scout certificates/courses to Supabase Storage and syncs them automatically into CurriculumScout.",
       "exists": true,
       "lines": 1357,
-      "bytes": 63822,
+      "bytes": 63821,
       "exports": [
         "CertificateUploadScreen"
       ],
@@ -1775,15 +1776,9 @@
       "route": "NudosManual",
       "role": "100% offline interactive manual of Scout knots, lashings (amarres), camping techniques, and visual SVG diagrams (ManualVisualDiagram).",
       "exists": true,
-      "lines": 1909,
-      "bytes": 88367,
+      "lines": 873,
+      "bytes": 42138,
       "exports": [
-        "ManualSectionKey",
-        "ModalTabKey",
-        "VisualStep",
-        "MultimediaImage",
-        "MultimediaData",
-        "ManualItem",
         "NudosManualScreen"
       ],
       "imports": [
@@ -1795,7 +1790,9 @@
         "../hooks/useBackHandler",
         "../theme/colors",
         "../utils/navigationHelper",
-        "../components/ManualVisualDiagram"
+        "../components/ManualVisualDiagram",
+        "./nudosManual/styles",
+        "../data/manualsData"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1812,7 +1809,7 @@
       "role": "Offline Scout songbook categorized by unit (Manada, Tropa, Caminantes, Clan, Fogata) with search and chords/lyrics.",
       "exists": true,
       "lines": 192,
-      "bytes": 8470,
+      "bytes": 8472,
       "exports": [
         "CancioneroScreen"
       ],
@@ -1840,7 +1837,7 @@
       "role": "Digital library of official ASV & WOSM PDF manuals and Mundialito guides stored in public/documentos/.",
       "exists": true,
       "lines": 1046,
-      "bytes": 37725,
+      "bytes": 37741,
       "exports": [
         "DocumentosScreen"
       ],
@@ -1905,7 +1902,7 @@
       "role": "Modal logbook for recording camping nights (date, location, nights count, notes) toward stage requirements.",
       "exists": true,
       "lines": 627,
-      "bytes": 20807,
+      "bytes": 20819,
       "exports": [
         "NochesAireLibreModal"
       ],
@@ -1933,7 +1930,7 @@
       "role": "Modal logbook for recording Vida de Grupo participations and council activities.",
       "exists": true,
       "lines": 659,
-      "bytes": 23550,
+      "bytes": 23554,
       "exports": [
         "VidaGrupoEntry",
         "VidaGrupoModal"
@@ -2019,7 +2016,7 @@
       "role": "Displays personal notifications and official system announcements with mark-as-read and clear actions.",
       "exists": true,
       "lines": 756,
-      "bytes": 28937,
+      "bytes": 28945,
       "exports": [
         "NotificationCenterModal"
       ],
@@ -2126,7 +2123,7 @@
       "role": "Triggers native beforeinstallprompt or displays step-by-step iOS Safari Add to Home Screen instructions.",
       "exists": true,
       "lines": 317,
-      "bytes": 11356,
+      "bytes": 11364,
       "exports": [
         "PWAInstallModal"
       ],
@@ -2151,7 +2148,7 @@
       "role": "Floating action button submitting diagnostic bug reports to bug_reports table.",
       "exists": true,
       "lines": 595,
-      "bytes": 26365,
+      "bytes": 26371,
       "exports": [
         "HelpFloatingFAB"
       ],
@@ -2187,8 +2184,8 @@
       "file": "src/components/DualProfileAvatar.tsx",
       "role": "Scout (uniform) and personal photo tabs; always opens on «Foto Scout» and each tab shows ONLY its own photo. In lists (Resumen, Rovers, dashboards) only the scout photo or the scout icon is shown — the personal photo never replaces it (fix 2026-11-09). Uploads via onUpload, images through SecureImage (signed URLs).",
       "exists": true,
-      "lines": 708,
-      "bytes": 22458,
+      "lines": 751,
+      "bytes": 24235,
       "exports": [
         "DualProfileAvatar"
       ],
@@ -2200,7 +2197,9 @@
         "../context/ThemeContext",
         "../utils/alert",
         "../utils/filePicker",
-        "./SecureImage"
+        "./SecureImage",
+        "./PhotoCropModal",
+        "../lib/fileUrl"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -2395,7 +2394,7 @@
       "role": "mode=self: the member uploads the payment receipt (photo + reference + amount); mode=leader: Scouter/Jefatura view receipts and the year-by-year history of approvals and returns. Rows in certificates (membresia_pago / membresia_hist).",
       "exists": true,
       "lines": 374,
-      "bytes": 18449,
+      "bytes": 18453,
       "exports": [
         "MembershipRecordsModal"
       ],
@@ -2878,7 +2877,7 @@
       "role": "Route Administracion (/administracion). Jefe de Grupo: people of own group (Scout/Scouter/Jefe, unit, approve). Comisionados: also create groups (scout_groups) and move people inside their territory. Admin/Nacional: whole country, all roles. Rules mirrored by proteger_perfil.",
       "exists": true,
       "lines": 690,
-      "bytes": 36178,
+      "bytes": 36182,
       "exports": [
         "AdministracionScreen"
       ],
@@ -3119,7 +3118,7 @@
       "role": "Scouter/Jefatura: catalog of official CIPs (cip_oficiales: create, list), mark attendance per youth (cip_sel_* in certificates, counts to the current stage requirement of that level), review old-CIP requests (cip_sol_*) made under the Scout Law.",
       "exists": true,
       "lines": 366,
-      "bytes": 20816,
+      "bytes": 20824,
       "exports": [
         "CipManagerModal"
       ],
@@ -3148,7 +3147,7 @@
       "role": "Youth view of a CIP requirement: credited CIPs (badge «anterior a la app»), own requests with status, form to request a pre-app CIP with Scout Law confirmation. Replaces the old self-selection modal in StageDetail.",
       "exists": true,
       "lines": 224,
-      "bytes": 13396,
+      "bytes": 13404,
       "exports": [
         "CipStageModal"
       ],
@@ -3253,6 +3252,197 @@
       "storageKeys": []
     },
     {
+      "id": "warmup.ts",
+      "label": "offline/warmup.ts (Offline pre-download of every screen)",
+      "type": "service",
+      "community": "backend_offline_services",
+      "file": "src/lib/offline/warmup.ts",
+      "role": "warmOfflineData(user): with internet, fetches in the background the data of ALL the user screens (stages, requirements, certificates, profile row, quarterly plan, programs, calendar, unit directory) so they work offline even if never opened. Called by AuthContext 4 s after the profile loads and on «online»; at most every 10 min.",
+      "exists": true,
+      "lines": 87,
+      "bytes": 3713,
+      "exports": [
+        "warmOfflineData"
+      ],
+      "imports": [
+        "@react-native-async-storage/async-storage",
+        "../dataService",
+        "../programaService",
+        "../calendarData",
+        "./net"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": [
+        "@scout_warmup_at_"
+      ]
+    },
+    {
+      "id": "calendarData.ts",
+      "label": "calendarData.ts (Calendar events loader)",
+      "type": "service",
+      "community": "backend_offline_services",
+      "file": "src/lib/calendarData.ts",
+      "role": "loadCalendarEvents(user): calendar_events + quarterly plan activities + CIP catalog + scout_programas with offline copy (only server data refreshes the copy) and pending offline events; monthNumber(). Used by CalendarScreen and warmup.",
+      "exists": true,
+      "lines": 181,
+      "bytes": 7061,
+      "exports": [
+        "CalendarEvent",
+        "monthNumber"
+      ],
+      "imports": [
+        "./supabaseClient",
+        "./offline/outbox",
+        "./offline/readCache",
+        "./dataService"
+      ],
+      "supabaseTables": [
+        "calendar_events",
+        "quarterly_plans",
+        "scout_programas"
+      ],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "PhotoCropModal.tsx",
+      "label": "PhotoCropModal.tsx (Crop & adjust profile photo)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/components/PhotoCropModal.tsx",
+      "role": "Drag to move, pinch / slider / buttons to zoom 1×–4×, rotate 90°, circular guide; outputs an 800×800 JPEG data URL. Math in src/utils/photoCrop.ts (unit tested). Used by DualProfileAvatar (new photo and «Recortar / Ajustar» of the saved one) and CurriculumScoutScreen.",
+      "exists": true,
+      "lines": 274,
+      "bytes": 12618,
+      "exports": [
+        "PhotoCropModal"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "lucide-react-native",
+        "../context/ThemeContext",
+        "../utils/photoCrop"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "DatePickerModal.tsx",
+      "label": "programaEditor/DatePickerModal.tsx (Program date calendar)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/screens/programaEditor/DatePickerModal.tsx",
+      "role": "Month calendar with quick dates (today, next Saturday/Sunday) for ProgramaScoutEditorScreen.",
+      "exists": true,
+      "lines": 146,
+      "bytes": 6656,
+      "exports": [
+        "quickDate",
+        "DatePickerModal"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "lucide-react-native",
+        "../../context/ThemeContext",
+        "../../utils/dateLocal",
+        "./styles"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "IndicatorPickerModal.tsx",
+      "label": "programaEditor/IndicatorPickerModal.tsx (Official ASV indicators picker)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/screens/programaEditor/IndicatorPickerModal.tsx",
+      "role": "Search and toggle official achievement indicators of one growth area (per unit / sinodal) or add a custom one, for ProgramaScoutEditorScreen.",
+      "exists": true,
+      "lines": 121,
+      "bytes": 5233,
+      "exports": [
+        "IndicatorPickerModal"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "lucide-react-native",
+        "../../context/ThemeContext",
+        "../../data/achievementIndicatorsData",
+        "./styles"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "manualsData.ts",
+      "label": "manualsData.ts (Scout manuals content)",
+      "type": "catalog",
+      "community": "database_catalogs_pwa",
+      "file": "src/data/manualsData.ts",
+      "role": "Content of the 5 offline manuals (knots & lashings, fires, sign language, tracking, first aid) with visual steps and multimedia; types ManualItem/VisualStep. Rendered by NudosManualScreen.",
+      "exists": true,
+      "lines": 980,
+      "bytes": 42623,
+      "exports": [
+        "ManualSectionKey",
+        "ModalTabKey",
+        "VisualStep",
+        "MultimediaImage",
+        "MultimediaData",
+        "ManualItem",
+        "MANUALS_DATA"
+      ],
+      "imports": [],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "e2e-run.mjs",
+      "label": "tests/e2e/run.mjs (Screen E2E tests)",
+      "type": "code_file",
+      "community": "database_catalogs_pwa",
+      "file": "tests/e2e/run.mjs",
+      "role": "npm run test:e2e — builds and opens the app in Chromium with Supabase MOCKED (tests/e2e/mockSupabase.mjs): 25 screens × 4 roles × light/dark (no JS errors, no endless spinner, content visible, contrast ≥ 3:1), program editor modals, and cold start offline with an expired session.",
+      "exists": true,
+      "lines": 299,
+      "bytes": 15155,
+      "exports": [],
+      "imports": [
+        "playwright-core",
+        "child_process",
+        "fs",
+        "os",
+        "path",
+        "url",
+        "./serve.mjs",
+        "./mockSupabase.mjs",
+        "./contrast.mjs"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": [
+        "@scout_cached_profile",
+        "@scout_cached_session",
+        "onboarding_seen_",
+        "app_dark_mode"
+      ]
+    },
+    {
       "id": "telegram-notify.js",
       "label": "api/telegram-notify.js (Bug reports to Telegram)",
       "type": "service",
@@ -3280,7 +3470,7 @@
       "role": "Opened by the carnet QR. Logged out: AppNavigator saves the id (@pending_verify_id) and LoginScreen shows a notice; after login it navigates here and calls /api/verificar with the session token.",
       "exists": true,
       "lines": 155,
-      "bytes": 8376,
+      "bytes": 8380,
       "exports": [
         "VerificarCarnetScreen"
       ],
@@ -3724,6 +3914,56 @@
       "from": "DualProfileAvatar.tsx",
       "to": "SecureImage.tsx",
       "relation": "renders"
+    },
+    {
+      "from": "DualProfileAvatar.tsx",
+      "to": "PhotoCropModal.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "CurriculumScoutScreen.tsx",
+      "to": "PhotoCropModal.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "AuthContext.tsx",
+      "to": "warmup.ts",
+      "relation": "calls"
+    },
+    {
+      "from": "warmup.ts",
+      "to": "dataService.ts",
+      "relation": "calls"
+    },
+    {
+      "from": "warmup.ts",
+      "to": "programaService.ts",
+      "relation": "calls"
+    },
+    {
+      "from": "warmup.ts",
+      "to": "calendarData.ts",
+      "relation": "calls"
+    },
+    {
+      "from": "CalendarScreen.tsx",
+      "to": "calendarData.ts",
+      "relation": "imports"
+    },
+    {
+      "from": "ProgramaScoutEditorScreen.tsx",
+      "to": "DatePickerModal.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "ProgramaScoutEditorScreen.tsx",
+      "to": "IndicatorPickerModal.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "NudosManualScreen.tsx",
+      "to": "manualsData.ts",
+      "relation": "imports"
     },
     {
       "from": "CertificateUploadScreen.tsx",
