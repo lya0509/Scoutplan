@@ -7,6 +7,7 @@ import { isRetryableError } from '../lib/offline/net';
 import { dataService } from '../lib/dataService';
 import { resolveFileUrl, clearFileCache } from '../lib/fileUrl';
 import { readRecoveryLink, setRecoveryFlag, hasRecoveryFlag } from '../lib/authRecovery';
+import { warmOfflineData } from '../lib/offline/warmup';
 
 const CACHED_PROFILE_KEY = '@scout_cached_profile';
 const CACHED_SESSION_KEY = '@scout_cached_session';
@@ -194,6 +195,13 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       presenceService.init(mergedUser);
       await AsyncStorage.setItem(CACHED_PROFILE_KEY, JSON.stringify(mergedUser));
 
+      // Con internet: guardar en el teléfono los datos de todas las pantallas (para usarlas
+      // sin conexión aunque nunca se hayan abierto). Unos segundos después, para no
+      // competir con la pantalla que se está abriendo.
+      if (data && mergedUser.account_status !== 'pending') {
+        setTimeout(() => { warmOfflineData(mergedUser).catch(() => {}); }, 4000);
+      }
+
       // Precargar las fotos propias (y la firma) para tenerlas sin internet, incluso al exportar a Word
       if (typeof window !== 'undefined' && typeof fetch === 'function') {
         const sign = (data?.medical_data as any)?.signatureUrl;
@@ -250,6 +258,17 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       setIsLoading(false);
     }
   };
+
+  // Al volver internet, completar la precarga offline (como mucho cada 10 minutos)
+  useEffect(() => {
+    if (!user?.id || typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+    const onOnline = () => {
+      if (user.account_status === 'pending') return;
+      setTimeout(() => { warmOfflineData(user).catch(() => {}); }, 4000);
+    };
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [user?.id, user?.account_status]);
 
   const refreshProfile = async () => {
     if (session?.user?.id) {

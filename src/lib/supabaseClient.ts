@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, AuthRetryableFetchError } from '@supabase/supabase-js';
 
 if (Platform.OS !== 'web') {
   require('react-native-url-polyfill/auto');
@@ -65,8 +65,36 @@ const offlineAwareFetch: typeof fetch = (input: any, init: any = {}) => {
     .finally(() => clearTimeout(timer));
 };
 
+/** Momento en que se saltó la renovación de la sesión por falta de internet. */
+let refreshSkippedAt = 0;
+const anonBearer = `Bearer ${supabaseAnonKey}`;
+
+function readAuthHeader(init: any): string {
+  const h = init?.headers;
+  if (!h) return '';
+  if (typeof Headers !== 'undefined' && h instanceof Headers) return h.get('Authorization') || '';
+  if (Array.isArray(h)) return (h.find(([k]) => String(k).toLowerCase() === 'authorization') || [])[1] || '';
+  return h.Authorization || h.authorization || '';
+}
+
+/**
+ * Si se saltó la renovación de la sesión, supabase-js manda la consulta con la clave
+ * pública (sin usuario). Esa consulta no se envía: las reglas de la base de datos
+ * devolverían listas vacías que pisarían la copia guardada, y una escritura se
+ * rechazaría. Se trata como «sin internet» y la pantalla usa la copia del teléfono.
+ */
+const guardedFetch: typeof fetch = (input: any, init: any = {}) => {
+  if (Date.now() - refreshSkippedAt < 5000 && readAuthHeader(init) === anonBearer) {
+    const url = String(typeof input === 'string' ? input : input?.url || '');
+    if (/\/(rest|storage|functions)\/v1\//.test(url)) {
+      return Promise.reject(offlineError('Sin conexión: la sesión se renovará al volver internet'));
+    }
+  }
+  return offlineAwareFetch(input, init);
+};
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  global: { fetch: offlineAwareFetch },
+  global: { fetch: guardedFetch },
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,
@@ -74,3 +102,50 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 });
+
+/**
+ * Abrir la app SIN internet con la sesión vencida (dura 1 hora) la dejaba cargando para
+ * siempre: supabase-js intenta renovar la sesión con reintentos durante ~30 s, y cada
+ * consulta espera esa renovación, una detrás de otra.
+ * Sin internet ahora se responde al instante con un error «reintentable»: la sesión NO
+ * se borra (sigue guardada) y se renueva sola cuando vuelve la conexión.
+ * Con Wi-Fi sin salida (el teléfono cree que hay internet) se espera como máximo 5 s.
+ */
+const REFRESH_WAIT_MS = 5000;
+const authClient: any = supabase.auth;
+const originalCallRefresh = typeof authClient._callRefreshToken === 'function'
+  ? authClient._callRefreshToken.bind(authClient)
+  : null;
+
+function skippedRefresh() {
+  refreshSkippedAt = Date.now();
+  return { data: null, error: new AuthRetryableFetchError('Sin conexión: la sesión se renovará al volver internet', 0) };
+}
+
+function looksOffline() {
+  return (typeof navigator !== 'undefined' && navigator.onLine === false) || Date.now() < unreachableUntil;
+}
+
+if (originalCallRefresh) {
+  authClient._callRefreshToken = (refreshToken: string) => {
+    if (!refreshToken || !looksOffline()) {
+      const real = originalCallRefresh(refreshToken);
+      if (!refreshToken) return real;
+      // Si tarda demasiado (Wi-Fi sin salida) se sigue intentando por detrás, pero la app no espera
+      let timer: any;
+      const slow = new Promise(resolve => {
+        timer = setTimeout(() => resolve(skippedRefresh()), REFRESH_WAIT_MS);
+      });
+      return Promise.race([real.finally(() => clearTimeout(timer)), slow]);
+    }
+    return Promise.resolve(skippedRefresh());
+  };
+}
+
+/** Al volver internet, renovar la sesión enseguida (avisa con TOKEN_REFRESHED). */
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('online', () => {
+    unreachableUntil = 0;
+    supabase.auth.getSession().catch(() => {});
+  });
+}

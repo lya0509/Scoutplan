@@ -1498,6 +1498,8 @@ export const dataService = {
     const rows = (async () => {
       const r = await supabase.from('certificates').select('*').eq('scout_id', scoutId).order('created_at', { ascending: false });
       if (r.error) _certRowsMemo.delete(scoutId);
+      // Misma copia que getCertificates: sirve para abrir sin internet registros nunca vistos
+      else writeCached(`certs_${scoutId}`, r.data || []);
       return { data: r.data, error: r.error };
     })();
     _certRowsMemo.set(scoutId, { at: now, rows });
@@ -1513,6 +1515,13 @@ export const dataService = {
         const raw = await AsyncStorage.getItem(localKey);
         if (raw) return JSON.parse(raw);
       } catch {}
+      // Requisito que nunca se abrió en este teléfono: sacarlo de la copia de todos los
+      // registros (la deja la precarga offline o la pantalla de certificados)
+      const allCached = await readCached<any[]>(`certs_${scoutId}`);
+      if (allCached) {
+        const pend = await pendingCertificateRows(scoutId);
+        return applyPendingRows(allCached.filter(d => d.category === category), pend, r => r.category === category).map(mapRow);
+      }
       return [];
     }
 
@@ -1946,14 +1955,17 @@ export const dataService = {
 
     // 1. Cargar desde Supabase
     try {
-      const { data, error } = await supabase
-        .from('certificates')
-        .select('*')
-        .eq('scout_id', scoutId)
-        .like('category', 'linked_cert_%');
+      const all = await this._allCertRows(scoutId);
+      let error = all.error;
+      let data = (all.data || []).filter((d: any) => d.category?.startsWith('linked_cert_'));
+      if (error) {
+        // Sin internet: usar la copia de todos los registros si existe
+        const allCached = await readCached<any[]>(`certs_${scoutId}`);
+        if (allCached) data = allCached.filter((d: any) => d.category?.startsWith('linked_cert_'));
+      }
 
       if (!error) remoteLoaded = true;
-      if (!error && data && data.length > 0) {
+      if (data && data.length > 0) {
         for (const row of data) {
           const rawCat = row.category.replace('linked_cert_', '');
           let parsedDesc: any = null;
