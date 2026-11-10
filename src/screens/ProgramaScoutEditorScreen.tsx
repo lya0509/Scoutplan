@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
   Modal,
   Platform,
-  Alert
+  Alert,
+  Animated
 } from 'react-native';
 import {
   Save,
@@ -63,6 +64,10 @@ import { todayLocal } from '../utils/dateLocal';
 import { styles } from './programaEditor/styles';
 import { DatePickerModal } from './programaEditor/DatePickerModal';
 import { IndicatorPickerModal } from './programaEditor/IndicatorPickerModal';
+import DragHandle from './programaEditor/DragHandle';
+import { useScheduleDrag } from './programaEditor/useScheduleDrag';
+import AutoGrowTextInput from '../components/AutoGrowTextInput';
+import { visibleNotes } from '../lib/programaNotes';
 
 export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
   const { user } = useAuth();
@@ -116,7 +121,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
   const [specificObjectives, setSpecificObjectives] = useState<string[]>(existingPrograma?.specificObjectives || ['']);
   const [specificMetas, setSpecificMetas] = useState<string[]>(existingPrograma?.specificMetas || ['']);
   const [selectedSDGs, setSelectedSDGs] = useState<number[]>(existingPrograma?.selectedSDGs || []);
-  const [importantNotes, setImportantNotes] = useState(existingPrograma?.importantNotes || '');
+  const [importantNotes, setImportantNotes] = useState(visibleNotes(existingPrograma?.importantNotes));
   const [registrationBadgeId] = useState('reg_2026');
 
   // Estado para el selector interactivo de Fecha (Calendario)
@@ -237,7 +242,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
           if (draft.specificObjectives) setSpecificObjectives(draft.specificObjectives);
           if (draft.specificMetas) setSpecificMetas(draft.specificMetas);
           if (draft.selectedSDGs) setSelectedSDGs(draft.selectedSDGs);
-          if (draft.importantNotes) setImportantNotes(draft.importantNotes);
+          if (draft.importantNotes) setImportantNotes(visibleNotes(draft.importantNotes));
           if (draft.schedule && Array.isArray(draft.schedule)) setSchedule(draft.schedule);
           if (draft.indicators) setIndicators(draft.indicators);
         }
@@ -453,6 +458,18 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
     setSchedule(newSchedule);
     setHasUnsavedChanges(true);
   };
+
+  // Arrastrar y soltar con la agarradera (#n) de cada actividad
+  const scheduleDrag = useScheduleDrag(schedule.map(item => item.id), (from, to) => {
+    setSchedule(prev => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+    setActiveReorderItemId(null);
+    setHasUnsavedChanges(true);
+  });
 
   // Manejadores del Selector de Horario (Reloj y Rueda)
   const parseTimeStr = (str: string, defaultH: number, defaultM: number, defaultAmPm: 'am' | 'pm') => {
@@ -765,7 +782,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         </View>
       </View>
 
-      <ScrollView style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
+      <ScrollView style={styles.scrollBody} contentContainerStyle={styles.scrollContent} {...scheduleDrag.scrollProps}>
         {/* BADGES INFORMATIVOS DE VINCULACIÓN AL PLAN TRIMESTRAL O EXTRAORDINARIA */}
         {planActivityId ? (
           <View style={{ backgroundColor: isDarkMode ? '#064e3b' : '#dcfce7', borderWidth: 1, borderColor: '#16a34a', padding: 12, borderRadius: 12, marginBottom: 14, flexDirection: 'row', alignItems: 'center' }}>
@@ -1019,7 +1036,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
           <View style={styles.fieldGroup}>
             <Text style={[styles.fieldLabel, { color: theme.text }]}>Objetivo General</Text>
-            <TextInput
+            <AutoGrowTextInput
               style={[styles.textArea, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', color: theme.text, borderColor: theme.border }]}
               placeholder="Describe el propósito formativo central de la actividad..."
               placeholderTextColor={theme.subText}
@@ -1223,15 +1240,18 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
           </View>
 
           {schedule.map((item, index) => {
-            const isBeingReordered = activeReorderItemId === item.id;
+            const isDragging = scheduleDrag.draggingId === item.id;
+            const isBeingReordered = activeReorderItemId === item.id || isDragging;
             return (
-              <View
+              <Animated.View
                 key={item.id}
+                ref={scheduleDrag.itemRef(item.id)}
+                onLayout={scheduleDrag.onItemLayout(item.id)}
                 style={[
                   styles.scheduleCardItem,
                   { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: isBeingReordered ? primaryColor : theme.border },
+                  { transform: [{ translateY: scheduleDrag.anim(item.id) }, { scale: isDragging ? 1.02 : 1 }] },
                   isBeingReordered && {
-                    transform: [{ scale: 1.025 }],
                     shadowColor: primaryColor,
                     shadowOffset: { width: 0, height: 6 },
                     shadowOpacity: 0.35,
@@ -1245,15 +1265,17 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                 {/* Cabecera del item con Reordenamiento */}
                 <View style={styles.scheduleItemHeader}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <TouchableOpacity
+                    <DragHandle
                       style={[styles.dragGripBtn, { backgroundColor: isBeingReordered ? primaryColor : (primaryColor + '18') }]}
-                      onLongPress={() => setActiveReorderItemId(isBeingReordered ? null : item.id)}
-                      onPress={() => setActiveReorderItemId(isBeingReordered ? null : item.id)}
-                      activeOpacity={0.7}
+                      accessibilityLabel={`Arrastrar actividad ${index + 1} para moverla`}
+                      onDragStart={pageY => scheduleDrag.handlers.start(item.id, pageY)}
+                      onDragMove={scheduleDrag.handlers.move}
+                      onDragEnd={scheduleDrag.handlers.end}
+                      onTap={() => setActiveReorderItemId(activeReorderItemId === item.id ? null : item.id)}
                     >
                       <GripVertical size={16} color={isBeingReordered ? '#ffffff' : primaryColor} />
                       <Text style={[styles.scheduleItemIndex, { color: isBeingReordered ? '#ffffff' : primaryColor }]}>#{index + 1}</Text>
-                    </TouchableOpacity>
+                    </DragHandle>
 
                     {/* Botones de subida y bajada rápida */}
                     <View style={styles.reorderButtonsRow}>
@@ -1287,7 +1309,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                         <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: 'bold' }}>En movimiento</Text>
                       </View>
                     ) : (
-                      <Text style={{ fontSize: 12, color: theme.subText }}>Mantén presionado para mover</Text>
+                      <Text style={{ fontSize: 12, color: theme.subText }}>Arrastra #{index + 1} para mover</Text>
                     )}
                     <TouchableOpacity onPress={() => handleRemoveScheduleRow(item.id)} style={{ padding: 4 }}>
                       <Trash2 size={16} color="#ef4444" />
@@ -1296,7 +1318,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                 </View>
 
                 {/* Si está en modo activo de reordenamiento por Long Press: barra de ayuda visual */}
-                {isBeingReordered && (
+                {activeReorderItemId === item.id && !isDragging && (
                   <View style={[styles.reorderActiveBar, { backgroundColor: primaryColor + '15', borderColor: primaryColor }]}>
                     <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold' }}>
                       ✨ Moviendo actividad #{index + 1}
@@ -1395,7 +1417,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
                 <View style={styles.fieldGroup}>
                   <Text style={[styles.fieldLabelSmall, { color: theme.text }]}>Descripción y Explicación de la Dinámica</Text>
-                  <TextInput
+                  <AutoGrowTextInput
                     style={[styles.textAreaSmall, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff', color: theme.text, borderColor: theme.border }]}
                     placeholder="Explica las reglas, la dinámica, el juego o el recorrido paso a paso..."
                     placeholderTextColor={theme.subText}
@@ -1416,7 +1438,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                     onChangeText={txt => handleUpdateScheduleRow(item.id, 'materials', txt)}
                   />
                 </View>
-              </View>
+              </Animated.View>
             );
           })}
         </View>
@@ -1424,7 +1446,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         {/* 6. SECCIÓN: NOTAS IMPORTANTES */}
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
           <Text style={[styles.sectionHeading, { color: theme.accentText }]}>📝 6. Notas Importantes / Recomendaciones</Text>
-          <TextInput
+          <AutoGrowTextInput
             style={[styles.textArea, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', color: theme.text, borderColor: theme.border }]}
             placeholder="Ej: Cada Rover debe tener dominio del tema. Traer hidratación y uniforme completo..."
             placeholderTextColor={theme.subText}

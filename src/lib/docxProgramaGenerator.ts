@@ -3,6 +3,7 @@ import { ProgramaScout } from '../types/programa';
 import { SDG_LIST } from '../data/sdgData';
 import { GROWTH_AREAS, GrowthAreaKey } from '../data/achievementIndicatorsData';
 import { resolveFileUrl } from './fileUrl';
+import { visibleNotes } from './programaNotes';
 
 function escapeXml(str: string): string {
   if (!str) return '';
@@ -291,7 +292,7 @@ export const docxProgramaGenerator = {
           ${scheduleRowsXml || '<w:tr><w:tc><w:tcPr><w:gridSpan w:val="4"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:i/><w:sz w:val="18"/></w:rPr><w:t>Sin actividades en el cronograma.</w:t></w:r></w:p></w:tc></w:tr>'}
           <w:tr>
             <w:tc><w:tcPr><w:tcW w:w="1800" w:type="dxa"/><w:shd w:fill="B2A1C7"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="17"/></w:rPr><w:t>NOTAS IMPORTANTES</w:t></w:r></w:p></w:tc>
-            <w:tc><w:tcPr><w:gridSpan w:val="3"/><w:tcW w:w="9223" w:type="dxa"/></w:tcPr><w:p><w:r><w:rPr><w:sz w:val="17"/></w:rPr><w:t>${escapeXml(programa.importantNotes || 'Cada integrante debe dominar su ponencia y dar lo mejor de sí en este servicio scout.')}</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:gridSpan w:val="3"/><w:tcW w:w="9223" w:type="dxa"/></w:tcPr><w:p>${(visibleNotes(programa.importantNotes) || 'Cada integrante debe dominar su ponencia y dar lo mejor de sí en este servicio scout.').split('\n').map((line, i) => `<w:r><w:rPr><w:sz w:val="17"/></w:rPr>${i > 0 ? '<w:br/>' : ''}<w:t xml:space="preserve">${escapeXml(line)}</w:t></w:r>`).join('')}</w:p></w:tc>
           </w:tr>
         </w:tbl>
       `;

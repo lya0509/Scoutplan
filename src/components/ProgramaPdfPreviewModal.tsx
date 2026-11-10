@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator
 } from 'react-native';
+import { visibleNotes } from '../lib/programaNotes';
 import { X, Printer, Download, FileText, CheckCircle, ArrowLeft } from 'lucide-react-native';
 import { ProgramaScout } from '../types/programa';
 import { SDG_LIST } from '../data/sdgData';
@@ -531,7 +532,7 @@ export function ProgramaPdfPreviewModal({ visible, programa, onClose }: Props) {
                           </View>
                           <View style={styles.asvNotesBodyCell}>
                             <Text style={styles.asvNotesBodyText}>
-                              {programa.importantNotes || 'Cada integrante debe dominar su ponencia y dar lo mejor de sí en este servicio scout.'}
+                              {visibleNotes(programa.importantNotes) || 'Cada integrante debe dominar su ponencia y dar lo mejor de sí en este servicio scout.'}
                             </Text>
                           </View>
                         </View>

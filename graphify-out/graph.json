@@ -2,17 +2,17 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-10T14:51:03.200Z",
+    "generatedAt": "2026-11-10T23:53:54.511Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
-      "totalNodes": 138,
-      "totalEdges": 133,
+      "totalNodes": 141,
+      "totalEdges": 137,
       "totalHyperedges": 4,
       "totalScreens": 29,
-      "totalComponents": 37,
+      "totalComponents": 39,
       "totalContexts": 3,
-      "totalServices": 30,
+      "totalServices": 31,
       "totalCatalogs": 12,
       "totalDatabaseTables": 11,
       "totalQaSuites": 14
@@ -581,8 +581,8 @@
       "file": "src/lib/programaService.ts",
       "role": "Manages scout_programas table and @scout_programas_list local cache with getProgramas, savePrograma, deletePrograma, and duplicatePrograma.",
       "exists": true,
-      "lines": 435,
-      "bytes": 17130,
+      "lines": 425,
+      "bytes": 16536,
       "exports": [
         "programaService"
       ],
@@ -591,7 +591,8 @@
         "@supabase/supabase-js",
         "./supabaseClient",
         "./offline/outbox",
-        "../types/programa"
+        "../types/programa",
+        "./programaNotes"
       ],
       "supabaseTables": [
         "scout_programas"
@@ -603,6 +604,26 @@
       "storageKeys": [
         "@scout_programas_list"
       ]
+    },
+    {
+      "id": "programaNotes.ts",
+      "label": "programaNotes.ts (Hidden metadata tags in Programa notes)",
+      "type": "service",
+      "community": "backend_offline_services",
+      "file": "src/lib/programaNotes.ts",
+      "role": "visibleNotes() strips PLAN_ACT_ID/PROGRAMA_STATUS/PREVIEW_ROLES/AUTHOR_ID/AUTHOR_NAME tags and extra blank lines for the editor, preview and .docx; notesWithMeta() rebuilds them together under the text on save (no blank-line growth).",
+      "exists": true,
+      "lines": 44,
+      "bytes": 1505,
+      "exports": [
+        "visibleNotes",
+        "notesWithMeta"
+      ],
+      "imports": [],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
     },
     {
       "id": "fileUrl.ts",
@@ -726,8 +747,8 @@
       "file": "src/lib/docxProgramaGenerator.ts",
       "role": "Generates official ASV Word .docx files for ProgramaScout using JSZip and public/programa_assets/Programa_Template.docx.",
       "exists": true,
-      "lines": 342,
-      "bytes": 19242,
+      "lines": 343,
+      "bytes": 19401,
       "exports": [
         "docxProgramaGenerator"
       ],
@@ -736,7 +757,8 @@
         "../types/programa",
         "../data/sdgData",
         "../data/achievementIndicatorsData",
-        "./fileUrl"
+        "./fileUrl",
+        "./programaNotes"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1494,8 +1516,8 @@
       "route": "ProgramaScoutEditor",
       "role": "Full editor for ProgramaScout: metadata, unit/sinodal selector, objectives, SDGs (17 ODS), 6 Growth Area achievement indicators, time-table schedule, and autoSaveService integration.",
       "exists": true,
-      "lines": 1915,
-      "bytes": 90356,
+      "lines": 1937,
+      "bytes": 91538,
       "exports": [
         "ProgramaScoutEditorScreen"
       ],
@@ -1519,7 +1541,11 @@
         "../utils/dateLocal",
         "./programaEditor/styles",
         "./programaEditor/DatePickerModal",
-        "./programaEditor/IndicatorPickerModal"
+        "./programaEditor/IndicatorPickerModal",
+        "./programaEditor/DragHandle",
+        "./programaEditor/useScheduleDrag",
+        "../components/AutoGrowTextInput",
+        "../lib/programaNotes"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1984,14 +2010,15 @@
       "file": "src/components/ProgramaPdfPreviewModal.tsx",
       "role": "Renders official ASV formatted preview of a ProgramaScout with html2pdf / print export.",
       "exists": true,
-      "lines": 833,
-      "bytes": 30823,
+      "lines": 834,
+      "bytes": 30890,
       "exports": [
         "ProgramaPdfPreviewModal"
       ],
       "imports": [
         "react",
         "react-native",
+        "../lib/programaNotes",
         "lucide-react-native",
         "../types/programa",
         "../data/sdgData",
@@ -3417,6 +3444,28 @@
       "storageKeys": []
     },
     {
+      "id": "DragHandle.tsx",
+      "label": "programaEditor/DragHandle.tsx (Drag grip for schedule items)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/screens/programaEditor/DragHandle.tsx",
+      "role": "PanResponder grip (#n) that drags a schedule activity with finger or mouse (touch-action none on web); a tap without moving opens the up/down arrows. Positions and auto-scroll come from programaEditor/useScheduleDrag.ts.",
+      "exists": true,
+      "lines": 60,
+      "bytes": 2022,
+      "exports": [
+        "DragHandle"
+      ],
+      "imports": [
+        "react",
+        "react-native"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
       "id": "manualsData.ts",
       "label": "manualsData.ts (Scout manuals content)",
       "type": "catalog",
@@ -3449,8 +3498,8 @@
       "file": "tests/e2e/run.mjs",
       "role": "npm run test:e2e — builds and opens the app in Chromium with Supabase MOCKED (tests/e2e/mockSupabase.mjs): 25 screens × 4 roles × light/dark (no JS errors, no endless spinner, content visible, contrast ≥ 3:1), program editor modals, and cold start offline with an expired session.",
       "exists": true,
-      "lines": 357,
-      "bytes": 18399,
+      "lines": 386,
+      "bytes": 20664,
       "exports": [],
       "imports": [
         "playwright-core",
@@ -3621,6 +3670,28 @@
         "react",
         "react-native",
         "../context/ThemeContext"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "AutoGrowTextInput.tsx",
+      "label": "AutoGrowTextInput.tsx (Auto-growing multiline input)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/components/AutoGrowTextInput.tsx",
+      "role": "Multiline TextInput that grows and shrinks with its text; on web measures the textarea scrollHeight and re-measures when the width changes (ResizeObserver), on native uses onContentSizeChange.",
+      "exists": true,
+      "lines": 75,
+      "bytes": 2832,
+      "exports": [
+        "AutoGrowTextInput"
+      ],
+      "imports": [
+        "react",
+        "react-native"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -4209,6 +4280,26 @@
       "from": "ProgramaScoutEditorScreen.tsx",
       "to": "IndicatorPickerModal.tsx",
       "relation": "renders"
+    },
+    {
+      "from": "ProgramaScoutEditorScreen.tsx",
+      "to": "DragHandle.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "ProgramaScoutEditorScreen.tsx",
+      "to": "AutoGrowTextInput.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "programaService.ts",
+      "to": "programaNotes.ts",
+      "relation": "imports"
+    },
+    {
+      "from": "ProgramaPdfPreviewModal.tsx",
+      "to": "programaNotes.ts",
+      "relation": "imports"
     },
     {
       "from": "NudosManualScreen.tsx",

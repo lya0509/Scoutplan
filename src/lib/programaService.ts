@@ -3,6 +3,7 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './supabaseClient';
 import { outbox } from './offline/outbox';
 import { ProgramaScout } from '../types/programa';
+import { notesWithMeta } from './programaNotes';
 
 const STORAGE_KEY = '@scout_programas_list';
 
@@ -300,26 +301,15 @@ class ProgramaService {
   async savePrograma(programa: ProgramaScout): Promise<ProgramaScout> {
     try {
       const now = new Date().toISOString();
-      let finalNotes = programa.importantNotes || '';
-      if (programa.planActivityId && !finalNotes.includes(`[PLAN_ACT_ID:${programa.planActivityId}]`)) {
-        finalNotes = finalNotes ? `${finalNotes}\n[PLAN_ACT_ID:${programa.planActivityId}]` : `[PLAN_ACT_ID:${programa.planActivityId}]`;
-      }
-      if (programa.status) {
-        finalNotes = finalNotes.replace(/\[PROGRAMA_STATUS:[^\]]+\]/g, '').trim();
-        finalNotes = `${finalNotes}\n[PROGRAMA_STATUS:${programa.status}]`.trim();
-      }
-      if (programa.previewRoles && programa.previewRoles.length > 0) {
-        finalNotes = finalNotes.replace(/\[PREVIEW_ROLES:[^\]]+\]/g, '').trim();
-        finalNotes = `${finalNotes}\n[PREVIEW_ROLES:${programa.previewRoles.join(',')}]`.trim();
-      }
-      if (programa.createdBy) {
-        finalNotes = finalNotes.replace(/\[AUTHOR_ID:[^\]]+\]/g, '').trim();
-        finalNotes = `${finalNotes}\n[AUTHOR_ID:${programa.createdBy}]`.trim();
-      }
-      if (programa.creatorName) {
-        finalNotes = finalNotes.replace(/\[AUTHOR_NAME:[^\]]+\]/g, '').trim();
-        finalNotes = `${finalNotes}\n[AUTHOR_NAME:${programa.creatorName}]`.trim();
-      }
+      // Antes cada guardado dejaba líneas vacías al quitar y volver a poner las
+      // etiquetas; ahora se reconstruyen juntas debajo del texto.
+      const finalNotes = notesWithMeta(programa.importantNotes, {
+        PLAN_ACT_ID: programa.planActivityId,
+        PROGRAMA_STATUS: programa.status,
+        PREVIEW_ROLES: programa.previewRoles && programa.previewRoles.length > 0 ? programa.previewRoles.join(',') : undefined,
+        AUTHOR_ID: programa.createdBy,
+        AUTHOR_NAME: programa.creatorName,
+      });
 
       const updatedPrograma: ProgramaScout = {
         ...programa,

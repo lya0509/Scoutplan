@@ -272,6 +272,35 @@ async function checkProgramaEditor(browser, base) {
     const shown = indicatorText && await page.getByText(indicatorText.trim()).count();  // en la lista va con «• » delante
     if (shown) ok(`indicadores: se agregó «${indicatorText.slice(0, 40)}…»`);
     else { bad('indicadores: el indicador elegido no aparece en la lista'); await shot(page, 'editor-indicador'); }
+
+    // Descripción de la dinámica: la caja crece con el texto y se encoge al ensanchar la ventana
+    const desc = page.locator('textarea[placeholder^="Explica las reglas"]').first();
+    await desc.fill('Armarán una matriz evaluando la urgencia por caducidad y la necesidad nutricional, luego trazarán la ruta más rápida considerando distancias y tráfico para proteger la cadena de frío, y cerrarán con una matriz de riesgos para actuar ante cualquier imprevisto en el camino.');
+    await sleep(300);
+    const size = () => desc.evaluate(el => ({ h: el.clientHeight, sh: el.scrollHeight }));
+    const narrow = await size();
+    await page.setViewportSize({ width: 1280, height: 860 }); await sleep(400);
+    const wide = await size();
+    await page.setViewportSize({ width: 400, height: 860 }); await sleep(400);
+    if (narrow.sh <= narrow.h + 1 && wide.sh <= wide.h + 1 && wide.h < narrow.h) ok(`descripción: la caja se ajusta al texto (${narrow.h} px en teléfono, ${wide.h} px en computadora)`);
+    else { bad(`descripción: la caja no se ajusta al texto (${JSON.stringify({ narrow, wide })})`); await shot(page, 'editor-descripcion'); }
+
+    // Cronograma: arrastrar la última actividad (#n) hasta el primer lugar
+    await page.getByText('Agregar Actividad').click(); await sleep(200);
+    const titleInputs = page.locator('input[placeholder^="Ej: Rompehielo"]');
+    const n = await titleInputs.count();
+    await titleInputs.nth(n - 1).fill('ULTIMA');
+    const grip = page.getByText(`#${n}`, { exact: true }).first();
+    await grip.scrollIntoViewIfNeeded();
+    const gb = await grip.boundingBox();
+    await page.mouse.move(gb.x + gb.width / 2, gb.y + gb.height / 2);
+    await page.mouse.down();
+    for (let i = 1; i <= 40; i++) { await page.mouse.move(gb.x + gb.width / 2, Math.max(5, gb.y - i * 30)); await sleep(25); }
+    await sleep(2500);   // cerca del borde la lista se desplaza sola
+    await page.mouse.up(); await sleep(400);
+    const order = await titleInputs.evaluateAll(els => els.map(e => e.value));
+    if (order[0] === 'ULTIMA') ok(`cronograma: arrastrar #${n} lo lleva al primer lugar`);
+    else { bad(`cronograma: el arrastre no movió la actividad (${order.join(' / ')})`); await shot(page, 'editor-arrastre'); }
     if (errors.length) bad(`editor: error de JavaScript: ${errors[0]}`);
   } catch (e) {
     bad(`editor: ${e.message.split('\n')[0]}`);
