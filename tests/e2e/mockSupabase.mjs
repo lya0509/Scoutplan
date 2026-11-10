@@ -90,7 +90,12 @@ export const FIXTURES = {
   ],
   audit_log: [],
   push_subscriptions: [],
-  bug_reports: [],
+  bug_reports: [
+    { id: 'br000000-0000-4000-8000-000000000001', created_at: iso(now), user_id: USERS.scout, user_name: 'Joven Prueba', user_role: 'scout', status: 'pendiente',
+      description: "[Error automático] Cannot read properties of undefined (reading 'map')\nPantalla: /plan · Versión: abc12345 · con internet\nEquipo: Android 14 · Chrome/131\n\nTypeError: Cannot read properties of undefined" },
+    { id: 'br000000-0000-4000-8000-000000000002', created_at: iso(now), user_id: USERS.scouter, user_name: 'Scouter Prueba', user_role: 'scouter', status: 'pendiente',
+      description: 'No me deja subir el certificado' },
+  ],
 };
 
 const RPC = {
@@ -168,7 +173,7 @@ export function fakeSession(p, { expired = false } = {}) {
  * Devuelve un registro de lo que la app pidió (para revisar escrituras inesperadas).
  */
 export async function attachMockSupabase(context, currentProfile) {
-  const log = { writes: [], unknownTables: new Set() };
+  const log = { writes: [], inserts: [], unknownTables: new Set() };
   await context.route(/^https:\/\/[a-z0-9-]+\.supabase\.co\//, async (route) => {
     const req = route.request();
     const url = new URL(req.url());
@@ -215,6 +220,7 @@ export async function attachMockSupabase(context, currentProfile) {
         log.writes.push(`${method} ${table}`);
         let body = [];
         try { body = req.postDataJSON(); } catch {}
+        if (method === 'POST') log.inserts.push({ table, body });
         return json(Array.isArray(body) ? body : body ? [body] : [], method === 'POST' ? 201 : 200);
       }
       if (!(table in FIXTURES)) log.unknownTables.add(table);

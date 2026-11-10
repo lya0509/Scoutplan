@@ -283,6 +283,32 @@ vRover.includes('Scouter Orión') ? ok('Ahora el Rover ve el plan de su unidad')
 await as(U(3), 'El Rover intenta modificar el plan de la unidad', `UPDATE public.quarterly_plans SET elaborated_by='hackeado' WHERE elaborated_by='Scouter Orión'`, true);
 (await db.query(`SELECT count(*)::int n FROM public.quarterly_plans WHERE elaborated_by='hackeado'`)).rows[0].n === 0 ? ok('…pero no cambia nada (solo lectura)') : bad('El Rover pudo modificar el plan de la unidad');
 
+// ───────────────────────── Errores de la app (bug_reports) ─────────────────────────
+section('supabase_errores_app.sql');
+// La tabla se creó desde el panel de Supabase: aquí con las columnas que usa la app y las
+// reglas que dejó supabase_rls_correcciones.sql
+await db.exec(`CREATE TABLE public.bug_reports (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid, user_name text, user_email text,
+    user_role text, description text, media_url text, status text, created_at timestamptz DEFAULT now());
+  ALTER TABLE public.bug_reports ENABLE ROW LEVEL SECURITY;
+  GRANT ALL ON public.bug_reports TO authenticated, service_role;
+  CREATE POLICY reportes_crear ON public.bug_reports FOR INSERT TO authenticated WITH CHECK (user_id IS NULL OR user_id::text = auth.uid()::text);
+  CREATE POLICY reportes_admin ON public.bug_reports FOR ALL TO authenticated USING (public.mi_rol() IN ('admin', 'nacional')) WITH CHECK (public.mi_rol() IN ('admin', 'nacional'));`);
+await as(U(3), 'El Rover guarda un error automático a su nombre', `INSERT INTO public.bug_reports (user_id, user_name, description, status) VALUES ('${U(3)}', 'Rover', '[Error automático] TypeError en Inicio', 'pendiente')`, true);
+await as(U(3), 'El Rover intenta guardar un reporte a nombre de otro', `INSERT INTO public.bug_reports (user_id, description) VALUES ('${U(1)}', 'falso')`, false);
+await as(U(4), 'Jefe de otro grupo guarda un error propio', `INSERT INTO public.bug_reports (user_id, description) VALUES ('${U(4)}', '[Error automático] de QA')`, true);
+const jefeAntes = await rowsAs(U(1), `SELECT count(*)::int n FROM public.bug_reports`);
+jefeAntes[0].n === 0 ? ok('Antes: la Jefatura no veía ningún reporte (solo admin)') : bad('La simulación no reproduce el estado previo');
+for (let k = 0; k < 2; k++) await run('supabase_errores_app.sql', sqlFile('supabase_errores_app.sql'));
+const vJefe = (await rowsAs(U(1), `SELECT description FROM public.bug_reports`)).map(r => r.description);
+vJefe.includes('[Error automático] TypeError en Inicio') ? ok('La Jefatura ve los errores de su grupo') : bad('La Jefatura no ve los errores de su grupo');
+!vJefe.includes('[Error automático] de QA') ? ok('…pero no los de otro grupo') : bad('La Jefatura ve errores de otro grupo');
+(await rowsAs(U(2), `SELECT count(*)::int n FROM public.bug_reports`))[0].n === 0 ? ok('El Scouter no ve los reportes') : bad('El Scouter ve reportes');
+(await rowsAs(U(3), `SELECT count(*)::int n FROM public.bug_reports`))[0].n === 0 ? ok('El joven no ve los reportes') : bad('El joven ve reportes');
+const anonBug = await asRole('anon', `SELECT count(*)::int n FROM public.bug_reports`);
+anonBug.err || anonBug.rows[0].n === 0 ? ok('Sin sesión no se ve nada') : bad('Sin sesión se ven reportes');
+await as(U(1), 'La Jefatura intenta borrar un reporte', `DELETE FROM public.bug_reports`, true);
+(await db.query(`SELECT count(*)::int n FROM public.bug_reports`)).rows[0].n === 2 ? ok('…pero no borra nada (solo lectura)') : bad('La Jefatura pudo borrar reportes');
+
 // ───────────────────────── Respaldo y restauración ─────────────────────────
 // Se arma un respaldo igual al de api/backup.js, se «pierden» y dañan datos, se restaura con
 // la misma lógica que scripts/restore-backup.mjs y se compara con el original.

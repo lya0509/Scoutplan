@@ -1,8 +1,8 @@
 // Pruebas automáticas de las pantallas (E2E) sobre la app compilada.
 //
 //   npm run test:e2e            → compila (expo export + sw.js) y prueba
-//   node tests/e2e/run.mjs      → prueba el dist/ que ya existe
-//   node tests/e2e/run.mjs --only=scout   (o scouter, jefe_grupo, comisionado_distrital, editor, offline)
+//   node tests/e2e/run.mjs      → reutiliza dist/ si ya está compilado para pruebas (si no, compila)
+//   node tests/e2e/run.mjs --only=scout   (o scouter, jefe_grupo, comisionado_distrital, editor, errores, offline)
 //
 // No toca la base de datos real: Supabase está simulado (tests/e2e/mockSupabase.mjs).
 // Por cada rol abre sus pantallas y revisa:
@@ -84,12 +84,20 @@ function findChromium() {
   return undefined; // que Playwright use el suyo
 }
 
+// La app de prueba se compila SIEMPRE con esta URL y clave de mentira (aquí y en GitHub):
+// así las pruebas nunca dependen del .env ni pueden tocar la base real.
+const E2E_SUPABASE_URL = 'https://e2eprueba.supabase.co';
+const E2E_SUPABASE_KEY = 'clave-de-prueba-no-real';
+
 function supabaseStorageKey() {
-  const env = fs.existsSync(path.join(ROOT, '.env')) ? fs.readFileSync(path.join(ROOT, '.env'), 'utf8') : '';
-  const url = (env.match(/EXPO_PUBLIC_SUPABASE_URL=(\S+)/) || [])[1] || process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-  const ref = (url.match(/https:\/\/([a-z0-9-]+)\.supabase\.co/) || [])[1];
-  if (!ref) throw new Error('No se encontró EXPO_PUBLIC_SUPABASE_URL (.env) para armar la sesión de prueba.');
-  return `sb-${ref}-auth-token`;
+  return 'sb-e2eprueba-auth-token';
+}
+
+/** ¿El dist/ actual se compiló para las pruebas (con la URL de mentira)? */
+function distIsForTests() {
+  const jsDir = path.join(DIST, '_expo', 'static', 'js', 'web');
+  if (!fs.existsSync(path.join(DIST, 'index.html')) || !fs.existsSync(jsDir)) return false;
+  return fs.readdirSync(jsDir).some(f => f.startsWith('index-') && fs.readFileSync(path.join(jsDir, f), 'utf8').includes('e2eprueba.supabase.co'));
 }
 
 let fails = 0;
@@ -273,10 +281,59 @@ async function checkProgramaEditor(browser, base) {
   }
 }
 
+/** Errores de la app: se registran solos (una vez) y la Jefatura los ve en su panel. */
+async function checkErrorReporting(browser, base) {
+  console.log('\n▶ Errores de la app: registro automático y panel de Jefatura');
+  // 1. Un joven sufre un error: se guarda en bug_reports una sola vez
+  let { context, log } = await newContext(browser, PROFILES.scout);
+  let page = await context.newPage();
+  try {
+    await page.goto(`${base}/inicio`);
+    await settle(page, /¡Hola, Joven/);
+    await page.evaluate(() => {
+      setTimeout(() => { throw new Error('Prueba E2E: algo falló'); }, 0);
+      setTimeout(() => { throw new Error('Prueba E2E: algo falló'); }, 50);   // repetido: no se manda dos veces
+      Promise.reject(new Error('Prueba E2E: promesa rechazada'));
+      setTimeout(() => { throw new TypeError('Failed to fetch'); }, 80);     // de red: se ignora
+    });
+    await sleep(2500);
+    const reports = log.inserts.filter(i => i.table === 'bug_reports').flatMap(i => [].concat(i.body));
+    const texts = reports.map(r => r.description || '');
+    const same = texts.filter(t => t.includes('Prueba E2E: algo falló')).length;
+    same === 1 ? ok('un error de la app se registra (y repetido, una sola vez)') : bad(`el error se registró ${same} veces (esperaba 1)`);
+    texts.some(t => t.includes('promesa rechazada')) ? ok('también las promesas rechazadas') : bad('no se registró la promesa rechazada');
+    !texts.some(t => t.includes('Failed to fetch')) ? ok('los fallos de red no se registran (son normales sin internet)') : bad('se registró un fallo de red');
+    const r = reports[0] || {};
+    r.user_id === PROFILES.scout.id && /Pantalla: \/inicio/.test(r.description || '') && r.description.startsWith('[Error automático')
+      ? ok('el reporte lleva quién, en qué pantalla y el detalle') : bad('al reporte le faltan datos: ' + JSON.stringify(r).slice(0, 200));
+  } finally {
+    await context.close();
+  }
+
+  // 2. La Jefatura abre «🐞 Errores de la app»
+  ({ context, log } = await newContext(browser, PROFILES.jefe_grupo));
+  page = await context.newPage();
+  try {
+    await page.goto(`${base}/jefe-grupo`);
+    await settle(page, /Panel Jefe de Grupo/);
+    await page.getByText('🐞 Errores de la app').first().click();
+    const st = await settle(page, /Cannot read properties of undefined/, 6000);
+    const manual = await page.getByText('No me deja subir el certificado').count();
+    if (st.found && manual) ok('la Jefatura ve los errores automáticos y los reportes manuales');
+    else { bad('el panel de errores no muestra los reportes'); await shot(page, 'errores-panel'); }
+  } finally {
+    await context.close();
+  }
+}
+
 // ---------- Principal ----------
-if (args.includes('--build') || !fs.existsSync(path.join(DIST, 'index.html'))) {
-  console.log('Compilando la app (npm run build:web)…');
-  execSync('npm run build:web', { cwd: ROOT, stdio: 'inherit' });
+if (args.includes('--build') || !distIsForTests()) {
+  console.log('Compilando la app para las pruebas (npm run build:web con Supabase de mentira)…');
+  execSync('npm run build:web', {
+    cwd: ROOT,
+    stdio: 'inherit',
+    env: { ...process.env, EXPO_PUBLIC_SUPABASE_URL: E2E_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_ANON_KEY: E2E_SUPABASE_KEY },
+  });
 }
 
 const server = await startServer(DIST);
@@ -288,6 +345,7 @@ try {
     if (!only || only === role) await checkRoutes(browser, role, base);
   }
   if (!only || only === 'editor') await checkProgramaEditor(browser, base);
+  if (!only || only === 'errores') await checkErrorReporting(browser, base);
   if (!only || only === 'offline') await checkOffline(browser, base);
 } finally {
   await browser.close();

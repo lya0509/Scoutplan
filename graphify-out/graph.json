@@ -2,17 +2,17 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-09T22:30:00.074Z",
+    "generatedAt": "2026-11-10T12:43:16.122Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
-      "totalNodes": 132,
-      "totalEdges": 120,
+      "totalNodes": 136,
+      "totalEdges": 128,
       "totalHyperedges": 4,
       "totalScreens": 29,
-      "totalComponents": 33,
+      "totalComponents": 35,
       "totalContexts": 3,
-      "totalServices": 29,
+      "totalServices": 30,
       "totalCatalogs": 12,
       "totalDatabaseTables": 11,
       "totalQaSuites": 14
@@ -97,8 +97,8 @@
       "file": "App.tsx",
       "role": "Initializes Graphify Bridge, registers /sw.js Service Worker on Web, listens to window online events to flush dataService.syncPendingRequirements(), and wraps ThemeProvider -> AuthProvider -> NotificationProvider -> AppNavigator.",
       "exists": true,
-      "lines": 61,
-      "bytes": 2314,
+      "lines": 67,
+      "bytes": 2628,
       "exports": [
         "App"
       ],
@@ -114,7 +114,9 @@
         "expo-status-bar",
         "./src/lib/dataService",
         "./src/lib/offline/outbox",
-        "./src/lib/graphifyBridge"
+        "./src/lib/graphifyBridge",
+        "./src/lib/errorReporter",
+        "./src/components/AppErrorBoundary"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1346,8 +1348,8 @@
       "route": "JefeDashboard",
       "role": "Group Chief dashboard: supervises all units (Manada, Tropa, Caminantes, Clan), approves/rejects membership expiration dates, moderates photos, and manages group calendar.",
       "exists": true,
-      "lines": 1698,
-      "bytes": 86430,
+      "lines": 1711,
+      "bytes": 87101,
       "exports": [
         "JefeGrupoScreen"
       ],
@@ -1380,7 +1382,8 @@
         "../utils/dateLocal",
         "../components/PullToRefreshScrollView",
         "../components/CipManagerModal",
-        "./jefeGrupo/styles"
+        "./jefeGrupo/styles",
+        "../components/AppErrorsModal"
       ],
       "supabaseTables": [
         "profiles",
@@ -2945,8 +2948,8 @@
       "file": "src/screens/NuevaContrasenaScreen.tsx",
       "role": "Gate shown while AuthContext.recoveryMode (entered via the «¿Olvidaste tu contraseña?» email link): supabase.auth.updateUser({password}), min 8 chars, then endRecovery().",
       "exists": true,
-      "lines": 119,
-      "bytes": 6239,
+      "lines": 120,
+      "bytes": 6376,
       "exports": [
         "NuevaContrasenaScreen"
       ],
@@ -3175,16 +3178,20 @@
       "file": "tests/sql/run.mjs",
       "role": "npm run test:sql — in-memory Postgres (PGlite) with Supabase stubs (auth.uid, roles, storage, realtime); runs every supabase_*.sql twice in production order and ~78 permission checks (cross-group, self-approval, CIP, history, deletion, notifications, private presence).",
       "exists": true,
-      "lines": 286,
-      "bytes": 28166,
+      "lines": 384,
+      "bytes": 37078,
       "exports": [],
       "imports": [
         "@electric-sql/pglite",
         "fs",
         "path",
-        "url"
+        "url",
+        "zlib",
+        "../../scripts/lib/backupRestore.mjs"
       ],
-      "supabaseTables": [],
+      "supabaseTables": [
+        "hola"
+      ],
       "supabaseBuckets": [],
       "realtimeChannels": [],
       "storageKeys": []
@@ -3418,8 +3425,8 @@
       "file": "tests/e2e/run.mjs",
       "role": "npm run test:e2e — builds and opens the app in Chromium with Supabase MOCKED (tests/e2e/mockSupabase.mjs): 25 screens × 4 roles × light/dark (no JS errors, no endless spinner, content visible, contrast ≥ 3:1), program editor modals, and cold start offline with an expired session.",
       "exists": true,
-      "lines": 299,
-      "bytes": 15155,
+      "lines": 357,
+      "bytes": 18387,
       "exports": [],
       "imports": [
         "playwright-core",
@@ -3441,6 +3448,109 @@
         "onboarding_seen_",
         "app_dark_mode"
       ]
+    },
+    {
+      "id": "errorReporter.ts",
+      "label": "errorReporter.ts (Automatic error reports)",
+      "type": "service",
+      "community": "backend_offline_services",
+      "file": "src/lib/errorReporter.ts",
+      "role": "installErrorReporter() listens to window error / unhandledrejection; reportError() stores «[Error automático]» rows in bug_reports with route, app version, device and stack. Ignores network/offline errors and browser extensions; same error max once a day per device and 5 per session; queued offline. Fatal (screen crash) also notifies Telegram with retries.",
+      "exists": true,
+      "lines": 189,
+      "bytes": 8711,
+      "exports": [
+        "reportError",
+        "installErrorReporter"
+      ],
+      "imports": [
+        "react-native",
+        "./supabaseClient",
+        "./apiClient",
+        "./offline/net"
+      ],
+      "supabaseTables": [
+        "bug_reports"
+      ],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": [
+        "@scout_err_sent_v1",
+        "@scout_err_pending_v1",
+        "@scout_cached_profile"
+      ]
+    },
+    {
+      "id": "AppErrorBoundary.tsx",
+      "label": "AppErrorBoundary.tsx (Crashed screen fallback)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/components/AppErrorBoundary.tsx",
+      "role": "Wraps AppNavigator: if a screen throws while rendering, shows «Algo salió mal» with «Volver a intentar» / «Ir al inicio» instead of a blank page, and reports it as fatal.",
+      "exists": true,
+      "lines": 59,
+      "bytes": 2767,
+      "exports": [
+        "AppErrorBoundary"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "../lib/errorReporter"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "AppErrorsModal.tsx",
+      "label": "AppErrorsModal.tsx («🐞 Errores de la app»)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/components/AppErrorsModal.tsx",
+      "role": "Jefatura panel listing automatic errors and manual bug reports of the group (RLS reportes_jefatura_ver in supabase_errores_app.sql), expandable detail.",
+      "exists": true,
+      "lines": 135,
+      "bytes": 6707,
+      "exports": [
+        "AppErrorsModal"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "lucide-react-native",
+        "../lib/supabaseClient",
+        "../context/ThemeContext"
+      ],
+      "supabaseTables": [
+        "bug_reports"
+      ],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "restore-backup.mjs",
+      "label": "scripts/restore-backup.mjs (Restore weekly backup)",
+      "type": "code_file",
+      "community": "database_catalogs_pwa",
+      "file": "scripts/restore-backup.mjs",
+      "role": "--list backups in bucket «respaldos»; dry run by default; --apply upserts by id through the REST API with the service key (never deletes newer data); --tables filter. Logic in scripts/lib/backupRestore.mjs, tested in tests/sql/run.mjs (backup → damage → restore → compare).",
+      "exists": true,
+      "lines": 130,
+      "bytes": 6315,
+      "exports": [],
+      "imports": [
+        "fs",
+        "path",
+        "url",
+        "./lib/backupRestore.mjs"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
     },
     {
       "id": "telegram-notify.js",
@@ -3919,6 +4029,46 @@
       "from": "DualProfileAvatar.tsx",
       "to": "PhotoCropModal.tsx",
       "relation": "renders"
+    },
+    {
+      "from": "App.tsx",
+      "to": "errorReporter.ts",
+      "relation": "calls"
+    },
+    {
+      "from": "App.tsx",
+      "to": "AppErrorBoundary.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "AppErrorBoundary.tsx",
+      "to": "errorReporter.ts",
+      "relation": "calls"
+    },
+    {
+      "from": "errorReporter.ts",
+      "to": "db:bug_reports",
+      "relation": "writes"
+    },
+    {
+      "from": "errorReporter.ts",
+      "to": "telegram-notify.js",
+      "relation": "calls"
+    },
+    {
+      "from": "JefeGrupoScreen.tsx",
+      "to": "AppErrorsModal.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "AppErrorsModal.tsx",
+      "to": "db:bug_reports",
+      "relation": "reads"
+    },
+    {
+      "from": "restore-backup.mjs",
+      "to": "backup.js",
+      "relation": "restores"
     },
     {
       "from": "CurriculumScoutScreen.tsx",

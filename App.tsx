@@ -11,10 +11,14 @@ import { StatusBar } from 'expo-status-bar';
 import { dataService } from './src/lib/dataService'; // registra los manejadores de la cola offline
 import { outbox } from './src/lib/offline/outbox';
 import { initGraphifyBridge } from './src/lib/graphifyBridge';
+import { installErrorReporter } from './src/lib/errorReporter';
+import { AppErrorBoundary } from './src/components/AppErrorBoundary';
 
 export default function App() {
   useEffect(() => {
     initGraphifyBridge();
+    // Errores que les pasan a los usuarios → bug_reports (los ve la Jefatura del grupo)
+    installErrorReporter();
     // 1. Registro de Service Worker para PWA (Instalación y soporte offline inmediato)
     if (Platform.OS === 'web' && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       const registerSW = () => {
@@ -50,7 +54,9 @@ export default function App() {
         <NotificationProvider>
           <StatusBar style="auto" />
           <LiveNotificationToast />
-          <AppNavigator />
+          <AppErrorBoundary>
+            <AppNavigator />
+          </AppErrorBoundary>
           <OfflineStatusBanner />
         </NotificationProvider>
       </AuthProvider>

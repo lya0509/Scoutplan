@@ -34,6 +34,7 @@ import { todayLocal, defaultMembershipDate } from '../utils/dateLocal';
 import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
 import CipManagerModal from '../components/CipManagerModal';
 import { styles, modalStyles } from './jefeGrupo/styles';
+import { AppErrorsModal } from '../components/AppErrorsModal';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
   if (!dateStr) return 'Seleccionar fecha en el calendario';
@@ -57,6 +58,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
   const { isDarkMode, theme, primaryColor, toggleDarkMode } = useTheme();
   // Morados e índigos fuertes sobre fondo negro casi no se leen: versión clara en modo oscuro
   const subCatDark = isDarkMode ? { color: '#c084fc' } : null;
+  const [showAppErrors, setShowAppErrors] = useState(false);
   const indigoText = isDarkMode ? '#a5b4fc' : '#4f46e5';
 
   const [showCustomizer, setShowCustomizer] = useState(false);
@@ -560,6 +562,16 @@ export default function JefeGrupoScreen({ navigation }: any) {
       >
         <ShieldCheck size={18} color="#2563eb" />
         <Text style={[styles.quickToolBtnText, { color: theme.text }]}>🛡️ Roles y miembros</Text>
+      </TouchableOpacity>
+
+      {/* ERRORES DE LA APP (registrados solos o reportados con el botón de ayuda) */}
+      <TouchableOpacity
+        style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+        onPress={() => setShowAppErrors(true)}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+      >
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>🐞 Errores de la app</Text>
       </TouchableOpacity>
 
       {/* CIP: catálogo y asistencia de los jóvenes del grupo */}
@@ -1687,6 +1699,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
         visible={showCustomizer}
         onClose={() => setShowCustomizer(false)}
       />
+      <AppErrorsModal visible={showAppErrors} onClose={() => setShowAppErrors(false)} />
       <CipManagerModal
         visible={showCipManager}
         onClose={() => setShowCipManager(false)}
