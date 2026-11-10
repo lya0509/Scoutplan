@@ -15,7 +15,8 @@ on:
 jobs:
   pruebas:
     name: Unitarias, base de datos y pantallas
-    runs-on: ubuntu-latest
+    # ubuntu-latest ya es 26.04 y Playwright aún no tiene Chromium para esa versión
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       EXPO_PUBLIC_SUPABASE_URL: https://e2eprueba.supabase.co
