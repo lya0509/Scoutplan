@@ -1,0 +1,52 @@
+# Pruebas automáticas en cada cambio que llega a main (y en cada pull request).
+# - Unitarias y de base de datos: también corren en la compilación de Vercel, así que si
+#   fallan NO se publica (vercel.json → npm run build:vercel).
+# - Pantallas (E2E): aquí, con Chromium. Si fallan, GitHub manda un correo y deja las
+#   capturas de las pantallas que fallaron en «Artifacts» del run.
+# Supabase está SIMULADO: la URL y la clave de abajo son de mentira y nada toca producción.
+name: Pruebas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pruebas:
+    name: Unitarias, base de datos y pantallas
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: https://e2eprueba.supabase.co
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: clave-de-prueba-no-real
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Pruebas unitarias
+        run: npm run test:unit
+
+      - name: Pruebas de la base de datos (reglas de seguridad)
+        run: npm run test:sql
+
+      - name: Instalar Chromium
+        run: npx playwright-core install --with-deps chromium
+
+      - name: Pruebas de pantallas (compila la app y la recorre)
+        run: node tests/e2e/run.mjs --build
+
+      - name: Guardar capturas de las pantallas que fallaron
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas-fallas
+          path: /tmp/scoutplan-e2e-fallas
+          if-no-files-found: ignore

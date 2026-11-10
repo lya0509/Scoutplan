@@ -46,7 +46,11 @@
     "test:sql": "node tests/sql/run.mjs",
     "test:unit": "node --test tests/unit/",
     "test:e2e": "node tests/e2e/run.mjs --build",
-    "test": "npm run test:unit && npm run test:sql && npm run test:e2e"
+    "test": "npm run test:unit && npm run test:sql && npm run test:e2e",
+    "build:vercel": "npm run test:unit && npm run test:sql && npm run build:web"
   },
-  "private": true
+  "private": true,
+  "engines": {
+    "node": "24.x"
+  }
 }
