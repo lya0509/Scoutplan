@@ -12,6 +12,8 @@ import { PGlite } from '@electric-sql/pglite';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import zlib from 'zlib';
+import { parseBackup, planRestore, restoreBackup, RESTORE_ORDER } from '../../scripts/lib/backupRestore.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const sqlFile = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
@@ -280,6 +282,76 @@ vRover.includes('Scouter Orión') ? ok('Ahora el Rover ve el plan de su unidad')
 (await rowsAs(U(9), `SELECT count(*)::int n FROM public.quarterly_plans`))[0].n === 0 ? ok('Una cuenta en revisión no ve los planes') : bad('Cuenta en revisión ve planes');
 await as(U(3), 'El Rover intenta modificar el plan de la unidad', `UPDATE public.quarterly_plans SET elaborated_by='hackeado' WHERE elaborated_by='Scouter Orión'`, true);
 (await db.query(`SELECT count(*)::int n FROM public.quarterly_plans WHERE elaborated_by='hackeado'`)).rows[0].n === 0 ? ok('…pero no cambia nada (solo lectura)') : bad('El Rover pudo modificar el plan de la unidad');
+
+// ───────────────────────── Respaldo y restauración ─────────────────────────
+// Se arma un respaldo igual al de api/backup.js, se «pierden» y dañan datos, se restaura con
+// la misma lógica que scripts/restore-backup.mjs y se compara con el original.
+section('Respaldo semanal: restaurar (scripts/restore-backup.mjs)');
+await db.exec(`ALTER ROLE service_role BYPASSRLS;`); // como en Supabase: la clave de servicio no pasa por las reglas
+const BACKUP_TABLES = ['profiles', 'stage_progress', 'requirement_progress', 'certificates', 'quarterly_plans',
+  'calendar_events', 'scout_programas', 'notifications', 'scout_notifications', 'bug_reports',
+  'audit_log', 'cip_oficiales', 'scout_groups', 'scout_regions', 'scout_districts'];
+const existing = [];
+for (const t of BACKUP_TABLES) if ((await db.query(`SELECT to_regclass('public.${t}') r`)).rows[0].r) existing.push(t);
+await db.exec(`INSERT INTO public.certificates (scout_id, category, title, level) VALUES ('${U(3)}', 'curso', 'Primeros Auxilios (respaldo)', 'Básico');
+  INSERT INTO public.stage_progress (scout_id, stage_id, status) VALUES ('${U(3)}', 'precursor', 'Aprobada');`);
+const snapshot = async (t) => (await db.query(`SELECT to_jsonb(x) j FROM public.${t} x ORDER BY x.id::text`)).rows.map(r => JSON.stringify(r.j));
+// 1. Respaldo (como lo arma api/backup.js: select * con la clave de servicio, JSON comprimido)
+const backupTables = {};
+const before = {};
+for (const t of existing) {
+  const r = await asRole('service_role', `SELECT * FROM public.${t}`);
+  backupTables[t] = r.rows.map(row => JSON.parse(JSON.stringify(row)));
+  before[t] = await snapshot(t);
+}
+const gz = zlib.gzipSync(Buffer.from(JSON.stringify({ app: 'Plan Progresivo Scout', createdAt: new Date().toISOString(), tables: backupTables })));
+const totalRows = Object.values(backupTables).reduce((a, r) => a + r.length, 0);
+totalRows > 10 ? ok(`respaldo armado: ${existing.length} tablas, ${totalRows} filas`) : bad('el respaldo de prueba quedó casi vacío');
+// 2. Desastre: se borran certificados, etapas y planes, se daña un perfil; después llega un dato nuevo
+await db.exec(`DELETE FROM public.certificates; DELETE FROM public.stage_progress; DELETE FROM public.quarterly_plans;
+  UPDATE public.profiles SET name = 'DAÑADO', unit = 'tropa' WHERE id = '${U(3)}';
+  INSERT INTO public.calendar_events (title, group_name) VALUES ('Evento cargado DESPUÉS del respaldo', 'Grupo Orión #84');`);
+// 3. Restaurar con la misma lógica del script (aquí escribe en Postgres en vez de la API REST)
+const sqlWriter = async (table, rows) => {
+  const cols = Object.keys(rows[0]);
+  const q = cols.map(c => `"${c}"`).join(', ');
+  const upd = cols.filter(c => c !== 'id').map(c => `"${c}" = EXCLUDED."${c}"`).join(', ');
+  await db.exec('SET ROLE service_role');
+  try {
+    await db.query(`INSERT INTO public.${table} (${q}) SELECT ${q} FROM json_populate_recordset(NULL::public.${table}, $1::json)
+      ON CONFLICT (id) DO ${upd ? 'UPDATE SET ' + upd : 'NOTHING'}`, [JSON.stringify(rows)]);
+  } finally { await db.exec('RESET ROLE'); }
+};
+const plan = planRestore(parseBackup(gz));
+plan.tables.map(t => t.table).indexOf('profiles') < plan.tables.map(t => t.table).indexOf('certificates')
+  ? ok('orden de restauración: perfiles antes que certificados') : bad('orden de restauración incorrecto');
+const summary = await restoreBackup(plan, sqlWriter, { batchSize: 3 });
+const restoreErrors = Object.entries(summary).flatMap(([t, s]) => s.errors.map(e => `${t}: ${e}`));
+restoreErrors.length === 0 ? ok('la restauración no dio errores (los disparadores de seguridad no la bloquean)') : bad('errores al restaurar: ' + restoreErrors.slice(0, 3).join(' | '));
+// 4. Comparar
+let same = true;
+for (const t of existing) {
+  if (t === 'audit_log' || t === 'calendar_events') continue; // el historial suma lo que hizo la restauración; el evento nuevo se revisa abajo
+  const now = await snapshot(t);
+  if (JSON.stringify(now) !== JSON.stringify(before[t])) { same = false; bad(`«${t}» no quedó igual que en el respaldo (${now.length} vs ${before[t].length} filas)`); }
+}
+if (same) ok('certificados, etapas, planes y perfiles quedaron exactamente como en el respaldo');
+const cal = (await db.query(`SELECT title FROM public.calendar_events`)).rows.map(r => r.title);
+cal.includes('Evento cargado DESPUÉS del respaldo') ? ok('lo cargado después del respaldo NO se borra') : bad('la restauración borró datos nuevos');
+before.calendar_events.every(j => cal.includes(JSON.parse(j).title)) ? ok('los eventos del respaldo están todos') : bad('faltan eventos del respaldo');
+if (existing.includes('audit_log')) {
+  const ids = new Set((await db.query(`SELECT id::text FROM public.audit_log`)).rows.map(r => r.id));
+  backupTables.audit_log.every(r => ids.has(String(r.id))) ? ok('el historial del respaldo se conserva') : bad('se perdieron filas del historial');
+}
+// 5. Archivos que no son respaldos
+let rejected = 0;
+for (const junk of [Buffer.from('hola'), Buffer.from('{"otra":"cosa"}'), zlib.gzipSync(Buffer.from('[1,2]'))]) {
+  try { parseBackup(junk); } catch { rejected++; }
+}
+rejected === 3 ? ok('rechaza archivos que no son respaldos') : bad('aceptó un archivo que no es respaldo');
+RESTORE_ORDER.length >= BACKUP_TABLES.length && BACKUP_TABLES.every(t => RESTORE_ORDER.includes(t))
+  ? ok('toda tabla que respalda api/backup.js tiene su lugar en el orden de restauración') : bad('hay tablas del respaldo sin orden de restauración');
+await db.exec(`ALTER ROLE service_role NOBYPASSRLS;`);
 
 console.log(fails ? `\n✘ ${fails} prueba(s) fallaron` : '\n✔ Todas las pruebas pasaron');
 process.exit(fails ? 1 : 0);
