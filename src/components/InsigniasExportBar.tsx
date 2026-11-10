@@ -6,6 +6,7 @@ import { buildInsigniasReport, InsigniaMember } from '../lib/insigniasReport';
 import { exportReportExcel, exportReportPdf } from '../utils/exportHelpers';
 import { isOnline } from '../lib/offline/net';
 import { showAlert } from '../utils/alert';
+import { buttonVariants, iconColor } from '../theme/buttons';
 
 interface Props {
   members: InsigniaMember[];
@@ -16,7 +17,8 @@ interface Props {
 
 /** Tarjeta con "Avance de insignias" → Excel / PDF para Scouters y Jefatura. */
 export function InsigniasExportBar({ members, groupName, scopeLabel }: Props) {
-  const { theme, primaryColor } = useTheme();
+  const { theme, primaryColor, isDarkMode } = useTheme();
+  const btn = buttonVariants(theme, isDarkMode, primaryColor);
   const [busy, setBusy] = useState<'xlsx' | 'pdf' | null>(null);
 
   const run = async (kind: 'xlsx' | 'pdf') => {
@@ -59,24 +61,24 @@ export function InsigniasExportBar({ members, groupName, scopeLabel }: Props) {
       </View>
       <View style={styles.row}>
         <TouchableOpacity
-          style={[styles.btn, { backgroundColor: '#15803d' }]}
+          style={[styles.btn, btn.secondary]}
           onPress={() => run('xlsx')}
           disabled={!!busy}
           accessibilityRole="button"
           accessibilityLabel="Descargar avance de insignias en Excel"
         >
-          {busy === 'xlsx' ? <ActivityIndicator size="small" color="#fff" /> : <Download size={15} color="#fff" />}
-          <Text style={styles.btnText}>Excel (.xlsx)</Text>
+          {busy === 'xlsx' ? <ActivityIndicator size="small" color={iconColor('excel', isDarkMode)} /> : <Download size={15} color={iconColor('excel', isDarkMode)} />}
+          <Text style={[styles.btnText, btn.secondaryText]}>Excel (.xlsx)</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.btn, { backgroundColor: primaryColor }]}
+          style={[styles.btn, btn.secondary]}
           onPress={() => run('pdf')}
           disabled={!!busy}
           accessibilityRole="button"
           accessibilityLabel="Descargar avance de insignias en PDF"
         >
-          {busy === 'pdf' ? <ActivityIndicator size="small" color="#fff" /> : <FileText size={15} color="#fff" />}
-          <Text style={styles.btnText}>PDF</Text>
+          {busy === 'pdf' ? <ActivityIndicator size="small" color={iconColor('pdf', isDarkMode)} /> : <FileText size={15} color={iconColor('pdf', isDarkMode)} />}
+          <Text style={[styles.btnText, btn.secondaryText]}>PDF</Text>
         </TouchableOpacity>
       </View>
     </View>

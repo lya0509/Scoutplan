@@ -276,7 +276,7 @@ export default function FichaMedicaOrion84Form({ targetUserId, readOnly, theme, 
         <Text style={{ fontSize: 12, fontWeight: 'bold', color: accent }}>
           Formato del Grupo Scout Orión 84 (Información General y Ficha Médica)
         </Text>
-        <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+        <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
           Los datos se completaron con tu perfil y tu Ficha Médica Scout. Revísalos, guarda y descarga el PDF listo para entregar.
         </Text>
       </View>
@@ -284,7 +284,7 @@ export default function FichaMedicaOrion84Form({ targetUserId, readOnly, theme, 
       {hasChanges && !readOnly && (
         <View style={styles.changesBanner}>
           <AlertCircle size={14} color="#f59e0b" style={{ marginRight: 6 }} />
-          <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#f59e0b', flex: 1 }}>
+          <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#f59e0b', flex: 1 }}>
             {savedAt ? 'Tienes cambios sin guardar.' : 'Esta ficha todavía no está guardada en tu perfil.'}
           </Text>
         </View>
@@ -298,7 +298,7 @@ export default function FichaMedicaOrion84Form({ targetUserId, readOnly, theme, 
       ))}
 
       {!!savedAt && (
-        <Text style={{ fontSize: 11, color: theme.subText, marginTop: 16 }}>
+        <Text style={{ fontSize: 12, color: theme.subText, marginTop: 16 }}>
           Última vez guardada: {new Date(savedAt).toLocaleString('es-VE')}
         </Text>
       )}
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   introBanner: { backgroundColor: 'rgba(97, 36, 153, 0.08)', padding: 10, borderRadius: 10 },
   changesBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.12)', padding: 8, borderRadius: 8, marginTop: 10 },
   sectionTitle: { fontSize: 14, fontWeight: 'bold', marginBottom: 2 },
-  label: { fontSize: 11, fontWeight: '800', marginBottom: 4, marginTop: 8 },
+  label: { fontSize: 12, fontWeight: '800', marginBottom: 4, marginTop: 8 },
   input: { borderRadius: 10, borderWidth: 1, padding: 8, fontSize: 12 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, minWidth: 48, alignItems: 'center' },

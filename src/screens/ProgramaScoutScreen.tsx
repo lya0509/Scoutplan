@@ -44,6 +44,7 @@ import { ProgramaPdfPreviewModal } from '../components/ProgramaPdfPreviewModal';
 import { showAlert } from '../utils/alert';
 import { navigateBackOrHome } from '../utils/navigationHelper';
 import { todayLocal } from '../utils/dateLocal';
+import { SkeletonScreen } from '../components/Skeleton';
 
 export default function ProgramaScoutScreen({ navigation }: any) {
   const { user } = useAuth();
@@ -376,7 +377,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
               <Text style={[styles.headerTitle, { color: theme.text }]}>Programas de Actividades</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
                 <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e', marginRight: 5 }} />
-                <Text style={{ fontSize: 11, color: theme.subText }}>
+                <Text style={{ fontSize: 12, color: theme.subText }}>
                   {isJefe 
                     ? 'Jefatura de Grupo • En vivo'
                     : isScouter
@@ -510,10 +511,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
 
         {/* LISTA DE PROGRAMAS */}
         {loading ? (
-          <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color={primaryColor} />
-            <Text style={{ marginTop: 10, color: theme.subText }}>Cargando programas oficiales...</Text>
-          </View>
+          <SkeletonScreen variant="list" fill={false} />
         ) : filteredProgramas.length === 0 ? (
           <View style={styles.emptyContainer}>
             <FileText size={48} color={theme.subText} style={{ marginBottom: 12, opacity: 0.6 }} />
@@ -579,14 +577,14 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                       {item.status === 'draft' && (
                         <View style={[styles.unitPill, { backgroundColor: isDarkMode ? '#451a03' : '#fef3c7', borderColor: '#f59e0b', flexDirection: 'row', alignItems: 'center', gap: 3 }]}>
                           <Lock size={10} color="#d97706" />
-                          <Text style={[styles.unitPillText, { color: '#d97706', fontSize: 10, fontWeight: 'bold' }]}>BOCETO</Text>
+                          <Text style={[styles.unitPillText, { color: '#d97706', fontSize: 12, fontWeight: 'bold' }]}>BOCETO</Text>
                         </View>
                       )}
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <View style={[styles.dateBadge, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
                         <Calendar size={12} color={theme.subText} style={{ marginRight: 4 }} />
-                        <Text style={{ fontSize: 11, color: theme.text, fontWeight: '600' }}>{item.date || 'Sin fecha'}</Text>
+                        <Text style={{ fontSize: 12, color: theme.text, fontWeight: '600' }}>{item.date || 'Sin fecha'}</Text>
                       </View>
                       <View
                         style={[
@@ -599,7 +597,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                         <Text
                           style={[
                             styles.unitPillText,
-                            { color: isPastAct ? (isDarkMode ? '#cbd5e1' : '#475569') : (isDarkMode ? '#86efac' : '#15803d'), fontSize: 10 }
+                            { color: isPastAct ? (isDarkMode ? '#cbd5e1' : '#475569') : (isDarkMode ? '#86efac' : '#15803d'), fontSize: 12 }
                           ]}
                         >
                           {isPastAct ? '✓ Realizada' : '⚡ Próxima'}
@@ -621,18 +619,18 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                   <View style={styles.statsRow}>
                     <View style={[styles.statChip, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
                       <Clock size={11} color={primaryColor} style={{ marginRight: 4 }} />
-                      <Text style={{ fontSize: 11, color: theme.text, fontWeight: '500' }}>
+                      <Text style={{ fontSize: 12, color: theme.text, fontWeight: '500' }}>
                         {item.schedule ? item.schedule.length : 0} Actividades
                       </Text>
                     </View>
                     <View style={[styles.statChip, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}>
                       <Sparkles size={11} color="#f59e0b" style={{ marginRight: 4 }} />
-                      <Text style={{ fontSize: 11, color: theme.text, fontWeight: '500' }}>
+                      <Text style={{ fontSize: 12, color: theme.text, fontWeight: '500' }}>
                         {item.selectedSDGs ? item.selectedSDGs.length : 0} ODS
                       </Text>
                     </View>
                     <View style={[styles.statChip, { backgroundColor: isDarkMode ? '#27272a' : '#f0fdf4' }]}>
-                      <Text style={{ fontSize: 11, color: '#16a34a', fontWeight: 'bold' }}>
+                      <Text style={{ fontSize: 12, color: '#16a34a', fontWeight: 'bold' }}>
                         ✓ Áreas de Crecimiento
                       </Text>
                     </View>
@@ -718,7 +716,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                 <Text style={[styles.modalTitle, { color: theme.text }]}>
                   {choiceStep === 'choice' ? 'Nuevo Programa de Actividades' : 'Seleccionar del Plan Trimestral'}
                 </Text>
-                <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                   {choiceStep === 'choice'
                     ? '¿Deseas elaborar una actividad que ya esté en el trimestre?'
                     : `Rama: ${(selectedUnitFilter !== 'todas' ? selectedUnitFilter : userUnit).toUpperCase()} • Trimestre: ${choiceQuarter}`}
@@ -762,7 +760,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                         Sí, actividad del Plan Trimestral
                       </Text>
                       <View style={{ backgroundColor: '#16a34a', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
-                        <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>Recomendado</Text>
+                        <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>Recomendado</Text>
                       </View>
                     </View>
                     <Text style={[styles.choiceCardDesc, { color: isDarkMode ? '#cbd5e1' : '#475569' }]}>
@@ -822,7 +820,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                       >
                         <Text
                           style={{
-                            fontSize: 11,
+                            fontSize: 12,
                             fontWeight: 'bold',
                             color: isSelected ? '#ffffff' : theme.text
                           }}
@@ -885,7 +883,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
 
                   return (
                     <View>
-                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.subText, marginBottom: 8 }}>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.subText, marginBottom: 8 }}>
                         ACTIVIDADES PENDIENTES POR ELABORAR ({availableActivities.length}):
                       </Text>
                       <ScrollView style={{ maxHeight: 290 }} showsVerticalScrollIndicator={false}>
@@ -905,25 +903,25 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                             <View style={{ flex: 1 }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                                 <View style={[styles.dayBadgeMini, { backgroundColor: primaryColor + '20' }]}>
-                                  <Text style={{ fontSize: 10, fontWeight: 'bold', color: theme.accentText }}>
+                                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>
                                     {act.month ? `${act.month.toUpperCase()} ` : ''}Día {act.day || '-'}
                                   </Text>
                                 </View>
                                 {act.isModified && (
                                   <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
-                                    <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#b45309' }}>Modificada</Text>
+                                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#b45309' }}>Modificada</Text>
                                   </View>
                                 )}
                               </View>
                               <Text style={[styles.quarterlyActTitle, { color: theme.text }]}>
                                 {act.activity || act.title || 'Actividad sin nombre'}
                               </Text>
-                              <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                              <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                                 📍 {act.place || 'Sede'} • 👤 {act.responsible || 'Scouters'}
                               </Text>
                             </View>
                             <View style={[styles.selectActBtn, { backgroundColor: primaryColor }]}>
-                              <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 11 }}>Elaborar →</Text>
+                              <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 12 }}>Elaborar →</Text>
                             </View>
                           </TouchableOpacity>
                         ))}
@@ -932,7 +930,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                       {completedCount > 0 && (
                         <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                           <CheckCircle size={13} color="#16a34a" />
-                          <Text style={{ fontSize: 11, color: '#16a34a', fontWeight: '600' }}>
+                          <Text style={{ fontSize: 12, color: '#16a34a', fontWeight: '600' }}>
                             {completedCount} actividad(es) ya elaboradas (ocultas para no duplicar)
                           </Text>
                         </View>
@@ -1044,7 +1042,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
   },
-  unitPillText: { fontSize: 10, fontWeight: 'bold', letterSpacing: 0.5 },
+  unitPillText: { fontSize: 12, fontWeight: 'bold', letterSpacing: 0.5 },
   dateBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1134,7 +1132,7 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   choiceCardDesc: {
-    fontSize: 11,
+    fontSize: 12,
     lineHeight: 16,
   },
   quarterChoiceBtn: {

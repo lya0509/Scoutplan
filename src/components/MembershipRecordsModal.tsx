@@ -306,7 +306,7 @@ export function MembershipRecordsModal({ visible, onClose, member, mode }: Props
                         {r.pending && (
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
                             <CloudOff size={12} color="#b45309" />
-                            <Text style={{ color: '#b45309', fontSize: 11, fontWeight: '700' }}>Se enviará al volver la conexión</Text>
+                            <Text style={{ color: '#b45309', fontSize: 12, fontWeight: '700' }}>Se enviará al volver la conexión</Text>
                           </View>
                         )}
                         {!!r.imageUrl && (
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
   primaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, minHeight: 46 },
   primaryBtnText: { color: '#fff', fontWeight: '700', fontSize: 14.5 },
   form: { borderRadius: 14, borderWidth: 1, padding: 14 },
-  label: { fontSize: 11, fontWeight: '800', letterSpacing: 0.3, marginBottom: 6 },
+  label: { fontSize: 12, fontWeight: '800', letterSpacing: 0.3, marginBottom: 6 },
   input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14 },
   chip: { borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 8, minHeight: 40, justifyContent: 'center' },
   pickBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderStyle: 'dashed', borderRadius: 12, minHeight: 56, marginBottom: 12 },

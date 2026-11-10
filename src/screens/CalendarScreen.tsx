@@ -308,7 +308,7 @@ export default function CalendarScreen() {
 
         {/* Leyenda de colores por Unidad */}
         <View style={[styles.legendContainer, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-          <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.subText, width: '100%', marginBottom: 4 }}>
+          <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.subText, width: '100%', marginBottom: 4 }}>
             COLORES POR UNIDAD (La pelotita del día parpadea si es un CIP):
           </Text>
           <View style={styles.legendItem}>
@@ -454,7 +454,7 @@ export default function CalendarScreen() {
                   <Text style={{ color: theme.text, fontSize: 13, fontWeight: 'bold' }}>
                     {formatDateWithDayOfWeek(newEventDate || selectedDate)}
                   </Text>
-                  <Text style={{ color: theme.subText, fontSize: 11 }}>
+                  <Text style={{ color: theme.subText, fontSize: 12 }}>
                     Toca para ver el calendario (Lunes a Domingo)
                   </Text>
                 </View>
@@ -541,7 +541,7 @@ export default function CalendarScreen() {
 
               {newEventUnit === 'scouters' && (
                 <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#eef2ff', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: '#6366f1', marginTop: 8, marginBottom: 12 }}>
-                  <Text style={{ fontSize: 11, color: '#4f46e5', fontWeight: 'bold' }}>
+                  <Text style={{ fontSize: 12, color: '#4f46e5', fontWeight: 'bold' }}>
                     🔒 Visibilidad Privada: Este evento SOLO lo verán Jefatura y Scouters. Los jóvenes scouts NO lo verán.
                   </Text>
                 </View>
@@ -567,7 +567,7 @@ const styles = StyleSheet.create({
   filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: '#e2e8f0', marginRight: 8 },
   viewChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, minHeight: 38, justifyContent: 'center' },
   filterChipActive: { backgroundColor: colors.primary },
-  filterChipText: { fontSize: 11, fontWeight: '600', color: '#475569' },
+  filterChipText: { fontSize: 12, fontWeight: '600', color: '#475569' },
   filterChipTextActive: { color: 'white', fontWeight: 'bold' },
 
   calendarContainer: { margin: 16, borderRadius: 16, overflow: 'hidden', elevation: 2 },
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
   eventHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   eventTitleText: { fontSize: 15, fontWeight: 'bold' },
   unitBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
-  unitBadgeText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
+  unitBadgeText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   eventDescText: { fontSize: 12, marginTop: 2 },
 
   fab: { position: 'absolute', bottom: 20, right: 20, backgroundColor: colors.primary, width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', elevation: 5 },
@@ -594,12 +594,12 @@ const styles = StyleSheet.create({
   modalContent: { borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '85%' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1 },
   modalTitle: { fontSize: 18, fontWeight: 'bold' },
-  label: { fontSize: 11, fontWeight: 'bold', marginTop: 14, marginBottom: 6 },
+  label: { fontSize: 12, fontWeight: 'bold', marginTop: 14, marginBottom: 6 },
   input: { borderRadius: 12, borderWidth: 1, padding: 12, fontSize: 14 },
   textArea: { height: 75, textAlignVertical: 'top' },
   unitSelectorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
   unitChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1 },
-  unitChipText: { fontSize: 11 },
+  unitChipText: { fontSize: 12 },
   saveBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginTop: 24, marginBottom: 30 },
   saveBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 }
 });

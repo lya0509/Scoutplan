@@ -39,6 +39,9 @@ import { PendingAccountsCard } from '../components/PendingAccountsCard';
 import { daysUntil, defaultMembershipDate, formatDateEs, todayLocal } from '../utils/dateLocal';
 import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
 import CipManagerModal from '../components/CipManagerModal';
+import { SkeletonScreen } from '../components/Skeleton';
+import { PanelHeader } from '../components/PanelHeader';
+import { contentMax } from '../theme/layout';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
   if (!dateStr) return 'Seleccionar fecha en el calendario';
@@ -252,7 +255,7 @@ function ActivitiesPanel({ unitFilter, isDarkMode, theme, onAddCip }: { unitFilt
 
           {loaded && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text style={{ fontSize: 11, color: theme.subText }}>Registrados:</Text>
+              <Text style={{ fontSize: 12, color: theme.subText }}>Registrados:</Text>
               <View style={panelStyles.badge}><Text style={panelStyles.badgeText}>{events.length}</Text></View>
             </View>
           )}
@@ -313,7 +316,7 @@ function ActivitiesPanel({ unitFilter, isDarkMode, theme, onAddCip }: { unitFilt
                       onPress={() => handleDelete(evt.id)}
                     >
                       {isDeleting
-                        ? <Text style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>¿Ok?</Text>
+                        ? <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>¿Ok?</Text>
                         : <Trash2 size={16} color="#e53935" />
                       }
                     </TouchableOpacity>
@@ -399,10 +402,10 @@ function OnlineRosterPanel({ unit, groupName, isDarkMode, theme, navigation }: {
                       zIndex: 10
                     }} />
                   </View>
-                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.text, textAlign: 'center' }} numberOfLines={1}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text, textAlign: 'center' }} numberOfLines={1}>
                     {member.name?.split(' ')[0] || 'Scout'}
                   </Text>
-                  <Text style={{ fontSize: 9, color: member.isOnline ? (isDarkMode ? '#4ade80' : '#16a34a') : (isDarkMode ? '#a1a1aa' : '#6b7280'), marginTop: 2 }}>
+                  <Text style={{ fontSize: 11, color: member.isOnline ? (isDarkMode ? '#4ade80' : '#16a34a') : (isDarkMode ? '#a1a1aa' : '#6b7280'), marginTop: 2 }}>
                     {member.isOnline ? '🟢 En línea' : '⚪ Desconectado'}
                   </Text>
                 </TouchableOpacity>
@@ -504,46 +507,18 @@ export default function ScouterDashboardScreen({ navigation }: any) {
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       
       {/* HEADER */}
-      <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : primaryColor }, isDarkMode && { borderBottomLeftRadius: 0, borderBottomRightRadius: 0, borderBottomWidth: 1, borderBottomColor: '#27272a' }]}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerGreeting}>Bienvenido/a,</Text>
-          <Text style={styles.headerName}>{user?.name}</Text>
-          <View style={styles.unitBadge}>
-            <Text style={styles.unitBadgeText}>Unidad: {user?.unit?.toUpperCase()}</Text>
-          </View>
-        </View>
-
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-          <NotificationHeaderBell color="#ffffff" style={[styles.calendarIconBtn, { backgroundColor: isDarkMode ? '#27272a' : 'rgba(255,255,255,0.2)' }]} />
-
-          <TouchableOpacity 
-            style={[styles.calendarIconBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
-            onPress={() => setShowCustomizer(true)}
-            activeOpacity={0.8}
-          >
-            <Palette color="#ffffff" size={20} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.calendarIconBtn, { backgroundColor: isDarkMode ? '#27272a' : 'rgba(255,255,255,0.2)' }]}
-            onPress={toggleDarkMode}
-            activeOpacity={0.8}
-          >
-            {isDarkMode ? <Sun color="#f59e0b" size={20} /> : <Moon color="white" size={20} />}
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.calendarIconBtn, { backgroundColor: 'rgba(239, 68, 68, 0.25)' }]} 
-            onPress={signOut}
-            activeOpacity={0.8}
-          >
-            <LogOut color="#ef4444" size={20} />
-          </TouchableOpacity>
-        </View>
+      <View style={contentMax}>
+      <PanelHeader
+        eyebrow={`Scouter · Unidad ${(user?.unit || '').toUpperCase()}`}
+        title={user?.name || 'Scouter'}
+        subtitle={user?.group_name || undefined}
+        onCustomize={() => setShowCustomizer(true)}
+        onSignOut={signOut}
+      />
       </View>
 
       {/* BARRA DE HERRAMIENTAS Y ACCESOS RÁPIDOS (WRAP EN ESCRITORIO) */}
-      <View style={{ paddingVertical: 10, paddingHorizontal: 16 }}>
+      <View style={[{ paddingVertical: 10, paddingHorizontal: 16 }, contentMax]}>
         {isDesktop ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
             <TouchableOpacity
@@ -552,7 +527,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
               activeOpacity={0.8}
             >
               <Calendar size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>📅 Programas</Text>
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Programas</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -570,7 +545,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
               activeOpacity={0.8}
             >
               <Award size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>🏅 Especialidades</Text>
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Especialidades</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -626,7 +601,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
               activeOpacity={0.8}
             >
               <Calendar size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>📅 Programas</Text>
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Programas</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -644,7 +619,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
               activeOpacity={0.8}
             >
               <Award size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>🏅 Especialidades</Text>
+              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Especialidades</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -713,9 +688,9 @@ export default function ScouterDashboardScreen({ navigation }: any) {
 
       {/* CONTENIDO PRINCIPAL */}
       {loading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+        <SkeletonScreen variant="panel" fill={false} />
       ) : (
-        <PullToRefreshScrollView onRefresh={() => loadScouts()} style={styles.scroll} contentContainerStyle={{ padding: 16, paddingBottom: 30 }}>
+        <PullToRefreshScrollView onRefresh={() => loadScouts()} style={styles.scroll} contentContainerStyle={[{ padding: 16, paddingBottom: 30 }, contentMax]}>
           {pendingAccounts.length > 0 && (
             <View style={{ marginBottom: 16 }}>
               <PendingAccountsCard members={pendingAccounts} groupName={user?.group_name} onChanged={loadScouts} />
@@ -791,7 +766,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                         </TouchableOpacity>
 
                         <View style={{ backgroundColor: presenceService.isUserOnline(rover.id, rover.updated_at) ? 'rgba(34, 197, 94, 0.15)' : 'rgba(156, 163, 175, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginTop: 4 }}>
-                          <Text style={{ fontSize: 10, fontWeight: 'bold', color: presenceService.isUserOnline(rover.id, rover.updated_at) ? (isDarkMode ? '#4ade80' : '#16a34a') : (isDarkMode ? '#a1a1aa' : '#6b7280') }}>
+                          <Text style={{ fontSize: 12, fontWeight: 'bold', color: presenceService.isUserOnline(rover.id, rover.updated_at) ? (isDarkMode ? '#4ade80' : '#16a34a') : (isDarkMode ? '#a1a1aa' : '#6b7280') }}>
                             {presenceService.isUserOnline(rover.id, rover.updated_at) ? '🟢 En línea' : '⚪ Desconectado'}
                           </Text>
                         </View>
@@ -865,7 +840,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                       </View>
                       <View style={{ flex: 1, marginLeft: 10 }}>
                         <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>{scout.name}</Text>
-                        <Text style={{ fontSize: 11, color: theme.subText }}>
+                        <Text style={{ fontSize: 12, color: theme.subText }}>
                           {mStatus === 'approved' && mDate && (daysUntil(mDate) ?? 0) < 0 ? `🔴 Anualidad vencida el ${formatDateEs(mDate)}` :
                            mStatus === 'approved' ? `✅ Aprobada hasta: ${formatDateEs(mDate)}` :
                            mStatus === 'pending_approval' ? `⏳ Pendiente: ${mDate}` :
@@ -892,7 +867,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                             setShowMembershipModal(true);
                           }}
                         >
-                          <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>
+                          <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>
                             {mStatus === 'none' || mStatus === 'rejected' ? '📅 Asignar' : '✏️ Editar'}
                           </Text>
                         </TouchableOpacity>
@@ -981,14 +956,14 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                 <Text style={{ color: theme.text, fontSize: 13, fontWeight: 'bold' }}>
                   {formatDateWithDayOfWeek(membershipDateInput || todayLocal())}
                 </Text>
-                <Text style={{ color: theme.subText, fontSize: 11 }}>
+                <Text style={{ color: theme.subText, fontSize: 12 }}>
                   Toca para seleccionar el día exacto en el calendario
                 </Text>
               </View>
             </TouchableOpacity>
 
             <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#fffbeb', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: isDarkMode ? '#3f3f46' : '#fef08a', marginTop: 4 }}>
-              <Text style={{ fontSize: 11, color: isDarkMode ? '#fef08a' : '#92400e' }}>
+              <Text style={{ fontSize: 12, color: isDarkMode ? '#fef08a' : '#92400e' }}>
                 💡 Elige la fecha con el calendario interactivo.
                 {user?.role === 'scouter' ? ' La fecha quedará en "Esperando Aprobación" hasta que Jefatura la valide.' : ' Como Jefe de Grupo, la fecha se aprobará de inmediato.'}
               </Text>
@@ -1226,7 +1201,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
   },
   statNumber: { fontSize: 26, fontWeight: 'bold' },
-  statLabel: { fontSize: 11, color: colors.textLight, marginTop: 2, textAlign: 'center' },
+  statLabel: { fontSize: 12, color: colors.textLight, marginTop: 2, textAlign: 'center' },
   scroll: { flex: 1, marginTop: 16 },
   logoutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
@@ -1246,9 +1221,9 @@ const panelStyles = StyleSheet.create({
   headerTitle: { fontSize: 16, fontWeight: 'bold' },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   addCipBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-  addCipBtnText: { color: 'white', fontSize: 11, fontWeight: 'bold' },
+  addCipBtnText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   badge: { backgroundColor: colors.primary, width: 22, height: 22, borderRadius: 11, justifyContent: 'center', alignItems: 'center' },
-  badgeText: { color: 'white', fontSize: 11, fontWeight: 'bold' },
+  badgeText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   body: { paddingHorizontal: 16, paddingBottom: 12, borderTopWidth: 1 },
   empty: { color: '#aaa', textAlign: 'center', padding: 20, fontStyle: 'italic' },
   memberRow: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 14 },
@@ -1258,21 +1233,21 @@ const panelStyles = StyleSheet.create({
   memberSub: { fontSize: 12, marginTop: 2, marginBottom: 6 },
   stagesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   stagePill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, borderWidth: 1 },
-  stagePillText: { fontSize: 10, fontWeight: '600' },
+  stagePillText: { fontSize: 12, fontWeight: '600' },
   reviewBtn: { backgroundColor: '#f59e0b', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, alignSelf: 'center' },
   reviewBtnText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   profileBtn: { backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, alignSelf: 'center' },
   profileBtnText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   activityRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
   dateBox: { borderRadius: 10, width: 52, paddingVertical: 8, alignItems: 'center' },
-  dateMonth: { color: 'white', fontSize: 10, fontWeight: 'bold' },
+  dateMonth: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   dateDay: { color: 'white', fontSize: 20, fontWeight: '900' },
   activityTitle: { fontSize: 15, fontWeight: 'bold', marginBottom: 2 },
   cipPulseBadge: { backgroundColor: '#ef4444', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
-  cipPulseText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
+  cipPulseText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   activityDesc: { fontSize: 12, marginBottom: 4 },
   unitTag: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
-  unitTagText: { fontSize: 10, fontWeight: 'bold', letterSpacing: 0.5 },
+  unitTagText: { fontSize: 12, fontWeight: 'bold', letterSpacing: 0.5 },
   trashBtn: {
     width: 36, height: 36, borderRadius: 18, backgroundColor: '#ffebee',
     justifyContent: 'center', alignItems: 'center', marginLeft: 8,
@@ -1285,11 +1260,11 @@ const modalStyles = StyleSheet.create({
   sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '85%' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1 },
   title: { fontSize: 18, fontWeight: 'bold' },
-  label: { fontSize: 11, fontWeight: '800', marginBottom: 6, marginTop: 14 },
+  label: { fontSize: 12, fontWeight: '800', marginBottom: 6, marginTop: 14 },
   input: { borderRadius: 12, borderWidth: 1, padding: 12, fontSize: 14 },
   scopeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
   scopeChip: { paddingHorizontal: 10, paddingVertical: 8, borderRadius: 12, borderWidth: 1 },
-  scopeChipText: { fontSize: 11 },
+  scopeChipText: { fontSize: 12 },
   saveBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginTop: 24, marginBottom: 30 },
   saveBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 }
 });

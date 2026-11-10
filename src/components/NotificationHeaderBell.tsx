@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: '#ffffff',
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: 'bold',
   }
 });

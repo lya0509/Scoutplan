@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   toastMessage: {
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 2,
     lineHeight: 15,
   },
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   },
   liveBadgeText: {
     color: '#ffffff',
-    fontSize: 8,
+    fontSize: 11,
     fontWeight: 'bold',
     letterSpacing: 0.5,
   },

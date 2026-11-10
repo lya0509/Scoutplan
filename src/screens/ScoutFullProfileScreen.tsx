@@ -27,6 +27,7 @@ import { showAlert } from '../utils/alert';
 import { navigateBackOrHome } from '../utils/navigationHelper';
 import { SecureImage } from '../components/SecureImage';
 import { resolveFileUrl } from '../lib/fileUrl';
+import { SkeletonScreen } from '../components/Skeleton';
 
 export default function ScoutFullProfileScreen({ route, navigation }: any) {
   const { scoutId } = route.params;
@@ -181,10 +182,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ color: theme.subText, marginTop: 12 }}>Cargando perfil completo...</Text>
-      </View>
+      <SkeletonScreen variant="profile" />
     );
   }
 
@@ -279,7 +277,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
               <Text style={{ fontSize: 18, marginRight: 6 }}>📋</Text>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>Ficha Médica</Text>
-                <Text style={{ fontSize: 10, color: theme.subText }}>Ver y Descargar Word</Text>
+                <Text style={{ fontSize: 12, color: theme.subText }}>Ver y Descargar Word</Text>
               </View>
             </TouchableOpacity>
 
@@ -290,7 +288,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
               <Text style={{ fontSize: 18, marginRight: 6 }}>📜</Text>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>Currículum Scout</Text>
-                <Text style={{ fontSize: 10, color: theme.subText }}>Ver y Descargar Word</Text>
+                <Text style={{ fontSize: 12, color: theme.subText }}>Ver y Descargar Word</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -337,7 +335,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
                 <Text style={[styles.pctText, { color: theme.accentText }]}>{st.pct}%</Text>
               </View>
               {isScouterOrAdmin && (
-                <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: 'bold', marginTop: 4 }}>
+                <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold', marginTop: 4 }}>
                   Toca para ver desglose de requisitos y actividades ➔
                 </Text>
               )}
@@ -524,7 +522,7 @@ const styles = StyleSheet.create({
   avatarRow: { flexDirection: 'row', alignItems: 'center' },
   scoutName: { fontSize: 20, fontWeight: 'bold' },
   badgePill: { backgroundColor: colors.primary, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12, alignSelf: 'flex-start', marginVertical: 4 },
-  badgePillText: { color: 'white', fontSize: 11, fontWeight: 'bold' },
+  badgePillText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   scoutSub: { fontSize: 13 },
   infoDivider: { height: 1, marginVertical: 16 },
   detailsGrid: { marginTop: 12 },
@@ -537,7 +535,7 @@ const styles = StyleSheet.create({
 
   stageRowCard: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 16, borderWidth: 1, marginBottom: 10 },
   stageTitle: { fontSize: 15, fontWeight: 'bold' },
-  stageStatusTag: { fontSize: 10, fontWeight: 'bold', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  stageStatusTag: { fontSize: 12, fontWeight: 'bold', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
   tagApproved: { backgroundColor: '#dcfce7', color: '#16a34a' },
   tagReview: { backgroundColor: '#fef3c7', color: '#d97706' },
   tagProgress: { backgroundColor: '#e0f2fe', color: '#0284c7' },
@@ -548,13 +546,13 @@ const styles = StyleSheet.create({
 
   certCard: { borderRadius: 16, padding: 16, borderWidth: 1, marginBottom: 12 },
   certCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  catBadge: { fontSize: 10, fontWeight: 'bold', color: colors.primary, backgroundColor: 'rgba(107, 33, 168, 0.1)', alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, marginBottom: 4 },
+  catBadge: { fontSize: 12, fontWeight: 'bold', color: colors.primary, backgroundColor: 'rgba(107, 33, 168, 0.1)', alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, marginBottom: 4 },
   certTitleText: { fontSize: 15, fontWeight: 'bold' },
   actionIconBtn: { padding: 8, backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 20 },
   certImgWrapper: { marginTop: 12, borderRadius: 12, overflow: 'hidden', height: 160, position: 'relative' },
   certImg: { width: '100%', height: '100%' },
   zoomHintOverlay: { position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.7)', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  zoomHintText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
+  zoomHintText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   emptyCertCard: { padding: 20, borderRadius: 14, borderWidth: 1, alignItems: 'center' }
 });
 
@@ -577,6 +575,6 @@ const modalStyles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },
   sheet: { borderRadius: 20, padding: 24 },
   title: { fontSize: 18, fontWeight: 'bold' },
-  label: { fontSize: 11, fontWeight: '800', marginBottom: 6 },
+  label: { fontSize: 12, fontWeight: '800', marginBottom: 6 },
   input: { borderRadius: 12, borderWidth: 1, padding: 12, fontSize: 14 }
 });

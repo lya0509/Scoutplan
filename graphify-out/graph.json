@@ -2,15 +2,15 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-10T12:43:16.122Z",
+    "generatedAt": "2026-11-10T14:51:03.200Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
-      "totalNodes": 136,
-      "totalEdges": 128,
+      "totalNodes": 138,
+      "totalEdges": 133,
       "totalHyperedges": 4,
       "totalScreens": 29,
-      "totalComponents": 35,
+      "totalComponents": 37,
       "totalContexts": 3,
       "totalServices": 30,
       "totalCatalogs": 12,
@@ -271,8 +271,8 @@
       "file": "src/context/ThemeContext.tsx",
       "role": "Persists app_dark_mode and app_primary_color in AsyncStorage and provides dynamic theme tokens across all screens.",
       "exists": true,
-      "lines": 135,
-      "bytes": 4637,
+      "lines": 136,
+      "bytes": 4708,
       "exports": [
         "THEME_COLOR_PRESETS",
         "ThemeProvider",
@@ -992,8 +992,8 @@
       "route": "Resumen",
       "role": "Main Scout home dashboard: ScoutUserIcon greeting badge, progression summary, active stage progress bar, unit Rovers directory (directorio_grupo RPC), quick access cards, CarnetScoutModal, OnboardingGuideModal, and HelpFloatingFAB.",
       "exists": true,
-      "lines": 849,
-      "bytes": 38756,
+      "lines": 865,
+      "bytes": 39790,
       "exports": [
         "ScoutDashboardScreen"
       ],
@@ -1018,7 +1018,9 @@
         "lucide-react-native",
         "../utils/dateLocal",
         "../components/PullToRefreshScrollView",
-        "../context/NotificationContext"
+        "../context/NotificationContext",
+        "../components/Skeleton",
+        "../theme/layout"
       ],
       "supabaseTables": [
         "calendar_events",
@@ -1039,7 +1041,7 @@
       "role": "Displays the 4 Rover/Clan progression stages (Precursor, Expedicionario, Descubridor, Fundador) with completion percentages and lock status.",
       "exists": true,
       "lines": 210,
-      "bytes": 9568,
+      "bytes": 9547,
       "exports": [
         "PlanProgresivoScreen"
       ],
@@ -1056,7 +1058,9 @@
         "lucide-react-native",
         "../components/StageBadgeIcon",
         "../components/NotificationHeaderBell",
-        "../data/unitTemplates"
+        "../data/unitTemplates",
+        "../components/Skeleton",
+        "../theme/layout"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1072,8 +1076,8 @@
       "route": "StageDetail",
       "role": "Interactive checklist of stage requirements, linking to CatalogSelectorScreen, NochesAireLibreModal, VidaGrupoModal, CertificateUploadScreen, and stage review submission.",
       "exists": true,
-      "lines": 1289,
-      "bytes": 58537,
+      "lines": 1288,
+      "bytes": 58437,
       "exports": [
         "StageDetailScreen"
       ],
@@ -1099,7 +1103,8 @@
         "../utils/navigationHelper",
         "../utils/dateLocal",
         "../components/SecureImage",
-        "../components/CipStageModal"
+        "../components/CipStageModal",
+        "../components/Skeleton"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1179,8 +1184,8 @@
       "route": "Perfil",
       "role": "Scout & Scouter personal profile editor: dual avatars (Uniformado/Casual), cédula, dates (birth, promise, join), membership expiration proposal, and digital Carnet Scout.",
       "exists": true,
-      "lines": 783,
-      "bytes": 35063,
+      "lines": 782,
+      "bytes": 35015,
       "exports": [
         "ProfileScreen"
       ],
@@ -1203,7 +1208,8 @@
         "../lib/dataService",
         "../utils/alert",
         "../utils/dateLocal",
-        "../utils/navigationHelper"
+        "../utils/navigationHelper",
+        "../components/Skeleton"
       ],
       "supabaseTables": [
         "profiles"
@@ -1221,8 +1227,8 @@
       "route": "ScoutFullProfile",
       "role": "360-degree view of a Scout profile for Scouters/Jefes: progression stages, certificates, medical record summary, curriculum, and membership status.",
       "exists": true,
-      "lines": 583,
-      "bytes": 25993,
+      "lines": 581,
+      "bytes": 25797,
       "exports": [
         "ScoutFullProfileScreen"
       ],
@@ -1244,7 +1250,8 @@
         "../utils/alert",
         "../utils/navigationHelper",
         "../components/SecureImage",
-        "../lib/fileUrl"
+        "../lib/fileUrl",
+        "../components/Skeleton"
       ],
       "supabaseTables": [
         "profiles",
@@ -1263,8 +1270,8 @@
       "route": "ScouterDashboard",
       "role": "Unit leader dashboard: lists unit scouts with online presence, pending stage reviews, quarterly plan feedback, unit programs, and profile photo moderation.",
       "exists": true,
-      "lines": 1296,
-      "bytes": 64583,
+      "lines": 1271,
+      "bytes": 63288,
       "exports": [
         "ScouterDashboardScreen"
       ],
@@ -1296,7 +1303,10 @@
         "../components/PendingAccountsCard",
         "../utils/dateLocal",
         "../components/PullToRefreshScrollView",
-        "../components/CipManagerModal"
+        "../components/CipManagerModal",
+        "../components/Skeleton",
+        "../components/PanelHeader",
+        "../theme/layout"
       ],
       "supabaseTables": [
         "calendar_events",
@@ -1316,7 +1326,7 @@
       "role": "Detailed requirement-by-requirement verification screen for a Scout with Approve/Reject stage actions and notification dispatch.",
       "exists": true,
       "lines": 546,
-      "bytes": 29600,
+      "bytes": 29596,
       "exports": [
         "ScouterReviewScreen"
       ],
@@ -1348,8 +1358,8 @@
       "route": "JefeDashboard",
       "role": "Group Chief dashboard: supervises all units (Manada, Tropa, Caminantes, Clan), approves/rejects membership expiration dates, moderates photos, and manages group calendar.",
       "exists": true,
-      "lines": 1711,
-      "bytes": 87101,
+      "lines": 1687,
+      "bytes": 86212,
       "exports": [
         "JefeGrupoScreen"
       ],
@@ -1383,7 +1393,10 @@
         "../components/PullToRefreshScrollView",
         "../components/CipManagerModal",
         "./jefeGrupo/styles",
-        "../components/AppErrorsModal"
+        "../components/AppErrorsModal",
+        "../components/Skeleton",
+        "../components/PanelHeader",
+        "../theme/layout"
       ],
       "supabaseTables": [
         "profiles",
@@ -1403,7 +1416,7 @@
       "role": "Territorial hierarchy dashboard (Distrital, Regional, Nacional, Admin) with drill-down metrics by Region -> District -> Group -> Unit.",
       "exists": true,
       "lines": 703,
-      "bytes": 36391,
+      "bytes": 36246,
       "exports": [
         "ComisionadoDashboardScreen"
       ],
@@ -1422,7 +1435,11 @@
         "../utils/exportHelpers",
         "../data/territory",
         "../lib/dataService",
-        "../components/PullToRefreshScrollView"
+        "../components/PullToRefreshScrollView",
+        "../theme/buttons",
+        "../components/Skeleton",
+        "../components/PanelHeader",
+        "../theme/layout"
       ],
       "supabaseTables": [
         "profiles"
@@ -1440,8 +1457,8 @@
       "route": "ProgramaScout",
       "role": "Lists unit & sinodal Scout Activity Programs with filters by unit, duplicate/delete actions, PDF preview modal, and Word .docx export.",
       "exists": true,
-      "lines": 1180,
-      "bytes": 48239,
+      "lines": 1178,
+      "bytes": 48115,
       "exports": [
         "ProgramaScoutScreen"
       ],
@@ -1460,7 +1477,8 @@
         "../components/ProgramaPdfPreviewModal",
         "../utils/alert",
         "../utils/navigationHelper",
-        "../utils/dateLocal"
+        "../utils/dateLocal",
+        "../components/Skeleton"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1517,8 +1535,8 @@
       "route": "QuarterlyPlan",
       "role": "Quarterly planner (Trimestres I-IV) supporting individual Rover plans and shared unit plans linked to ProgramaScoutEditor.",
       "exists": true,
-      "lines": 2116,
-      "bytes": 103560,
+      "lines": 2119,
+      "bytes": 103820,
       "exports": [
         "QuarterlyPlanScreen"
       ],
@@ -1542,7 +1560,9 @@
         "../utils/navigationHelper",
         "../utils/exportHelpers",
         "../utils/reportTable",
-        "./quarterlyPlan/styles"
+        "./quarterlyPlan/styles",
+        "../theme/buttons",
+        "../components/Skeleton"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1666,8 +1686,8 @@
       "route": "FichaMedica",
       "role": "Two-tab medical record: \"Ficha Médica Scout\" (ASV form, Word .docx export) and \"Ficha Médica Orión 84\" (FichaMedicaOrion84Form, PDF export). Both live in profiles.medical_data (Orión 84 under medical_data.orion84; saves merge, never overwrite each other).",
       "exists": true,
-      "lines": 847,
-      "bytes": 42225,
+      "lines": 848,
+      "bytes": 42245,
       "exports": [
         "FichaMedicaScreen"
       ],
@@ -1689,7 +1709,8 @@
         "../utils/filePicker",
         "../components/FichaMedicaOrion84Form",
         "../utils/dateLocal",
-        "../components/SecureImage"
+        "../components/SecureImage",
+        "../components/Skeleton"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1705,8 +1726,8 @@
       "route": "CurriculumScout",
       "role": "Official Scout Curriculum Vitae form auto-synced with uploaded certificates, awards, and progression stages, with Word .docx export.",
       "exists": true,
-      "lines": 1241,
-      "bytes": 63800,
+      "lines": 1242,
+      "bytes": 63820,
       "exports": [
         "CurriculumScoutScreen"
       ],
@@ -1725,7 +1746,8 @@
         "../utils/navigationHelper",
         "../utils/filePicker",
         "../components/PhotoCropModal",
-        "../components/SecureImage"
+        "../components/SecureImage",
+        "../components/Skeleton"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1741,8 +1763,8 @@
       "route": "CertificateUpload",
       "role": "Uploads and categorizes Scout certificates/courses to Supabase Storage and syncs them automatically into CurriculumScout.",
       "exists": true,
-      "lines": 1357,
-      "bytes": 63821,
+      "lines": 1358,
+      "bytes": 63843,
       "exports": [
         "CertificateUploadScreen"
       ],
@@ -1763,7 +1785,8 @@
         "../utils/filePicker",
         "../utils/dateLocal",
         "../components/SecureImage",
-        "../lib/fileUrl"
+        "../lib/fileUrl",
+        "../components/Skeleton"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -2019,7 +2042,7 @@
       "role": "Displays personal notifications and official system announcements with mark-as-read and clear actions.",
       "exists": true,
       "lines": 756,
-      "bytes": 28945,
+      "bytes": 28947,
       "exports": [
         "NotificationCenterModal"
       ],
@@ -2048,7 +2071,7 @@
       "role": "Header bell button with animated unread counter opening NotificationCenterModal.",
       "exists": true,
       "lines": 76,
-      "bytes": 1994,
+      "bytes": 1995,
       "exports": [
         "NotificationHeaderBell"
       ],
@@ -2075,7 +2098,7 @@
       "role": "Global top toast banner displaying incoming real-time notifications.",
       "exists": true,
       "lines": 140,
-      "bytes": 3916,
+      "bytes": 3917,
       "exports": [
         "LiveNotificationToast"
       ],
@@ -2188,7 +2211,7 @@
       "role": "Scout (uniform) and personal photo tabs; always opens on «Foto Scout» and each tab shows ONLY its own photo. In lists (Resumen, Rovers, dashboards) only the scout photo or the scout icon is shown — the personal photo never replaces it (fix 2026-11-09). Uploads via onUpload, images through SecureImage (signed URLs).",
       "exists": true,
       "lines": 751,
-      "bytes": 24235,
+      "bytes": 24236,
       "exports": [
         "DualProfileAvatar"
       ],
@@ -2316,7 +2339,7 @@
       "role": "Shows \"Sin conexión · N\", \"Enviando…\", \"Todo enviado\" or failed changes with retry; collapses to a small chip under the header so it never covers bottom action buttons.",
       "exists": true,
       "lines": 178,
-      "bytes": 6656,
+      "bytes": 6652,
       "exports": [
         "OfflineStatusBanner"
       ],
@@ -2342,7 +2365,7 @@
       "role": "Opened from OfflineStatusBanner: lists queued outbox operations in send order, failed ones with a friendly error, retry-all and discard-one actions.",
       "exists": true,
       "lines": 238,
-      "bytes": 10098,
+      "bytes": 10096,
       "exports": [
         "PendingChangesModal"
       ],
@@ -2479,8 +2502,8 @@
       "file": "src/components/InsigniasExportBar.tsx",
       "role": "Card with Excel/PDF buttons for the badge progress report of a unit or the whole group (online only).",
       "exists": true,
-      "lines": 95,
-      "bytes": 3949,
+      "lines": 97,
+      "bytes": 4191,
       "exports": [
         "InsigniasExportBar"
       ],
@@ -2492,7 +2515,8 @@
         "../lib/insigniasReport",
         "../utils/exportHelpers",
         "../lib/offline/net",
-        "../utils/alert"
+        "../utils/alert",
+        "../theme/buttons"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -2880,7 +2904,7 @@
       "role": "Route Administracion (/administracion). Jefe de Grupo: people of own group (Scout/Scouter/Jefe, unit, approve). Comisionados: also create groups (scout_groups) and move people inside their territory. Admin/Nacional: whole country, all roles. Rules mirrored by proteger_perfil.",
       "exists": true,
       "lines": 690,
-      "bytes": 36182,
+      "bytes": 36176,
       "exports": [
         "AdministracionScreen"
       ],
@@ -3121,7 +3145,7 @@
       "role": "Scouter/Jefatura: catalog of official CIPs (cip_oficiales: create, list), mark attendance per youth (cip_sel_* in certificates, counts to the current stage requirement of that level), review old-CIP requests (cip_sol_*) made under the Scout Law.",
       "exists": true,
       "lines": 366,
-      "bytes": 20824,
+      "bytes": 20822,
       "exports": [
         "CipManagerModal"
       ],
@@ -3150,7 +3174,7 @@
       "role": "Youth view of a CIP requirement: credited CIPs (badge «anterior a la app»), own requests with status, form to request a pre-app CIP with Scout Law confirmation. Replaces the old self-selection modal in StageDetail.",
       "exists": true,
       "lines": 224,
-      "bytes": 13404,
+      "bytes": 13402,
       "exports": [
         "CipStageModal"
       ],
@@ -3375,7 +3399,7 @@
       "role": "Search and toggle official achievement indicators of one growth area (per unit / sinodal) or add a custom one, for ProgramaScoutEditorScreen.",
       "exists": true,
       "lines": 121,
-      "bytes": 5233,
+      "bytes": 5234,
       "exports": [
         "IndicatorPickerModal"
       ],
@@ -3426,7 +3450,7 @@
       "role": "npm run test:e2e — builds and opens the app in Chromium with Supabase MOCKED (tests/e2e/mockSupabase.mjs): 25 screens × 4 roles × light/dark (no JS errors, no endless spinner, content visible, contrast ≥ 3:1), program editor modals, and cold start offline with an expired session.",
       "exists": true,
       "lines": 357,
-      "bytes": 18387,
+      "bytes": 18399,
       "exports": [],
       "imports": [
         "playwright-core",
@@ -3546,6 +3570,57 @@
         "path",
         "url",
         "./lib/backupRestore.mjs"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "PanelHeader.tsx",
+      "label": "PanelHeader.tsx (Common dashboard header)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/components/PanelHeader.tsx",
+      "role": "Shared header of Scouter, Jefatura and Comisionado dashboards: role pill + bell/colors/dark/sign-out buttons on top, full-width name below (replaces three different headers; Comisionado no longer amber).",
+      "exists": true,
+      "lines": 83,
+      "bytes": 3920,
+      "exports": [
+        "PanelHeaderButton",
+        "PanelHeader"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "lucide-react-native",
+        "../context/ThemeContext",
+        "./NotificationHeaderBell"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "Skeleton.tsx",
+      "label": "Skeleton.tsx (Loading skeletons)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/components/Skeleton.tsx",
+      "role": "SkeletonScreen variants dashboard/list/form/profile/panel with pulsing grey blocks instead of a lone spinner (role=progressbar so E2E still detects endless loading). Used in 13 screens.",
+      "exists": true,
+      "lines": 158,
+      "bytes": 5996,
+      "exports": [
+        "SkeletonBlock",
+        "SkeletonPulse",
+        "SkeletonScreen"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "../context/ThemeContext"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -4034,6 +4109,31 @@
       "from": "App.tsx",
       "to": "errorReporter.ts",
       "relation": "calls"
+    },
+    {
+      "from": "ScouterDashboardScreen.tsx",
+      "to": "PanelHeader.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "JefeGrupoScreen.tsx",
+      "to": "PanelHeader.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "ComisionadoDashboardScreen.tsx",
+      "to": "PanelHeader.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "ScoutDashboardScreen.tsx",
+      "to": "Skeleton.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "PlanProgresivoScreen.tsx",
+      "to": "Skeleton.tsx",
+      "relation": "renders"
     },
     {
       "from": "App.tsx",

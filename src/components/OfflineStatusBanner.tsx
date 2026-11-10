@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
-  chipText: { fontSize: 11.5, fontWeight: '700' },
+  chipText: { fontSize: 12, fontWeight: '700' },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -173,5 +173,5 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   title: { fontSize: 13, fontWeight: '700' },
-  detail: { fontSize: 11.5, opacity: 0.9, marginTop: 1 },
+  detail: { fontSize: 12, opacity: 0.9, marginTop: 1 },
 });

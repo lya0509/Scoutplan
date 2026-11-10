@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   stepBadgeText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   iconCircle: {

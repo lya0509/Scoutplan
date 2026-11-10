@@ -250,7 +250,7 @@ export function VidaGrupoModal({
                 <Text style={[styles.headerTitle, { color: theme.text }]} numberOfLines={1}>
                   {effectiveReqTitle || 'Vida de Grupo'}
                 </Text>
-                <Text style={{ fontSize: 11, color: isCompleted ? '#16a34a' : theme.subText, fontWeight: isCompleted ? 'bold' : 'normal' }}>
+                <Text style={{ fontSize: 12, color: isCompleted ? '#16a34a' : theme.subText, fontWeight: isCompleted ? 'bold' : 'normal' }}>
                   {isCompleted ? '✓ Requisito Cumplido' : `Registra ${requiredCount} ${isPeregrinaje ? 'peregrinaje(s)' : isCampamento ? 'campamento(s)' : 'proyecto(s)'}`}
                 </Text>
               </View>
@@ -285,7 +285,7 @@ export function VidaGrupoModal({
                     borderRadius: 12,
                   }}
                 >
-                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>
+                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>
                     {Math.min(100, Math.round((entries.length / requiredCount) * 100))}%
                   </Text>
                 </View>
@@ -349,7 +349,7 @@ export function VidaGrupoModal({
                             >
                               <Text
                                 style={{
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   fontWeight: subtype === t ? 'bold' : 'normal',
                                   color: subtype === t ? 'white' : theme.text,
                                 }}
@@ -488,7 +488,7 @@ export function VidaGrupoModal({
                     </View>
 
                     {!!item.subtype && (
-                      <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: 'bold', marginBottom: 2 }}>
+                      <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold', marginBottom: 2 }}>
                         Tipo: {item.subtype}
                       </Text>
                     )}
@@ -496,19 +496,19 @@ export function VidaGrupoModal({
                     {!!item.location && (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
                         <MapPin size={12} color={theme.subText} />
-                        <Text style={{ fontSize: 11, color: theme.subText }}>{item.location}</Text>
+                        <Text style={{ fontSize: 12, color: theme.subText }}>{item.location}</Text>
                       </View>
                     )}
 
                     {item.description ? (
-                      <Text style={{ fontSize: 11, color: theme.subText, marginVertical: 4 }}>
+                      <Text style={{ fontSize: 12, color: theme.subText, marginVertical: 4 }}>
                         {item.description}
                       </Text>
                     ) : null}
 
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
                       <CalendarIcon size={12} color={theme.subText} />
-                      <Text style={{ fontSize: 11, color: theme.subText }}>Fecha: {item.date}</Text>
+                      <Text style={{ fontSize: 12, color: theme.subText }}>Fecha: {item.date}</Text>
                     </View>
                   </View>
 
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   fieldLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
     marginBottom: 4,
   },

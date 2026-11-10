@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 17, fontWeight: '800' },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginTop: 14, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },
   statusText: { fontSize: 13, flexShrink: 1 },
-  section: { fontSize: 11.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 },
+  section: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 },
   empty: { textAlign: 'center', fontSize: 14, paddingVertical: 24 },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderWidth: 1, borderRadius: 12, padding: 12 },
   rowIcon: { paddingTop: 1 },

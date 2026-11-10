@@ -27,6 +27,7 @@ import { pickImageUniversal } from '../utils/filePicker';
 import { todayLocal } from '../utils/dateLocal';
 import { SecureImage } from '../components/SecureImage';
 import { resolveFileUrl } from '../lib/fileUrl';
+import { SkeletonScreen } from '../components/Skeleton';
 
 // Configuración del calendario en Español
 LocaleConfig.locales['es'] = {
@@ -324,7 +325,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                 Vinculando para: {returnToStage.reqText}
               </Text>
             </View>
-            <Text style={{ fontSize: 11, color: isDarkMode ? '#a78bfa' : '#7c3aed', marginTop: 4 }}>
+            <Text style={{ fontSize: 12, color: isDarkMode ? '#a78bfa' : '#7c3aed', marginTop: 4 }}>
               Toca "Vincular a este Requisito" en cualquiera de tus certificados o sube uno nuevo para marcar la etapa.
             </Text>
           </View>
@@ -358,7 +359,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
             <Text style={{ fontSize: 13, fontWeight: 'bold', color: isDarkMode ? '#38bdf8' : '#1d4ed8' }}>
               Catálogo Oficial de Especialidades (Dropbox)
             </Text>
-            <Text style={{ fontSize: 11, color: isDarkMode ? '#94a3b8' : '#64748b', marginTop: 1 }}>
+            <Text style={{ fontSize: 12, color: isDarkMode ? '#94a3b8' : '#64748b', marginTop: 1 }}>
               Explora las guías oficiales y fichas de requisitos en PDF.
             </Text>
           </View>
@@ -450,7 +451,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
       {/* Lista de Acreditaciones */}
       <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 40 }}>
         {loading ? (
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+          <SkeletonScreen variant="list" fill={false} />
         ) : filteredCerts.length === 0 ? (
           <View style={[styles.emptyCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
             <Award size={48} color={isDarkMode ? '#52525b' : '#cbd5e1'} style={{ marginBottom: 12 }} />
@@ -488,12 +489,12 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                   <View style={{ padding: 10, flex: 1, justifyContent: 'space-between' }}>
                     <View>
                       <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginBottom: 4 }}>
-                        <Text style={[styles.catBadgeText, { fontSize: 9 }]}>
+                        <Text style={[styles.catBadgeText, { fontSize: 11 }]}>
                           {catObj?.name || 'ACREDITACIÓN'}
                         </Text>
                         {levelObj && (
                           <View style={[styles.levelBadge, { backgroundColor: levelColor, paddingHorizontal: 5, paddingVertical: 1 }]}>
-                            <Text style={[styles.levelBadgeText, { fontSize: 8 }]}>{levelObj.name.split(' ')[0]}</Text>
+                            <Text style={[styles.levelBadgeText, { fontSize: 11 }]}>{levelObj.name.split(' ')[0]}</Text>
                           </View>
                         )}
                       </View>
@@ -503,7 +504,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                       </Text>
 
                       {cert.date ? (
-                        <Text style={{ fontSize: 10, color: theme.subText, marginTop: 3 }}>
+                        <Text style={{ fontSize: 12, color: theme.subText, marginTop: 3 }}>
                           📅 {cert.date}
                         </Text>
                       ) : null}
@@ -561,7 +562,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                           handleSelectForRequirement(cert);
                         }}
                       >
-                        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 10 }}>
+                        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>
                           ✓ Vincular
                         </Text>
                       </TouchableOpacity>
@@ -600,7 +601,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                       <Text style={[styles.certArea, { color: theme.subText }]}>Área: {cert.area}</Text>
                     ) : null}
                     {cert.date ? (
-                      <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>Fecha: {cert.date}</Text>
+                      <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>Fecha: {cert.date}</Text>
                     ) : null}
                   </View>
 
@@ -836,7 +837,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                     }}
                   >
                     <FolderOpen size={16} color={isDarkMode ? '#38bdf8' : '#2563eb'} />
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: isDarkMode ? '#38bdf8' : '#1d4ed8', flex: 1 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: isDarkMode ? '#38bdf8' : '#1d4ed8', flex: 1 }}>
                       📁 Ver Fichas y Requisitos en Dropbox
                     </Text>
                     <ExternalLink size={13} color={isDarkMode ? '#38bdf8' : '#2563eb'} />
@@ -1028,7 +1029,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                     {/* SELECTOR RÁPIDO DE AÑO */}
                     <View style={{ marginBottom: 8 }}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.subText }}>AÑO:</Text>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.subText }}>AÑO:</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                           <TouchableOpacity 
                             onPress={() => setCalYear(prev => prev - 1)}
@@ -1060,7 +1061,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                             }}
                             onPress={() => setCalYear(yr)}
                           >
-                            <Text style={{ fontSize: 11, fontWeight: 'bold', color: calYear === yr ? 'white' : theme.text }}>
+                            <Text style={{ fontSize: 12, fontWeight: 'bold', color: calYear === yr ? 'white' : theme.text }}>
                               {yr}
                             </Text>
                           </TouchableOpacity>
@@ -1070,7 +1071,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
 
                     {/* SELECTOR RÁPIDO DE MES */}
                     <View style={{ marginBottom: 10 }}>
-                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.subText, marginBottom: 4 }}>MES:</Text>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.subText, marginBottom: 4 }}>MES:</Text>
                       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 5 }}>
                         {['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'].map((mName, idx) => {
                           const mNum = idx + 1;
@@ -1088,7 +1089,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                               }}
                               onPress={() => setCalMonth(mNum)}
                             >
-                              <Text style={{ fontSize: 11, fontWeight: 'bold', color: isSel ? 'white' : theme.text }}>
+                              <Text style={{ fontSize: 12, fontWeight: 'bold', color: isSel ? 'white' : theme.text }}>
                                 {mName}
                               </Text>
                             </TouchableOpacity>
@@ -1140,7 +1141,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                   <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>
                     Sincronizar con mi Currículum Scout
                   </Text>
-                  <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                     Inserta automáticamente esta acreditación y su fecha en tu Hoja de Vida Scout oficial.
                   </Text>
                 </View>
@@ -1159,7 +1160,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                 </Text>
               </TouchableOpacity>
 
-              <Text style={{ fontSize: 11, color: theme.subText, marginVertical: 6, textAlign: 'center' }}>
+              <Text style={{ fontSize: 12, color: theme.subText, marginVertical: 6, textAlign: 'center' }}>
                 — o pega directamente la URL o enlace —
               </Text>
 
@@ -1277,16 +1278,16 @@ const styles = StyleSheet.create({
   certCard: { borderRadius: 16, padding: 18, marginBottom: 14, borderWidth: 1, elevation: 2 },
   certCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   catBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-  catBadgeText: { fontSize: 10, fontWeight: 'bold', color: '#ffffff', backgroundColor: colors.primaryLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  catBadgeText: { fontSize: 12, fontWeight: 'bold', color: '#ffffff', backgroundColor: colors.primaryLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
   levelBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  levelBadgeText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
+  levelBadgeText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   certTitle: { fontSize: 16, fontWeight: 'bold', marginTop: 2 },
   certArea: { fontSize: 12, marginTop: 4 },
   actionIconBtn: { padding: 8, backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 20 },
   imagePreviewWrapper: { marginTop: 14, borderRadius: 12, overflow: 'hidden', height: 160, position: 'relative' },
   previewImage: { width: '100%', height: '100%' },
   zoomHintOverlay: { position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.7)', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  zoomHintText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
+  zoomHintText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
 
   emptyCard: { borderRadius: 16, padding: 36, alignItems: 'center', borderWidth: 1, marginTop: 20 },
   emptyTitle: { fontSize: 17, fontWeight: 'bold', marginBottom: 6 },
@@ -1337,19 +1338,19 @@ const modalStyles = StyleSheet.create({
   sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '85%' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1 },
   title: { fontSize: 18, fontWeight: 'bold' },
-  label: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5, marginBottom: 6, marginTop: 14 },
+  label: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5, marginBottom: 6, marginTop: 14 },
   input: { borderRadius: 12, borderWidth: 1, padding: 14, fontSize: 14 },
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   chipBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, borderWidth: 1 },
   chipBtnText: { fontSize: 12 },
   quickSuggestBox: { marginTop: 8, padding: 10, borderRadius: 12, backgroundColor: 'rgba(107, 33, 168, 0.05)' },
-  suggestLabel: { fontSize: 11, fontWeight: 'bold', color: colors.primary },
+  suggestLabel: { fontSize: 12, fontWeight: 'bold', color: colors.primary },
   itemPill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, borderWidth: 1 },
-  itemPillText: { fontSize: 11 },
+  itemPillText: { fontSize: 12 },
   deviceFileBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 12, borderWidth: 1.5, borderStyle: 'dashed', marginTop: 4 },
   deviceFileBtnText: { fontSize: 13, fontWeight: 'bold' },
   previewBox: { marginTop: 10, borderRadius: 12, overflow: 'hidden' },
-  previewText: { fontSize: 10, fontWeight: 'bold', marginBottom: 4 },
+  previewText: { fontSize: 12, fontWeight: 'bold', marginBottom: 4 },
   previewImg: { width: '100%', height: 120, borderRadius: 8 },
   saveSubmitBtn: { backgroundColor: colors.primary, paddingVertical: 16, borderRadius: 14, alignItems: 'center', marginTop: 24, marginBottom: 30 },
   saveSubmitText: { color: 'white', fontWeight: 'bold', fontSize: 15 }

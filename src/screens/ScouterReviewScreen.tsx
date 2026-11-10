@@ -316,7 +316,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                           </Text>
                         </View>
                       ) : (
-                        <Text style={{ fontSize: 11, color: theme.subText, fontStyle: 'italic' }}>
+                        <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic' }}>
                           Sin especialidad o curso formalmente vinculado
                         </Text>
                       )}
@@ -346,7 +346,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                             {act.text}
                           </Text>
                           {!!act.subArea && (
-                            <Text style={{ fontSize: 10, color: theme.subText }}>
+                            <Text style={{ fontSize: 12, color: theme.subText }}>
                               Área: {act.subArea}
                             </Text>
                           )}
@@ -375,19 +375,19 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                           <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>
                             {(cip.title || '').replace(/\[6P\s*/gi, '[CIP ').replace(/\b6P\b/gi, 'CIP')}
                           </Text>
-                          <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                          <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                             📅 Fecha / Año: {cip.date || 'Sin fecha'} {cip.scope ? `(${cip.scope.toUpperCase()})` : ''}
                           </Text>
                           {cip.description ? (
-                            <Text style={{ fontSize: 10, color: theme.subText, fontStyle: 'italic', marginTop: 1 }}>
+                            <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic', marginTop: 1 }}>
                               {cip.description.replace(/\b6P\b/gi, 'CIP')}
                             </Text>
                           ) : null}
                           {cip.marcadoPor ? (
-                            <Text style={{ fontSize: 10.5, color: theme.subText, marginTop: 1 }}>Marcado por {cip.marcadoPor}</Text>
+                            <Text style={{ fontSize: 12, color: theme.subText, marginTop: 1 }}>Marcado por {cip.marcadoPor}</Text>
                           ) : null}
                           {cip.historico ? (
-                            <Text style={{ fontSize: 10.5, color: '#b45309', fontWeight: 'bold', marginTop: 2 }}>Registro anterior a la app (bajo la Ley Scout)</Text>
+                            <Text style={{ fontSize: 12, color: '#b45309', fontWeight: 'bold', marginTop: 2 }}>Registro anterior a la app (bajo la Ley Scout)</Text>
                           ) : null}
                         </View>
                       </View>
@@ -421,15 +421,15 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                             {entry.title || (entry.type === 'peregrinaje' ? `Peregrinaje ${entry.subtype || ''}` : 'Registro de Vida de Grupo')}
                           </Text>
                           {entry.location ? (
-                            <Text style={{ fontSize: 11, color: theme.text, marginTop: 2 }}>
+                            <Text style={{ fontSize: 12, color: theme.text, marginTop: 2 }}>
                               📍 Destino / Lugar: <Text style={{ fontWeight: 'bold' }}>{entry.location}</Text>
                             </Text>
                           ) : null}
-                          <Text style={{ fontSize: 11, color: theme.subText, marginTop: 1 }}>
+                          <Text style={{ fontSize: 12, color: theme.subText, marginTop: 1 }}>
                             📅 Fecha: {entry.date || 'Sin fecha'} {entry.subtype ? `• Tipo: ${entry.subtype}` : ''}
                           </Text>
                           {entry.description ? (
-                            <Text style={{ fontSize: 11, color: theme.subText, fontStyle: 'italic', marginTop: 2 }}>
+                            <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic', marginTop: 2 }}>
                               "{entry.description}"
                             </Text>
                           ) : null}
@@ -458,11 +458,11 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                         <Lightbulb size={18} color="#d97706" style={{ marginRight: 8, marginTop: 2 }} />
                         <View style={{ flex: 1 }}>
                           <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>{entry.title}</Text>
-                          <Text style={{ fontSize: 11, color: theme.subText, marginTop: 1 }}>
+                          <Text style={{ fontSize: 12, color: theme.subText, marginTop: 1 }}>
                             📅 Fecha: {entry.date || 'Sin fecha'}
                           </Text>
                           {entry.description ? (
-                            <Text style={{ fontSize: 11, color: theme.subText, fontStyle: 'italic', marginTop: 2 }}>
+                            <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic', marginTop: 2 }}>
                               "{entry.description}"
                             </Text>
                           ) : null}

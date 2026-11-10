@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   subtitle: {
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 2,
   },
   closeBtn: {
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   counterLabel: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: 'bold',
     letterSpacing: 0.5,
   },
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
   },
   reachedBadgeText: {
     color: '#16a34a',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   pendingBadge: {
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
   },
   pendingBadgeText: {
     color: '#f59e0b',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   progressTrack: {
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   inputLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
     marginBottom: 4,
   },
@@ -602,7 +602,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   entryDate: {
-    fontSize: 11,
+    fontSize: 12,
   },
   nightsPill: {
     flexDirection: 'row',
@@ -612,11 +612,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   nightsPillText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   entryNotes: {
-    fontSize: 11,
+    fontSize: 12,
     fontStyle: 'italic',
     marginTop: 3,
   },

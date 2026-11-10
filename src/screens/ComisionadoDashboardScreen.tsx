@@ -20,13 +20,23 @@ import {
 import { REGIONS, regionLabel, districtLabel, registerDistricts, registerRegions } from '../data/territory';
 import { dataService } from '../lib/dataService';
 import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
+import { buttonVariants } from '../theme/buttons';
+import { SkeletonScreen } from '../components/Skeleton';
+import { PanelHeader, PanelHeaderButton } from '../components/PanelHeader';
+import { contentMax } from '../theme/layout';
 
 // Todas las regiones de la ASV (misma lista que el registro)
 const REGIONS_DATA = REGIONS;
 
+/** «COMISIÓN DISTRITAL» → «Comisión Distrital» (en el encabezado no se grita). */
+function titleCase(t: string) {
+  return t.toLowerCase().replace(/(^|\s)(\p{L})/gu, (_m, sp, ch) => sp + ch.toUpperCase());
+}
+
 export default function ComisionadoDashboardScreen({ navigation }: any) {
   const { user, signOut } = useAuth();
   const { isDarkMode, theme, primaryColor, toggleDarkMode } = useTheme();
+  const btn = buttonVariants(theme, isDarkMode, primaryColor);
 
   const role = user?.role || 'nacional';
   const isNacional = role === 'nacional' || role === 'admin';
@@ -193,33 +203,23 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg }}>
-      <PullToRefreshScrollView onRefresh={() => loadTerritorialData()} style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      <PullToRefreshScrollView onRefresh={() => loadTerritorialData()} style={styles.container} contentContainerStyle={[{ paddingBottom: 40 }, contentMax]}>
         
         {/* CABECERA TERRITORIAL */}
-        <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : levelInfo.themeColor }]}>
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              {levelInfo.icon}
-              <Text style={styles.badgeText}>{levelInfo.title}</Text>
-            </View>
-            <Text style={styles.subtitle}>{levelInfo.subtitle}</Text>
-          </View>
-
-          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Administracion')} accessibilityRole="button" accessibilityLabel="Administración de grupos y roles">
+        <PanelHeader
+          eyebrow={titleCase(levelInfo.title.split(':')[0])}
+          eyebrowIcon={levelInfo.icon}
+          title={user?.name || 'Comisionado'}
+          subtitle={[levelInfo.title.split(':')[1]?.trim(), levelInfo.subtitle].filter(Boolean).map((t, i) => (i === 0 ? titleCase(t as string) : t)).join(' · ')}
+          showBell={false}
+          extraActions={
+            <PanelHeaderButton onPress={() => navigation.navigate('Administracion')} label="Administración de grupos y roles">
               <ShieldCheck color="#ffffff" size={20} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => setShowCustomizer(true)}>
-              <Palette color="#ffffff" size={20} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={toggleDarkMode}>
-              {isDarkMode ? <Sun color="#f59e0b" size={20} /> : <Moon color="white" size={20} />}
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.iconBtn, { backgroundColor: 'rgba(239, 68, 68, 0.25)' }]} onPress={signOut}>
-              <LogOut color="#ef4444" size={20} />
-            </TouchableOpacity>
-          </View>
-        </View>
+            </PanelHeaderButton>
+          }
+          onCustomize={() => setShowCustomizer(true)}
+          onSignOut={signOut}
+        />
 
         {/* SELECTORES DE ALCANCE TERRITORIAL */}
         <View style={[styles.filterCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
@@ -284,30 +284,30 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
         <View style={{ paddingVertical: 8, paddingHorizontal: 16 }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
             <TouchableOpacity
-              style={[styles.toolBtn, { backgroundColor: '#9333ea' }]}
+              style={[styles.toolBtn, btn.secondary]}
               onPress={() => setShowCensoModal(true)}
               activeOpacity={0.8}
             >
-              <Users size={16} color="white" />
-              <Text style={styles.toolBtnText}>Censo Territorial</Text>
+              <Users size={16} color={isDarkMode ? '#c084fc' : '#7e22ce'} />
+              <Text style={[styles.toolBtnText, btn.secondaryText]}>Censo Territorial</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.toolBtn, { backgroundColor: '#dc2626' }]}
+              style={[styles.toolBtn, btn.secondary]}
               onPress={() => setShowPadronMedicoModal(true)}
               activeOpacity={0.8}
             >
-              <ShieldCheck size={16} color="white" />
-              <Text style={styles.toolBtnText}>Padrón Médico</Text>
+              <ShieldCheck size={16} color={isDarkMode ? '#f87171' : '#b91c1c'} />
+              <Text style={[styles.toolBtnText, btn.secondaryText]}>Padrón Médico</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.toolBtn, { backgroundColor: '#b45309' }]}
+              style={[styles.toolBtn, btn.secondary]}
               onPress={() => setShowSemaforoModal(true)}
               activeOpacity={0.8}
             >
-              <Clock size={16} color="white" />
-              <Text style={styles.toolBtnText}>Semáforo Carnets ({territorialStats.pendingCarnet})</Text>
+              <Clock size={16} color={isDarkMode ? '#fbbf24' : '#b45309'} />
+              <Text style={[styles.toolBtnText, btn.secondaryText]}>Semáforo Carnets ({territorialStats.pendingCarnet})</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -334,13 +334,13 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
               activeOpacity={0.8}
             >
               <Award size={16} color={primaryColor} />
-              <Text style={[styles.toolBtnText, { color: theme.text }]}>🏅 Especialidades</Text>
+              <Text style={[styles.toolBtnText, { color: theme.text }]}>Especialidades</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color={primaryColor} style={{ marginTop: 40 }} />
+          <SkeletonScreen variant="panel" fill={false} />
         ) : (
           <View style={{ padding: 16 }}>
 
@@ -376,7 +376,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
                 🏢 Grupos Scouts en Jurisdicción ({uniqueGroups.length})
               </Text>
-              <Text style={{ fontSize: 11, color: theme.subText }}>{filteredProfiles.length} miembros totales</Text>
+              <Text style={{ fontSize: 12, color: theme.subText }}>{filteredProfiles.length} miembros totales</Text>
             </View>
 
             {uniqueGroups.length === 0 ? (
@@ -405,7 +405,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                           <Building size={16} color={levelInfo.themeColor} />
                           <Text style={[styles.groupTitle, { color: theme.text }]}>{grpName}</Text>
                         </View>
-                        <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                        <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                           {scoutsCount} Scouts • {scoutersCount} Dirigentes {jefe ? `• Jefe: ${jefe.name}` : ''}
                         </Text>
                       </View>
@@ -418,7 +418,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                           <View key={m.id} style={[styles.memberMiniRow, { borderColor: theme.border }]}>
                             <View style={{ flex: 1 }}>
                               <Text style={[styles.memberName, { color: theme.text }]}>{m.name}</Text>
-                              <Text style={{ fontSize: 10, color: theme.subText }}>
+                              <Text style={{ fontSize: 12, color: theme.subText }}>
                                 {(m.unit || 'General').toUpperCase()} • {m.role === 'jefe_grupo' ? 'Jefe de Grupo' : m.role === 'scouter' ? 'Dirigente' : 'Scout'}
                                 {m.cedula ? ` • C.I: ${m.cedula}` : ''}
                               </Text>
@@ -427,7 +427,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                               style={[styles.viewProfileBtn, { backgroundColor: primaryColor }]}
                               onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: m.id })}
                             >
-                              <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>Perfil</Text>
+                              <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>Perfil</Text>
                             </TouchableOpacity>
                           </View>
                         ))}
@@ -459,7 +459,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                 <Users color="#9333ea" size={22} style={{ marginRight: 8 }} />
                 <View>
                   <Text style={[modalStyles.title, { color: theme.text }]}>Censo y Nómina Territorial</Text>
-                  <Text style={{ fontSize: 11, color: theme.subText }}>{territorialTitle} • {filteredProfiles.length} Miembros Registrados</Text>
+                  <Text style={{ fontSize: 12, color: theme.subText }}>{territorialTitle} • {filteredProfiles.length} Miembros Registrados</Text>
                 </View>
               </View>
               <TouchableOpacity onPress={() => setShowCensoModal(false)}>
@@ -491,14 +491,14 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                   <Text style={[styles.tableIndex, { color: theme.subText }]}>{idx + 1}</Text>
                   <View style={{ flex: 2 }}>
                     <Text style={[styles.memberName, { color: theme.text }]}>{m.name}</Text>
-                    <Text style={{ fontSize: 10, color: theme.subText }}>C.I: {m.cedula || 'N/A'} • {m.group_name}</Text>
+                    <Text style={{ fontSize: 12, color: theme.subText }}>C.I: {m.cedula || 'N/A'} • {m.group_name}</Text>
                   </View>
                   <View style={{ flex: 1.5 }}>
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.accentText }}>{(m.unit || 'General').toUpperCase()}</Text>
-                    <Text style={{ fontSize: 10, color: theme.subText }}>{m.role}</Text>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>{(m.unit || 'General').toUpperCase()}</Text>
+                    <Text style={{ fontSize: 12, color: theme.subText }}>{m.role}</Text>
                   </View>
                   <View style={{ flex: 1.5, alignItems: 'flex-end' }}>
-                    <Text style={{ fontSize: 10, color: m.membership_status === 'approved' ? '#16a34a' : '#dc2626', fontWeight: 'bold' }}>
+                    <Text style={{ fontSize: 12, color: m.membership_status === 'approved' ? '#16a34a' : '#dc2626', fontWeight: 'bold' }}>
                       {m.membership_status === 'approved' ? '✓ Carnet' : 'Sin Carnet'}
                     </Text>
                   </View>
@@ -520,7 +520,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                 <ShieldCheck color="#dc2626" size={22} style={{ marginRight: 8 }} />
                 <View>
                   <Text style={[modalStyles.title, { color: theme.text }]}>Padrón Médico Territorial de Contingencia</Text>
-                  <Text style={{ fontSize: 11, color: theme.subText }}>Registro médico para eventos distritales, regionales y nacionales</Text>
+                  <Text style={{ fontSize: 12, color: theme.subText }}>Registro médico para eventos distritales, regionales y nacionales</Text>
                 </View>
               </View>
               <TouchableOpacity onPress={() => setShowPadronMedicoModal(false)}>
@@ -554,14 +554,14 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                     <Text style={[styles.tableIndex, { color: theme.subText }]}>{idx + 1}</Text>
                     <View style={{ flex: 2 }}>
                       <Text style={[styles.memberName, { color: theme.text }]}>{m.name}</Text>
-                      <Text style={{ fontSize: 10, color: theme.subText }}>{m.group_name} • {(m.unit || 'General').toUpperCase()}</Text>
+                      <Text style={{ fontSize: 12, color: theme.subText }}>{m.group_name} • {(m.unit || 'General').toUpperCase()}</Text>
                     </View>
                     <View style={{ width: 50, alignItems: 'center' }}>
-                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#dc2626' }}>{med.bloodType || 'S/R'}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#dc2626' }}>{med.bloodType || 'S/R'}</Text>
                     </View>
                     <View style={{ flex: 2, alignItems: 'flex-end' }}>
-                      <Text style={{ fontSize: 10, color: theme.text, fontWeight: 'bold' }}>{med.emergencyContactName || 'Representante'}</Text>
-                      <Text style={{ fontSize: 10, color: theme.accentText }}>📞 {med.emergencyPhonePersonal || m.phone || 'Sin tlf'}</Text>
+                      <Text style={{ fontSize: 12, color: theme.text, fontWeight: 'bold' }}>{med.emergencyContactName || 'Representante'}</Text>
+                      <Text style={{ fontSize: 12, color: theme.accentText }}>📞 {med.emergencyPhonePersonal || m.phone || 'Sin tlf'}</Text>
                     </View>
                   </View>
                 );
@@ -582,7 +582,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                 <Clock color="#d97706" size={22} style={{ marginRight: 8 }} />
                 <View>
                   <Text style={[modalStyles.title, { color: theme.text }]}>Semáforo y Control de Membresías Territorial</Text>
-                  <Text style={{ fontSize: 11, color: theme.subText }}>Monitoreo de carnet ASV por grupo y región</Text>
+                  <Text style={{ fontSize: 12, color: theme.subText }}>Monitoreo de carnet ASV por grupo y región</Text>
                 </View>
               </View>
               <TouchableOpacity onPress={() => setShowSemaforoModal(false)}>
@@ -633,11 +633,11 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                     <Text style={[styles.tableIndex, { color: theme.subText }]}>{idx + 1}</Text>
                     <View style={{ flex: 2 }}>
                       <Text style={[styles.memberName, { color: theme.text }]}>{m.name}</Text>
-                      <Text style={{ fontSize: 10, color: theme.subText }}>{m.group_name} • {(m.unit || 'General').toUpperCase()}</Text>
+                      <Text style={{ fontSize: 12, color: theme.subText }}>{m.group_name} • {(m.unit || 'General').toUpperCase()}</Text>
                     </View>
                     <View style={{ flex: 1.5, alignItems: 'flex-end' }}>
-                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: statusColor }}>{statusLabel}</Text>
-                      <Text style={{ fontSize: 10, color: theme.subText }}>{m.membership_expires_at || 'Sin fecha'}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: statusColor }}>{statusLabel}</Text>
+                      <Text style={{ fontSize: 12, color: theme.subText }}>{m.membership_expires_at || 'Sin fecha'}</Text>
                     </View>
                   </View>
                 );
@@ -662,15 +662,15 @@ const styles = StyleSheet.create({
 
   filterCard: { margin: 16, marginBottom: 8, padding: 12, borderRadius: 14, borderWidth: 1 },
   scopeChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#d1d5db', marginRight: 6 },
-  scopeChipText: { fontSize: 11, fontWeight: '600' },
+  scopeChipText: { fontSize: 12, fontWeight: '600' },
 
   toolBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, paddingHorizontal: 14, borderRadius: 12, gap: 6 },
-  toolBtnText: { color: 'white', fontSize: 11, fontWeight: 'bold' },
+  toolBtnText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
 
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   kpiCard: { width: '48%', padding: 14, borderRadius: 14, borderWidth: 1, alignItems: 'center' },
   kpiNumber: { fontSize: 22, fontWeight: 'bold', marginTop: 4 },
-  kpiLabel: { fontSize: 11, marginTop: 2, textAlign: 'center' },
+  kpiLabel: { fontSize: 12, marginTop: 2, textAlign: 'center' },
 
   sectionTitle: { fontSize: 15, fontWeight: 'bold' },
   emptyBox: { padding: 24, borderRadius: 14, borderWidth: 1, alignItems: 'center' },
@@ -691,7 +691,7 @@ const styles = StyleSheet.create({
   modalActionBtnText: { color: 'white', fontWeight: 'bold', fontSize: 12 },
 
   tableRow: { flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 10, borderWidth: 1, marginBottom: 6 },
-  tableIndex: { fontSize: 11, fontWeight: 'bold', width: 24 }
+  tableIndex: { fontSize: 12, fontWeight: 'bold', width: 24 }
 });
 
 const modalStyles = StyleSheet.create({

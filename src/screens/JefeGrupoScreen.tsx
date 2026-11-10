@@ -16,8 +16,7 @@ import {
   Users, Award, Calendar, Calendar as CalendarIcon, Moon, Sun, FileText,
   ChevronRight, ChevronDown, ChevronUp, Camera, BookOpen, Palette, Plus, X,
   Shield, ShieldCheck, Flag, Sparkles, Download, Printer, Search, CheckCircle2,
-  AlertTriangle, Clock, RefreshCw, Eye, CheckCircle, Check, Phone, LogOut, Receipt
-} from 'lucide-react-native';
+  AlertTriangle, Clock, RefreshCw, Eye, CheckCircle, Check, Phone, LogOut, Receipt, Bug } from 'lucide-react-native';
 import { showAlert } from '../utils/alert';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
 import { DualProfileAvatar } from '../components/DualProfileAvatar';
@@ -35,6 +34,9 @@ import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
 import CipManagerModal from '../components/CipManagerModal';
 import { styles, modalStyles } from './jefeGrupo/styles';
 import { AppErrorsModal } from '../components/AppErrorsModal';
+import { SkeletonScreen } from '../components/Skeleton';
+import { PanelHeader } from '../components/PanelHeader';
+import { contentMax } from '../theme/layout';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
   if (!dateStr) return 'Seleccionar fecha en el calendario';
@@ -476,11 +478,11 @@ export default function JefeGrupoScreen({ navigation }: any) {
               <Text style={[styles.memberName, { color: theme.text }]}>{member.name}</Text>
               {isScouterRole && (
                 <View style={{ backgroundColor: 'rgba(79, 70, 229, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#4f46e5' }}>
-                  <Text style={{ fontSize: 10, color: isDarkMode ? '#a5b4fc' : '#6366f1', fontWeight: 'bold' }}>👔 DIRIGENTE</Text>
+                  <Text style={{ fontSize: 12, color: isDarkMode ? '#a5b4fc' : '#6366f1', fontWeight: 'bold' }}>👔 DIRIGENTE</Text>
                 </View>
               )}
             </View>
-            <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+            <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
               {roleSubtitle} {member.cedula ? `• C.I: ${member.cedula}` : ''}
             </Text>
           </View>
@@ -501,7 +503,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
             onPress={() => navigation.navigate('FichaMedica', { targetUserId: member.id })}
           >
             <Text style={{ fontSize: 13, marginRight: 4 }}>📋</Text>
-            <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.accentText }}>Ficha Médica</Text>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>Ficha Médica</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -509,12 +511,12 @@ export default function JefeGrupoScreen({ navigation }: any) {
             onPress={() => navigation.navigate('CurriculumScout', { targetUserId: member.id })}
           >
             <Text style={{ fontSize: 13, marginRight: 4 }}>📜</Text>
-            <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.accentText }}>Currículum</Text>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>Currículum</Text>
           </TouchableOpacity>
 
           {isApproved && (
             <View style={[styles.miniDocBtn, { backgroundColor: '#dcfce7', borderColor: '#16a34a' }]}>
-              <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#15803d' }}>✓ Carnet Activo</Text>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#15803d' }}>✓ Carnet Activo</Text>
             </View>
           )}
         </View>
@@ -550,7 +552,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
         activeOpacity={0.8}
       >
         <Users size={18} color="#9333ea" />
-        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>📊 Censo y Nómina</Text>
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Censo y Nómina</Text>
       </TouchableOpacity>
 
       {/* ROLES Y MIEMBROS (nombrar Scouters, aprobar cuentas) */}
@@ -561,7 +563,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
         accessibilityRole="button"
       >
         <ShieldCheck size={18} color="#2563eb" />
-        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>🛡️ Roles y miembros</Text>
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Roles y miembros</Text>
       </TouchableOpacity>
 
       {/* ERRORES DE LA APP (registrados solos o reportados con el botón de ayuda) */}
@@ -571,7 +573,8 @@ export default function JefeGrupoScreen({ navigation }: any) {
         activeOpacity={0.8}
         accessibilityRole="button"
       >
-        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>🐞 Errores de la app</Text>
+        <Bug size={18} color={isDarkMode ? '#fca5a5' : '#b91c1c'} />
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Errores de la app</Text>
       </TouchableOpacity>
 
       {/* CIP: catálogo y asistencia de los jóvenes del grupo */}
@@ -582,7 +585,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
         accessibilityRole="button"
       >
         <Flag size={18} color="#7c3aed" />
-        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>🚩 CIP</Text>
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>CIP</Text>
       </TouchableOpacity>
 
       {/* 2. PADRÓN DE EMERGENCIA MÉDICA */}
@@ -592,7 +595,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
         activeOpacity={0.8}
       >
         <ShieldCheck size={18} color="#dc2626" />
-        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>🏥 Padrón Médico</Text>
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Padrón Médico</Text>
       </TouchableOpacity>
 
       {/* 3. SEMÁFORO DE MEMBRESÍAS Y CARNETS */}
@@ -603,7 +606,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
       >
         <Clock size={18} color="#d97706" />
         <Text style={[styles.quickToolBtnText, { color: theme.text }]}>
-          🚦 Semáforo Carnets {semaforoCounts.pending > 0 ? `(${semaforoCounts.pending})` : ''}
+          Semáforo Carnets {semaforoCounts.pending > 0 ? `(${semaforoCounts.pending})` : ''}
         </Text>
       </TouchableOpacity>
 
@@ -649,7 +652,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
         activeOpacity={0.8}
       >
         <Award size={18} color={primaryColor} />
-        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>🏅 Especialidades Scout</Text>
+        <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Especialidades Scout</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -665,43 +668,16 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1 }}>
-      <PullToRefreshScrollView onRefresh={() => loadStatsAndMembers()} style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={{ paddingBottom: 40 }}>
+      <PullToRefreshScrollView onRefresh={() => loadStatsAndMembers()} style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={[{ paddingBottom: 40 }, contentMax]}>
       
         {/* CABECERA JEFE DE GRUPO */}
-        <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : primaryColor }]}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.title}>Panel Jefe de Grupo</Text>
-            <Text style={styles.subtitle}>Grupo Scout: {user?.group_name || 'Grupo Orión #84'}</Text>
-          </View>
-
-          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-            <NotificationHeaderBell color="#ffffff" style={styles.iconBtn} />
-
-            <TouchableOpacity 
-              style={styles.iconBtn} 
-              onPress={() => setShowCustomizer(true)}
-              activeOpacity={0.8}
-            >
-              <Palette color="#ffffff" size={20} />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.iconBtn} 
-              onPress={toggleDarkMode}
-              activeOpacity={0.8}
-            >
-              {isDarkMode ? <Sun color="#f59e0b" size={20} /> : <Moon color="white" size={20} />}
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.iconBtn, { backgroundColor: 'rgba(239, 68, 68, 0.25)' }]} 
-              onPress={signOut}
-              activeOpacity={0.8}
-            >
-              <LogOut color="#ef4444" size={20} />
-            </TouchableOpacity>
-          </View>
-        </View>
+        <PanelHeader
+          eyebrow="Panel Jefe de Grupo"
+          title={user?.name || 'Jefatura'}
+          subtitle={`Grupo Scout: ${user?.group_name || 'Grupo Orión #84'}`}
+          onCustomize={() => setShowCustomizer(true)}
+          onSignOut={signOut}
+        />
 
         {/* BARRA DE ACCIONES RÁPIDAS Y HERRAMIENTAS INSTITUCIONALES (WRAP EN ESCRITORIO) */}
         <View style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
@@ -717,7 +693,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
         </View>
         
         {loading ? (
-          <ActivityIndicator size="large" color={primaryColor} style={{ marginTop: 40 }} />
+          <SkeletonScreen variant="panel" fill={false} />
         ) : (
           <View style={{ padding: 16 }}>
 
@@ -775,7 +751,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
               >
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.accordionTitle, { color: theme.text }]}>🟡 MANADA DE LOBATOS Y LOBEZNAS</Text>
-                  <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                     {manadaData.scouters.length} Scouters • {manadaData.totalYouth} Niños/as
                   </Text>
                 </View>
@@ -817,7 +793,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
               >
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.accordionTitle, { color: theme.text }]}>🟢 TROPA SCOUT</Text>
-                  <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                     {tropaData.scouters.length} Scouters • {tropaData.totalYouth} Scouts
                   </Text>
                 </View>
@@ -852,7 +828,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
               >
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.accordionTitle, { color: theme.text }]}>🔵 CAMINANTES / COMUNIDAD</Text>
-                  <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                     {caminantesData.scouters.length} Scouters • {caminantesData.totalYouth} Caminantes
                   </Text>
                 </View>
@@ -887,7 +863,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
               >
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.accordionTitle, { color: theme.text }]}>🔴 CLAN ROVER</Text>
-                  <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                     {clanData.scouters.length} Scouters • {clanData.totalYouth} Rovers
                   </Text>
                 </View>
@@ -922,7 +898,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
               >
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.accordionTitle, { color: theme.text }]}>⚜️ JEFATURA Y CONSEJO DE GRUPO</Text>
-                  <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                     {jefaturaMembers.length} Miembros de Jefatura
                   </Text>
                 </View>
@@ -962,7 +938,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 <Users color="#9333ea" size={22} style={{ marginRight: 8 }} />
                 <View>
                   <Text style={[modalStyles.title, { color: theme.text }]}>Censo y Nómina Oficial del Grupo</Text>
-                  <Text style={{ fontSize: 11, color: theme.subText }}>{user?.group_name || 'Grupo Scout'} • {filteredCensoMembers.length} Miembros filtrados</Text>
+                  <Text style={{ fontSize: 12, color: theme.subText }}>{user?.group_name || 'Grupo Scout'} • {filteredCensoMembers.length} Miembros filtrados</Text>
                 </View>
               </View>
               <TouchableOpacity onPress={() => setShowCensoModal(false)} style={{ padding: 6 }}>
@@ -1049,31 +1025,31 @@ export default function JefeGrupoScreen({ navigation }: any) {
                       <Text style={[styles.tableIndex, { color: theme.subText }]}>{idx + 1}</Text>
                       <View style={{ flex: 2 }}>
                         <Text style={[styles.tableMainText, { color: theme.text }]}>{m.name}</Text>
-                        <Text style={{ fontSize: 11, color: theme.subText }}>C.I: {m.cedula || 'Sin C.I.'}</Text>
+                        <Text style={{ fontSize: 12, color: theme.subText }}>C.I: {m.cedula || 'Sin C.I.'}</Text>
                       </View>
                       <View style={{ flex: 1.5 }}>
-                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: isJefe ? (isDarkMode ? '#c084fc' : '#9333ea') : theme.accentText }}>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: isJefe ? (isDarkMode ? '#c084fc' : '#9333ea') : theme.accentText }}>
                           {isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase()}
                         </Text>
-                        <Text style={{ fontSize: 10, color: theme.subText }}>{m.role === 'scouter' ? 'Dirigente' : m.role === 'jefe_grupo' ? 'Jefe Grupo' : 'Scout'}</Text>
+                        <Text style={{ fontSize: 12, color: theme.subText }}>{m.role === 'scouter' ? 'Dirigente' : m.role === 'jefe_grupo' ? 'Jefe Grupo' : 'Scout'}</Text>
                       </View>
                       <View style={{ flex: 1.5 }}>
-                        <Text style={{ fontSize: 11, color: theme.text }}>Prom: {m.promise_date || 'N/A'}</Text>
-                        <Text style={{ fontSize: 10, color: theme.subText }}>Nac: {m.birth_date || 'N/A'}</Text>
+                        <Text style={{ fontSize: 12, color: theme.text }}>Prom: {m.promise_date || 'N/A'}</Text>
+                        <Text style={{ fontSize: 12, color: theme.subText }}>Nac: {m.birth_date || 'N/A'}</Text>
                         {m.role === 'scout' && (() => {
                           const fit = ageFitForUnit(m.unit, m.birth_date);
                           if (fit.kind === 'unknown') return null;
                           const warn = fit.kind !== 'ok';
                           return (
-                            <Text style={{ fontSize: 10, fontWeight: warn ? 'bold' : 'normal', color: warn ? (isDarkMode ? '#fdba74' : '#c2410c') : theme.subText }}>
+                            <Text style={{ fontSize: 12, fontWeight: warn ? 'bold' : 'normal', color: warn ? (isDarkMode ? '#fdba74' : '#c2410c') : theme.subText }}>
                               {warn ? '⚠️ ' : ''}{ageFitLabel(fit)}
                             </Text>
                           );
                         })()}
                       </View>
                       <View style={{ flex: 1.5, alignItems: 'flex-end' }}>
-                        <Text style={{ fontSize: 11, color: theme.text, fontWeight: '500' }}>{m.phone || 'Sin tlf'}</Text>
-                        <Text style={{ fontSize: 10, color: m.membership_status === 'approved' ? '#16a34a' : '#dc2626', fontWeight: 'bold' }}>
+                        <Text style={{ fontSize: 12, color: theme.text, fontWeight: '500' }}>{m.phone || 'Sin tlf'}</Text>
+                        <Text style={{ fontSize: 12, color: m.membership_status === 'approved' ? '#16a34a' : '#dc2626', fontWeight: 'bold' }}>
                           {m.membership_status === 'approved' ? '✓ Carnet' : 'Sin Carnet'}
                         </Text>
                       </View>
@@ -1097,7 +1073,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 <ShieldCheck color="#dc2626" size={22} style={{ marginRight: 8 }} />
                 <View>
                   <Text style={[modalStyles.title, { color: theme.text }]}>Padrón de Emergencia Médica y Contactos</Text>
-                  <Text style={{ fontSize: 11, color: theme.subText }}>Registro médico prioritario para salidas y campamentos • {filteredMedicoMembers.length} Miembros</Text>
+                  <Text style={{ fontSize: 12, color: theme.subText }}>Registro médico prioritario para salidas y campamentos • {filteredMedicoMembers.length} Miembros</Text>
                 </View>
               </View>
               <TouchableOpacity onPress={() => setShowPadronMedicoModal(false)} style={{ padding: 6 }}>
@@ -1189,11 +1165,11 @@ export default function JefeGrupoScreen({ navigation }: any) {
                       <Text style={[styles.tableIndex, { color: theme.subText }]}>{idx + 1}</Text>
                       <View style={{ flex: 2 }}>
                         <Text style={[styles.tableMainText, { color: theme.text }]}>{m.name}</Text>
-                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: isJefe ? (isDarkMode ? '#c084fc' : '#9333ea') : theme.subText }}>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: isJefe ? (isDarkMode ? '#c084fc' : '#9333ea') : theme.subText }}>
                           {isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase()}
                         </Text>
                         {isAdult && (
-                          <Text style={{ fontSize: 10, color: theme.subText, fontWeight: '500' }}>
+                          <Text style={{ fontSize: 12, color: theme.subText, fontWeight: '500' }}>
                             {m.role === 'jefe_grupo' ? 'Scouter / Jefe Grupo' : 'Scouter'}
                           </Text>
                         )}
@@ -1208,17 +1184,17 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
                       {/* ALERGIAS */}
                       <View style={{ flex: 2, paddingHorizontal: 6 }}>
-                        <Text style={{ fontSize: 11, color: hasAllergies ? '#dc2626' : theme.subText, fontWeight: hasAllergies ? 'bold' : 'normal' }}>
+                        <Text style={{ fontSize: 12, color: hasAllergies ? '#dc2626' : theme.subText, fontWeight: hasAllergies ? 'bold' : 'normal' }}>
                           {hasAllergies ? `⚠️ ${med.allergies.medicamento || med.allergies.alimento || 'Alergia'}` : 'Sin Alergias'}
                         </Text>
                       </View>
 
                       {/* CONTACTO DE EMERGENCIA / NÚMERO DE CONTACTO */}
                       <View style={{ flex: 2.2, alignItems: 'flex-end' }}>
-                        <Text style={{ fontSize: 11, color: theme.text, fontWeight: 'bold' }}>
+                        <Text style={{ fontSize: 12, color: theme.text, fontWeight: 'bold' }}>
                           {med.emergencyContactName ? med.emergencyContactName : (isAdult ? 'Número de Contacto' : 'Representante')}
                         </Text>
-                        <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: '500' }}>📞 {contactPhone || 'Sin tlf'}</Text>
+                        <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: '500' }}>📞 {contactPhone || 'Sin tlf'}</Text>
                       </View>
                     </View>
                   );
@@ -1240,7 +1216,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 <Clock color="#d97706" size={22} style={{ marginRight: 8 }} />
                 <View>
                   <Text style={[modalStyles.title, { color: theme.text }]}>Semáforo Institucional de Membresías y Carnets</Text>
-                  <Text style={{ fontSize: 11, color: theme.subText }}>Control de vigencia y aprobación de carnet ASV • Total: {allMembers.length} Miembros</Text>
+                  <Text style={{ fontSize: 12, color: theme.subText }}>Control de vigencia y aprobación de carnet ASV • Total: {allMembers.length} Miembros</Text>
                 </View>
               </View>
               <TouchableOpacity onPress={() => setShowSemaforoModal(false)} style={{ padding: 6 }}>
@@ -1374,7 +1350,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                     style={{ backgroundColor: primaryColor, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }} 
                     onPress={() => setSemaforoStatusFilter('all')}
                   >
-                    <Text style={{ fontSize: 11, color: 'white', fontWeight: 'bold' }}>✕ Ver Todos ({allMembers.length})</Text>
+                    <Text style={{ fontSize: 12, color: 'white', fontWeight: 'bold' }}>✕ Ver Todos ({allMembers.length})</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -1413,15 +1389,15 @@ export default function JefeGrupoScreen({ navigation }: any) {
                       <Text style={[styles.tableIndex, { color: theme.subText }]}>{idx + 1}</Text>
                       <View style={{ flex: 2 }}>
                         <Text style={[styles.tableMainText, { color: theme.text }]}>{m.name}</Text>
-                        <Text style={{ fontSize: 11, color: theme.subText }}>{(m.unit || 'General').toUpperCase()}</Text>
+                        <Text style={{ fontSize: 12, color: theme.subText }}>{(m.unit || 'General').toUpperCase()}</Text>
                       </View>
 
                       {/* BADGE DE SEMÁFORO */}
                       <View style={{ flex: 1.8, alignItems: 'center' }}>
                         <View style={{ backgroundColor: statusBadge.bg, borderColor: statusBadge.border, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
-                          <Text style={{ fontSize: 11, fontWeight: 'bold', color: statusBadge.text }}>{statusBadge.label}</Text>
+                          <Text style={{ fontSize: 12, fontWeight: 'bold', color: statusBadge.text }}>{statusBadge.label}</Text>
                         </View>
-                        <Text style={{ fontSize: 10, color: theme.subText, marginTop: 2 }}>{m.membership_expires_at || 'Sin fecha'}</Text>
+                        <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>{m.membership_expires_at || 'Sin fecha'}</Text>
                       </View>
 
                       {/* BOTONES DE ACCIÓN */}
@@ -1440,7 +1416,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                             onPress={() => handleApproveMembership(m.id)}
                           >
                             <Check size={14} color="white" style={{ marginRight: 2 }} />
-                            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>Aprobar</Text>
+                            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>Aprobar</Text>
                           </TouchableOpacity>
                         )}
 
@@ -1452,7 +1428,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                             setShowMembershipDatePicker(true);
                           }}
                         >
-                          <Text style={{ color: theme.text, fontSize: 11, fontWeight: 'bold' }}>📅 Asignar</Text>
+                          <Text style={{ color: theme.text, fontSize: 12, fontWeight: 'bold' }}>📅 Asignar</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -1588,7 +1564,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {eventUnit === 'scouters' && (
                 <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#eef2ff', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: '#6366f1', marginBottom: 12 }}>
-                  <Text style={{ fontSize: 11, color: '#4f46e5', fontWeight: 'bold' }}>
+                  <Text style={{ fontSize: 12, color: '#4f46e5', fontWeight: 'bold' }}>
                     🔒 Visibilidad Privada: Este evento SOLO lo verán Jefatura y Scouters. Los jóvenes scouts NO lo verán.
                   </Text>
                 </View>
@@ -1616,7 +1592,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   <Text style={{ color: theme.text, fontSize: 13, fontWeight: 'bold' }}>
                     {formatDateWithDayOfWeek(eventDate)}
                   </Text>
-                  <Text style={{ color: theme.subText, fontSize: 11 }}>
+                  <Text style={{ color: theme.subText, fontSize: 12 }}>
                     Toca para ver el calendario (Lunes a Domingo)
                   </Text>
                 </View>

@@ -11,6 +11,8 @@ import { ChevronRight } from 'lucide-react-native';
 import { StageBadgeIcon } from '../components/StageBadgeIcon';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { getStagesForUnit } from '../data/unitTemplates';
+import { SkeletonScreen } from '../components/Skeleton';
+import { contentMax } from '../theme/layout';
 
 const STAGE_COLORS: Record<string, string> = {
   'precursor':      '#ffb300',
@@ -66,14 +68,12 @@ export default function PlanProgresivoScreen({ navigation }: any) {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <SkeletonScreen variant="list" />
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.bg }]}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={contentMax}>
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderBottomColor: theme.border }]}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flex: 1, paddingRight: 8 }}>

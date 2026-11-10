@@ -316,7 +316,7 @@ async function checkErrorReporting(browser, base) {
   try {
     await page.goto(`${base}/jefe-grupo`);
     await settle(page, /Panel Jefe de Grupo/);
-    await page.getByText('🐞 Errores de la app').first().click();
+    await page.getByText('Errores de la app', { exact: true }).first().click();
     const st = await settle(page, /Cannot read properties of undefined/, 6000);
     const manual = await page.getByText('No me deja subir el certificado').count();
     if (st.found && manual) ok('la Jefatura ve los errores automáticos y los reportes manuales');

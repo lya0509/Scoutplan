@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', marginTop: 20, fontSize: 14 },
   warn: { fontSize: 13, lineHeight: 18, borderRadius: 10, padding: 12 },
   badge: { borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
-  badgeText: { fontSize: 11.5, fontWeight: '700' },
+  badgeText: { fontSize: 12, fontWeight: '700' },
   back: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36 },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 12, padding: 12, minHeight: 56 },
   memberName: { fontSize: 14.5, fontWeight: '700' },

@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   miniSwitchBadgeText: {
-    fontSize: 11,
+    fontSize: 12,
     lineHeight: 13,
   },
   customPlaceholder: {
@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(16, 185, 129, 0.08)',
   },
   customPlaceholderText: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: 'bold',
     marginTop: 2,
   },
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   activeHint: {
-    fontSize: 11,
+    fontSize: 12,
     marginBottom: 6,
     textAlign: 'center',
   },

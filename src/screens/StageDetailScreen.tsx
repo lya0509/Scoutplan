@@ -32,6 +32,7 @@ import { navigateBackOrHome } from '../utils/navigationHelper';
 import { formatDateEs, humanDuration } from '../utils/dateLocal';
 import { SecureImage } from '../components/SecureImage';
 import CipStageModal from '../components/CipStageModal';
+import { SkeletonScreen } from '../components/Skeleton';
 
 export default function StageDetailScreen({ route, navigation }: any) {
   const { stageId } = route.params || { stageId: 'precursor' };
@@ -449,9 +450,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
 
   if (loading || !stageTemplate) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <SkeletonScreen variant="list" />
     );
   }
 
@@ -590,7 +589,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                     {linkedCertMap[req.id]?.certTitle ? (
                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <Sparkles size={12} color="#10b981" style={{ marginRight: 4 }} />
-                        <Text style={{ fontSize: 11, color: '#10b981', fontWeight: 'bold' }}>
+                        <Text style={{ fontSize: 12, color: '#10b981', fontWeight: 'bold' }}>
                           Acreditado: {linkedCertMap[req.id].certTitle}
                         </Text>
                       </View>
@@ -741,7 +740,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                   <Text style={[modalStyles.title, { color: theme.text }]} numberOfLines={1}>
                     Vincular Acreditación
                   </Text>
-                  <Text style={{ fontSize: 11, color: theme.subText, marginTop: 1 }}>
+                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 1 }}>
                     {selectedReqForCert?.text}
                   </Text>
                 </View>
@@ -853,7 +852,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                       }}
                       onPress={() => setCertFilterLevel(lvl.id)}
                     >
-                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: certFilterLevel === lvl.id ? 'white' : theme.text }}>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: certFilterLevel === lvl.id ? 'white' : theme.text }}>
                         {lvl.name}
                       </Text>
                     </TouchableOpacity>
@@ -910,7 +909,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                     onPress={() => setCertModalViewMode('list')}
                   >
                     <List size={13} color={certModalViewMode === 'list' ? 'white' : theme.subText} />
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: certModalViewMode === 'list' ? 'white' : theme.subText }}>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: certModalViewMode === 'list' ? 'white' : theme.subText }}>
                       Lista
                     </Text>
                   </TouchableOpacity>
@@ -928,7 +927,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                     onPress={() => setCertModalViewMode('grid')}
                   >
                     <LayoutGrid size={13} color={certModalViewMode === 'grid' ? 'white' : theme.subText} />
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: certModalViewMode === 'grid' ? 'white' : theme.subText }}>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: certModalViewMode === 'grid' ? 'white' : theme.subText }}>
                       Cuadrícula
                     </Text>
                   </TouchableOpacity>
@@ -975,7 +974,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                       <Text style={[modalStyles.emptyText, { color: theme.text, fontWeight: 'bold' }]}>
                         No se encontraron certificados para este requisito.
                       </Text>
-                      <Text style={{ fontSize: 11, color: theme.subText, textAlign: 'center', marginTop: 4 }}>
+                      <Text style={{ fontSize: 12, color: theme.subText, textAlign: 'center', marginTop: 4 }}>
                         Usa el botón superior "Subir Nueva" para adjuntar tu diploma o "Marcar Directo" si ya lo completaste.
                       </Text>
                     </View>
@@ -1026,7 +1025,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                               <View>
                                 {!!cert.level && (
                                   <View style={{ alignSelf: 'flex-start', backgroundColor: colors.primary, paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginBottom: 3 }}>
-                                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 8 }}>{cert.level.toUpperCase()}</Text>
+                                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>{cert.level.toUpperCase()}</Text>
                                   </View>
                                 )}
                                 <Text style={[modalStyles.gridCertTitle, { color: theme.text }]} numberOfLines={2}>
@@ -1041,7 +1040,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                                 backgroundColor: isSelected ? '#10b981' : usedIn ? (isDarkMode ? '#44403c' : '#e2e8f0') : colors.primary,
                                 alignItems: 'center'
                               }}>
-                                <Text style={{ color: usedIn ? theme.subText : 'white', fontWeight: 'bold', fontSize: 10 }}>
+                                <Text style={{ color: usedIn ? theme.subText : 'white', fontWeight: 'bold', fontSize: 12 }}>
                                   {isSelected ? '✓ Vinculado' : usedIn ? 'Bloqueado' : 'Vincular'}
                                 </Text>
                               </View>
@@ -1092,20 +1091,20 @@ export default function StageDetailScreen({ route, navigation }: any) {
                           </Text>
                           {!!cert.level && (
                             <View style={{ backgroundColor: colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-                              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 9 }}>
+                              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>
                                 {cert.level.toUpperCase()}
                               </Text>
                             </View>
                           )}
                         </View>
-                        <Text style={{ fontSize: 11, color: theme.subText }}>
+                        <Text style={{ fontSize: 12, color: theme.subText }}>
                           Categoría: {cert.category || 'Especialidad'}
                         </Text>
                         <Text style={modalStyles.eventDate}>
                           Fecha: {cert.date || cert.created_at?.split('T')[0] || 'Registrado'}
                         </Text>
                         {usedIn && (
-                          <Text style={{ fontSize: 10, color: '#ef4444', fontWeight: 'bold', marginTop: 3 }}>
+                          <Text style={{ fontSize: 12, color: '#ef4444', fontWeight: 'bold', marginTop: 3 }}>
                             🔒 Utilizado en: {usedIn.stageTitle} — {usedIn.reqText}
                           </Text>
                         )}
@@ -1125,7 +1124,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                         <Text style={{
                           color: usedIn ? (isDarkMode ? '#a8a29e' : '#64748b') : 'white',
                           fontWeight: 'bold',
-                          fontSize: 11
+                          fontSize: 12
                         }}>
                           {isSelected ? '✓ Vinculado' : usedIn ? 'Bloqueado' : 'Vincular'}
                         </Text>
@@ -1246,7 +1245,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: 'bold' },
   subtitle: { fontSize: 12, marginTop: 2 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  statusText: { fontSize: 11, fontWeight: 'bold' },
+  statusText: { fontSize: 12, fontWeight: 'bold' },
   progressSection: { marginTop: 10 },
   progressBarBg: { height: 8, borderRadius: 4, overflow: 'hidden' },
   progressBarFill: { height: '100%', borderRadius: 4 },
@@ -1254,7 +1253,7 @@ const styles = StyleSheet.create({
   reqRow: { flexDirection: 'row', alignItems: 'flex-start', padding: 14, borderRadius: 14, marginBottom: 10, borderWidth: 1 },
   reqText: { fontSize: 14, fontWeight: '600', lineHeight: 20 },
   reqTextChecked: { color: colors.primary, fontWeight: 'bold' },
-  reqBadge: { fontSize: 11, color: '#9333ea', fontWeight: 'bold', marginTop: 4 },
+  reqBadge: { fontSize: 12, color: '#9333ea', fontWeight: 'bold', marginTop: 4 },
   footerAction: { padding: 16, paddingBottom: 40 },
   sendReviewBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 14 },
   sendReviewBtnDisabled: { backgroundColor: '#64748b' },
@@ -1272,7 +1271,7 @@ const modalStyles = StyleSheet.create({
   eventCard: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 12, borderWidth: 1, marginBottom: 10 },
   eventTitle: { fontSize: 15, fontWeight: 'bold' },
   eventDesc: { fontSize: 12, marginTop: 2 },
-  eventDate: { fontSize: 11, color: colors.primary, marginTop: 4, fontWeight: 'bold' },
+  eventDate: { fontSize: 12, color: colors.primary, marginTop: 4, fontWeight: 'bold' },
 
   gridCertCard: { width: '48%', borderRadius: 12, overflow: 'hidden', borderWidth: 1, marginBottom: 10 },
   gridCertImage: { width: '100%', height: 90 },

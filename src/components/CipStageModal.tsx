@@ -91,7 +91,7 @@ export default function CipStageModal({ visible, onClose, stageId, req, isReadOn
                     </Text>
                     {c.historico && (
                       <View style={[styles.tag, { backgroundColor: '#f59e0b22' }]}>
-                        <Text style={{ color: '#b45309', fontSize: 11.5, fontWeight: '700' }}>Registro anterior a la app</Text>
+                        <Text style={{ color: '#b45309', fontSize: 12, fontWeight: '700' }}>Registro anterior a la app</Text>
                       </View>
                     )}
                   </View>

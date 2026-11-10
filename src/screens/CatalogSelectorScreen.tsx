@@ -452,9 +452,9 @@ const styles = StyleSheet.create({
   cardText: { fontSize: 14, fontWeight: 'bold', lineHeight: 20 },
   cardTextSelected: { color: colors.primary },
   tagRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 4 },
-  tagText: { fontSize: 11 },
-  tagAreaText: { fontSize: 11 },
-  disabledTagText: { fontSize: 11, color: '#ef4444', fontWeight: 'bold' },
+  tagText: { fontSize: 12 },
+  tagAreaText: { fontSize: 12 },
+  disabledTagText: { fontSize: 12, color: '#ef4444', fontWeight: 'bold' },
 
   emptyCard: { padding: 30, alignItems: 'center', borderRadius: 14, borderWidth: 1, marginTop: 20 },
   emptyTitle: { fontSize: 15, fontWeight: 'bold' },

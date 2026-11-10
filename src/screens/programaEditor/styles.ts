@@ -43,7 +43,7 @@ export const styles = StyleSheet.create({
   sectionHeading: { fontSize: 14, fontWeight: 'bold', marginBottom: 12 },
   fieldGroup: { marginBottom: 12 },
   fieldLabel: { fontSize: 12, fontWeight: 'bold', marginBottom: 6 },
-  fieldLabelSmall: { fontSize: 11, fontWeight: '600', marginBottom: 4 },
+  fieldLabelSmall: { fontSize: 12, fontWeight: '600', marginBottom: 4 },
   textInput: {
     height: 42,
     borderRadius: 8,
@@ -91,7 +91,7 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
   },
-  sinodalToggleText: { fontSize: 11 },
+  sinodalToggleText: { fontSize: 12 },
   fixedUnitBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -122,7 +122,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
   },
-  unitChipText: { fontSize: 10 },
+  unitChipText: { fontSize: 12 },
   activeBadgePill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -149,7 +149,7 @@ export const styles = StyleSheet.create({
     fontSize: 12,
   },
   countBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 },
-  subTextHint: { fontSize: 11, marginBottom: 10, lineHeight: 16 },
+  subTextHint: { fontSize: 12, marginBottom: 10, lineHeight: 16 },
   sdgGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   sdgChip: {
     flexDirection: 'row',
@@ -159,7 +159,7 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
   },
-  sdgChipText: { fontSize: 11, fontWeight: '500' },
+  sdgChipText: { fontSize: 12, fontWeight: '500' },
   areaAccordion: {
     borderRadius: 10,
     borderWidth: 1,
@@ -184,7 +184,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 6,
   },
-  selectedIndicatorText: { fontSize: 11, flex: 1, marginRight: 6, lineHeight: 15 },
+  selectedIndicatorText: { fontSize: 12, flex: 1, marginRight: 6, lineHeight: 15 },
   indicatorActionsRow: { marginTop: 8 },
   btnPickOfficial: {
     flexDirection: 'row',
@@ -201,7 +201,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
   },
-  addScheduleBtnText: { color: '#ffffff', fontSize: 11, fontWeight: 'bold' },
+  addScheduleBtnText: { color: '#ffffff', fontSize: 12, fontWeight: 'bold' },
   scheduleCardItem: {
     padding: 12,
     borderRadius: 10,
@@ -265,7 +265,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 6,
   },
-  indicatorOptionText: { fontSize: 11, marginTop: 2, lineHeight: 15 },
+  indicatorOptionText: { fontSize: 12, marginTop: 2, lineHeight: 15 },
   customAddBlock: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -333,7 +333,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
   },
   quickDateChipText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   calendarNavRow: {
@@ -362,7 +362,7 @@ export const styles = StyleSheet.create({
   calWeekDayText: {
     width: 38,
     textAlign: 'center',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
   },
   calGrid: {
@@ -421,7 +421,7 @@ export const styles = StyleSheet.create({
   },
   movePositionBtnText: {
     color: '#ffffff',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
   },
 
@@ -483,7 +483,7 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
   },
   saveOptionBadgeText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '900',
     letterSpacing: 0.5,
   },
@@ -547,7 +547,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   timePickerTabSub: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: 'bold',
     textTransform: 'uppercase',
   },
@@ -645,7 +645,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
   },
   presetChipText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   durationSummaryBox: {

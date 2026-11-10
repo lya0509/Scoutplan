@@ -43,7 +43,7 @@ export const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   statCard: { flex: 1, padding: 12, borderRadius: 16, borderWidth: 1, alignItems: 'center' },
   statNumber: { fontSize: 20, fontWeight: 'bold', marginTop: 4 },
-  statLabel: { fontSize: 10, marginTop: 2, textAlign: 'center' },
+  statLabel: { fontSize: 12, marginTop: 2, textAlign: 'center' },
   sectionTitle: { fontSize: 16, fontWeight: 'bold' },
 
   accordionSection: {
@@ -77,7 +77,7 @@ export const styles = StyleSheet.create({
     letterSpacing: 0.4
   },
   emptySubText: {
-    fontSize: 11,
+    fontSize: 12,
     fontStyle: 'italic',
     color: '#94a3b8',
     marginBottom: 8,
@@ -116,7 +116,7 @@ export const styles = StyleSheet.create({
   },
   profileBtnText: {
     color: 'white',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
     marginRight: 2
   },
@@ -165,7 +165,7 @@ export const styles = StyleSheet.create({
   exportBtnText: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: 11
+    fontSize: 12
   },
   filterTag: {
     paddingHorizontal: 12,
@@ -175,7 +175,7 @@ export const styles = StyleSheet.create({
     marginRight: 6
   },
   filterTagText: {
-    fontSize: 11
+    fontSize: 12
   },
   tableRow: {
     flexDirection: 'row',
@@ -186,7 +186,7 @@ export const styles = StyleSheet.create({
     marginBottom: 6
   },
   tableIndex: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
     width: 24
   },
@@ -214,7 +214,7 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   trafficLabel: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: 'bold',
     marginTop: 2,
     textAlign: 'center'
@@ -250,11 +250,11 @@ export const modalStyles = StyleSheet.create({
   sheet: { width: '100%', maxWidth: 520, borderRadius: 20, overflow: 'hidden', maxHeight: '90%' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1 },
   title: { fontSize: 16, fontWeight: 'bold' },
-  label: { fontSize: 11, fontWeight: 'bold', marginTop: 12, marginBottom: 6 },
+  label: { fontSize: 12, fontWeight: 'bold', marginTop: 12, marginBottom: 6 },
   input: { borderWidth: 1, borderRadius: 10, padding: 12, fontSize: 13 },
   scopeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
   scopeChip: { paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10, borderWidth: 1 },
-  scopeChipText: { fontSize: 11, fontWeight: '600' },
+  scopeChipText: { fontSize: 12, fontWeight: '600' },
   saveBtn: { padding: 14, borderRadius: 12, alignItems: 'center', marginTop: 16, marginBottom: 8 },
   saveBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 }
 });

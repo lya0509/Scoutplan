@@ -385,7 +385,7 @@ export default function TemporalDriveScreen({ navigation }: any) {
                     {photo.type === 'video' ? (
                       <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' }}>
                         <Text style={{ fontSize: 24 }}>🎥</Text>
-                        <Text style={{ fontSize: 10, color: 'white', fontWeight: 'bold', marginTop: 4 }}>VIDEO</Text>
+                        <Text style={{ fontSize: 12, color: 'white', fontWeight: 'bold', marginTop: 4 }}>VIDEO</Text>
                       </View>
                     ) : (
                       <SecureImage source={{ uri: photo.url }} style={styles.photoThumb} />
@@ -654,7 +654,7 @@ const styles = StyleSheet.create({
   header: { padding: 18, borderBottomWidth: 1 },
   headerInner: { maxWidth: 960, width: '100%', alignSelf: 'center' },
   contentWrapper: { maxWidth: 960, width: '100%', alignSelf: 'center' },
-  badgeBanner: { fontSize: 10, fontWeight: '900', color: colors.primary, letterSpacing: 0.5, marginBottom: 2 },
+  badgeBanner: { fontSize: 12, fontWeight: '900', color: colors.primary, letterSpacing: 0.5, marginBottom: 2 },
   headerTitle: { fontSize: 18, fontWeight: 'bold' },
   headerSub: { fontSize: 12, marginTop: 2, maxWidth: 280 },
   createBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
@@ -666,7 +666,7 @@ const styles = StyleSheet.create({
   albumHeaderSub: { fontSize: 12, marginTop: 4 },
   timerBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fef3c7', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   timerBadgeInline: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, alignSelf: 'flex-start', marginTop: 4 },
-  timerBadgeText: { fontSize: 11, fontWeight: 'bold', color: '#d97706' },
+  timerBadgeText: { fontSize: 12, fontWeight: 'bold', color: '#d97706' },
   uploadPhotosBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 12, marginTop: 14 },
   uploadPhotosBtnText: { color: 'white', fontWeight: 'bold', fontSize: 13 },
 
@@ -685,7 +685,7 @@ const styles = StyleSheet.create({
   photoCard: { flexBasis: 160, flexGrow: 1, maxWidth: 230, height: 160, borderRadius: 14, borderWidth: 1, overflow: 'hidden', backgroundColor: '#000' },
   photoThumb: { width: '100%', height: '100%' },
   photoInfoOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', padding: 6 },
-  photoUploader: { color: 'white', fontSize: 11, fontWeight: 'bold' }
+  photoUploader: { color: 'white', fontSize: 12, fontWeight: 'bold' }
 });
 
 const modalStyles = StyleSheet.create({
@@ -693,7 +693,7 @@ const modalStyles = StyleSheet.create({
   sheet: { width: '100%', maxWidth: 520, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderRadius: Platform.OS === 'web' ? 24 : undefined, paddingBottom: 30, overflow: 'hidden' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1 },
   title: { fontSize: 16, fontWeight: 'bold' },
-  label: { fontSize: 11, fontWeight: '800', marginBottom: 4 },
+  label: { fontSize: 12, fontWeight: '800', marginBottom: 4 },
   input: { borderRadius: 10, borderWidth: 1, padding: 12, fontSize: 13 },
   daysChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderWidth: 1 },
   submitBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 14, alignItems: 'center', marginTop: 20 },

@@ -240,7 +240,7 @@ export default function NudosManualScreen({ navigation }: any) {
               <Text style={{ fontSize: 12, fontWeight: '800', color: isDarkMode ? '#c4b5fd' : '#6d28d9' }}>
                 🏅 Especialidad Oficial: Maniobra con Cuerdas
               </Text>
-              <Text style={{ fontSize: 11, color: theme.subText, marginTop: 1 }}>
+              <Text style={{ fontSize: 12, color: theme.subText, marginTop: 1 }}>
                 Revisa los requisitos ASV para obtener la insignia de especialidad.
               </Text>
             </View>
@@ -313,7 +313,7 @@ export default function NudosManualScreen({ navigation }: any) {
                 {/* Categoría y Badges multimedia disponibles */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
                   <View style={[styles.catTagBadge, { backgroundColor: primaryColor + '15' }]}>
-                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: theme.accentText }}>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>
                       {item.categoryTag}
                     </Text>
                   </View>
@@ -372,7 +372,7 @@ export default function NudosManualScreen({ navigation }: any) {
                     <Text style={[modalStyles.title, { color: theme.text }]} numberOfLines={1}>
                       {selectedItem.name}
                     </Text>
-                    <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: 'bold' }}>
+                    <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold' }}>
                       {selectedItem.categoryTag} {selectedItem.difficulty ? `• Nivel ${selectedItem.difficulty}` : ''}
                     </Text>
                   </View>
@@ -454,7 +454,7 @@ export default function NudosManualScreen({ navigation }: any) {
                   <View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
                       <WifiOff size={14} color="#16a34a" />
-                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#16a34a' }}>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#16a34a' }}>
                         MODO ESCRITO 100% OFFLINE (DISPONIBLE SIN CONEXIÓN)
                       </Text>
                     </View>
@@ -470,7 +470,7 @@ export default function NudosManualScreen({ navigation }: any) {
                           <Text style={[modalStyles.sectionLabel, { color: theme.accentText, marginBottom: 0 }]}>
                             PASO A PASO EXPLICADO
                           </Text>
-                          <Text style={{ fontSize: 10, color: theme.subText }}>Toca para marcar tu avance</Text>
+                          <Text style={{ fontSize: 12, color: theme.subText }}>Toca para marcar tu avance</Text>
                         </View>
 
                         {selectedItem.steps.map((st, idx) => {
@@ -507,7 +507,7 @@ export default function NudosManualScreen({ navigation }: any) {
                     {/* Consejos prácticos de patrulla */}
                     {selectedItem.tips && selectedItem.tips.length > 0 && (
                       <View style={[modalStyles.tipBox, { backgroundColor: isDarkMode ? '#1e293b' : '#eff6ff', borderColor: '#3b82f6' }]}>
-                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#2563eb', marginBottom: 4 }}>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#2563eb', marginBottom: 4 }}>
                           💡 CONSEJOS DE PATRULLA / SCOUTER:
                         </Text>
                         {selectedItem.tips.map((t, idx) => (
@@ -523,7 +523,7 @@ export default function NudosManualScreen({ navigation }: any) {
                       <View style={[modalStyles.tipBox, { backgroundColor: isDarkMode ? '#451a03' : '#fef2f2', borderColor: '#ef4444' }]}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
                           <AlertTriangle size={14} color="#ef4444" />
-                          <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#ef4444' }}>
+                          <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#ef4444' }}>
                             PRECAUCIÓN DE SEGURIDAD:
                           </Text>
                         </View>
@@ -566,11 +566,11 @@ export default function NudosManualScreen({ navigation }: any) {
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <WifiOff size={14} color="#16a34a" />
-                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#16a34a' }}>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#16a34a' }}>
                           ESQUEMA VECTORIAL OFFLINE
                         </Text>
                       </View>
-                      <Text style={{ fontSize: 11, color: theme.subText }}>Sin internet ni descargas</Text>
+                      <Text style={{ fontSize: 12, color: theme.subText }}>Sin internet ni descargas</Text>
                     </View>
 
                     {/* DIAGRAMA VECTORIAL SVG */}
@@ -647,7 +647,7 @@ export default function NudosManualScreen({ navigation }: any) {
                           {!!selectedItem.visualSteps[visualStepIndex - 1]?.callout && (
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
                               <Sparkles size={13} color="#eab308" />
-                              <Text style={{ fontSize: 11, fontWeight: 'bold', color: isDarkMode ? '#fde047' : '#ca8a04' }}>
+                              <Text style={{ fontSize: 12, fontWeight: 'bold', color: isDarkMode ? '#fde047' : '#ca8a04' }}>
                                 Clave: {selectedItem.visualSteps[visualStepIndex - 1]?.callout}
                               </Text>
                             </View>
@@ -699,7 +699,7 @@ export default function NudosManualScreen({ navigation }: any) {
                   <View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
                       <Wifi size={14} color="#3b82f6" />
-                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#3b82f6' }}>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#3b82f6' }}>
                         MULTIMEDIA (REQUIERE CONEXIÓN DE DATOS O WIFI)
                       </Text>
                     </View>
@@ -742,7 +742,7 @@ export default function NudosManualScreen({ navigation }: any) {
                           </Text>
                           {!!selectedItem.multimedia?.videoDuration && (
                             <View style={modalStyles.durationBadge}>
-                              <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: 'bold' }}>
+                              <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: 'bold' }}>
                                 ⏱️ {selectedItem.multimedia.videoDuration}
                               </Text>
                             </View>
@@ -754,7 +754,7 @@ export default function NudosManualScreen({ navigation }: any) {
                         <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text, marginBottom: 2 }}>
                           {selectedItem.multimedia?.videoTitle || `Tutorial: ${selectedItem.name}`}
                         </Text>
-                        <Text style={{ fontSize: 11, color: theme.subText, marginBottom: 10 }}>
+                        <Text style={{ fontSize: 12, color: theme.subText, marginBottom: 10 }}>
                           Fuente: {selectedItem.multimedia?.videoChannel || 'Escultismo y Pionerismo Scout'}
                         </Text>
 
@@ -816,7 +816,7 @@ export default function NudosManualScreen({ navigation }: any) {
                               </Text>
                               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
                                 <Maximize2 size={12} color={primaryColor} />
-                                <Text style={{ fontSize: 10, color: theme.accentText, fontWeight: 'bold' }}>
+                                <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold' }}>
                                   Toca para ampliar imagen
                                 </Text>
                               </View>
@@ -830,7 +830,7 @@ export default function NudosManualScreen({ navigation }: any) {
                         <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>
                           Diagramas visuales disponibles en la pestaña "Visual (Offline)"
                         </Text>
-                        <Text style={{ fontSize: 11, color: theme.subText, marginTop: 4, textAlign: 'center' }}>
+                        <Text style={{ fontSize: 12, color: theme.subText, marginTop: 4, textAlign: 'center' }}>
                           Los esquemas paso a paso vectoriales ya están cargados y funcionan sin conexión.
                         </Text>
                         <TouchableOpacity

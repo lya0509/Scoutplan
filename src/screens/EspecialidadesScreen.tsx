@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   headerStatLabel: {
-    fontSize: 11,
+    fontSize: 12,
     color: 'rgba(255, 255, 255, 0.85)',
     fontWeight: '600',
     marginTop: 2,
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   categoryTagText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
   },
   officialTag: {
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   officialTagText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
   },
   specialtyTitle: {

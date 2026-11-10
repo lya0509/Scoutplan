@@ -175,7 +175,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                 <Text style={[styles.headerTitle, { color: theme.text }]}>Notificaciones Scout</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
                   <Radio size={12} color="#10b981" />
-                  <Text style={{ fontSize: 10, color: '#10b981', fontWeight: 'bold' }}>
+                  <Text style={{ fontSize: 12, color: '#10b981', fontWeight: 'bold' }}>
                     Web Push 24/7 + Segundo Plano Activo
                   </Text>
                 </View>
@@ -228,7 +228,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                   <Text style={{ fontSize: 12, fontWeight: 'bold', color: isDarkMode ? '#fbbf24' : '#92400e' }}>
                     Activar Push del Sistema
                   </Text>
-                  <Text style={{ fontSize: 10, color: isDarkMode ? '#d4d4d8' : '#78350f', marginTop: 2 }}>
+                  <Text style={{ fontSize: 12, color: isDarkMode ? '#d4d4d8' : '#78350f', marginTop: 2 }}>
                     Para recibir avisos en la barra de tu teléfono o PC cuando la app esté minimizada.
                   </Text>
                 </View>
@@ -241,7 +241,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                   }}
                   onPress={requestPushPermission}
                 >
-                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>
+                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>
                     Activar
                   </Text>
                 </TouchableOpacity>
@@ -259,7 +259,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                 gap: 8
               }}>
                 <CheckCircle2 size={16} color="#16a34a" />
-                <Text style={{ fontSize: 11, fontWeight: 'bold', color: isDarkMode ? '#86efac' : '#15803d', flex: 1 }}>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: isDarkMode ? '#86efac' : '#15803d', flex: 1 }}>
                   Push del Sistema, Segundo Plano y Pantalla de Bloqueo Activados ✅
                 </Text>
               </View>
@@ -269,7 +269,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                 {/* BARRA DE ACCIONES RÁPIDAS */}
                 {notifications.length > 0 && (
                   <View style={styles.inboxActions}>
-                    <Text style={{ fontSize: 11, color: theme.subText }}>
+                    <Text style={{ fontSize: 12, color: theme.subText }}>
                       {unreadCount} sin leer de {notifications.length} total
                     </Text>
                     <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
@@ -279,7 +279,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                           onPress={markAllAsRead}
                         >
                           <CheckCheck size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                          <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: 'bold' }}>
+                          <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold' }}>
                             Marcar todo leído
                           </Text>
                         </TouchableOpacity>
@@ -289,7 +289,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                         onPress={clearAllNotifications}
                       >
                         <Trash2 size={13} color={theme.subText} style={{ marginRight: 4 }} />
-                        <Text style={{ fontSize: 11, color: theme.subText, fontWeight: 'bold' }}>
+                        <Text style={{ fontSize: 12, color: theme.subText, fontWeight: 'bold' }}>
                           Vaciar
                         </Text>
                       </TouchableOpacity>
@@ -348,7 +348,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                           >
                             {notif.title}
                           </Text>
-                          <Text style={{ fontSize: 10, color: theme.subText }}>
+                          <Text style={{ fontSize: 12, color: theme.subText }}>
                             {formatNotificationTime(notif.created_at)}
                           </Text>
                         </View>
@@ -374,7 +374,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                             }}
                             style={{ marginTop: 4, alignSelf: 'flex-start' }}
                           >
-                            <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: 'bold' }}>
+                            <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold' }}>
                               {expandedNotifIds.has(notif.id) ? '▲ Mostrar menos' : '▼ Leer comunicado completo'}
                             </Text>
                           </TouchableOpacity>
@@ -383,7 +383,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                         {!!notif.unit && (
                           <View style={{ flexDirection: 'row', marginTop: 6 }}>
                             <View style={[styles.unitTag, { backgroundColor: isDarkMode ? '#3f3f46' : '#e4e4e7' }]}>
-                              <Text style={{ fontSize: 9, fontWeight: 'bold', color: theme.text }}>
+                              <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.text }}>
                                 ⚜️ {notif.unit.toUpperCase()}
                               </Text>
                             </View>
@@ -417,7 +417,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                   <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.accentText }}>
                     🧪 Simulador de Notificaciones en Tiempo Real
                   </Text>
-                  <Text style={{ fontSize: 11, color: isDarkMode ? '#e4e4e7' : '#4b5563', marginTop: 4, lineHeight: 16 }}>
+                  <Text style={{ fontSize: 12, color: isDarkMode ? '#e4e4e7' : '#4b5563', marginTop: 4, lineHeight: 16 }}>
                     Haz clic en cualquiera de los siguientes botones para emitir una notificación real por WebSockets. Podrás ver el banner flotante superior aparecer al instante en tu pantalla y en cualquier dispositivo conectado.
                   </Text>
                 </View>
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
   },
   unreadBadgeText: {
     color: '#ffffff',
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: 'bold',
   },
   headerTitle: {
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   notifItemMsg: {
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 2,
     lineHeight: 15,
   },
@@ -749,7 +749,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   testBtnDesc: {
-    fontSize: 10,
+    fontSize: 12,
     marginTop: 2,
   }
 });

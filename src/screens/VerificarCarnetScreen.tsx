@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   container: { padding: 16, paddingTop: 32, alignItems: 'center', flexGrow: 1 },
   card: { width: '100%', maxWidth: 440, borderRadius: 18, borderWidth: 1, overflow: 'hidden' },
   top: { paddingHorizontal: 20, paddingVertical: 16 },
-  topSmall: { color: '#ffffffd9', fontSize: 11, letterSpacing: 0.5, fontWeight: '600' },
+  topSmall: { color: '#ffffffd9', fontSize: 12, letterSpacing: 0.5, fontWeight: '600' },
   topTitle: { color: '#fff', fontSize: 18, fontWeight: '800', marginTop: 2 },
   body: { padding: 20 },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 16 },

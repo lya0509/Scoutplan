@@ -23,6 +23,7 @@ import { navigateBackOrHome } from '../utils/navigationHelper';
 import { pickImageUniversal } from '../utils/filePicker';
 import { PhotoCropModal } from '../components/PhotoCropModal';
 import { SecureImage } from '../components/SecureImage';
+import { SkeletonScreen } from '../components/Skeleton';
 
 export default function CurriculumScoutScreen({ route, navigation }: any) {
   const { user } = useAuth();
@@ -511,7 +512,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
             {isViewOnlyForScouter && (
               <View style={styles.scouterBadge}>
                 <Shield size={12} color="white" style={{ marginRight: 4 }} />
-                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 10 }}>Modo Scouter</Text>
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>Modo Scouter</Text>
               </View>
             )}
           </View>
@@ -526,7 +527,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
           {hasChanges && !isViewOnlyForScouter && (
             <View style={styles.changesBanner}>
               <AlertCircle size={14} color="#f59e0b" style={{ marginRight: 6 }} />
-              <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#f59e0b', flex: 1 }}>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#f59e0b', flex: 1 }}>
                 Has realizado cambios en tu Currículum. Recuerda guardar los cambios.
               </Text>
             </View>
@@ -536,7 +537,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
 
       <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 60 }}>
         {loading ? (
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 30 }} />
+          <SkeletonScreen variant="form" fill={false} />
         ) : (
           <View style={[styles.sheet, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
             
@@ -551,13 +552,13 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
               </View>
               <View style={{ flex: 1, marginLeft: 14 }}>
                 <Text style={{ fontWeight: 'bold', fontSize: 13, color: theme.text }}>FOTO DE LA PERSONA</Text>
-                <Text style={{ fontSize: 11, color: theme.subText, marginTop: 2 }}>
+                <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                   Se estampará en el recuadro superior derecho del documento Word.
                 </Text>
                 {!isViewOnlyForScouter && (
                   <TouchableOpacity style={styles.uploadPhotoBtn} onPress={handlePickPhoto}>
                     <Camera size={12} color="white" style={{ marginRight: 4 }} />
-                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>Cargar Foto</Text>
+                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>Cargar Foto</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -576,7 +577,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                   <Text style={{ fontSize: 13, fontWeight: 'bold', color: isDarkMode ? '#c4b5fd' : '#6d28d9' }}>
                     📥 Sincronizar desde mis Certificados Subidos
                   </Text>
-                  <Text style={{ fontSize: 11, color: isDarkMode ? '#a78bfa' : '#7c3aed', marginTop: 2 }}>
+                  <Text style={{ fontSize: 12, color: isDarkMode ? '#a78bfa' : '#7c3aed', marginTop: 2 }}>
                     Importa de 1 clic tus Cursos (Horqueta, Remo, Canoa), Programas Mundiales (Tribu de la Tierra, Scout Solar, Enseñas) y Especialidades con sus fechas.
                   </Text>
                 </View>
@@ -584,7 +585,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                   <ActivityIndicator size="small" color="#8b5cf6" style={{ marginLeft: 8 }} />
                 ) : (
                   <View style={{ backgroundColor: '#8b5cf6', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, marginLeft: 8 }}>
-                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>Sincronizar</Text>
+                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>Sincronizar</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -723,13 +724,13 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                     style={[styles.checkBtn, isStudying && { backgroundColor: colors.primary }]}
                     onPress={() => !isViewOnlyForScouter && setIsStudying(true)}
                   >
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: isStudying ? 'white' : theme.text }}>SÍ</Text>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: isStudying ? 'white' : theme.text }}>SÍ</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.checkBtn, !isStudying && { backgroundColor: colors.primary }]}
                     onPress={() => !isViewOnlyForScouter && setIsStudying(false)}
                   >
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: !isStudying ? 'white' : theme.text }}>NO</Text>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: !isStudying ? 'white' : theme.text }}>NO</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -771,13 +772,13 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                     style={[styles.checkBtn, isWorking && { backgroundColor: colors.primary }]}
                     onPress={() => !isViewOnlyForScouter && setIsWorking(true)}
                   >
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: isWorking ? 'white' : theme.text }}>SÍ</Text>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: isWorking ? 'white' : theme.text }}>SÍ</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.checkBtn, !isWorking && { backgroundColor: colors.primary }]}
                     onPress={() => !isViewOnlyForScouter && setIsWorking(false)}
                   >
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: !isWorking ? 'white' : theme.text }}>NO</Text>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: !isWorking ? 'white' : theme.text }}>NO</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -830,13 +831,13 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                     style={[styles.swimChip, canSwim && { backgroundColor: colors.primary }]}
                     onPress={() => !isViewOnlyForScouter && setCanSwim(true)}
                   >
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: canSwim ? 'white' : theme.text }}>SÍ</Text>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: canSwim ? 'white' : theme.text }}>SÍ</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.swimChip, !canSwim && { backgroundColor: colors.primary }]}
                     onPress={() => !isViewOnlyForScouter && setCanSwim(false)}
                   >
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: !canSwim ? 'white' : theme.text }}>NO</Text>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: !canSwim ? 'white' : theme.text }}>NO</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -906,7 +907,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                       style={[styles.unitCheckChip, isChecked && { backgroundColor: colors.primary }]}
                       onPress={() => !isViewOnlyForScouter && setUnitsBelonged(prev => ({ ...prev, [u.key]: !(prev as any)[u.key] }))}
                     >
-                      <Text style={{ fontSize: 11, fontWeight: 'bold', color: isChecked ? 'white' : theme.text }}>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: isChecked ? 'white' : theme.text }}>
                         {isChecked ? '✓ ' : ' '}{u.title}
                       </Text>
                     </TouchableOpacity>
@@ -939,7 +940,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                 <View style={{ gap: 6 }}>
                   <View style={{ flexDirection: 'row', gap: 6 }}>
                     <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={{ fontSize: 10, fontWeight: 'bold', color: theme.subText, marginBottom: 2 }}>F. Realización</Text>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.subText, marginBottom: 2 }}>F. Realización</Text>
                       <TextInput
                         style={[styles.input, { backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
                         placeholder="DD/MM/AAAA"
@@ -950,7 +951,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                       />
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={{ fontSize: 10, fontWeight: 'bold', color: theme.subText, marginBottom: 2 }}>F. Certificación</Text>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.subText, marginBottom: 2 }}>F. Certificación</Text>
                       <TextInput
                         style={[styles.input, { backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
                         placeholder="DD/MM/AAAA"
@@ -962,7 +963,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                     </View>
                   </View>
                   <View style={{ minWidth: 0 }}>
-                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: theme.subText, marginBottom: 2 }}>Director del Curso</Text>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.subText, marginBottom: 2 }}>Director del Curso</Text>
                     <TextInput
                       style={[styles.input, { backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
                       placeholder="Nombre del Director"
@@ -985,7 +986,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                   onPress={() => setWorkshopsList(prev => [...prev, { title: '', date: '', director: '' }])}
                 >
                   <Plus size={12} color="white" />
-                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 10, marginLeft: 2 }}>Agregar</Text>
+                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12, marginLeft: 2 }}>Agregar</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -1037,7 +1038,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                   onPress={() => setDistinctionsList(prev => [...prev, { title: '', date: '' }])}
                 >
                   <Plus size={12} color="white" />
-                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 10, marginLeft: 2 }}>Agregar</Text>
+                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12, marginLeft: 2 }}>Agregar</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -1077,7 +1078,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                   onPress={() => setEventsList(prev => [...prev, { title: '', role: '', date: '' }])}
                 >
                   <Plus size={12} color="white" />
-                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 10, marginLeft: 2 }}>Agregar</Text>
+                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12, marginLeft: 2 }}>Agregar</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -1129,7 +1130,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
                   onPress={() => setWorldProgramsList(prev => [...prev, { title: '', role: '', date: '' }])}
                 >
                   <Plus size={12} color="white" />
-                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 10, marginLeft: 2 }}>Agregar</Text>
+                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12, marginLeft: 2 }}>Agregar</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -1215,7 +1216,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 17, fontWeight: 'bold', marginTop: 2 },
   scouterBadge: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   exportHeaderBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  exportHeaderBtnText: { color: 'white', fontWeight: 'bold', fontSize: 11 },
+  exportHeaderBtnText: { color: 'white', fontWeight: 'bold', fontSize: 12 },
   changesBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.12)', padding: 8, borderRadius: 8, marginTop: 8 },
   headerInner: { maxWidth: 850, width: '100%', alignSelf: 'center' },
 
@@ -1226,7 +1227,7 @@ const styles = StyleSheet.create({
   uploadPhotoBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginTop: 6, alignSelf: 'flex-start' },
 
   sectionTitle: { fontSize: 14, fontWeight: 'bold', marginBottom: 6 },
-  label: { fontSize: 11, fontWeight: '800', marginBottom: 4, marginTop: 8 },
+  label: { fontSize: 12, fontWeight: '800', marginBottom: 4, marginTop: 8 },
   input: { borderRadius: 10, borderWidth: 1, padding: 8, fontSize: 12 },
   natChip: { flex: 1, height: 38, borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', justifyContent: 'center', alignItems: 'center', marginTop: 4 },
   checkBtn: { width: 44, height: 28, borderRadius: 6, borderWidth: 1, borderColor: '#d1d5db', justifyContent: 'center', alignItems: 'center' },

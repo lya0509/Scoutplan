@@ -45,7 +45,7 @@ export function IndicatorPickerModal({ area, units, unitsLabel, stages, selected
             </TouchableOpacity>
           </View>
 
-          <Text style={{ fontSize: 11, color: theme.subText, marginBottom: 10 }}>
+          <Text style={{ fontSize: 12, color: theme.subText, marginBottom: 10 }}>
             {unitsLabel} (Etapas {stages.join(', ')}):
           </Text>
 
@@ -76,7 +76,7 @@ export function IndicatorPickerModal({ area, units, unitsLabel, stages, selected
                   onPress={() => (isAlreadySelected ? onRemove(item.text) : onAdd(item.text))}
                 >
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 9, color: theme.accentText, fontWeight: 'bold' }}>Etapa {item.stage}</Text>
+                    <Text style={{ fontSize: 11, color: theme.accentText, fontWeight: 'bold' }}>Etapa {item.stage}</Text>
                     <Text style={[styles.indicatorOptionText, { color: theme.text }]}>{item.text}</Text>
                   </View>
                   {isAlreadySelected && <CheckCircle size={16} color={primaryColor} style={{ marginLeft: 8 }} />}

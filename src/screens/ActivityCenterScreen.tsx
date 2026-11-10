@@ -272,9 +272,9 @@ const styles = StyleSheet.create({
   },
   cardTopRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' },
   badgeTag: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  badgeTagText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
-  subAreaText: { fontSize: 11 },
-  areaText: { fontSize: 11 },
+  badgeTagText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
+  subAreaText: { fontSize: 12 },
+  areaText: { fontSize: 12 },
   activityText: { fontSize: 15, fontWeight: '600', lineHeight: 22 },
 
   emptyCard: { borderRadius: 14, padding: 30, alignItems: 'center', borderWidth: 1, marginTop: 20 },

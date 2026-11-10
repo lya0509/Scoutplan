@@ -141,7 +141,7 @@ export default function CancioneroScreen({ navigation }: any) {
             <Music size={20} color={colors.primary} style={{ marginRight: 12 }} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.songTitle, { color: theme.text }]}>{song.title}</Text>
-              <Text style={{ fontSize: 11, color: theme.subText, textTransform: 'uppercase' }}>{song.category}</Text>
+              <Text style={{ fontSize: 12, color: theme.subText, textTransform: 'uppercase' }}>{song.category}</Text>
             </View>
             <ChevronRight size={18} color={isDarkMode ? '#71717a' : '#94a3b8'} />
           </TouchableOpacity>
@@ -171,7 +171,7 @@ export default function CancioneroScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 18, borderBottomWidth: 1 },
-  offlineBadge: { fontSize: 10, fontWeight: '900', color: '#16a34a', letterSpacing: 0.5, marginBottom: 2 },
+  offlineBadge: { fontSize: 12, fontWeight: '900', color: '#16a34a', letterSpacing: 0.5, marginBottom: 2 },
   title: { fontSize: 18, fontWeight: 'bold' },
   searchBox: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, marginTop: 10, height: 42 },
   searchInput: { flex: 1, fontSize: 13 },

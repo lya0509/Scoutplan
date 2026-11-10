@@ -527,7 +527,7 @@ export default function RegisterScreen({ navigation }: any) {
           {selectedUnit === 'manada' && (
             <View style={{ backgroundColor: 'rgba(99, 102, 241, 0.12)', borderLeftWidth: 4, borderLeftColor: colors.primary, padding: 12, borderRadius: 8, marginTop: 10 }}>
               <Text style={{ fontWeight: 'bold', fontSize: 12, color: colors.primary }}>🐾 Registro de Unidad Manada (Perfil del Representante):</Text>
-              <Text style={{ fontSize: 11, color: isDarkMode ? '#e4e4e7' : '#4b5563', marginTop: 4, lineHeight: 16 }}>
+              <Text style={{ fontSize: 12, color: isDarkMode ? '#e4e4e7' : '#4b5563', marginTop: 4, lineHeight: 16 }}>
                 Esta cuenta será administrada por el padre o representante. Si tu hijo(a) avanza en el futuro a Tropa, Caminantes o Clan, podrán actualizar el correo electrónico registrado en cualquier momento para mantener la misma cuenta e historial scout.
               </Text>
             </View>
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
   dateButton: { justifyContent: 'center', minHeight: 52 },
   divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
   dividerLine: { flex: 1, height: 1 },
-  dividerText: { marginHorizontal: 12, fontSize: 11, fontWeight: '700', letterSpacing: 1 },
+  dividerText: { marginHorizontal: 12, fontSize: 12, fontWeight: '700', letterSpacing: 1 },
   submitButton: {
     backgroundColor: colors.primary, padding: 18, borderRadius: 14,
     alignItems: 'center', marginTop: 28,
@@ -741,7 +741,7 @@ const pickerStyles = StyleSheet.create({
     flexDirection: 'row', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4,
   },
   colLabel: {
-    flex: 1, textAlign: 'center', fontSize: 11,
+    flex: 1, textAlign: 'center', fontSize: 12,
     fontWeight: '700', color: '#bbb', letterSpacing: 1,
   },
   wheelsRow: {

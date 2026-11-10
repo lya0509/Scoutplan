@@ -26,6 +26,7 @@ import { pickImageUniversal } from '../utils/filePicker';
 import FichaMedicaOrion84Form from '../components/FichaMedicaOrion84Form';
 import { todayLocal } from '../utils/dateLocal';
 import { SecureImage } from '../components/SecureImage';
+import { SkeletonScreen } from '../components/Skeleton';
 
 type FichaTab = 'scout' | 'orion84';
 const FICHA_TABS: { key: FichaTab; label: string }[] = [
@@ -511,7 +512,7 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
             {isViewOnlyForScouter && (
               <View style={styles.scouterBadge}>
                 <Shield size={12} color="white" style={{ marginRight: 4 }} />
-                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 10 }}>Modo Scouter</Text>
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>Modo Scouter</Text>
               </View>
             )}
           </View>
@@ -543,7 +544,7 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
           {activeTab === 'scout' && hasChanges && !isViewOnlyForScouter && (
             <View style={styles.changesBanner}>
               <AlertCircle size={14} color="#f59e0b" style={{ marginRight: 6 }} />
-              <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#f59e0b', flex: 1 }}>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#f59e0b', flex: 1 }}>
                 Has realizado cambios en la Ficha Médica. Recuerda guardar los cambios.
               </Text>
             </View>
@@ -561,7 +562,7 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
             fallbackProfile={targetUserId === user?.id ? user : undefined}
           />
         ) : loading ? (
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 30 }} />
+          <SkeletonScreen variant="form" fill={false} />
         ) : (
           <View style={[styles.sheet, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
             
@@ -629,13 +630,13 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
                     style={[styles.genderChip, gender === 'Masculino' && { backgroundColor: colors.primary, borderColor: colors.primary }]}
                     onPress={() => !isViewOnlyForScouter && setGender('Masculino')}
                   >
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: gender === 'Masculino' ? 'white' : theme.text }}>MASCULINO</Text>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: gender === 'Masculino' ? 'white' : theme.text }}>MASCULINO</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.genderChip, gender === 'Femenino' && { backgroundColor: colors.primary, borderColor: colors.primary }]}
                     onPress={() => !isViewOnlyForScouter && setGender('Femenino')}
                   >
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: gender === 'Femenino' ? 'white' : theme.text }}>FEMENINO</Text>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: gender === 'Femenino' ? 'white' : theme.text }}>FEMENINO</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -746,7 +747,7 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
                     style={[styles.chip, bloodPressure === press && { backgroundColor: colors.primary }]}
                     onPress={() => !isViewOnlyForScouter && setBloodPressure(press as any)}
                   >
-                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: bloodPressure === press ? 'white' : theme.text }}>{press}</Text>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: bloodPressure === press ? 'white' : theme.text }}>{press}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -756,10 +757,10 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
             <Text style={[styles.sectionTitle, { color: theme.accentText, marginTop: 20 }]}>4. Firma Digital del Declarante / Representante</Text>
             
             <View style={styles.signatureBanner}>
-              <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.accentText }}>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>
                 💡 Recomendación para una Firma Limpia y Profesional:
               </Text>
-              <Text style={{ fontSize: 10, color: theme.subText, marginTop: 2 }}>
+              <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                 Sube tu firma escaneada o en imagen sin fondo (PNG transparente) para que encaje perfectamente sobre la línea de firma del documento Word.
               </Text>
             </View>
@@ -769,13 +770,13 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
                 {signatureUrl ? (
                   <SecureImage source={{ uri: signatureUrl }} style={{ width: '100%', height: '100%', resizeMode: 'contain' }} />
                 ) : (
-                  <Text style={{ fontSize: 10, color: theme.subText, textAlign: 'center' }}>Sin firma cargada</Text>
+                  <Text style={{ fontSize: 12, color: theme.subText, textAlign: 'center' }}>Sin firma cargada</Text>
                 )}
               </View>
               {!isViewOnlyForScouter && (
                 <TouchableOpacity style={styles.uploadSigBtn} onPress={handlePickSignature}>
                   <Camera size={14} color="white" style={{ marginRight: 4 }} />
-                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>Cargar Firma sin Fondo</Text>
+                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>Cargar Firma sin Fondo</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -820,7 +821,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 17, fontWeight: 'bold', marginTop: 2 },
   scouterBadge: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   exportHeaderBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  exportHeaderBtnText: { color: 'white', fontWeight: 'bold', fontSize: 11 },
+  exportHeaderBtnText: { color: 'white', fontWeight: 'bold', fontSize: 12 },
   changesBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.12)', padding: 8, borderRadius: 8, marginTop: 8 },
   headerInner: { maxWidth: 850, width: '100%', alignSelf: 'center' },
   tabBar: { flexDirection: 'row', borderRadius: 12, padding: 4, marginTop: 10, gap: 4 },
@@ -830,7 +831,7 @@ const styles = StyleSheet.create({
 
   sheet: { borderRadius: 18, padding: 18, borderWidth: 1, maxWidth: 850, width: '100%', alignSelf: 'center' },
   sectionTitle: { fontSize: 14, fontWeight: 'bold', marginBottom: 6 },
-  label: { fontSize: 11, fontWeight: '800', marginBottom: 4, marginTop: 8 },
+  label: { fontSize: 12, fontWeight: '800', marginBottom: 4, marginTop: 8 },
   input: { borderRadius: 10, borderWidth: 1, padding: 8, fontSize: 12 },
   natChip: { flex: 1, height: 38, borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', justifyContent: 'center', alignItems: 'center', marginTop: 4 },
   genderChip: { flex: 1, height: 38, paddingHorizontal: 4, borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', justifyContent: 'center', alignItems: 'center' },

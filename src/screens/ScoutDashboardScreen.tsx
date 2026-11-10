@@ -19,6 +19,8 @@ import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, 
 import { todayLocal, daysUntil, formatDateEs } from '../utils/dateLocal';
 import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
 import { useNotifications } from '../context/NotificationContext';
+import { SkeletonScreen } from '../components/Skeleton';
+import { contentMax } from '../theme/layout';
 
 const UNIT_COLORS: Record<string, string> = {
   'manada': '#ffb300',
@@ -63,6 +65,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
   // Avisos sin leer: la misma lista que la campanita (se actualiza sola cuando llega uno en vivo)
   const { notifications: allNotifs, markAsRead } = useNotifications();
   const notifications = allNotifs.filter(n => !n.read);
+  const [expandedNotifs, setExpandedNotifs] = useState<Record<string, boolean>>({});
   const [showAllNotifs, setShowAllNotifs] = useState(false);
   const [roversList, setRoversList] = useState<any[]>([]);
 
@@ -346,9 +349,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
   if (loading) {
     return (
-      <View style={[styles.center, { backgroundColor: theme.bg }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <SkeletonScreen variant="dashboard" />
     );
   }
 
@@ -356,7 +357,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1 }}>
-      <PullToRefreshScrollView onRefresh={() => loadDashboardData()} style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={styles.content}>
+      <PullToRefreshScrollView onRefresh={() => loadDashboardData()} style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={[styles.content, contentMax]}>
       
       {/* AVISOS SIN LEER: 2 a la vista; el resto con «Ver todos» (antes se apilaban todos) */}
       {notifications.slice(0, showAllNotifs ? notifications.length : 2).map(notif => {
@@ -368,7 +369,22 @@ export default function ScoutDashboardScreen({ navigation }: any) {
               <Bell color={accent} size={20} style={{ marginRight: 10 }} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.notifTitle, { color: theme.text }]}>{notif.title}</Text>
-                {!!(notif.message || (notif as any).reason) && <Text style={[styles.notifReason, { color: theme.subText }]}>{notif.message || (notif as any).reason}</Text>}
+                {!!(notif.message || (notif as any).reason) && (() => {
+                  // Avisos largos (p. ej. el comunicado de mantenimiento) se ven en 3 líneas con «Ver más»
+                  const body = String(notif.message || (notif as any).reason);
+                  const long = body.length > 160 || body.split('\n').length > 3;
+                  const open = expandedNotifs[notif.id];
+                  return (
+                    <>
+                      <Text style={[styles.notifReason, { color: theme.subText }]} numberOfLines={long && !open ? 3 : undefined}>{body}</Text>
+                      {long && (
+                        <TouchableOpacity onPress={() => setExpandedNotifs(prev => ({ ...prev, [notif.id]: !open }))} accessibilityRole="button" style={{ alignSelf: 'flex-start', paddingVertical: 4 }}>
+                          <Text style={{ color: theme.accentText, fontWeight: '700', fontSize: 13 }}>{open ? 'Ver menos' : 'Ver más'}</Text>
+                        </TouchableOpacity>
+                      )}
+                    </>
+                  );
+                })()}
               </View>
             </View>
             <TouchableOpacity onPress={() => handleDismissNotification(notif.id)} style={{ padding: 8 }} accessibilityRole="button" accessibilityLabel="Marcar aviso como leído">
@@ -568,7 +584,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
                   </TouchableOpacity>
                   
                   <View style={{ backgroundColor: rover.isOnline ? 'rgba(34, 197, 94, 0.15)' : 'rgba(156, 163, 175, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginTop: 4 }}>
-                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: rover.isOnline ? (isDarkMode ? '#4ade80' : '#16a34a') : (isDarkMode ? '#a1a1aa' : '#6b7280') }}>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: rover.isOnline ? (isDarkMode ? '#4ade80' : '#16a34a') : (isDarkMode ? '#a1a1aa' : '#6b7280') }}>
                       {rover.isOnline ? '🟢 En línea' : '⚪ Desconectado'}
                     </Text>
                   </View>
@@ -584,7 +600,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
                     onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: rover.id })}
                     activeOpacity={0.7}
                   >
-                    <Text style={{ fontSize: 10, color: theme.accentText, fontWeight: 'bold' }}>
+                    <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold' }}>
                       Ver Perfil ⚜️
                     </Text>
                   </TouchableOpacity>
@@ -630,7 +646,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
                   <Text style={[styles.eventTitle, { color: theme.text, flex: 1 }]}>{displayTitle}</Text>
                   {hasPrograma && (
                     <View style={{ backgroundColor: isDarkMode ? '#581c87' : '#f3e8ff', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#d8b4fe' }}>
-                      <Text style={{ fontSize: 9, color: isDarkMode ? '#f3e8ff' : '#7e22ce', fontWeight: 'bold' }}>📄 Ficha Oficial</Text>
+                      <Text style={{ fontSize: 11, color: isDarkMode ? '#f3e8ff' : '#7e22ce', fontWeight: 'bold' }}>📄 Ficha Oficial</Text>
                     </View>
                   )}
                 </View>
@@ -667,7 +683,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
                 📅 {selectedEventPendingModal?.date} • {selectedEventPendingModal?.unit?.toUpperCase()}
               </Text>
               {selectedEventPendingModal?.description ? (
-                <Text style={{ fontSize: 11, color: theme.subText, textAlign: 'center', marginTop: 4 }}>
+                <Text style={{ fontSize: 12, color: theme.subText, textAlign: 'center', marginTop: 4 }}>
                   {selectedEventPendingModal?.description}
                 </Text>
               ) : null}
@@ -677,7 +693,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
               <Text style={{ fontSize: 12, color: '#b45309', fontWeight: 'bold', textAlign: 'center' }}>
                 ⏳ Aún no se ha publicado el Programa Oficial
               </Text>
-              <Text style={{ fontSize: 11, color: '#92400e', textAlign: 'center', marginTop: 4 }}>
+              <Text style={{ fontSize: 12, color: '#92400e', textAlign: 'center', marginTop: 4 }}>
                 Tu equipo de scouters publicará próximamente la minuta detallada, horarios por bloques y lista de materiales para esta actividad.
               </Text>
             </View>
@@ -798,7 +814,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   installCardSubtitle: {
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 2
   },
   welcomeCard: { backgroundColor: colors.primary, borderRadius: 16, padding: 20, marginBottom: 20 },
@@ -814,7 +830,7 @@ const styles = StyleSheet.create({
   statusProgress: { backgroundColor: '#FEF3C7' },
   statusReview: { backgroundColor: '#DBEAFE' },
   statusApproved: { backgroundColor: '#D1FAE5' },
-  statusText: { fontSize: 11, fontWeight: 'bold', color: '#1E293B' },
+  statusText: { fontSize: 12, fontWeight: 'bold', color: '#1E293B' },
   progressBarBg: { height: 8, backgroundColor: '#E2E8F0', borderRadius: 4, overflow: 'hidden' },
   progressBarFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 4 },
   progressText: { fontSize: 12, marginTop: 6, fontWeight: '500' },

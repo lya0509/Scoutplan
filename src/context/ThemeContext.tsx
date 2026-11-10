@@ -96,9 +96,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     await setPrimaryColor('#612499');
   };
 
-  // En modo oscuro el morado se aclara un 30 %: el texto morado sobre negro pasa de un
-  // contraste 2,2 a 4,8, y las letras blancas sobre los botones siguen legibles (4,4).
-  const effectivePrimary = isDarkMode ? lighten(primaryColor, 0.3) : primaryColor;
+  // En modo oscuro el morado se aclara un 25 %: las letras blancas sobre los botones quedan
+  // en contraste 5,0 (con 30 % eran 4,4, bajo el mínimo 4,5). El texto morado sobre negro
+  // usa theme.accentText (aclarado 55 %), que se lee mejor.
+  const effectivePrimary = isDarkMode ? lighten(primaryColor, 0.25) : primaryColor;
   // colors.primary lo leen muchas pantallas al dibujarse: se mantiene igual al color efectivo
   defaultColors.primary = effectivePrimary;
   defaultColors.purple = effectivePrimary;

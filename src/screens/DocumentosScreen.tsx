@@ -318,7 +318,7 @@ export default function DocumentosScreen({ navigation, route }: any) {
                   <View style={[styles.progressTrack, { backgroundColor: isDarkMode ? '#27272a' : '#e5e7eb' }]}>
                     <View style={[styles.progressFill, { backgroundColor: primaryColor, width: `${bulk.total ? Math.round((bulk.done / bulk.total) * 100) : 0}%` as any }]} />
                   </View>
-                  <Text style={{ fontSize: 11, color: theme.subText, marginTop: 4 }}>
+                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 4 }}>
                     Descargando {bulk.done} de {bulk.total}… (unos 56 MB en total, mejor con Wi-Fi)
                   </Text>
                 </View>
@@ -410,7 +410,7 @@ export default function DocumentosScreen({ navigation, route }: any) {
         {selectedCategory === 'especialidades' && (
           <View style={{ marginTop: 4, marginBottom: 12 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 8 }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: theme.subText, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: theme.subText, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 Submenú de Áreas Oficiales (ASV):
               </Text>
               <TouchableOpacity
@@ -425,7 +425,7 @@ export default function DocumentosScreen({ navigation, route }: any) {
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
               >
                 <Globe size={13} color={primaryColor} />
-                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.accentText }}>Sitio ASV</Text>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: theme.accentText }}>Sitio ASV</Text>
                 <ExternalLink size={11} color={primaryColor} />
               </TouchableOpacity>
             </View>
@@ -860,7 +860,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   categoryBadgeText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
   },
@@ -886,7 +886,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   metaLabel: {
-    fontSize: 10,
+    fontSize: 12,
     textTransform: 'uppercase',
     fontWeight: '600',
     marginBottom: 2,
@@ -977,7 +977,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   viewerSub: {
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 2,
   },
   viewerCloseBtn: {

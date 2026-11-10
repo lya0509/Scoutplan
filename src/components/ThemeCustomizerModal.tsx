@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     marginBottom: 16
   },
   previewLabel: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.8,
     marginBottom: 8
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   previewSub: {
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 2
   },
   sectionTitle: {

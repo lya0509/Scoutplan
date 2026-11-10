@@ -20,6 +20,7 @@ import { dataService } from '../lib/dataService';
 import { showAlert } from '../utils/alert';
 import { daysUntil, formatDateEs } from '../utils/dateLocal';
 import { navigateBackOrHome } from '../utils/navigationHelper';
+import { SkeletonScreen } from '../components/Skeleton';
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                 'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -395,9 +396,7 @@ export default function ProfileScreen({ navigation }: any) {
 
   if (loading) {
     return (
-      <View style={[styles.center, { backgroundColor: theme.bg }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <SkeletonScreen variant="profile" />
     );
   }
 
@@ -464,7 +463,7 @@ export default function ProfileScreen({ navigation }: any) {
           </View>
           {membershipStatus === 'approved' && (
             <View style={[styles.roleBadge, { backgroundColor: '#dcfce7', borderWidth: 1, borderColor: '#16a34a' }]}>
-              <Text style={{ color: '#15803d', fontWeight: 'bold', fontSize: 11 }}>
+              <Text style={{ color: '#15803d', fontWeight: 'bold', fontSize: 12 }}>
                 ✓ MEMBRESÍA ACTIVA
               </Text>
             </View>
@@ -775,7 +774,7 @@ const mStyles = StyleSheet.create({
   cancel: { fontSize: 15, color: colors.textLight },
   confirm: { fontSize: 15, color: colors.primary, fontWeight: 'bold' },
   labels: { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 12 },
-  colLabel: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '700', color: '#bbb' },
+  colLabel: { flex: 1, textAlign: 'center', fontSize: 12, fontWeight: '700', color: '#bbb' },
   wheels: { flexDirection: 'row', paddingHorizontal: 20, backgroundColor: '#fafafa', marginHorizontal: 16, borderRadius: 16 },
   sep: { width: 1, backgroundColor: '#eee', marginVertical: 8 },
   preview: { textAlign: 'center', paddingTop: 14, color: colors.primary, fontWeight: 'bold', fontSize: 15 },
