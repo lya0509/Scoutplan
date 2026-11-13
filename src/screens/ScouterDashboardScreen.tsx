@@ -41,7 +41,7 @@ import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
 import CipManagerModal from '../components/CipManagerModal';
 import { SkeletonScreen } from '../components/Skeleton';
 import { PanelHeader } from '../components/PanelHeader';
-import { contentMax } from '../theme/layout';
+import { contentMax, contentWide, WIDE_BREAKPOINT } from '../theme/layout';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
   if (!dateStr) return 'Seleccionar fecha en el calendario';
@@ -423,6 +423,8 @@ export default function ScouterDashboardScreen({ navigation }: any) {
   const { isDarkMode, theme, primaryColor, toggleDarkMode } = useTheme();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
+  const isWide = width >= WIDE_BREAKPOINT;
+  const frame = isWide ? contentWide : contentMax;
 
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [scouts, setScouts] = useState<any[]>([]);
@@ -514,80 +516,18 @@ export default function ScouterDashboardScreen({ navigation }: any) {
     { label: 'Cancionero', Icon: Music, onPress: () => navigation.navigate('Cancionero') },
   ];
 
-  return (
-    <View style={[styles.container, { backgroundColor: theme.bg }]}>
-      
-      {/* HEADER */}
-      <View style={contentMax}>
-      <PanelHeader
-        eyebrow={`Scouter · Unidad ${(user?.unit || '').toUpperCase()}`}
-        title={user?.name || 'Scouter'}
-        subtitle={user?.group_name || undefined}
-        onCustomize={() => setShowCustomizer(true)}
-        onSignOut={signOut}
-      />
-      </View>
-
-      {/* BARRA DE HERRAMIENTAS Y ACCESOS RÁPIDOS: en computadora, cuadrícula pareja de 4 por fila;
-          en el teléfono, tira deslizable */}
-      <View style={[{ paddingVertical: 10, paddingHorizontal: 16 }, contentMax]}>
-        {isDesktop ? (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-            {quickLinks.map(q => (
-              <TouchableOpacity
-                key={q.label}
-                style={[styles.scouterQuickBtn, styles.scouterQuickBtnGrid, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-                onPress={q.onPress}
-                activeOpacity={0.8}
-              >
-                <q.Icon size={18} color={primaryColor} />
-                <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>{q.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
-            {quickLinks.map(q => (
-              <TouchableOpacity
-                key={q.label}
-                style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-                onPress={q.onPress}
-                activeOpacity={0.8}
-              >
-                <q.Icon size={18} color={primaryColor} />
-                <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>{q.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
-      </View>
-
-      {/* ESTADÍSTICAS */}
-      <View style={[styles.statsRow, contentMax]}>
-        <View style={[styles.statCard, { borderTopColor: primaryColor, backgroundColor: theme.cardBg }]}>
-          <Text style={[styles.statNumber, { color: theme.text }]}>{stats.total}</Text>
-          <Text style={[styles.statLabel, { color: theme.subText }]}>Scouts</Text>
-        </View>
-        <View style={[styles.statCard, { borderTopColor: '#f59e0b', backgroundColor: theme.cardBg }]}>
-          <Text style={[styles.statNumber, { color: '#f59e0b' }]}>{stats.inReview}</Text>
-          <Text style={[styles.statLabel, { color: theme.subText }]}>En Revisión</Text>
-        </View>
-        <View style={[styles.statCard, { borderTopColor: '#22c55e', backgroundColor: theme.cardBg }]}>
-          <Text style={[styles.statNumber, { color: '#22c55e' }]}>{stats.approved}</Text>
-          <Text style={[styles.statLabel, { color: theme.subText }]}>Con Aprobada</Text>
-        </View>
-      </View>
-
-      {/* CONTENIDO PRINCIPAL */}
-      {loading ? (
-        <SkeletonScreen variant="panel" fill={false} />
-      ) : (
-        <PullToRefreshScrollView onRefresh={() => loadScouts()} style={styles.scroll} contentContainerStyle={[{ padding: 16, paddingBottom: 30 }, contentMax]}>
+  // Secciones del panel: en pantalla grande se reparten en dos columnas (ver más abajo).
+  const pendingSection = (
+    <>
           {pendingAccounts.length > 0 && (
             <View style={{ marginBottom: 16 }}>
               <PendingAccountsCard members={pendingAccounts} groupName={user?.group_name} onChanged={loadScouts} />
             </View>
           )}
+    </>
+  );
+  const insigniasSection = (
+    <>
           {scouts.length > 0 && (
             <View style={{ marginBottom: 16 }}>
               <InsigniasExportBar
@@ -597,7 +537,10 @@ export default function ScouterDashboardScreen({ navigation }: any) {
               />
             </View>
           )}
-
+    </>
+  );
+  const roversSection = (
+    <>
           {/* DIRECTORIO HORIZONTAL DE ROVERS (SI LA UNIDAD ES CLAN) */}
           {user?.unit?.toLowerCase() === 'clan' && (
             <View style={{ marginBottom: 20 }}>
@@ -670,7 +613,10 @@ export default function ScouterDashboardScreen({ navigation }: any) {
               )}
             </View>
           )}
-
+    </>
+  );
+  const membersSection = (
+    <>
           <MembersPanel
             scouts={scouts}
             isDarkMode={isDarkMode}
@@ -682,7 +628,10 @@ export default function ScouterDashboardScreen({ navigation }: any) {
               scoutName: scout.name,
             })}
           />
-
+    </>
+  );
+  const onlineSection = (
+    <>
           <OnlineRosterPanel
             unit={user?.unit?.toLowerCase() || 'clan'}
             groupName={user?.group_name || ''}
@@ -690,14 +639,20 @@ export default function ScouterDashboardScreen({ navigation }: any) {
             theme={theme}
             navigation={navigation}
           />
-
+    </>
+  );
+  const activitiesSection = (
+    <>
           <ActivitiesPanel 
             unitFilter={user?.unit?.toLowerCase() || ''} 
             isDarkMode={isDarkMode}
             theme={theme}
             onAddCip={() => setShowCipManager(true)}
           />
-
+    </>
+  );
+  const membershipSection = (
+    <>
           {/* PANEL DE GESTIÓN DE MEMBRESÍA SCOUT */}
           <View style={[panelStyles.wrapper, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
             <View style={[panelStyles.header, { paddingBottom: 10 }]}>
@@ -809,6 +764,101 @@ export default function ScouterDashboardScreen({ navigation }: any) {
               )}
             </View>
           </View>
+    </>
+  );
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.bg }]}>
+      
+      {/* HEADER */}
+      <View style={frame}>
+      <PanelHeader
+        eyebrow={`Scouter · Unidad ${(user?.unit || '').toUpperCase()}`}
+        title={user?.name || 'Scouter'}
+        subtitle={user?.group_name || undefined}
+        onCustomize={() => setShowCustomizer(true)}
+        onSignOut={signOut}
+      />
+      </View>
+
+      {/* BARRA DE HERRAMIENTAS Y ACCESOS RÁPIDOS: en computadora, cuadrícula pareja de 4 por fila;
+          en el teléfono, tira deslizable */}
+      <View style={[{ paddingVertical: 10, paddingHorizontal: 16 }, frame]}>
+        {isDesktop ? (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+            {quickLinks.map(q => (
+              <TouchableOpacity
+                key={q.label}
+                style={[styles.scouterQuickBtn, styles.scouterQuickBtnGrid, isWide && { flexBasis: '11%' }, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+                onPress={q.onPress}
+                activeOpacity={0.8}
+              >
+                <q.Icon size={18} color={primaryColor} />
+                <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>{q.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+            {quickLinks.map(q => (
+              <TouchableOpacity
+                key={q.label}
+                style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+                onPress={q.onPress}
+                activeOpacity={0.8}
+              >
+                <q.Icon size={18} color={primaryColor} />
+                <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>{q.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+      </View>
+
+      {/* ESTADÍSTICAS */}
+      <View style={[styles.statsRow, frame]}>
+        <View style={[styles.statCard, { borderTopColor: primaryColor, backgroundColor: theme.cardBg }]}>
+          <Text style={[styles.statNumber, { color: theme.text }]}>{stats.total}</Text>
+          <Text style={[styles.statLabel, { color: theme.subText }]}>Scouts</Text>
+        </View>
+        <View style={[styles.statCard, { borderTopColor: '#f59e0b', backgroundColor: theme.cardBg }]}>
+          <Text style={[styles.statNumber, { color: '#f59e0b' }]}>{stats.inReview}</Text>
+          <Text style={[styles.statLabel, { color: theme.subText }]}>En Revisión</Text>
+        </View>
+        <View style={[styles.statCard, { borderTopColor: '#22c55e', backgroundColor: theme.cardBg }]}>
+          <Text style={[styles.statNumber, { color: '#22c55e' }]}>{stats.approved}</Text>
+          <Text style={[styles.statLabel, { color: theme.subText }]}>Con Aprobada</Text>
+        </View>
+      </View>
+
+      {/* CONTENIDO PRINCIPAL */}
+      {loading ? (
+        <SkeletonScreen variant="panel" fill={false} />
+      ) : (
+        <PullToRefreshScrollView onRefresh={() => loadScouts()} style={styles.scroll} contentContainerStyle={[{ padding: 16, paddingBottom: 30 }, frame]}>
+          {pendingSection}
+          {roversSection}
+          {isWide ? (
+            <View style={{ flexDirection: 'row', gap: 16, alignItems: 'flex-start' }}>
+              <View style={{ flex: 3, minWidth: 0 }}>
+                {membersSection}
+                {membershipSection}
+              </View>
+              <View style={{ flex: 2, minWidth: 0 }}>
+                {insigniasSection}
+                {onlineSection}
+                {activitiesSection}
+              </View>
+            </View>
+          ) : (
+            <>
+              {insigniasSection}
+              {membersSection}
+              {onlineSection}
+              {activitiesSection}
+              {membershipSection}
+            </>
+          )}
         </PullToRefreshScrollView>
       )}
 

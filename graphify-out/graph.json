@@ -2,7 +2,7 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-13T18:49:48.053Z",
+    "generatedAt": "2026-11-13T19:03:16.183Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
@@ -1298,8 +1298,8 @@
       "route": "ScouterDashboard",
       "role": "Unit leader dashboard: lists unit scouts with online presence, pending stage reviews, quarterly plan feedback, unit programs, and profile photo moderation.",
       "exists": true,
-      "lines": 1165,
-      "bytes": 58304,
+      "lines": 1215,
+      "bytes": 59590,
       "exports": [
         "ScouterDashboardScreen"
       ],

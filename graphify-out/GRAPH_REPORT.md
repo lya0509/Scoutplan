@@ -1,6 +1,6 @@
 # Full-System Graphify Architectural Report — Plan Progresivo Scout ASV (v3.0.0)
 
-> **Generated**: `2026-11-13T18:49:48.053Z` | **Communities**: `8` | **Nodes**: `144` (`29` Screens, `40` Components, `33` Services, `12` Catalogs, `11` DB Tables) | **QA Suites**: `14`
+> **Generated**: `2026-11-13T19:03:16.183Z` | **Communities**: `8` | **Nodes**: `144` (`29` Screens, `40` Components, `33` Services, `12` Catalogs, `11` DB Tables) | **QA Suites**: `14`
 
 ---
 
@@ -76,7 +76,7 @@ Auth screens (LoginScreen, RegisterScreen) and core Scout journey screens: Scout
 ### 4. Scouter, Jefe de Grupo & Comisionado Territorial Dashboards (`leadership_territorial_screens`)
 Role-segmented management dashboards: ScouterDashboardScreen (unit management), ScouterReviewScreen (stage & requirement validation), JefeGrupoScreen (group supervision, membership & photo approval), and ComisionadoDashboardScreen (Distrital, Regional, Nacional & Admin hierarchy).
 
-- **ScouterDashboardScreen.tsx (route: ScouterDashboard)** ([`src/screens/ScouterDashboardScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/ScouterDashboardScreen.tsx), `1165 lines`): Unit leader dashboard: lists unit scouts with online presence, pending stage reviews, quarterly plan feedback, unit programs, and profile photo moderation. — **DB Tables**: `calendar_events`, `stage_progress`
+- **ScouterDashboardScreen.tsx (route: ScouterDashboard)** ([`src/screens/ScouterDashboardScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/ScouterDashboardScreen.tsx), `1215 lines`): Unit leader dashboard: lists unit scouts with online presence, pending stage reviews, quarterly plan feedback, unit programs, and profile photo moderation. — **DB Tables**: `calendar_events`, `stage_progress`
 - **ScouterReviewScreen.tsx (route: ScouterReview)** ([`src/screens/ScouterReviewScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/ScouterReviewScreen.tsx), `661 lines`): Detailed requirement-by-requirement verification screen for a Scout with Approve/Reject stage actions and notification dispatch.
 - **JefeGrupoScreen.tsx (route: JefeDashboard)** ([`src/screens/JefeGrupoScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/JefeGrupoScreen.tsx), `1687 lines`): Group Chief dashboard: supervises all units (Manada, Tropa, Caminantes, Clan), approves/rejects membership expiration dates, moderates photos, and manages group calendar. — **DB Tables**: `profiles`, `stage_progress`
 - **ComisionadoDashboardScreen.tsx (route: ComisionadoDashboard)** ([`src/screens/ComisionadoDashboardScreen.tsx`](file:///home/lya/proyectos/plan-progresivo/src/screens/ComisionadoDashboardScreen.tsx), `703 lines`): Territorial hierarchy dashboard (Distrital, Regional, Nacional, Admin) with drill-down metrics by Region -> District -> Group -> Unit. — **DB Tables**: `profiles`

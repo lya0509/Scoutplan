@@ -1,10 +1,11 @@
 // Capturas de las pantallas principales para revisar el diseño (no es una prueba: no falla).
 //
-//   node tests/e2e/screenshots.mjs [carpeta] [--dark] [--wide]
+//   node tests/e2e/screenshots.mjs [carpeta] [--dark] [--wide | --width=1920]
 //
 // Usa la misma app compilada y el mismo Supabase simulado que las pruebas E2E
 // (compila si hace falta). Guarda una imagen por pantalla y rol en la carpeta
-// (por defecto /tmp/scoutplan-capturas). --wide = pantalla de computadora (1280 px).
+// (por defecto /tmp/scoutplan-capturas). --wide = pantalla de computadora (1280 px);
+// --width=N = otra pantalla de computadora (p. ej. 1920 = 1080p, 2560 = 2K).
 import { chromium } from 'playwright-core';
 import { execSync } from 'child_process';
 import fs from 'fs';
@@ -19,7 +20,8 @@ const DIST = path.join(ROOT, 'dist');
 const args = process.argv.slice(2);
 const OUT = args.find(a => !a.startsWith('--')) || path.join(os.tmpdir(), 'scoutplan-capturas');
 const dark = args.includes('--dark');
-const wide = args.includes('--wide');
+const widthArg = Number((args.find(a => a.startsWith('--width=')) || '').split('=')[1]) || 0;
+const wide = args.includes('--wide') || widthArg > 0;
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 const SHOTS = {
@@ -58,7 +60,7 @@ function findChromium() {
 fs.mkdirSync(OUT, { recursive: true });
 const server = await startServer(DIST);
 const browser = await chromium.launch({ executablePath: findChromium(), headless: true });
-const viewport = wide ? { width: 1280, height: 860 } : { width: 400, height: 860 };
+const viewport = widthArg ? { width: widthArg, height: Math.round(widthArg * 0.5) } : wide ? { width: 1280, height: 860 } : { width: 400, height: 860 };
 for (const [role, routes] of Object.entries(SHOTS)) {
   const profile = PROFILES[role];
   const context = await browser.newContext({ viewport });
@@ -75,7 +77,7 @@ for (const [role, routes] of Object.entries(SHOTS)) {
   for (const r of routes) {
     await page.goto(`http://localhost:${server.port}/${r}`);
     await sleep(3500);
-    const file = path.join(OUT, `${role}-${(r || 'inicio').replace(/\W+/g, '_')}${dark ? '-oscuro' : ''}${wide ? '-ancha' : ''}.png`);
+    const file = path.join(OUT, `${role}-${(r || 'inicio').replace(/\W+/g, '_')}${dark ? '-oscuro' : ''}${widthArg ? `-${widthArg}` : wide ? '-ancha' : ''}.png`);
     await page.screenshot({ path: file, fullPage: !wide });
   }
   await context.close();
