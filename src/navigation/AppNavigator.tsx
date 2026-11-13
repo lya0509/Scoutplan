@@ -193,7 +193,15 @@ export default function AppNavigator() {
     });
   }, [user, toggleDarkMode, setPrimaryColor]);
 
-  if (isLoading && !user) {
+  // Animación de inicio (public/index.html): se retira cuando ya hay pantalla que mostrar
+  const showingLoader = isLoading && !user;
+  useEffect(() => {
+    if (!showingLoader && Platform.OS === 'web' && typeof window !== 'undefined') {
+      (window as any).__hideScoutSplash?.();
+    }
+  }, [showingLoader]);
+
+  if (showingLoader) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#18181b' }}>
         <ActivityIndicator size="large" color="#9333ea" />
