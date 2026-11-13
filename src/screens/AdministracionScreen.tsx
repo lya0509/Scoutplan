@@ -405,6 +405,7 @@ function EditPersonModal({ person, roles, canMove, groups, onClose, onSaved }: {
 
 const ACTION_ICON: Record<string, string> = {
   rol: '🛡️', cuenta: '✅', grupo: '🔀', rama: '🏕️', registro: '📝', cuenta_borrada: '🗑️', grupo_creado: '🏢', grupo_estado: '⏸️',
+  etapa: '🎖️', requisito: '☑️',
 };
 
 function HistoryTab() {
@@ -430,7 +431,7 @@ function HistoryTab() {
 
   return (
     <View style={{ gap: 8 }}>
-      <Text style={[styles.hint, { color: theme.subText, marginTop: 0 }]}>Últimos {rows.length} cambios de roles, cuentas y grupos. Nadie puede editar ni borrar este registro.</Text>
+      <Text style={[styles.hint, { color: theme.subText, marginTop: 0 }]}>Últimos {rows.length} cambios de roles, cuentas, grupos y etapas (aprobaciones, devoluciones y requisitos que marca un dirigente). Nadie puede editar ni borrar este registro.</Text>
       {rows.map(r => (
         <View key={r.id} style={[styles.row, { backgroundColor: theme.cardBg, borderColor: theme.border, alignItems: 'flex-start' }]}>
           <Text style={{ fontSize: 18 }}>{ACTION_ICON[r.action] || '•'}</Text>

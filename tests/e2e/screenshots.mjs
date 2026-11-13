@@ -23,8 +23,10 @@ const wide = args.includes('--wide');
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 const SHOTS = {
-  scout: ['inicio', 'perfil', 'plan', 'etapa/expedicionario', 'programas', 'plan-trimestral', 'ficha-medica', 'curriculo', 'certificados', 'actividades', 'calendario', 'nudos', 'documentos'],
-  scouter: ['scouter', 'plan-trimestral-standalone'],
+  scout: ['inicio', 'perfil', 'plan', 'etapa/expedicionario', 'programas', 'plan-trimestral', 'ficha-medica', 'curriculo', 'certificados', 'actividades', 'calendario', 'nudos', 'documentos', 'catalogo?stageId=precursor&reqType=basica'],
+  scouter: ['scouter', 'plan-trimestral-standalone',
+    'scouter-revision?scoutId=00000000-0000-4000-8000-0000000e2e01&stageId=expedicionario&scoutName=Joven%20Prueba',
+    'scouter-revision?scoutId=00000000-0000-4000-8000-0000000e2e01&stageId=descubridor&scoutName=Joven%20Prueba'],
   jefe_grupo: ['jefe-grupo', 'administracion'],
   comisionado_distrital: [''],
 };

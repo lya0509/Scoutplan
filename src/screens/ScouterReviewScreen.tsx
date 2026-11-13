@@ -30,6 +30,11 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
   const [showVidaGrupoModal, setShowVidaGrupoModal] = useState(false);
   const [selectedReqForVidaGrupo, setSelectedReqForVidaGrupo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  // Estado real de la etapa en la cadena (una etapa es «Bloqueada» si la anterior no está aprobada)
+  const [stageStatus, setStageStatus] = useState<string>('En Progreso');
+  // La ficha se abre para CONSULTAR: tocar un requisito no cambia nada hasta pulsar «Editar».
+  // (Antes cada toque marcaba/desmarcaba al momento y se cambiaban requisitos sin querer.)
+  const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -37,6 +42,18 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
 
   const loadData = async () => {
     if (!stageTemplate) return;
+
+    const statusMap = await dataService.getAllStageStatuses(scoutId).catch(() => ({} as Record<string, string>));
+    let prevApproved = true;
+    for (const stg of stagesData) {
+      const dbSt = statusMap[stg.id];
+      if (stg.id === stageId) {
+        setStageStatus(!prevApproved ? 'Bloqueada' : (dbSt || 'En Progreso'));
+        break;
+      }
+      prevApproved = dbSt === 'Aprobada';
+    }
+
     const loadedChecks: Record<string, boolean> = {};
     const loadedNights: Record<string, any[]> = {};
     const loadedVg: Record<string, any[]> = {};
@@ -87,10 +104,69 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
     setLoading(false);
   };
 
-  const toggleCheck = async (reqId: string) => {
-    const newValue = !checks[reqId];
-    setChecks(prev => ({ ...prev, [reqId]: newValue }));
-    await dataService.toggleRequirement(scoutId, stageId, reqId, newValue);
+  const isBlocked = stageStatus === 'Bloqueada';
+
+  /** Qué le falta registrar al joven para este requisito (null = tiene su registro). */
+  const missingEvidence = (req: any): string | null => {
+    const need = req.requiredCount || 1;
+    if (req.type === 'basica' || req.type === 'opcional') {
+      const n = (req.type === 'opcional' ? activitiesByType.opcional : activitiesByType.basica).length;
+      return n >= (req.requiredCount || 0) ? null : `solo registró ${n} de ${req.requiredCount} actividades del catálogo`;
+    }
+    if (req.type === 'cursos' || req.type === 'especialidad') {
+      return linkedCertMap[req.id]?.certTitle || linkedCertMap[`${stageId}_${req.id}`]?.certTitle ? null : 'no vinculó ningún certificado';
+    }
+    if (req.type === 'ciclos') {
+      const n = (cipSelectionsMap[req.id] || []).length;
+      return n >= need ? null : `registró ${n} de ${need} CIP`;
+    }
+    if (req.type === 'vida_grupo') {
+      const n = (vidaGrupoMap[req.id] || []).length;
+      return n >= need ? null : `registró ${n} de ${need}`;
+    }
+    if (req.type === 'aire_libre') {
+      const nights = (nightsMap[req.id] || []).reduce((a: number, it: any) => a + (it.nightsCount || 1), 0);
+      const req10 = req.requiredCount || 10;
+      return nights >= req10 ? null : `registró ${nights} de ${req10} noches`;
+    }
+    if (req.type === 'personales') {
+      const n = (personalesMap[req.id] || []).length;
+      const req3 = req.requiredCount || 3;
+      return n >= req3 ? null : `registró ${n} de ${req3} actividades personales`;
+    }
+    return null; // requisitos de lista (Ley, Promesa…): no tienen registro aparte
+  };
+
+  const setRequirement = async (reqId: string, value: boolean) => {
+    setChecks(prev => ({ ...prev, [reqId]: value }));
+    setConfirmStep('none');
+    await dataService.toggleRequirement(scoutId, stageId, reqId, value);
+  };
+
+  const toggleCheck = async (req: any) => {
+    if (isBlocked) {
+      showAlert('🔒 Etapa bloqueada', `${scoutName} todavía no llega a esta etapa: primero debe tener aprobada la anterior. Aquí solo puedes consultar.`);
+      return;
+    }
+    if (!editMode) {
+      showAlert('Modo consulta', 'Para marcar o desmarcar requisitos, pulsa primero «✏️ Editar requisitos» arriba de la lista.');
+      return;
+    }
+    const newValue = !checks[req.id];
+    const falta = newValue ? missingEvidence(req) : null;
+    if (falta) {
+      // Marcar algo que el joven no registró = convalidarlo. Se pide confirmación.
+      showAlert(
+        '¿Convalidar sin registro?',
+        `«${req.text}»: ${scoutName} ${falta}.\n\nSi lo marcas, quedará como CONVALIDADO por el dirigente, sin evidencias en la app.`,
+        [
+          { text: 'Sí, convalidar', onPress: () => { setRequirement(req.id, true); } },
+          { text: 'Cancelar', style: 'cancel' },
+        ]
+      );
+      return;
+    }
+    await setRequirement(req.id, newValue);
   };
 
   const toggleShowDetails = (reqId: string) => {
@@ -100,6 +176,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
   const [confirmStep, setConfirmStep] = useState<'none' | 'approve' | 'reject'>('none');
 
   const handleApprove = async () => {
+    if (isBlocked) return; // no se aprueban etapas a las que el joven aún no llega
     const allChecked = stageTemplate?.requirements.every(req => checks[req.id]);
     
     if (confirmStep === 'none') {
@@ -177,9 +254,30 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
       </View>
 
       <ScrollView style={styles.scroll}>
-        <Text style={[styles.instructionText, { color: theme.subText }]}>
-          Toca cualquier requisito que consideres incorrecto para desmarcarlo. Si desmarcas algo, la etapa le será devuelta.
-        </Text>
+        {isBlocked ? (
+          <View style={[styles.banner, { backgroundColor: isDarkMode ? '#450a0a' : '#fee2e2', borderColor: '#ef4444' }]}>
+            <Text style={{ color: isDarkMode ? '#fca5a5' : '#b91c1c', fontSize: 13, fontWeight: 'bold' }}>
+              🔒 Etapa bloqueada: {scoutName} todavía no llega aquí (primero debe tener aprobada la etapa anterior). Solo puedes consultarla; no se puede aprobar ni marcar.
+            </Text>
+          </View>
+        ) : (
+          <View style={[styles.banner, { backgroundColor: theme.cardBg, borderColor: editMode ? colors.warning : theme.border }]}>
+            <Text style={{ color: theme.text, fontSize: 13 }}>
+              {editMode
+                ? '✏️ Modo edición: cada toque marca o desmarca el requisito y se guarda al momento. Si desmarcas algo, al pulsar el botón de abajo la etapa se devuelve.'
+                : stageStatus === 'Aprobada'
+                  ? '✅ Etapa aprobada. Estás en modo consulta: tocar un requisito no cambia nada.'
+                  : '👀 Modo consulta: revisa los registros. Para marcar o desmarcar algo, pulsa «Editar requisitos».'}
+            </Text>
+            <TouchableOpacity
+              onPress={() => setEditMode(e => !e)}
+              style={[styles.editBtn, { backgroundColor: editMode ? colors.warning : colors.primary }]}
+              accessibilityRole="button"
+            >
+              <Text style={styles.editBtnText}>{editMode ? 'Terminar edición' : '✏️ Editar requisitos'}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {stageTemplate.requirements.map(req => {
           const isChecked = checks[req.id];
@@ -203,8 +301,8 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                   { backgroundColor: theme.cardBg, borderColor: theme.border },
                   !isChecked && (isDarkMode ? styles.reqRowErrorDark : styles.reqRowError)
                 ]}
-                onPress={() => toggleCheck(req.id)}
-                activeOpacity={0.7}
+                onPress={() => toggleCheck(req)}
+                activeOpacity={editMode && !isBlocked ? 0.7 : 1}
               >
                 {isChecked ? (
                   <CheckSquare color={colors.primary} size={24} />
@@ -230,7 +328,11 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                     >
                       <BookOpen size={14} color={colors.primary} style={{ marginRight: 4 }} />
                       <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>
-                        {isExpanded ? 'Ocultar actividades realizadas' : `Ver actividades realizadas (${completedActivities.length} de ${req.requiredCount || 0})`}
+                        {isExpanded
+                          ? 'Ocultar actividades realizadas'
+                          : isChecked && completedActivities.length === 0
+                            ? 'Convalidado (sin actividades registradas)'
+                            : `Ver actividades realizadas (${completedActivities.length} de ${req.requiredCount || 0})`}
                       </Text>
                       {isExpanded ? <ChevronUp size={14} color={colors.primary} style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color={colors.primary} style={{ marginLeft: 2 }} />}
                     </TouchableOpacity>
@@ -248,7 +350,9 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                       <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>
                         {isExpanded
                           ? 'Ocultar actividades CIP'
-                          : `Ver CIP (${reqCipSelections.length} de ${req.requiredCount || 1} acreditados)`}
+                          : isChecked && reqCipSelections.length === 0
+                            ? 'Convalidado (sin CIP registrado)'
+                            : `Ver CIP (${reqCipSelections.length} de ${req.requiredCount || 1} acreditados)`}
                       </Text>
                       {isExpanded ? <ChevronUp size={14} color={colors.primary} style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color={colors.primary} style={{ marginLeft: 2 }} />}
                     </TouchableOpacity>
@@ -316,8 +420,8 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                           </Text>
                         </View>
                       ) : (
-                        <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic' }}>
-                          Sin especialidad o curso formalmente vinculado
+                        <Text style={{ fontSize: 12, color: isChecked ? '#b45309' : theme.subText, fontStyle: 'italic' }}>
+                          {isChecked ? 'Convalidado (sin certificado vinculado)' : 'Sin especialidad o curso formalmente vinculado'}
                         </Text>
                       )}
                     </View>
@@ -332,8 +436,10 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                     Actividades del Catálogo realizadas por {scoutName}:
                   </Text>
                   {completedActivities.length === 0 ? (
-                    <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic' }}>
-                      No se registraron actividades específicas del catálogo para este requisito.
+                    <Text style={{ fontSize: 12, color: isChecked ? '#b45309' : theme.subText, fontStyle: 'italic' }}>
+                      {isChecked
+                        ? 'Convalidado por el dirigente: el joven no registró en la app cuáles actividades fueron.'
+                        : 'No se registraron actividades específicas del catálogo para este requisito.'}
                     </Text>
                   ) : (
                     completedActivities.map((act, index) => (
@@ -364,8 +470,10 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                     CIP acreditados a {scoutName} ({reqCipSelections.length} de {req.requiredCount || 1}):
                   </Text>
                   {reqCipSelections.length === 0 ? (
-                    <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic' }}>
-                      No hay eventos CIP registrados o convalidados aún.
+                    <Text style={{ fontSize: 12, color: isChecked ? '#b45309' : theme.subText, fontStyle: 'italic' }}>
+                      {isChecked
+                        ? 'Convalidado por el dirigente: no se registró cuál CIP fue.'
+                        : 'No hay eventos CIP registrados o convalidados aún.'}
                     </Text>
                   ) : (
                     reqCipSelections.map((cip, index) => (
@@ -403,8 +511,10 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                     Desglose de Vida de Grupo ({reqVgEntries.length} de {req.requiredCount || 1} registrados):
                   </Text>
                   {reqVgEntries.length === 0 ? (
-                    <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic' }}>
-                      El Scout aún no ha registrado los detalles para este requisito.
+                    <Text style={{ fontSize: 12, color: isChecked ? '#b45309' : theme.subText, fontStyle: 'italic' }}>
+                      {isChecked
+                        ? 'Convalidado por el dirigente: el joven no registró los detalles en la app.'
+                        : 'El Scout aún no ha registrado los detalles para este requisito.'}
                     </Text>
                   ) : (
                     reqVgEntries.map((entry, index) => (
@@ -505,8 +615,9 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
         />
       )}
 
+      {!isBlocked && (
       <View style={[styles.footer, { backgroundColor: theme.cardBg, borderTopColor: theme.border }]}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
             styles.approveButton, 
             confirmStep === 'reject' && { backgroundColor: colors.warning }
@@ -517,6 +628,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
           <Text style={styles.approveButtonText}>{getButtonText()}</Text>
         </TouchableOpacity>
       </View>
+      )}
     </View>
   );
 }
@@ -528,6 +640,9 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 14, color: '#e0e0e0', marginBottom: 4 },
   scroll: { flex: 1, padding: 20 },
   instructionText: { fontSize: 14, marginBottom: 20, fontStyle: 'italic', textAlign: 'center' },
+  banner: { borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 16, gap: 10 },
+  editBtn: { alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10 },
+  editBtnText: { color: 'white', fontWeight: 'bold', fontSize: 13 },
   reqRow: { 
     flexDirection: 'row', alignItems: 'center', 
     padding: 16, borderRadius: 12, marginBottom: 10,

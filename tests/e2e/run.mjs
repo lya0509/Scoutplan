@@ -48,6 +48,8 @@ const SCOUT_ROUTES = [
   ['actividades', /Biblioteca Scout|Actividades/],
   ['calendario', /Calendario de Actividades/],
   ['catalogo', /Seleccionadas/],
+  // Etapa ya aprobada: el catálogo avisa que es solo consulta (caso real 2026-11-13)
+  ['catalogo?stageId=precursor&reqType=basica', /solo puedes consultar/],
 ];
 const PLAN = {
   scout: SCOUT_ROUTES,
@@ -57,6 +59,9 @@ const PLAN = {
     ['programas-actividades', /Programas de Actividades/],
     ['drive-fotos-standalone', /Drive/i],
     [`perfil-completo?scoutId=${PROFILES.scout.id}`, /Joven Prueba/],
+    // La ficha se abre en modo consulta; una etapa a la que el joven no llega no se puede aprobar
+    [`scouter-revision?scoutId=${PROFILES.scout.id}&stageId=expedicionario&scoutName=Joven%20Prueba`, /Editar requisitos/],
+    [`scouter-revision?scoutId=${PROFILES.scout.id}&stageId=descubridor&scoutName=Joven%20Prueba`, /Etapa bloqueada/],
   ],
   jefe_grupo: [
     ['jefe-grupo', /Panel Jefe de Grupo/],

@@ -54,6 +54,8 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [disabledIds, setDisabledIds] = useState<string[]>([]);
   const [stageStatus, setStageStatus] = useState<string>('En Progreso');
+  // Etapa en la que el joven está trabajando ahora (la primera sin aprobar)
+  const [currentStageId, setCurrentStageId] = useState<string | null>(null);
   
   const [modalMessage, setModalMessage] = useState<string | null>(null);
 
@@ -123,6 +125,8 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
       }
 
       setStageStatus(paramStageStatus || computedStatus);
+      const firstOpen = stagesData.find(stg => statusMap[stg.id] !== 'Aprobada');
+      setCurrentStageId(firstOpen ? firstOpen.id : null);
 
       // 2. Obtener requisitos del usuario
       const userReqs = await dataService.getRequirementRows(user.id);
@@ -170,6 +174,13 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
   };
 
   const isReadOnly = stageStatus === 'En Revision' || stageStatus === 'Aprobada' || stageStatus === 'Bloqueada';
+  const isClosed = stageStatus === 'En Revision' || stageStatus === 'Aprobada';
+  const closedStageText = stageStatus === 'Aprobada'
+    ? 'Esta etapa ya está aprobada, por eso no se pueden marcar actividades.'
+    : 'Esta etapa está en revisión por tu dirigente, por eso no se pueden cambiar las actividades.';
+  const currentStageTitle = currentStageId && currentStageId !== stageId
+    ? stagesData.find(s => s.id === currentStageId)?.title
+    : undefined;
 
   const handleToggleActivity = async (id: string) => {
     if (stageStatus === 'Bloqueada') {
@@ -177,7 +188,10 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
       return;
     }
     if (isReadOnly || !user) {
-      showAlert('⚠️ Modo Solo Lectura', 'No puedes modificar actividades de una etapa en revisión o ya aprobada.');
+      showAlert(
+        stageStatus === 'Aprobada' ? '✅ Etapa ya aprobada' : '⏳ Etapa en revisión',
+        `${closedStageText} Aquí solo puedes consultar.${currentStageTitle ? ` Tu etapa actual es ${currentStageTitle}.` : ''}`
+      );
       return;
     }
     if (!checkProfileCompletion(user, navigation)) return;
@@ -266,6 +280,23 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
           </View>
         )}
         
+        {isClosed && (
+          <View style={{ backgroundColor: isDarkMode ? '#1e293b' : '#eff6ff', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 10, gap: 8 }}>
+            <Text style={{ color: isDarkMode ? '#bfdbfe' : '#1e40af', fontSize: 13, fontWeight: 'bold' }}>
+              {stageStatus === 'Aprobada' ? '✅ ' : '⏳ '}{closedStageText} Aquí solo puedes consultar.
+            </Text>
+            {!!currentStageTitle && (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('StageDetail', { stageId: currentStageId })}
+                style={{ alignSelf: 'flex-start', backgroundColor: '#2563eb', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 }}
+                accessibilityRole="button"
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>Ir a mi etapa actual: {currentStageTitle} ➔</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
         <View style={styles.counterBox}>
           <Text style={[styles.counterText, { color: subTextColor }]}>
             Seleccionadas: <Text style={[styles.counterHighlight, { color: theme.accentText }]}>{selectedIds.length}</Text> / {requiredCount}
@@ -341,7 +372,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
                   isDisabled && (isDarkMode ? styles.cardDisabledDark : styles.cardDisabled)
                 ]}
                 onPress={() => handleToggleActivity(act.id)}
-                disabled={isDisabled || isReadOnly}
+                disabled={isDisabled}
                 activeOpacity={0.7}
               >
                 <View style={styles.iconBox}>

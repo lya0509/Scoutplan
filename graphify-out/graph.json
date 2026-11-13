@@ -2,7 +2,7 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-10T23:53:54.511Z",
+    "generatedAt": "2026-11-13T15:34:57.003Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
@@ -131,8 +131,8 @@
       "file": "src/navigation/AppNavigator.tsx",
       "role": "Routes unauthenticated users to Login/Register and authenticated users by role (scout -> DrawerNavigator, scouter -> ScouterDashboard, jefe_grupo -> JefeDashboard, comisionados/nacional/admin -> ComisionadoDashboard) plus shared screens.",
       "exists": true,
-      "lines": 292,
-      "bytes": 13345,
+      "lines": 300,
+      "bytes": 13655,
       "exports": [
         "hasPendingVerify",
         "AppNavigator"
@@ -1142,8 +1142,8 @@
       "route": "CatalogSelector",
       "role": "Searchable selector for official ASV catalog activities (básicas, opcionales, especialidades, cursos, ciclos) filtered by stage and requirement type.",
       "exists": true,
-      "lines": 474,
-      "bytes": 20810,
+      "lines": 505,
+      "bytes": 22693,
       "exports": [
         "CatalogSelectorScreen"
       ],
@@ -1347,8 +1347,8 @@
       "route": "ScouterReview",
       "role": "Detailed requirement-by-requirement verification screen for a Scout with Approve/Reject stage actions and notification dispatch.",
       "exists": true,
-      "lines": 546,
-      "bytes": 29596,
+      "lines": 661,
+      "bytes": 35818,
       "exports": [
         "ScouterReviewScreen"
       ],
@@ -2930,8 +2930,8 @@
       "file": "src/screens/AdministracionScreen.tsx",
       "role": "Route Administracion (/administracion). Jefe de Grupo: people of own group (Scout/Scouter/Jefe, unit, approve). Comisionados: also create groups (scout_groups) and move people inside their territory. Admin/Nacional: whole country, all roles. Rules mirrored by proteger_perfil.",
       "exists": true,
-      "lines": 690,
-      "bytes": 36176,
+      "lines": 691,
+      "bytes": 36290,
       "exports": [
         "AdministracionScreen"
       ],
@@ -3229,8 +3229,8 @@
       "file": "tests/sql/run.mjs",
       "role": "npm run test:sql — in-memory Postgres (PGlite) with Supabase stubs (auth.uid, roles, storage, realtime); runs every supabase_*.sql twice in production order and ~78 permission checks (cross-group, self-approval, CIP, history, deletion, notifications, private presence).",
       "exists": true,
-      "lines": 384,
-      "bytes": 37078,
+      "lines": 411,
+      "bytes": 40614,
       "exports": [],
       "imports": [
         "@electric-sql/pglite",
@@ -3498,8 +3498,8 @@
       "file": "tests/e2e/run.mjs",
       "role": "npm run test:e2e — builds and opens the app in Chromium with Supabase MOCKED (tests/e2e/mockSupabase.mjs): 25 screens × 4 roles × light/dark (no JS errors, no endless spinner, content visible, contrast ≥ 3:1), program editor modals, and cold start offline with an expired session.",
       "exists": true,
-      "lines": 386,
-      "bytes": 20664,
+      "lines": 391,
+      "bytes": 21167,
       "exports": [],
       "imports": [
         "playwright-core",

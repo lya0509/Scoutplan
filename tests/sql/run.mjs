@@ -309,6 +309,33 @@ anonBug.err || anonBug.rows[0].n === 0 ? ok('Sin sesión no se ve nada') : bad('
 await as(U(1), 'La Jefatura intenta borrar un reporte', `DELETE FROM public.bug_reports`, true);
 (await db.query(`SELECT count(*)::int n FROM public.bug_reports`)).rows[0].n === 2 ? ok('…pero no borra nada (solo lectura)') : bad('La Jefatura pudo borrar reportes');
 
+// ───────────────────────── Historial de etapas y requisitos ─────────────────────────
+// Caso real 2026-11-03: se aprobaron y luego se quitaron etapas de un Rover y no se supo quién.
+section('supabase_historial_etapas.sql');
+await db.exec(`CREATE TABLE IF NOT EXISTS public.requirement_progress (id serial PRIMARY KEY, scout_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+  stage_id text, requirement_id text, completed boolean, created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now());`);
+for (let k = 0; k < 2; k++) await run('supabase_historial_etapas.sql', sqlFile('supabase_historial_etapas.sql'));
+/** Ejecuta `sql` como si lo hiciera el usuario `uid` (auth.uid()); uid vacío = SQL directo. */
+const asActor = (uid, sql) => db.exec(`BEGIN; SELECT set_config('test.uid','${uid}',true); ${sql}; COMMIT;`);
+const histDe = async () => (await db.query(`SELECT actor_name, action, detail FROM public.audit_log WHERE action IN ('etapa','requisito') AND target_id='${U(3)}' ORDER BY id`)).rows;
+await asActor(U(3), `INSERT INTO public.stage_progress (scout_id, stage_id, status) VALUES ('${U(3)}', 'expedicionario', 'En Revision')`);
+await asActor(U(2), `UPDATE public.stage_progress SET status='Aprobada' WHERE scout_id='${U(3)}' AND stage_id='expedicionario'`);
+await asActor(U(2), `UPDATE public.stage_progress SET status='Aprobada' WHERE scout_id='${U(3)}' AND stage_id='expedicionario'`); // sin cambio
+await asActor(U(3), `INSERT INTO public.requirement_progress (scout_id, stage_id, requirement_id, completed) VALUES
+  ('${U(3)}', 'expedicionario', 'exp_basicas', true), ('${U(3)}', 'expedicionario', 'act_88', true)`);
+await asActor(U(2), `UPDATE public.requirement_progress SET completed=false WHERE scout_id='${U(3)}'`);
+await asActor('', `DELETE FROM public.stage_progress WHERE scout_id='${U(3)}' AND stage_id='expedicionario'`);
+const he = await histDe();
+const det = he.map(r => `${r.actor_name}|${r.detail}`);
+det.includes('Rover Orión|Etapa Expedicionario: En Revision') ? ok('El historial anota cuando el joven envía la etapa') : bad('Falta el envío: ' + JSON.stringify(det));
+det.includes('Scouter Orión|Etapa Expedicionario: En Revision → Aprobada') ? ok('…quién la aprobó') : bad('Falta la aprobación con el nombre del Scouter: ' + JSON.stringify(det));
+he.filter(r => r.detail.includes('→ Aprobada')).length === 1 ? ok('…y no repite si el estado no cambia') : bad('Anotó un cambio que no hubo');
+det.includes('Scouter Orión|Desmarcó el requisito «exp_basicas» de Expedicionario') ? ok('Anota el requisito que desmarca el dirigente') : bad('Falta el requisito del dirigente: ' + JSON.stringify(det));
+!det.some(d => d.includes('act_88')) && !det.some(d => d.startsWith('Rover Orión|Marcó')) ? ok('…pero no lo que marca el propio joven ni las actividades del catálogo') : bad('Anotó de más: ' + JSON.stringify(det));
+det.includes('Base de datos (SQL)|Etapa Expedicionario: se borró su estado (era Aprobada)') ? ok('Anota cuando se borra una etapa por SQL') : bad('Falta el borrado: ' + JSON.stringify(det));
+(await rowsAs(U(1), `SELECT count(*)::int n FROM public.audit_log WHERE action='etapa'`))[0].n >= 3 ? ok('La Jefatura del grupo ve esos cambios') : bad('La Jefatura no ve el historial de etapas');
+(await rowsAs(U(3), `SELECT count(*)::int n FROM public.audit_log`))[0].n === 0 ? ok('El joven no ve el historial') : bad('El joven ve el historial');
+
 // ───────────────────────── Respaldo y restauración ─────────────────────────
 // Se arma un respaldo igual al de api/backup.js, se «pierden» y dañan datos, se restaura con
 // la misma lógica que scripts/restore-backup.mjs y se compara con el original.
