@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { appVersionLabel } from '../lib/appVersion';
 import {
   View,
   Text,
@@ -139,6 +140,11 @@ export function ThemeCustomizerModal({ visible, onClose }: Props) {
               <RotateCcw size={14} color={theme.subText} style={{ marginRight: 6 }} />
               <Text style={[styles.resetText, { color: theme.subText }]}>Restablecer color morado original</Text>
             </TouchableOpacity>
+
+            {/* Versión que tiene este teléfono: para saber si ya llegó un arreglo */}
+            <Text style={{ color: theme.subText, fontSize: 12, textAlign: 'center', marginTop: 14 }}>
+              Versión de la app: {appVersionLabel()}
+            </Text>
           </ScrollView>
         </View>
       </View>

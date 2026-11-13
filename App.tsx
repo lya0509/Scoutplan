@@ -14,6 +14,7 @@ import { outbox } from './src/lib/offline/outbox';
 import { initGraphifyBridge } from './src/lib/graphifyBridge';
 import { installErrorReporter } from './src/lib/errorReporter';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
+import UpdateAvailableBanner from './src/components/UpdateAvailableBanner';
 
 export default function App() {
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function App() {
             <AppNavigator />
           </AppErrorBoundary>
           <OfflineStatusBanner />
+          <UpdateAvailableBanner />
         </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>

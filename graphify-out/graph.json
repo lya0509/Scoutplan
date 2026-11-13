@@ -2,7 +2,7 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-13T21:10:59.964Z",
+    "generatedAt": "2026-11-13T23:18:48.925Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
@@ -97,8 +97,8 @@
       "file": "App.tsx",
       "role": "Initializes Graphify Bridge, registers /sw.js Service Worker on Web, listens to window online events to flush dataService.syncPendingRequirements(), and wraps ThemeProvider -> AuthProvider -> NotificationProvider -> AppNavigator.",
       "exists": true,
-      "lines": 69,
-      "bytes": 2746,
+      "lines": 71,
+      "bytes": 2858,
       "exports": [
         "App"
       ],
@@ -117,7 +117,8 @@
         "./src/lib/offline/outbox",
         "./src/lib/graphifyBridge",
         "./src/lib/errorReporter",
-        "./src/components/AppErrorBoundary"
+        "./src/components/AppErrorBoundary",
+        "./src/components/UpdateAvailableBanner"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -2159,13 +2160,14 @@
       "file": "src/components/ThemeCustomizerModal.tsx",
       "role": "Modal allowing users to customize primary accent color and dark/light theme.",
       "exists": true,
-      "lines": 293,
-      "bytes": 8708,
+      "lines": 299,
+      "bytes": 9028,
       "exports": [
         "ThemeCustomizerModal"
       ],
       "imports": [
         "react",
+        "../lib/appVersion",
         "react-native",
         "lucide-react-native",
         "../context/ThemeContext",
