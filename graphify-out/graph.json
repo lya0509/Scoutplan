@@ -2,17 +2,17 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-13T19:03:16.183Z",
+    "generatedAt": "2026-11-13T19:12:14.900Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
-      "totalNodes": 144,
-      "totalEdges": 141,
+      "totalNodes": 145,
+      "totalEdges": 143,
       "totalHyperedges": 4,
       "totalScreens": 29,
       "totalComponents": 40,
       "totalContexts": 3,
-      "totalServices": 33,
+      "totalServices": 34,
       "totalCatalogs": 12,
       "totalDatabaseTables": 11,
       "totalQaSuites": 14
@@ -1067,8 +1067,8 @@
       "route": "PlanProgresivo",
       "role": "Displays the 4 Rover/Clan progression stages (Precursor, Expedicionario, Descubridor, Fundador) with completion percentages and lock status.",
       "exists": true,
-      "lines": 204,
-      "bytes": 9396,
+      "lines": 257,
+      "bytes": 12248,
       "exports": [
         "PlanProgresivoScreen"
       ],
@@ -1088,7 +1088,11 @@
         "../data/unitTemplates",
         "../components/Skeleton",
         "../theme/layout",
-        "../theme/stageColors"
+        "../theme/stageColors",
+        "../theme/buttons",
+        "../utils/badgeCelebration",
+        "../lib/celebration",
+        "../lib/celebrationVideo"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -3537,8 +3541,8 @@
       "file": "src/components/BadgeCelebrationWatcher.tsx",
       "role": "Mounted in App.tsx (scouts only, web). On open, on «badge» notifications and on returning to the app, compares stage_progress with @scout_celebrated_stages_<id> via planCelebrations(); shows each newly approved stage once (first run: only those approved in the last 7 days). Skipped under navigator.webdriver.",
       "exists": true,
-      "lines": 86,
-      "bytes": 4089,
+      "lines": 87,
+      "bytes": 4141,
       "exports": [
         "BadgeCelebrationWatcher"
       ],
@@ -3568,14 +3572,38 @@
       "file": "src/lib/celebration.web.ts",
       "role": "showBadgeCelebration(): HTML/CSS overlay animating only transform/opacity (rays, ripples, confetti); the unit max badge (last stage, Clan = Rover Ciudadano) gets the golden version with fireworks, golden rain and stars. Queues several, waits for the start splash; celebration.ts is the native no-op.",
       "exists": true,
-      "lines": 312,
-      "bytes": 16951,
+      "lines": 315,
+      "bytes": 17138,
       "exports": [
         "CelebrationOptions",
         "showBadgeCelebration"
       ],
       "imports": [
         "react-native-web/dist/modules/AssetRegistry"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "celebrationVideo.web.ts",
+      "label": "celebrationVideo.web.ts (Badge celebration MP4)",
+      "type": "service",
+      "community": "backend_offline_services",
+      "file": "src/lib/celebrationVideo.web.ts",
+      "role": "openCelebrationVideo()/createCelebrationVideo(): draws the celebration on a 720x1280 canvas frame by frame (scout name, group, badge, approval date, scout logo from scoutLogoPaths.ts) and encodes MP4 H.264 on the device with mediabunny (WebCodecs, lazy-loaded chunk); MediaRecorder fallback. Dialog with progress, preview, download and Web Share. Nothing is uploaded.",
+      "exists": true,
+      "lines": 692,
+      "bytes": 26696,
+      "exports": [
+        "CelebrationVideoOptions",
+        "canMakeCelebrationVideo",
+        "openCelebrationVideo"
+      ],
+      "imports": [
+        "react-native-web/dist/modules/AssetRegistry",
+        "./scoutLogoPaths"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -4277,6 +4305,16 @@
       "from": "BadgeCelebrationWatcher.tsx",
       "to": "celebration.web.ts",
       "relation": "calls"
+    },
+    {
+      "from": "PlanProgresivoScreen.tsx",
+      "to": "celebration.web.ts",
+      "relation": "replays"
+    },
+    {
+      "from": "PlanProgresivoScreen.tsx",
+      "to": "celebrationVideo.web.ts",
+      "relation": "creates_video"
     },
     {
       "from": "App.tsx",

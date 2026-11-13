@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -7,18 +7,43 @@ import { dataService } from '../lib/dataService';
 import { formatDateEs } from '../utils/dateLocal';
 import { supabase } from '../lib/supabaseClient';
 import { colors } from '../theme/colors';
-import { ChevronRight } from 'lucide-react-native';
-import { StageBadgeIcon } from '../components/StageBadgeIcon';
+import { ChevronRight, PartyPopper, Clapperboard } from 'lucide-react-native';
+import { StageBadgeIcon, BADGE_IMAGES } from '../components/StageBadgeIcon';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { getStagesForUnit } from '../data/unitTemplates';
 import { SkeletonScreen } from '../components/Skeleton';
 import { contentMax } from '../theme/layout';
 import { STAGE_COLORS } from '../theme/stageColors';
+import { buttonVariants } from '../theme/buttons';
+import { isMaxBadge } from '../utils/badgeCelebration';
+import { showBadgeCelebration } from '../lib/celebration';
+import { openCelebrationVideo, canMakeCelebrationVideo } from '../lib/celebrationVideo';
 
 
 export default function PlanProgresivoScreen({ navigation }: any) {
   const { user } = useAuth();
-  const { isDarkMode, theme } = useTheme();
+  const { isDarkMode, theme, primaryColor } = useTheme();
+  const btn = buttonVariants(theme, isDarkMode, primaryColor);
+  const canCelebrate = Platform.OS === 'web';
+  const canVideo = canCelebrate && canMakeCelebrationVideo();
+
+  // Datos de la insignia para volver a ver la celebración o crear el video
+  const celebrationFor = (stage: any) => {
+    const tpl = getStagesForUnit(user?.role === 'scout' ? user?.unit : null);
+    const order = tpl.stages.map(st => st.id);
+    const idx = order.indexOf(stage.id);
+    return {
+      title: stage.name,
+      color: STAGE_COLORS[stage.id] || colors.primary,
+      badge: BADGE_IMAGES[stage.id],
+      isMax: isMaxBadge(stage.id, order),
+      unitLabel: tpl.unit?.label || 'Clan',
+      nextTitle: idx >= 0 ? tpl.stages[idx + 1]?.title : undefined,
+      name: user?.name || 'Scout',
+      groupName: user?.group_name || undefined,
+      dateText: stage.approvedAt ? formatDateEs(stage.approvedAt.slice(0, 10)) : undefined,
+    };
+  };
 
   const [stages, setStages]   = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,6 +177,31 @@ export default function PlanProgresivoScreen({ navigation }: any) {
                 </View>
               )}
 
+              {isApproved && canCelebrate && (
+                <View style={styles.celebrateRow}>
+                  <TouchableOpacity
+                    style={[styles.celebrateBtn, btn.secondary]}
+                    onPress={() => { showBadgeCelebration(celebrationFor(stage)); }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Ver la celebración de ${stage.name}`}
+                  >
+                    <PartyPopper size={16} color={color} />
+                    <Text style={[styles.celebrateBtnText, btn.secondaryText]}>Ver celebración</Text>
+                  </TouchableOpacity>
+                  {canVideo && (
+                    <TouchableOpacity
+                      style={[styles.celebrateBtn, btn.secondary]}
+                      onPress={() => openCelebrationVideo(celebrationFor(stage))}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Descargar el video de ${stage.name}`}
+                    >
+                      <Clapperboard size={16} color={color} />
+                      <Text style={[styles.celebrateBtnText, btn.secondaryText]}>Descargar video</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+
               {isLocked && (
                 <View style={[styles.approvedBanner, isDarkMode ? { backgroundColor: '#1e293b' } : { backgroundColor: '#f1f5f9' }]}>
                   <Text style={[styles.approvedBannerText, isDarkMode ? { color: '#94a3b8' } : { color: '#64748b' }]}>🔒 Etapa bloqueada • Toca para consultar el contenido y requisitos</Text>
@@ -187,6 +237,9 @@ const styles = StyleSheet.create({
   cardInReviewDark: { backgroundColor: '#451a03', borderWidth: 1.5, borderColor: '#b45309' },
 
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  celebrateRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
+  celebrateBtn: { flexGrow: 1, flexBasis: 140, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10 },
+  celebrateBtnText: { fontSize: 13, fontWeight: '700' },
   badgeWrapper: { alignItems: 'center', justifyContent: 'center' },
   stageName: { fontSize: 17, fontWeight: 'bold' },
   statusLabel: { fontSize: 13, marginTop: 2 },

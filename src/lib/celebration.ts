@@ -7,6 +7,7 @@ export interface CelebrationOptions {
   isMax: boolean;
   unitLabel?: string;
   nextTitle?: string;
+  name?: string;
 }
 
 export function showBadgeCelebration(_o: CelebrationOptions): Promise<void> {

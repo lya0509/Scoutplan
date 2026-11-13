@@ -18,6 +18,8 @@ export interface CelebrationOptions {
   unitLabel?: string;
   /** Siguiente etapa, si hay. */
   nextTitle?: string;
+  /** Nombre del scout para el «¡Felicidades, …!». */
+  name?: string;
 }
 
 function assetUri(src: any): string {
@@ -239,9 +241,10 @@ function render(o: CelebrationOptions): Promise<void> {
     title.id = 'bc-title';
     title.textContent = o.title;
     const msg = el('div', 'bc-msg');
+    const first = (o.name || '').trim().split(/\s+/)[0];
     msg.textContent = max
-      ? `Completaste el Plan Progresivo${o.unitLabel ? ` del ${o.unitLabel}` : ''}. Llegaste a lo más alto: ¡felicitaciones!`
-      : `Tu Scouter aprobó tu etapa.${o.nextTitle ? ` Ahora vas por ${o.nextTitle}.` : ''} ¡Sigue así!`;
+      ? `¡Felicidades${first ? `, ${first}` : ''}! Completaste el Plan Progresivo${o.unitLabel ? ` del ${o.unitLabel}` : ''}. Llegaste a lo más alto.`
+      : `¡Felicidades${first ? `, ${first}` : ''}! Tu Scouter aprobó tu etapa.${o.nextTitle ? ` Ahora vas por ${o.nextTitle}.` : ''}`;
     const btn = el('button', 'bc-btn') as HTMLButtonElement;
     btn.type = 'button';
     btn.textContent = max ? '¡Lo logré!' : '¡Genial!';

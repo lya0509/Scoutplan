@@ -55,6 +55,7 @@ export default function BadgeCelebrationWatcher() {
           isMax: isMaxBadge(stageId, order),
           unitLabel: unit?.label || 'Clan',
           nextTitle: idx >= 0 ? stages[idx + 1]?.title : undefined,
+          name: user.name || undefined,
         });
       }
     } catch (e) {
@@ -62,7 +63,7 @@ export default function BadgeCelebrationWatcher() {
     } finally {
       running.current = false;
     }
-  }, [user?.id, user?.role, user?.unit, user?.account_status]);
+  }, [user?.id, user?.role, user?.unit, user?.account_status, user?.name]);
 
   // Al abrir la app / iniciar sesión
   useEffect(() => { check(); }, [check]);
