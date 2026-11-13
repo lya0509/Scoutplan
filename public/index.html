@@ -133,14 +133,15 @@
         var el = document.getElementById('scout-splash');
         if (!el) return;
         // Arranca con el logo del mismo tamaño y en el mismo lugar que la pantalla que pone el
-        // teléfono al abrir la app instalada (círculo ≈ 36 % del ancho, al centro de la pantalla).
+        // teléfono al abrir la app instalada (círculo ≈ 36,4 % del ancho, centrado en la pantalla
+        // completa: como la barra de arriba es más alta que la de abajo, eso cae al 49,3 % de la página).
         try {
           var logo = el.querySelector('.ss-logo'), r = logo.getBoundingClientRect();
           var W = window.innerWidth, H = window.innerHeight;
-          var ringFinal = 0.9448 * r.width, ringStart = Math.min(0.361 * W, 160);
+          var ringFinal = 0.9448 * r.width, ringStart = Math.min(0.3639 * W, 160);
           el.style.setProperty('--s0', String(ringStart / ringFinal));
           el.style.setProperty('--dx', (W / 2 - (r.left + 0.5011 * r.width)) + 'px');
-          el.style.setProperty('--dy', (H * 0.485 - (r.top + 0.4730 * r.height)) + 'px');
+          el.style.setProperty('--dy', (H * 0.4933 - (r.top + 0.4730 * r.height)) + 'px');
         } catch (e) {}
         var test = !!navigator.webdriver; // pruebas automáticas: se quita al instante
         var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
