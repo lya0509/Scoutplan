@@ -55,75 +55,54 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="shortcut icon" href="/favicon.ico" />
-    <!-- Animación de inicio (flor de lis rodando + cuerda + nudo). Solo aparece al
+    <!-- Animación de inicio: arranca igual que la pantalla del ícono que pone el teléfono y
+         "cobra vida" (crece, la flor da una vuelta, se aprieta el nudo). Solo aparece al
          cargar la app desde cero; App la retira con window.__hideScoutSplash(). -->
     <style id="scout-splash-css">
       #scout-splash {
+        --dx: 0px; --dy: 0px; --s0: 1;
         position: fixed; inset: 0; z-index: 2147483000;
         display: flex; align-items: center; justify-content: center;
-        background: radial-gradient(circle at 50% 42%, #7b3cb9 0%, #612499 48%, #3f1468 100%);
+        background: #612499; /* mismo morado liso que la pantalla del teléfono */
         overflow: hidden; transition: opacity .45s ease;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       }
-      #scout-splash .ss-stage {
-        display: flex; flex-direction: column; align-items: center;
-        transition: transform .45s cubic-bezier(.4,0,.2,1);
+      #scout-splash .ss-glow {
+        position: absolute; inset: 0; pointer-events: none;
+        background: radial-gradient(circle at 50% 45%, rgba(150,90,210,.55) 0%, rgba(150,90,210,0) 62%);
+        animation: ss-fadein .9s ease .25s both;
       }
-      #scout-splash .ss-logo { position: relative; width: min(56vw, 240px); }
-      #scout-splash .ss-logo > svg { display: block; width: 100%; height: auto; overflow: visible; fill: #fff; fill-rule: evenodd; }
-      #scout-splash .ss-fleur, #scout-splash .ss-knot { transform-box: fill-box; transform-origin: center; }
-      #scout-splash .ss-fleur {
-        animation: ss-roll 1.15s cubic-bezier(.25,.8,.3,1) both, ss-breathe 1.8s ease-in-out 1.9s infinite;
-      }
-      /* La cuerda se "dibuja" desde el nudo en sentido horario. Se hace GIRANDO dos mitades
-         recortadas (no con trazo ni con animación SVG): el giro lo mueve la tarjeta gráfica, así
-         no se congela mientras el teléfono carga la app, y arranca desde el primer instante.
-         Al cerrarse da paso a la cuerda oficial. */
-      #scout-splash .ss-wipe {
-        position: absolute; left: 2.4929%; top: 0; margin-top: 1.9381%; width: 95.238%;
-        transform: rotate(180deg); animation: ss-hide .12s linear 1.42s forwards;
-      }
-      #scout-splash .ss-wipe::before { content: ""; display: block; padding-top: 100%; }
-      #scout-splash .ss-half, #scout-splash .ss-cap { position: absolute; top: 0; bottom: 0; width: 50%; overflow: hidden; }
-      #scout-splash .ss-half.r { left: 50%; }
-      #scout-splash .ss-half.l { left: 0; }
-      #scout-splash .ss-turn { position: absolute; top: 0; bottom: 0; width: 200%; transform-origin: 50% 50%; will-change: transform; }
-      #scout-splash .r .ss-turn { left: -100%; animation: ss-spin .4s cubic-bezier(.45,0,1,1) .55s both; }
-      #scout-splash .l .ss-turn { left: 0; animation: ss-spin .4s cubic-bezier(0,0,.55,1) .95s both; }
-      #scout-splash .r .ss-cap { left: 0; }
-      #scout-splash .l .ss-cap { left: 50%; }
-      #scout-splash .ss-cap svg { position: absolute; top: 0; height: 100%; width: 200%; }
-      #scout-splash .r .ss-cap svg { left: 0; }
-      #scout-splash .l .ss-cap svg { left: -100%; }
-      #scout-splash .ss-cap circle { fill: none; stroke: #fff; stroke-width: 10.3; }
-      #scout-splash .ss-rope { opacity: 0; animation: ss-show .1s linear 1.3s forwards; }
-      #scout-splash .ss-knot { animation: ss-pop .5s cubic-bezier(.3,1.6,.5,1) 1.42s both; }
-      #scout-splash .ss-title {
-        margin-top: 26px; color: #fff; text-align: center;
-        animation: ss-rise .6s ease-out 1.55s both;
-      }
+      #scout-splash .ss-stage { position: relative; display: flex; flex-direction: column; align-items: center; transition: transform .45s cubic-bezier(.4,0,.2,1); }
+      #scout-splash .ss-logo { position: relative; width: min(56vw, 240px); transform-origin: 50.11% 47.30%; will-change: transform; }
+      #scout-splash .ss-logo svg { display: block; width: 100%; height: auto; overflow: visible; fill: #fff; fill-rule: evenodd; }
+      #scout-splash .ss-layer { position: absolute; inset: 0; will-change: transform; }
+      #scout-splash .ss-fleurL { transform-origin: 50.12% 46.02%; }
+      #scout-splash .ss-knotL { transform-origin: 50.06% 91.94%; }
+      #scout-splash .ss-title { margin-top: 26px; color: #fff; text-align: center; }
       #scout-splash .ss-title b { display: block; font-size: 22px; font-weight: 800; letter-spacing: .5px; }
       #scout-splash .ss-title span { display: block; margin-top: 4px; font-size: 13px; opacity: .78; letter-spacing: .3px; }
       #scout-splash.ss-out { opacity: 0; pointer-events: none; }
       #scout-splash.ss-out .ss-stage { transform: scale(1.08); }
-      @keyframes ss-roll {
-        0%   { transform: translateX(-320%) rotate(-360deg) scale(.7); opacity: 0; }
-        12%  { opacity: 1; }
-        72%  { transform: translateX(6%) rotate(10deg) scale(1.03); }
-        88%  { transform: translateX(-2%) rotate(-3deg) scale(1); }
-        100% { transform: none; opacity: 1; }
-      }
-      @keyframes ss-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-      @keyframes ss-pop { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+      /* Empieza con el logo del tamaño y en el lugar de la pantalla del teléfono (--dx, --dy, --s0) */
+      @keyframes ss-grow { from { transform: translate(var(--dx), var(--dy)) scale(var(--s0)); } to { transform: none; } }
+      @keyframes ss-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
       @keyframes ss-rise { 0% { transform: translateY(12px); opacity: 0; } 100% { transform: none; opacity: 1; } }
-      @keyframes ss-spin { from { transform: rotate(0deg); } to { transform: rotate(180deg); } }
+      @keyframes ss-fadein { from { opacity: 0; } to { opacity: 1; } }
       @keyframes ss-hide { to { opacity: 0; } }
-      @keyframes ss-show { to { opacity: 1; } }
       @media (prefers-reduced-motion: reduce) {
-        #scout-splash .ss-fleur, #scout-splash .ss-knot, #scout-splash .ss-title { animation: none; }
-        #scout-splash .ss-wipe { display: none; }
-        #scout-splash .ss-rope { animation: none; opacity: 1; }
+        #scout-splash *, #scout-splash *::before { animation: none !important; }
       }
+      #scout-splash .ss-logo { animation: ss-grow .85s cubic-bezier(.65,0,.25,1) .3s both, ss-breathe 1.8s ease-in-out 2s infinite; }
+      #scout-splash .ss-fleurL { animation: ss-twirl 1.05s cubic-bezier(.45,0,.25,1) .3s both; }
+      #scout-splash .ss-knotL { animation: ss-tie .5s ease-out 1.05s both; }
+      #scout-splash .ss-title { animation: ss-rise .6s ease-out 1.2s both; }
+      @keyframes ss-twirl {
+        0%   { transform: none; }
+        45%  { transform: translateY(-5%) rotate(210deg); }
+        78%  { transform: rotate(378deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes ss-tie { 0% { transform: none; } 35% { transform: scale(1.35); } 100% { transform: none; } }
     </style>
   </head>
 
@@ -133,23 +112,16 @@
       You need to enable JavaScript to run this app.
     </noscript>
     <div id="scout-splash" aria-hidden="true">
+      <div class="ss-glow"></div>
       <div class="ss-stage">
         <div class="ss-logo">
-        <svg viewBox="268 109 420 440" xmlns="http://www.w3.org/2000/svg">
-          <path class="ss-rope" d="M478.47,119.24c109.56,0,198.38,88.6,198.38,197.9,0,82.04-50.04,152.4-121.33,182.41-16.06,6.76-27.64,10.19-45.59,10.84-16.96.61-28.97-.45-28.97-.45l10.77-6.36c3.34-1.97,6.49-3.32,10.52-3.31,13.74,1.26,27.17-1.48,39.89-6.51,71.7-28.29,124.45-95.27,124.45-176.62,0-103.65-84.22-187.67-188.12-187.67s-188.12,84.02-188.12,187.67c0,83.53,54.71,154.31,130.33,178.64.82.26,2.47.83,3.3,1.08-1.7,2.94-3,6.15-3.81,9.55-.62-.19-2.09-.7-2.71-.9-79.71-25.67-137.37-100.3-137.37-188.36,0-109.3,88.82-197.9,198.38-197.9Z"/>
-          <g class="ss-knot">
-          <path d="M436.13,513.54c0-10.62,8.61-19.24,19.24-19.24,0,0,5.76,0,11.79-2.61,1.92-.83,3.78-1.73,5.43-2.58-4.87-3.44-10.81-5.46-17.22-5.46-16.51,0-29.89,13.38-29.89,29.89s13.38,29.89,29.89,29.89c6.41,0,12.36-2.02,17.22-5.46-1.65-.85-3.52-1.75-5.43-2.58-5.45-2.36-10.68-2.59-11.64-2.61-.05,0-.1,0-.16,0-10.62,0-19.24-8.61-19.24-19.24Z"/>
+          <svg viewBox="268 109 420 440"><path class="ss-rope" d="M478.47,119.24c109.56,0,198.38,88.6,198.38,197.9,0,82.04-50.04,152.4-121.33,182.41-16.06,6.76-27.64,10.19-45.59,10.84-16.96.61-28.97-.45-28.97-.45l10.77-6.36c3.34-1.97,6.49-3.32,10.52-3.31,13.74,1.26,27.17-1.48,39.89-6.51,71.7-28.29,124.45-95.27,124.45-176.62,0-103.65-84.22-187.67-188.12-187.67s-188.12,84.02-188.12,187.67c0,83.53,54.71,154.31,130.33,178.64.82.26,2.47.83,3.3,1.08-1.7,2.94-3,6.15-3.81,9.55-.62-.19-2.09-.7-2.71-.9-79.71-25.67-137.37-100.3-137.37-188.36,0-109.3,88.82-197.9,198.38-197.9Z"/></svg>
+          <div class="ss-layer ss-knotL"><svg viewBox="268 109 420 440"><path d="M436.13,513.54c0-10.62,8.61-19.24,19.24-19.24,0,0,5.76,0,11.79-2.61,1.92-.83,3.78-1.73,5.43-2.58-4.87-3.44-10.81-5.46-17.22-5.46-16.51,0-29.89,13.38-29.89,29.89s13.38,29.89,29.89,29.89c6.41,0,12.36-2.02,17.22-5.46-1.65-.85-3.52-1.75-5.43-2.58-5.45-2.36-10.68-2.59-11.64-2.61-.05,0-.1,0-.16,0-10.62,0-19.24-8.61-19.24-19.24Z"/>
           <path d="M442.28,510.3s.89-8.73,12.78-10.41c11.9-1.68,13.22-2,21.52-6.53,8.3-4.53,14.97-8.46,20.53-9.51,5.56-1.06,17.92.26,25.86,9.36,0,0-8.56,1.5-21.98,1.06,0,0-4.01-.27-9.68,2.87-5.67,3.14-13.7,9.58-27.63,12.18-13.93,2.6-21.4.99-21.4.99Z"/>
           <path d="M442.28,516.91s.89,8.73,12.78,10.41c11.9,1.68,13.22,2,21.52,6.53,8.3,4.53,14.97,8.46,20.53,9.51,5.56,1.06,17.92-.26,25.86-9.36,0,0-8.56-1.5-21.98-1.06,0,0-4.01.27-9.68-2.87-5.67-3.14-13.7-9.58-27.63-12.18-13.93-2.6-21.4-.99-21.4-.99Z"/>
           <path d="M420.21,520.32l-20.32,7.6s-2.53.77-1.77,3.84c.77,3.07,2.92,6.68,5.07,6.37,2.14-.31,6.78-4.03,20.73-7.47-1.74-3.19-3.01-6.67-3.71-10.34Z"/>
-          <path d="M480.99,517.58l11.37,6.6s4.57,3.35,10.15,3.15c5.58-.2,20.41-.71,33.91,4.26,13.51,4.98,15.43,5.99,15.43,5.99,0,0,1.95.94,2.94,0,.99-.93,3.37-4.35,3.66-7.37,0,0,.11-1.57-1.1-2.09-1.22-.52-17.06-7.71-31.1-9.74-14.04-2.03-33.38-2.12-45.27-.81Z"/>
-          </g>
-          <path class="ss-fleur" d="M538.41,356.85s2.51,3.3,2.51,7.23-2.51,7.24-2.51,7.24h-119.92s-2.51-3.3-2.51-7.24,2.51-7.23,2.51-7.23h14.95c-.86-4.63-5.1-21.98-21.11-29.73-10.67-5.16-25-3.19-32.68,6.49-3.06,3.85-9.25,15.24-1.54,31.96-20.45-1.63-38.92-18.8-43.01-38.78-11.02-53.74,62.4-84.58,95.42-29.72,0,0,16.49,22.34,17.19,59.79h11.53c.23-12.62-3.13-33.7-10.85-51.17-4.48-12.3-16.46-33.23-19.88-51.99-6.78-37.22,24.53-74.65,49.96-96.8,25.42,22.15,56.74,59.58,49.96,96.8-3.42,18.76-15.4,39.68-19.88,51.99-7.72,17.48-11.09,38.55-10.85,51.17h11.53c.7-37.45,17.19-59.79,17.19-59.79,33.02-54.85,106.43-24.01,95.42,29.72-4.09,19.99-22.56,37.15-43.01,38.78,7.71-16.71,1.52-28.1-1.54-31.96-7.69-9.68-22.02-11.65-32.68-6.49-16.02,7.75-20.25,25.1-21.11,29.73h14.95ZM478.45,466.08s-24.51-12.3-39.89-31.46c0,0,17.88-20.7,20.2-53.74h14.55s.81,37.46,5.14,56.64c4.32-19.18,5.14-56.64,5.14-56.64h14.55c2.32,33.04,20.2,53.74,20.2,53.74-15.38,19.15-39.89,31.46-39.89,31.46h0ZM446.77,381.07h-14.22s-2.58,10.6-10.91,16.16c-6.72,4.49-16.5,6.46-27.69-.99-8.16,23.88,24.26,38.82,42.53,14.69,5.58-7.36,9.55-21,10.3-29.86h0ZM510.13,381.07c.74,8.85,4.72,22.49,10.3,29.86,18.26,24.14,50.68,9.19,42.53-14.69-11.19,7.45-20.97,5.47-27.69.99-8.33-5.56-10.91-16.16-10.91-16.16h-14.22ZM472.84,356.85h11.22s.6-22.56,0-75.43c-.6-52.87-5.61-80.43-5.61-80.43,0,0-5,27.56-5.61,80.43-.6,52.87,0,75.43,0,75.43h0ZM376.55,294.95l-10.46-10.46,2.06,14.32-13.13,7.06,14.92,2.33,2.13,14.46,6.93-13.19,14.26,2.33-10.26-10.53,6.66-12.99-13.13,6.66h0ZM580.35,294.95l-13.13-6.66,6.66,12.99-10.26,10.53,14.26-2.33,6.93,13.19,2.13-14.46,14.92-2.33-13.13-7.06,2.06-14.32-10.46,10.46Z"/>
-        </svg>
-        <div class="ss-wipe">
-          <div class="ss-half r"><div class="ss-turn"><div class="ss-cap"><svg viewBox="0 0 400 400"><circle cx="200" cy="200" r="193.25"/></svg></div></div></div>
-          <div class="ss-half l"><div class="ss-turn"><div class="ss-cap"><svg viewBox="0 0 400 400"><circle cx="200" cy="200" r="193.25"/></svg></div></div></div>
-        </div>
+          <path d="M480.99,517.58l11.37,6.6s4.57,3.35,10.15,3.15c5.58-.2,20.41-.71,33.91,4.26,13.51,4.98,15.43,5.99,15.43,5.99,0,0,1.95.94,2.94,0,.99-.93,3.37-4.35,3.66-7.37,0,0,.11-1.57-1.1-2.09-1.22-.52-17.06-7.71-31.1-9.74-14.04-2.03-33.38-2.12-45.27-.81Z"/></svg></div>
+          <div class="ss-layer ss-fleurL"><svg viewBox="268 109 420 440"><path d="M538.41,356.85s2.51,3.3,2.51,7.23-2.51,7.24-2.51,7.24h-119.92s-2.51-3.3-2.51-7.24,2.51-7.23,2.51-7.23h14.95c-.86-4.63-5.1-21.98-21.11-29.73-10.67-5.16-25-3.19-32.68,6.49-3.06,3.85-9.25,15.24-1.54,31.96-20.45-1.63-38.92-18.8-43.01-38.78-11.02-53.74,62.4-84.58,95.42-29.72,0,0,16.49,22.34,17.19,59.79h11.53c.23-12.62-3.13-33.7-10.85-51.17-4.48-12.3-16.46-33.23-19.88-51.99-6.78-37.22,24.53-74.65,49.96-96.8,25.42,22.15,56.74,59.58,49.96,96.8-3.42,18.76-15.4,39.68-19.88,51.99-7.72,17.48-11.09,38.55-10.85,51.17h11.53c.7-37.45,17.19-59.79,17.19-59.79,33.02-54.85,106.43-24.01,95.42,29.72-4.09,19.99-22.56,37.15-43.01,38.78,7.71-16.71,1.52-28.1-1.54-31.96-7.69-9.68-22.02-11.65-32.68-6.49-16.02,7.75-20.25,25.1-21.11,29.73h14.95ZM478.45,466.08s-24.51-12.3-39.89-31.46c0,0,17.88-20.7,20.2-53.74h14.55s.81,37.46,5.14,56.64c4.32-19.18,5.14-56.64,5.14-56.64h14.55c2.32,33.04,20.2,53.74,20.2,53.74-15.38,19.15-39.89,31.46-39.89,31.46h0ZM446.77,381.07h-14.22s-2.58,10.6-10.91,16.16c-6.72,4.49-16.5,6.46-27.69-.99-8.16,23.88,24.26,38.82,42.53,14.69,5.58-7.36,9.55-21,10.3-29.86h0ZM510.13,381.07c.74,8.85,4.72,22.49,10.3,29.86,18.26,24.14,50.68,9.19,42.53-14.69-11.19,7.45-20.97,5.47-27.69.99-8.33-5.56-10.91-16.16-10.91-16.16h-14.22ZM472.84,356.85h11.22s.6-22.56,0-75.43c-.6-52.87-5.61-80.43-5.61-80.43,0,0-5,27.56-5.61,80.43-.6,52.87,0,75.43,0,75.43h0ZM376.55,294.95l-10.46-10.46,2.06,14.32-13.13,7.06,14.92,2.33,2.13,14.46,6.93-13.19,14.26,2.33-10.26-10.53,6.66-12.99-13.13,6.66h0ZM580.35,294.95l-13.13-6.66,6.66,12.99-10.26,10.53,14.26-2.33,6.93,13.19,2.13-14.46,14.92-2.33-13.13-7.06,2.06-14.32-10.46,10.46Z"/></svg></div>
         </div>
         <div class="ss-title"><b>Plan Progresivo</b><span>Scouts de Venezuela</span></div>
       </div>
@@ -158,6 +130,16 @@
       (function () {
         var el = document.getElementById('scout-splash');
         if (!el) return;
+        // Arranca con el logo del mismo tamaño y en el mismo lugar que la pantalla que pone el
+        // teléfono al abrir la app instalada (círculo ≈ 36 % del ancho, al centro de la pantalla).
+        try {
+          var logo = el.querySelector('.ss-logo'), r = logo.getBoundingClientRect();
+          var W = window.innerWidth, H = window.innerHeight;
+          var ringFinal = 0.9448 * r.width, ringStart = Math.min(0.361 * W, 160);
+          el.style.setProperty('--s0', String(ringStart / ringFinal));
+          el.style.setProperty('--dx', (W / 2 - (r.left + 0.5011 * r.width)) + 'px');
+          el.style.setProperty('--dy', (H * 0.485 - (r.top + 0.4730 * r.height)) + 'px');
+        } catch (e) {}
         var test = !!navigator.webdriver; // pruebas automáticas: se quita al instante
         var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
         var introDone = test || still, appReady = false, closing = false;
@@ -170,16 +152,14 @@
           setTimeout(remove, 500);
         }
         function maybeClose() { if (appReady && introDone) close(); }
-        // La app entra cuando la animación TERMINÓ DE VERDAD (último paso: el título),
-        // no por reloj: así no se corta aunque el teléfono vaya lento.
+        // La app entra cuando la animación TERMINÓ DE VERDAD (último paso: el título).
         el.querySelector('.ss-title').addEventListener('animationend', function () { introDone = true; maybeClose(); });
         window.__hideScoutSplash = function () {
           appReady = true;
           maybeClose();
           setTimeout(close, 4000); // si el navegador no anima (ahorro de batería), no esperar para siempre
         };
-        // Por si la app no llega a avisar (error al cargar): no tapar la pantalla para siempre
-        setTimeout(close, 15000);
+        setTimeout(close, 15000); // por si la app no llega a avisar
       })();
     </script>
     <!-- The root element for your Expo app. -->

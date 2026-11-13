@@ -1,6 +1,6 @@
 # Full-System Graphify Architectural Report — Plan Progresivo Scout ASV (v3.0.0)
 
-> **Generated**: `2026-11-13T17:02:52.268Z` | **Communities**: `8` | **Nodes**: `141` (`29` Screens, `39` Components, `31` Services, `12` Catalogs, `11` DB Tables) | **QA Suites**: `14`
+> **Generated**: `2026-11-13T17:24:57.850Z` | **Communities**: `8` | **Nodes**: `141` (`29` Screens, `39` Components, `31` Services, `12` Catalogs, `11` DB Tables) | **QA Suites**: `14`
 
 ---
 
