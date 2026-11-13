@@ -2,7 +2,7 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-13T19:12:14.900Z",
+    "generatedAt": "2026-11-13T20:12:51.302Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
@@ -189,8 +189,8 @@
       "file": "src/navigation/DrawerNavigator.tsx",
       "role": "15-screen Drawer menu for Scouts with custom header avatar, dark mode toggle, ThemeCustomizerModal trigger, and PWAInstallModal trigger.",
       "exists": true,
-      "lines": 245,
-      "bytes": 10244,
+      "lines": 250,
+      "bytes": 10647,
       "exports": [
         "DrawerNavigator"
       ],
@@ -1019,8 +1019,8 @@
       "route": "Resumen",
       "role": "Main Scout home dashboard: ScoutUserIcon greeting badge, progression summary, active stage progress bar, unit Rovers directory (directorio_grupo RPC), quick access cards, CarnetScoutModal, OnboardingGuideModal, and HelpFloatingFAB.",
       "exists": true,
-      "lines": 865,
-      "bytes": 39790,
+      "lines": 893,
+      "bytes": 40697,
       "exports": [
         "ScoutDashboardScreen"
       ],
@@ -1390,8 +1390,8 @@
       "route": "JefeDashboard",
       "role": "Group Chief dashboard: supervises all units (Manada, Tropa, Caminantes, Clan), approves/rejects membership expiration dates, moderates photos, and manages group calendar.",
       "exists": true,
-      "lines": 1687,
-      "bytes": 86212,
+      "lines": 1729,
+      "bytes": 87441,
       "exports": [
         "JefeGrupoScreen"
       ],
@@ -1447,8 +1447,8 @@
       "route": "ComisionadoDashboard",
       "role": "Territorial hierarchy dashboard (Distrital, Regional, Nacional, Admin) with drill-down metrics by Region -> District -> Group -> Unit.",
       "exists": true,
-      "lines": 703,
-      "bytes": 36246,
+      "lines": 712,
+      "bytes": 36952,
       "exports": [
         "ComisionadoDashboardScreen"
       ],
@@ -1681,8 +1681,8 @@
       "route": "TemporalDrive",
       "role": "Photo evidence albums organized by activity/date, backed by Supabase Storage scout-files and @scout_temporal_drive_albums cache.",
       "exists": true,
-      "lines": 708,
-      "bytes": 33975,
+      "lines": 709,
+      "bytes": 34144,
       "exports": [
         "TemporalDriveScreen"
       ],
@@ -2941,14 +2941,15 @@
       "file": "src/screens/AdministracionScreen.tsx",
       "role": "Route Administracion (/administracion). Jefe de Grupo: people of own group (Scout/Scouter/Jefe, unit, approve). Comisionados: also create groups (scout_groups) and move people inside their territory. Admin/Nacional: whole country, all roles. Rules mirrored by proteger_perfil.",
       "exists": true,
-      "lines": 691,
-      "bytes": 36290,
+      "lines": 701,
+      "bytes": 37008,
       "exports": [
         "AdministracionScreen"
       ],
       "imports": [
         "react",
         "react-native",
+        "../theme/layout",
         "@react-navigation/native",
         "lucide-react-native",
         "../context/AuthContext",

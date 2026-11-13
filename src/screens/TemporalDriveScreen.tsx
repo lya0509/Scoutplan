@@ -309,8 +309,9 @@ export default function TemporalDriveScreen({ navigation }: any) {
       {/* CABECERA DRIVE TEMPORAL */}
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderColor: theme.border }]}>
         <View style={styles.headerInner}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+            {/* flex: 1 → el texto se ajusta y el botón «Nuevo Álbum» ya no se sale de la pantalla en el teléfono */}
+            <View style={{ flex: 1 }}>
               <Text style={[styles.badgeBanner, { color: theme.accentText }]}>⚡ ALMACENAMIENTO A MÁXIMA CALIDAD ORIGINAL</Text>
               <Text style={[styles.headerTitle, { color: theme.text }]}>Drive de Fotos</Text>
               <Text style={[styles.headerSub, { color: theme.subText }]}>
@@ -657,7 +658,7 @@ const styles = StyleSheet.create({
   badgeBanner: { fontSize: 12, fontWeight: '900', color: colors.primary, letterSpacing: 0.5, marginBottom: 2 },
   headerTitle: { fontSize: 18, fontWeight: 'bold' },
   headerSub: { fontSize: 12, marginTop: 2, maxWidth: 280 },
-  createBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
+  createBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, flexShrink: 0 },
   createBtnText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
 
   backLinkBtn: { marginBottom: 14 },

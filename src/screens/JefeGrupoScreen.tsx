@@ -36,7 +36,7 @@ import { styles, modalStyles } from './jefeGrupo/styles';
 import { AppErrorsModal } from '../components/AppErrorsModal';
 import { SkeletonScreen } from '../components/Skeleton';
 import { PanelHeader } from '../components/PanelHeader';
-import { contentMax } from '../theme/layout';
+import { contentMax, contentWide, WIDE_BREAKPOINT } from '../theme/layout';
 
 function formatDateWithDayOfWeek(dateStr: string): string {
   if (!dateStr) return 'Seleccionar fecha en el calendario';
@@ -532,6 +532,9 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
   const { width } = useWindowDimensions();
   const isDesktop = width > 768;
+  // Pantalla grande (1080p, 2K): el panel usa casi todo el ancho y las ramas van en dos columnas
+  const isWide = width >= WIDE_BREAKPOINT;
+  const frame = isWide ? contentWide : contentMax;
 
   const quickToolButtons = (
     <>
@@ -666,9 +669,197 @@ export default function JefeGrupoScreen({ navigation }: any) {
     </>
   );
 
+  // Ramas del grupo (acordeones). En pantalla grande se reparten en dos columnas.
+  const manadaSection = (
+    <>
+            {/* 1. ACORDEÓN: 🟡 MANADA DE LOBATOS Y LOBEZNAS */}
+            <View style={[styles.accordionSection, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+              <TouchableOpacity
+                style={[styles.accordionHeader, { borderLeftColor: UNIT_COLORS.manada }]}
+                onPress={() => toggleSection('manada')}
+                activeOpacity={0.8}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.accordionTitle, { color: theme.text }]}>🟡 MANADA DE LOBATOS Y LOBEZNAS</Text>
+                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
+                    {manadaData.scouters.length} Scouters • {manadaData.totalYouth} Niños/as
+                  </Text>
+                </View>
+                {expanded.manada ? <ChevronUp size={20} color={theme.subText} /> : <ChevronDown size={20} color={theme.subText} />}
+              </TouchableOpacity>
+
+              {expanded.manada && (
+                <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
+                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters / Dirigentes de Manada ({manadaData.scouters.length})</Text>
+                  {manadaData.scouters.length === 0 ? (
+                    <Text style={styles.emptySubText}>No hay scouters registrados en Manada.</Text>
+                  ) : (
+                    manadaData.scouters.map(s => renderMemberCard(s, 'Dirigente de Manada / Akela', true))
+                  )}
+
+                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🐺 Lobatos ({manadaData.lobatos?.length || 0})</Text>
+                  {manadaData.lobatos?.length === 0 ? (
+                    <Text style={styles.emptySubText}>No hay lobatos registrados.</Text>
+                  ) : (
+                    manadaData.lobatos?.map(s => renderMemberCard(s, 'Lobato • Manada'))
+                  )}
+
+                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🐺 Lobeznas ({manadaData.lobeznas?.length || 0})</Text>
+                  {manadaData.lobeznas?.length === 0 ? (
+                    <Text style={styles.emptySubText}>No hay lobeznas registradas.</Text>
+                  ) : (
+                    manadaData.lobeznas?.map(s => renderMemberCard(s, 'Lobezna • Manada'))
+                  )}
+                </View>
+              )}
+            </View>
+    </>
+  );
+  const tropaSection = (
+    <>
+            {/* 2. ACORDEÓN: 🟢 TROPA SCOUT */}
+            <View style={[styles.accordionSection, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+              <TouchableOpacity
+                style={[styles.accordionHeader, { borderLeftColor: UNIT_COLORS.tropa }]}
+                onPress={() => toggleSection('tropa')}
+                activeOpacity={0.8}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.accordionTitle, { color: theme.text }]}>🟢 TROPA SCOUT</Text>
+                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
+                    {tropaData.scouters.length} Scouters • {tropaData.totalYouth} Scouts
+                  </Text>
+                </View>
+                {expanded.tropa ? <ChevronUp size={20} color={theme.subText} /> : <ChevronDown size={20} color={theme.subText} />}
+              </TouchableOpacity>
+
+              {expanded.tropa && (
+                <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
+                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters de Tropa ({tropaData.scouters.length})</Text>
+                  {tropaData.scouters.length === 0 ? (
+                    <Text style={styles.emptySubText}>No hay scouters registrados en Tropa.</Text>
+                  ) : (
+                    tropaData.scouters.map(s => renderMemberCard(s, 'Dirigente de Tropa', true))
+                  )}
+
+                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>⚜️ Scouts ({tropaData.youth?.length || 0})</Text>
+                  {tropaData.youth?.length === 0 ? (
+                    <Text style={styles.emptySubText}>No hay scouts registrados en Tropa.</Text>
+                  ) : (
+                    tropaData.youth?.map(s => renderMemberCard(s, 'Scout • Tropa'))
+                  )}
+                </View>
+              )}
+            </View>
+    </>
+  );
+  const caminantesSection = (
+    <>
+            {/* 3. ACORDEÓN: 🔵 CAMINANTES / COMUNIDAD */}
+            <View style={[styles.accordionSection, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+              <TouchableOpacity
+                style={[styles.accordionHeader, { borderLeftColor: UNIT_COLORS.comunidad }]}
+                onPress={() => toggleSection('caminantes')}
+                activeOpacity={0.8}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.accordionTitle, { color: theme.text }]}>🔵 CAMINANTES / COMUNIDAD</Text>
+                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
+                    {caminantesData.scouters.length} Scouters • {caminantesData.totalYouth} Caminantes
+                  </Text>
+                </View>
+                {expanded.caminantes ? <ChevronUp size={20} color={theme.subText} /> : <ChevronDown size={20} color={theme.subText} />}
+              </TouchableOpacity>
+
+              {expanded.caminantes && (
+                <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
+                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters de Caminantes ({caminantesData.scouters.length})</Text>
+                  {caminantesData.scouters.length === 0 ? (
+                    <Text style={styles.emptySubText}>No hay scouters registrados en Caminantes.</Text>
+                  ) : (
+                    caminantesData.scouters.map(s => renderMemberCard(s, 'Dirigente de Caminantes', true))
+                  )}
+
+                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🧭 Caminantes ({caminantesData.youth?.length || 0})</Text>
+                  {caminantesData.youth?.length === 0 ? (
+                    <Text style={styles.emptySubText}>No hay jóvenes registrados en Caminantes.</Text>
+                  ) : (
+                    caminantesData.youth?.map(s => renderMemberCard(s, 'Caminante • Comunidad'))
+                  )}
+                </View>
+              )}
+            </View>
+    </>
+  );
+  const clanSection = (
+    <>
+            {/* 4. ACORDEÓN: 🔴 CLAN ROVER */}
+            <View style={[styles.accordionSection, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+              <TouchableOpacity
+                style={[styles.accordionHeader, { borderLeftColor: UNIT_COLORS.clan }]}
+                onPress={() => toggleSection('clan')}
+                activeOpacity={0.8}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.accordionTitle, { color: theme.text }]}>🔴 CLAN ROVER</Text>
+                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
+                    {clanData.scouters.length} Scouters • {clanData.totalYouth} Rovers
+                  </Text>
+                </View>
+                {expanded.clan ? <ChevronUp size={20} color={theme.subText} /> : <ChevronDown size={20} color={theme.subText} />}
+              </TouchableOpacity>
+
+              {expanded.clan && (
+                <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
+                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters de Clan ({clanData.scouters.length})</Text>
+                  {clanData.scouters.length === 0 ? (
+                    <Text style={styles.emptySubText}>No hay scouters registrados en Clan.</Text>
+                  ) : (
+                    clanData.scouters.map(s => renderMemberCard(s, 'Scouter de Clan / Rover', true))
+                  )}
+
+                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🚩 Rovers ({clanData.youth?.length || 0})</Text>
+                  {clanData.youth?.length === 0 ? (
+                    <Text style={styles.emptySubText}>No hay rovers registrados en el Clan.</Text>
+                  ) : (
+                    clanData.youth?.map(s => renderMemberCard(s, 'Rover Scout • Clan'))
+                  )}
+                </View>
+              )}
+            </View>
+    </>
+  );
+  const jefaturaSection = (
+    <>
+            {/* 5. ACORDEÓN: ⚜️ JEFATURA Y CONSEJO DE GRUPO */}
+            <View style={[styles.accordionSection, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+              <TouchableOpacity
+                style={[styles.accordionHeader, { borderLeftColor: '#8e24aa' }]}
+                onPress={() => toggleSection('jefatura')}
+                activeOpacity={0.8}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.accordionTitle, { color: theme.text }]}>⚜️ JEFATURA Y CONSEJO DE GRUPO</Text>
+                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
+                    {jefaturaMembers.length} Miembros de Jefatura
+                  </Text>
+                </View>
+                {expanded.jefatura ? <ChevronUp size={20} color={theme.subText} /> : <ChevronDown size={20} color={theme.subText} />}
+              </TouchableOpacity>
+
+              {expanded.jefatura && (
+                <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
+                  <Text style={[styles.subCategoryTitle, subCatDark]}>👑 Jefes y Subjefes de Grupo ({jefaturaMembers.length})</Text>
+                  {jefaturaMembers.map(j => renderMemberCard(j, 'Jefatura de Grupo', true))}
+                </View>
+              )}
+            </View>
+    </>
+  );
+
   return (
     <View style={{ flex: 1 }}>
-      <PullToRefreshScrollView onRefresh={() => loadStatsAndMembers()} style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={[{ paddingBottom: 40 }, contentMax]}>
+      <PullToRefreshScrollView onRefresh={() => loadStatsAndMembers()} style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={[{ paddingBottom: 40 }, frame]}>
       
         {/* CABECERA JEFE DE GRUPO */}
         <PanelHeader
@@ -742,176 +933,27 @@ export default function JefeGrupoScreen({ navigation }: any) {
               🌳 Estructura y Miembros del Grupo ({allMembers.length})
             </Text>
 
-            {/* 1. ACORDEÓN: 🟡 MANADA DE LOBATOS Y LOBEZNAS */}
-            <View style={[styles.accordionSection, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-              <TouchableOpacity
-                style={[styles.accordionHeader, { borderLeftColor: UNIT_COLORS.manada }]}
-                onPress={() => toggleSection('manada')}
-                activeOpacity={0.8}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.accordionTitle, { color: theme.text }]}>🟡 MANADA DE LOBATOS Y LOBEZNAS</Text>
-                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
-                    {manadaData.scouters.length} Scouters • {manadaData.totalYouth} Niños/as
-                  </Text>
+            {isWide ? (
+              <View style={{ flexDirection: 'row', gap: 16, alignItems: 'flex-start' }}>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  {manadaSection}
+                  {caminantesSection}
+                  {jefaturaSection}
                 </View>
-                {expanded.manada ? <ChevronUp size={20} color={theme.subText} /> : <ChevronDown size={20} color={theme.subText} />}
-              </TouchableOpacity>
-
-              {expanded.manada && (
-                <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters / Dirigentes de Manada ({manadaData.scouters.length})</Text>
-                  {manadaData.scouters.length === 0 ? (
-                    <Text style={styles.emptySubText}>No hay scouters registrados en Manada.</Text>
-                  ) : (
-                    manadaData.scouters.map(s => renderMemberCard(s, 'Dirigente de Manada / Akela', true))
-                  )}
-
-                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🐺 Lobatos ({manadaData.lobatos?.length || 0})</Text>
-                  {manadaData.lobatos?.length === 0 ? (
-                    <Text style={styles.emptySubText}>No hay lobatos registrados.</Text>
-                  ) : (
-                    manadaData.lobatos?.map(s => renderMemberCard(s, 'Lobato • Manada'))
-                  )}
-
-                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🐺 Lobeznas ({manadaData.lobeznas?.length || 0})</Text>
-                  {manadaData.lobeznas?.length === 0 ? (
-                    <Text style={styles.emptySubText}>No hay lobeznas registradas.</Text>
-                  ) : (
-                    manadaData.lobeznas?.map(s => renderMemberCard(s, 'Lobezna • Manada'))
-                  )}
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  {tropaSection}
+                  {clanSection}
                 </View>
-              )}
-            </View>
-
-            {/* 2. ACORDEÓN: 🟢 TROPA SCOUT */}
-            <View style={[styles.accordionSection, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-              <TouchableOpacity
-                style={[styles.accordionHeader, { borderLeftColor: UNIT_COLORS.tropa }]}
-                onPress={() => toggleSection('tropa')}
-                activeOpacity={0.8}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.accordionTitle, { color: theme.text }]}>🟢 TROPA SCOUT</Text>
-                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
-                    {tropaData.scouters.length} Scouters • {tropaData.totalYouth} Scouts
-                  </Text>
-                </View>
-                {expanded.tropa ? <ChevronUp size={20} color={theme.subText} /> : <ChevronDown size={20} color={theme.subText} />}
-              </TouchableOpacity>
-
-              {expanded.tropa && (
-                <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters de Tropa ({tropaData.scouters.length})</Text>
-                  {tropaData.scouters.length === 0 ? (
-                    <Text style={styles.emptySubText}>No hay scouters registrados en Tropa.</Text>
-                  ) : (
-                    tropaData.scouters.map(s => renderMemberCard(s, 'Dirigente de Tropa', true))
-                  )}
-
-                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>⚜️ Scouts ({tropaData.youth?.length || 0})</Text>
-                  {tropaData.youth?.length === 0 ? (
-                    <Text style={styles.emptySubText}>No hay scouts registrados en Tropa.</Text>
-                  ) : (
-                    tropaData.youth?.map(s => renderMemberCard(s, 'Scout • Tropa'))
-                  )}
-                </View>
-              )}
-            </View>
-
-            {/* 3. ACORDEÓN: 🔵 CAMINANTES / COMUNIDAD */}
-            <View style={[styles.accordionSection, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-              <TouchableOpacity
-                style={[styles.accordionHeader, { borderLeftColor: UNIT_COLORS.comunidad }]}
-                onPress={() => toggleSection('caminantes')}
-                activeOpacity={0.8}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.accordionTitle, { color: theme.text }]}>🔵 CAMINANTES / COMUNIDAD</Text>
-                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
-                    {caminantesData.scouters.length} Scouters • {caminantesData.totalYouth} Caminantes
-                  </Text>
-                </View>
-                {expanded.caminantes ? <ChevronUp size={20} color={theme.subText} /> : <ChevronDown size={20} color={theme.subText} />}
-              </TouchableOpacity>
-
-              {expanded.caminantes && (
-                <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters de Caminantes ({caminantesData.scouters.length})</Text>
-                  {caminantesData.scouters.length === 0 ? (
-                    <Text style={styles.emptySubText}>No hay scouters registrados en Caminantes.</Text>
-                  ) : (
-                    caminantesData.scouters.map(s => renderMemberCard(s, 'Dirigente de Caminantes', true))
-                  )}
-
-                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🧭 Caminantes ({caminantesData.youth?.length || 0})</Text>
-                  {caminantesData.youth?.length === 0 ? (
-                    <Text style={styles.emptySubText}>No hay jóvenes registrados en Caminantes.</Text>
-                  ) : (
-                    caminantesData.youth?.map(s => renderMemberCard(s, 'Caminante • Comunidad'))
-                  )}
-                </View>
-              )}
-            </View>
-
-            {/* 4. ACORDEÓN: 🔴 CLAN ROVER */}
-            <View style={[styles.accordionSection, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-              <TouchableOpacity
-                style={[styles.accordionHeader, { borderLeftColor: UNIT_COLORS.clan }]}
-                onPress={() => toggleSection('clan')}
-                activeOpacity={0.8}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.accordionTitle, { color: theme.text }]}>🔴 CLAN ROVER</Text>
-                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
-                    {clanData.scouters.length} Scouters • {clanData.totalYouth} Rovers
-                  </Text>
-                </View>
-                {expanded.clan ? <ChevronUp size={20} color={theme.subText} /> : <ChevronDown size={20} color={theme.subText} />}
-              </TouchableOpacity>
-
-              {expanded.clan && (
-                <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters de Clan ({clanData.scouters.length})</Text>
-                  {clanData.scouters.length === 0 ? (
-                    <Text style={styles.emptySubText}>No hay scouters registrados en Clan.</Text>
-                  ) : (
-                    clanData.scouters.map(s => renderMemberCard(s, 'Scouter de Clan / Rover', true))
-                  )}
-
-                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🚩 Rovers ({clanData.youth?.length || 0})</Text>
-                  {clanData.youth?.length === 0 ? (
-                    <Text style={styles.emptySubText}>No hay rovers registrados en el Clan.</Text>
-                  ) : (
-                    clanData.youth?.map(s => renderMemberCard(s, 'Rover Scout • Clan'))
-                  )}
-                </View>
-              )}
-            </View>
-
-            {/* 5. ACORDEÓN: ⚜️ JEFATURA Y CONSEJO DE GRUPO */}
-            <View style={[styles.accordionSection, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-              <TouchableOpacity
-                style={[styles.accordionHeader, { borderLeftColor: '#8e24aa' }]}
-                onPress={() => toggleSection('jefatura')}
-                activeOpacity={0.8}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.accordionTitle, { color: theme.text }]}>⚜️ JEFATURA Y CONSEJO DE GRUPO</Text>
-                  <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
-                    {jefaturaMembers.length} Miembros de Jefatura
-                  </Text>
-                </View>
-                {expanded.jefatura ? <ChevronUp size={20} color={theme.subText} /> : <ChevronDown size={20} color={theme.subText} />}
-              </TouchableOpacity>
-
-              {expanded.jefatura && (
-                <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={[styles.subCategoryTitle, subCatDark]}>👑 Jefes y Subjefes de Grupo ({jefaturaMembers.length})</Text>
-                  {jefaturaMembers.map(j => renderMemberCard(j, 'Jefatura de Grupo', true))}
-                </View>
-              )}
-            </View>
+              </View>
+            ) : (
+              <>
+                {manadaSection}
+                {tropaSection}
+                {caminantesSection}
+                {clanSection}
+                {jefaturaSection}
+              </>
+            )}
 
             {/* BOTÓN CERRAR SESIÓN DE JEFATURA */}
             <TouchableOpacity 

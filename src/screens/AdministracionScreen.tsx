@@ -1,7 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Modal, ActivityIndicator,
+  View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Modal, ActivityIndicator, useWindowDimensions,
 } from 'react-native';
+import { CONTENT_MAX_WIDTH, CONTENT_WIDE_MAX_WIDTH, WIDE_BREAKPOINT } from '../theme/layout';
 import { useFocusEffect } from '@react-navigation/native';
 import { Search, Plus, X, ShieldCheck, Users, Building2, UserCheck, UserX, AlertTriangle, History } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
@@ -45,6 +46,11 @@ type Filter = 'todos' | 'pendientes' | 'dirigentes';
 export default function AdministracionScreen() {
   const { user } = useAuth();
   const { theme, isDarkMode, primaryColor } = useTheme();
+  // Computadora: la lista de personas va en 2 columnas (3 en pantalla grande, 4 desde 1800 px) y el panel se ensancha.
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
+  const isWide = width >= WIDE_BREAKPOINT;
+  const rowBasis = width >= 1800 ? '23.5%' : isWide ? '32%' : isDesktop ? '48%' : undefined;
   const myRole: string = user?.role || 'scout';
   const roles = assignableRoles(myRole);
   const canMove = canMoveMembers(myRole);
@@ -118,7 +124,7 @@ export default function AdministracionScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg }}>
-      <PullToRefreshScrollView onRefresh={() => load()} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <PullToRefreshScrollView onRefresh={() => load()} contentContainerStyle={[styles.container, { maxWidth: isWide ? CONTENT_WIDE_MAX_WIDTH : CONTENT_MAX_WIDTH }]} keyboardShouldPersistTaps="handled">
         <View style={[styles.scope, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
           <ShieldCheck size={20} color={primaryColor} />
           <View style={{ flex: 1 }}>
@@ -194,10 +200,12 @@ export default function AdministracionScreen() {
 
             {shown.length === 0 ? (
               <Text style={[styles.empty, { color: theme.subText }]}>No hay personas con ese filtro.</Text>
-            ) : shown.map(p => (
+            ) : (
+              <View style={rowBasis ? { flexDirection: 'row', flexWrap: 'wrap', gap: 12 } : { gap: 12 }}>
+              {shown.map(p => (
               <TouchableOpacity
                 key={p.id}
-                style={[styles.row, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+                style={[styles.row, rowBasis ? { width: rowBasis } : null, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
                 onPress={() => setEditing(p)}
                 accessibilityRole="button"
                 accessibilityLabel={`Administrar a ${p.name}`}
@@ -216,7 +224,9 @@ export default function AdministracionScreen() {
                   {p.account_status === 'rejected' && <Text style={styles.rejected}>Rechazada</Text>}
                 </View>
               </TouchableOpacity>
-            ))}
+              ))}
+              </View>
+            )}
           </>
         ) : tab === 'historial' ? (
           <HistoryTab />

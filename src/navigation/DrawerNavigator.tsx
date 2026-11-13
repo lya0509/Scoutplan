@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { colors } from '../theme/colors';
@@ -143,6 +143,7 @@ function CustomDrawerContent(props: any & { onOpenCustomizer: () => void; onOpen
 
 export default function DrawerNavigator() {
   const { isDarkMode, primaryColor } = useTheme();
+  const { width } = useWindowDimensions();
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [showInstall, setShowInstall] = useState(false);
 
@@ -168,6 +169,10 @@ export default function DrawerNavigator() {
           overlayColor: isDarkMode ? 'rgba(0, 0, 0, 0.75)' : 'rgba(0, 0, 0, 0.5)',
           headerStyle: { backgroundColor: isDarkMode ? '#000000' : primaryColor },
           headerTintColor: '#fff',
+          // La cabecera calcula el ancho del título suponiendo UN botón a la derecha; aquí hay dos
+          // (paleta y modo oscuro, ~112 px). Sin esto los títulos largos («Documentos y Guías Scout»)
+          // se montaban sobre los botones en el teléfono. Ahora se cortan con «…».
+          headerTitleContainerStyle: { maxWidth: Math.max(120, width - 190) },
           headerRight: () => (
             <HeaderRightButtons 
               onOpenCustomizer={() => setShowCustomizer(true)} 
@@ -182,14 +187,14 @@ export default function DrawerNavigator() {
         <Drawer.Screen name="Resumen" component={ScoutDashboardScreen} options={{ drawerLabel: 'Inicio' }} />
         <Drawer.Screen name="Perfil" component={ProfileScreen} />
         <Drawer.Screen name="PlanProgresivo" component={PlanProgresivoScreen} options={{ drawerLabel: 'Plan Progresivo', title: 'Plan Progresivo' }} />
-        <Drawer.Screen name="ProgramasScoutDrawer" component={ProgramaScoutScreen} options={{ drawerLabel: 'Programas de Actividades', title: 'Programas de Actividades' }} />
+        <Drawer.Screen name="ProgramasScoutDrawer" component={ProgramaScoutScreen} options={{ drawerLabel: 'Programas de Actividades', title: 'Programas' }} />
         <Drawer.Screen name="PlanTrimestralDrawer" component={QuarterlyPlanScreen} options={{ drawerLabel: 'Plan Trimestral', title: 'Plan Trimestral' }} />
         <Drawer.Screen name="TemporalDriveDrawer" component={TemporalDriveScreen} options={{ drawerLabel: 'Drive de Fotos', title: 'Drive de Fotos' }} />
         <Drawer.Screen name="FichaMedicaDrawer" component={FichaMedicaScreen} options={{ drawerLabel: 'Ficha Médica', title: 'Ficha Médica' }} />
         <Drawer.Screen name="CurriculumScoutDrawer" component={CurriculumScoutScreen} options={{ drawerLabel: 'Currículum Scout Joven', title: 'Currículum Scout Joven' }} />
         <Drawer.Screen name="NudosManualDrawer" component={NudosManualScreen} options={{ drawerLabel: '📖 Manuales', title: 'Manuales Scout' }} />
-        <Drawer.Screen name="CancioneroDrawer" component={CancioneroScreen} options={{ drawerLabel: 'Cancionero y Oraciones (Offline)', title: 'Cancionero & Oraciones Scout' }} />
-        <Drawer.Screen name="DocumentosDrawer" component={DocumentosScreen} options={{ drawerLabel: 'Documentos y Guías (PDF)', title: 'Documentos y Guías Scout' }} />
+        <Drawer.Screen name="CancioneroDrawer" component={CancioneroScreen} options={{ drawerLabel: 'Cancionero y Oraciones (Offline)', title: 'Cancionero' }} />
+        <Drawer.Screen name="DocumentosDrawer" component={DocumentosScreen} options={{ drawerLabel: 'Documentos y Guías (PDF)', title: 'Documentos y Guías' }} />
         <Drawer.Screen name="EspecialidadesDrawer" component={EspecialidadesScreen} options={{ drawerLabel: '🏅 Especialidades Scout', title: 'Especialidades Scout' }} />
         <Drawer.Screen name="CertificadosDrawer" component={CertificateUploadScreen} options={{ drawerLabel: 'Mis Certificados', title: 'Mis Certificados' }} />
         <Drawer.Screen name="CentroActividades" component={ActivityCenterScreen} options={{ drawerLabel: 'Centro de Actividades', title: 'Actividades' }} />

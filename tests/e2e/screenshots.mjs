@@ -1,6 +1,6 @@
 // Capturas de las pantallas principales para revisar el diseño (no es una prueba: no falla).
 //
-//   node tests/e2e/screenshots.mjs [carpeta] [--dark] [--wide | --width=1920]
+//   node tests/e2e/screenshots.mjs [carpeta] [--dark] [--wide | --width=1920] [--only=scout,scouter]
 //
 // Usa la misma app compilada y el mismo Supabase simulado que las pruebas E2E
 // (compila si hace falta). Guarda una imagen por pantalla y rol en la carpeta
@@ -24,14 +24,22 @@ const widthArg = Number((args.find(a => a.startsWith('--width=')) || '').split('
 const wide = args.includes('--wide') || widthArg > 0;
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+const SID = PROFILES.scout.id;
+// Las mismas pantallas que recorren las pruebas E2E (tests/e2e/run.mjs)
 const SHOTS = {
-  scout: ['inicio', 'perfil', 'plan', 'etapa/expedicionario', 'programas', 'plan-trimestral', 'ficha-medica', 'curriculo', 'certificados', 'actividades', 'calendario', 'nudos', 'documentos', 'catalogo?stageId=precursor&reqType=basica'],
-  scouter: ['scouter', 'plan-trimestral-standalone',
-    'scouter-revision?scoutId=00000000-0000-4000-8000-0000000e2e01&stageId=expedicionario&scoutName=Joven%20Prueba',
-    'scouter-revision?scoutId=00000000-0000-4000-8000-0000000e2e01&stageId=descubridor&scoutName=Joven%20Prueba'],
+  scout: ['inicio', 'perfil', 'plan', 'etapa/expedicionario', 'programas', 'plan-trimestral', 'drive-fotos', 'ficha-medica',
+    'curriculo', 'nudos', 'cancionero', 'documentos', 'especialidades', 'certificados', 'actividades', 'calendario',
+    'catalogo', 'catalogo?stageId=precursor&reqType=basica'],
+  scouter: ['scouter', 'plan-trimestral-standalone', 'programas-actividades', 'drive-fotos-standalone',
+    `perfil-completo?scoutId=${SID}`,
+    `scouter-revision?scoutId=${SID}&stageId=expedicionario&scoutName=Joven%20Prueba`,
+    `scouter-revision?scoutId=${SID}&stageId=descubridor&scoutName=Joven%20Prueba`],
   jefe_grupo: ['jefe-grupo', 'administracion'],
-  comisionado_distrital: [''],
+  comisionado_distrital: ['', 'administracion'],
 };
+// --only=scouter,jefe_grupo  → solo esos roles
+const only = (args.find(a => a.startsWith('--only=')) || '').split('=')[1];
+if (only) for (const k of Object.keys(SHOTS)) if (!only.split(',').includes(k)) delete SHOTS[k];
 
 function distIsForTests() {
   const jsDir = path.join(DIST, '_expo', 'static', 'js', 'web');

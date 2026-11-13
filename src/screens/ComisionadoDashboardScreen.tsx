@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Modal, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Modal, TextInput, Platform, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -23,7 +23,7 @@ import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
 import { buttonVariants } from '../theme/buttons';
 import { SkeletonScreen } from '../components/Skeleton';
 import { PanelHeader, PanelHeaderButton } from '../components/PanelHeader';
-import { contentMax } from '../theme/layout';
+import { contentMax, contentWide, WIDE_BREAKPOINT } from '../theme/layout';
 
 // Todas las regiones de la ASV (misma lista que el registro)
 const REGIONS_DATA = REGIONS;
@@ -199,11 +199,18 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
   };
 
   const levelInfo = getLevelBadgeInfo();
+  // En computadora: indicadores en una fila; en pantalla grande el panel usa casi todo el ancho
+  // y los grupos van en dos columnas.
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
+  const isWide = width >= WIDE_BREAKPOINT;
+  const frame = isWide ? contentWide : contentMax;
+  const kpiDesktop = isDesktop ? { width: undefined, flexGrow: 1, flexBasis: '22%' as const } : null;
   const territorialTitle = isNacional ? 'Nivel Nacional' : isRegional ? `Región ${user?.region || ''}` : `Distrito ${user?.district || ''}`;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg }}>
-      <PullToRefreshScrollView onRefresh={() => loadTerritorialData()} style={styles.container} contentContainerStyle={[{ paddingBottom: 40 }, contentMax]}>
+      <PullToRefreshScrollView onRefresh={() => loadTerritorialData()} style={styles.container} contentContainerStyle={[{ paddingBottom: 40 }, frame]}>
         
         {/* CABECERA TERRITORIAL */}
         <PanelHeader
@@ -346,25 +353,25 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
 
             {/* TARJETAS DE INDICADORES TERRITORIALES */}
             <View style={styles.statsGrid}>
-              <View style={[styles.kpiCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+              <View style={[styles.kpiCard, kpiDesktop, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
                 <Building color={levelInfo.themeColor} size={24} />
                 <Text style={[styles.kpiNumber, { color: theme.text }]}>{territorialStats.totalGroups}</Text>
                 <Text style={[styles.kpiLabel, { color: theme.subText }]}>Grupos Scouts</Text>
               </View>
 
-              <View style={[styles.kpiCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+              <View style={[styles.kpiCard, kpiDesktop, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
                 <Users color={colors.primary} size={24} />
                 <Text style={[styles.kpiNumber, { color: theme.text }]}>{territorialStats.totalYouth}</Text>
                 <Text style={[styles.kpiLabel, { color: theme.subText }]}>Jóvenes Scouts</Text>
               </View>
 
-              <View style={[styles.kpiCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+              <View style={[styles.kpiCard, kpiDesktop, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
                 <Shield color="#4f46e5" size={24} />
                 <Text style={[styles.kpiNumber, { color: isDarkMode ? '#a5b4fc' : '#4f46e5' }]}>{territorialStats.totalLeaders}</Text>
                 <Text style={[styles.kpiLabel, { color: theme.subText }]}>Dirigentes</Text>
               </View>
 
-              <View style={[styles.kpiCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+              <View style={[styles.kpiCard, kpiDesktop, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
                 <CheckCircle2 color="#16a34a" size={24} />
                 <Text style={[styles.kpiNumber, { color: '#16a34a' }]}>{territorialStats.activeCarnet}</Text>
                 <Text style={[styles.kpiLabel, { color: theme.subText }]}>Carnets Activos</Text>
@@ -386,7 +393,8 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                 </Text>
               </View>
             ) : (
-              uniqueGroups.map(grpName => {
+              <View style={isWide ? { flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, alignItems: 'flex-start' } : undefined}>
+              {uniqueGroups.map(grpName => {
                 const groupMembers = filteredProfiles.filter(p => p.group_name === grpName);
                 const scoutsCount = groupMembers.filter(p => p.role === 'scout').length;
                 const scoutersCount = groupMembers.filter(p => p.role === 'scouter' || p.role === 'jefe_grupo').length;
@@ -394,7 +402,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                 const isExpanded = !!expandedGroups[grpName];
 
                 return (
-                  <View key={grpName} style={[styles.groupCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+                  <View key={grpName} style={[styles.groupCard, isWide && { flexBasis: '48%', flexGrow: 1 }, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
                     <TouchableOpacity
                       style={styles.groupHeader}
                       onPress={() => toggleGroup(grpName)}
@@ -435,7 +443,8 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                     )}
                   </View>
                 );
-              })
+              })}
+              </View>
             )}
 
             {/* BOTÓN CERRAR SESIÓN */}

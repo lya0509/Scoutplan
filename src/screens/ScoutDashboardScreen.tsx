@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, useWindowDimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import HelpFloatingFAB from '../components/HelpFloatingFAB';
@@ -20,7 +20,7 @@ import { todayLocal, daysUntil, formatDateEs } from '../utils/dateLocal';
 import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
 import { useNotifications } from '../context/NotificationContext';
 import { SkeletonScreen } from '../components/Skeleton';
-import { contentMax } from '../theme/layout';
+import { contentMax, contentWide, WIDE_BREAKPOINT } from '../theme/layout';
 
 const UNIT_COLORS: Record<string, string> = {
   'manada': '#ffb300',
@@ -57,6 +57,10 @@ const ONBOARDING_SLIDES = [
 export default function ScoutDashboardScreen({ navigation }: any) {
   const { user } = useAuth();
   const { isDarkMode, theme, primaryColor } = useTheme();
+  // Pantalla grande (1080p, 2K): el inicio usa casi todo el ancho; etapa y rovers a la izquierda,
+  // próximas actividades a la derecha.
+  const { width: winWidth } = useWindowDimensions();
+  const isWide = winWidth >= WIDE_BREAKPOINT;
 
   const [loading, setLoading]           = useState(true);
   const [currentStage, setCurrentStage]   = useState<any>(null);
@@ -355,9 +359,186 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
   const SlideIcon = ONBOARDING_SLIDES[currentSlide].icon;
 
+  // Secciones del inicio (en pantalla grande van en dos columnas)
+  const stageAndRoversSection = (
+    <>
+      {/* Etapa Actual */}
+      <View style={styles.sectionHeader}>
+        <Award color={colors.primary} size={20} />
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Tu Etapa Actual</Text>
+      </View>
+
+      {currentStage ? (
+        <TouchableOpacity
+          style={[styles.stageCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('StageDetail', { stageId: currentStage.id })}
+        >
+          <View style={styles.stageCardHeader}>
+            <Text style={[styles.stageName, { color: theme.text }]}>{currentStage.name}</Text>
+            <View style={[
+              styles.statusBadge,
+              stageStatus === 'Aprobada' ? styles.statusApproved :
+              stageStatus === 'En Revision' ? styles.statusReview :
+              styles.statusProgress
+            ]}>
+              <Text style={styles.statusText}>{stageStatus}</Text>
+            </View>
+          </View>
+
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: `${currentStage.progress}%` }]} />
+          </View>
+          <Text style={[styles.progressText, { color: theme.subText }]}>{currentStage.progress}% completado</Text>
+
+          <View style={[styles.stageCardFooter, { borderTopColor: theme.border }]}>
+            <Text style={[styles.actionLinkText, { color: theme.accentText }]}>Ver requisitos y avanzar</Text>
+            <ChevronRight color={colors.primary} size={18} />
+          </View>
+        </TouchableOpacity>
+      ) : (
+        <Text style={[styles.emptyText, { color: theme.subText }]}>No tienes etapas activas cargadas.</Text>
+      )}
+
+      {/* DIRECTORIO Y ESTADO ONLINE DE ROVERS DE LA UNIDAD */}
+      <View style={{ marginBottom: 20 }}>
+        <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 8 }]}>⚜️ Rovers</Text>
+        {roversList.length === 0 ? (
+          <View style={[styles.emptyEventsCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+            <Text style={{ color: theme.subText, fontSize: 13 }}>Sé el primer Rover registrado en esta unidad.</Text>
+          </View>
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={{ flexDirection: 'row', gap: 10, paddingVertical: 4 }}>
+              {roversList.map(rover => (
+                <View
+                  key={rover.id}
+                  style={{
+                    backgroundColor: theme.cardBg,
+                    borderColor: theme.border,
+                    borderWidth: 1,
+                    borderRadius: 16,
+                    padding: 12,
+                    alignItems: 'center',
+                    minWidth: 115,
+                    elevation: 2,
+                  }}
+                >
+                  <View style={{ position: 'relative', marginBottom: 6 }}>
+                    <DualProfileAvatar
+                      scoutAvatarUrl={rover.avatar_url}
+                      customAvatarUrl={rover.custom_avatar_url}
+                      unit={rover.unit || 'clan'}
+                      size={52}
+                      editable={false}
+                    />
+                    <View style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      right: 0,
+                      width: 12,
+                      height: 12,
+                      borderRadius: 6,
+                      backgroundColor: rover.isOnline ? '#22c55e' : '#9ca3af',
+                      borderWidth: 2,
+                      borderColor: 'white'
+                    }} />
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: rover.id })}
+                    style={{ alignItems: 'center' }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text, textAlign: 'center' }} numberOfLines={1}>
+                      {rover.name || 'Rover'}
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <View style={{ backgroundColor: rover.isOnline ? 'rgba(34, 197, 94, 0.15)' : 'rgba(156, 163, 175, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginTop: 4 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: rover.isOnline ? (isDarkMode ? '#4ade80' : '#16a34a') : (isDarkMode ? '#a1a1aa' : '#6b7280') }}>
+                      {rover.isOnline ? '🟢 En línea' : '⚪ Desconectado'}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={{
+                      marginTop: 8,
+                      paddingVertical: 3,
+                      paddingHorizontal: 8,
+                      borderRadius: 8,
+                      backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
+                    }}
+                    onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: rover.id })}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold' }}>
+                      Ver Perfil ⚜️
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        )}
+      </View>
+    </>
+  );
+  const upcomingSection = (
+    <>
+      {/* Próximos Eventos */}
+      <View style={styles.sectionHeader}>
+        <CalendarIcon color={colors.primary} size={20} />
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Próximas Actividades</Text>
+        <TouchableOpacity style={{ marginLeft: 'auto' }} onPress={() => navigation.navigate('Calendario')}>
+          <Text style={[styles.seeAllText, { color: theme.accentText }]}>Ver todo</Text>
+        </TouchableOpacity>
+      </View>
+
+      {upcomingEvents.length === 0 ? (
+        <View style={[styles.emptyEventsCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+          <Text style={[styles.emptyText, { color: theme.subText }]}>No hay actividades programadas próximamente.</Text>
+        </View>
+      ) : (
+        upcomingEvents.map(evt => {
+          const color = UNIT_COLORS[evt.unit?.toLowerCase()] || colors.primary;
+          const displayTitle = (evt.title || '').replace(/\[6P\s*/gi, '[CIP ').replace(/\b6P\b/gi, 'CIP').replace(/6P/g, 'CIP');
+          const displayDesc = evt.description ? evt.description.replace(/\b6P\b/gi, 'CIP').replace(/6P/g, 'CIP') : '';
+          const hasPrograma = evt.id && String(evt.id).startsWith('prog_');
+
+          return (
+            <TouchableOpacity
+              key={evt.id}
+              style={[styles.eventCard, { backgroundColor: theme.cardBg, borderColor: hasPrograma ? '#9333ea' : theme.border }]}
+              onPress={() => handlePressEvent(evt)}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.eventCircle, { backgroundColor: color }]}>
+                <Text style={styles.eventCircleText}>{evt.unit?.charAt(0).toUpperCase()}</Text>
+              </View>
+              <View style={styles.eventInfo}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                  <Text style={[styles.eventTitle, { color: theme.text, flex: 1 }]}>{displayTitle}</Text>
+                  {hasPrograma && (
+                    <View style={{ backgroundColor: isDarkMode ? '#581c87' : '#f3e8ff', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#d8b4fe' }}>
+                      <Text style={{ fontSize: 11, color: isDarkMode ? '#f3e8ff' : '#7e22ce', fontWeight: 'bold' }}>📄 Ficha Oficial</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={[styles.eventDate, { color: theme.subText }]}>📅 {evt.date}</Text>
+                {displayDesc ? <Text style={[styles.eventDesc, { color: theme.subText }]}>{displayDesc}</Text> : null}
+              </View>
+              <ChevronRight size={18} color={theme.subText} style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
+          );
+        })
+      )}
+    </>
+  );
+
   return (
     <View style={{ flex: 1 }}>
-      <PullToRefreshScrollView onRefresh={() => loadDashboardData()} style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={[styles.content, contentMax]}>
+      <PullToRefreshScrollView onRefresh={() => loadDashboardData()} style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={[styles.content, isWide ? contentWide : contentMax]}>
       
       {/* AVISOS SIN LEER: 2 a la vista; el resto con «Ver todos» (antes se apilaban todos) */}
       {notifications.slice(0, showAllNotifs ? notifications.length : 2).map(notif => {
@@ -490,173 +671,20 @@ export default function ScoutDashboardScreen({ navigation }: any) {
         );
       })()}
 
-      {/* Etapa Actual */}
-      <View style={styles.sectionHeader}>
-        <Award color={colors.primary} size={20} />
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Tu Etapa Actual</Text>
-      </View>
-
-      {currentStage ? (
-        <TouchableOpacity
-          style={[styles.stageCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-          activeOpacity={0.85}
-          onPress={() => navigation.navigate('StageDetail', { stageId: currentStage.id })}
-        >
-          <View style={styles.stageCardHeader}>
-            <Text style={[styles.stageName, { color: theme.text }]}>{currentStage.name}</Text>
-            <View style={[
-              styles.statusBadge,
-              stageStatus === 'Aprobada' ? styles.statusApproved :
-              stageStatus === 'En Revision' ? styles.statusReview :
-              styles.statusProgress
-            ]}>
-              <Text style={styles.statusText}>{stageStatus}</Text>
-            </View>
+      {isWide ? (
+        <View style={{ flexDirection: 'row', gap: 20, alignItems: 'flex-start' }}>
+          <View style={{ flex: 3, minWidth: 0 }}>
+            {stageAndRoversSection}
           </View>
-
-          <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${currentStage.progress}%` }]} />
+          <View style={{ flex: 2, minWidth: 0 }}>
+            {upcomingSection}
           </View>
-          <Text style={[styles.progressText, { color: theme.subText }]}>{currentStage.progress}% completado</Text>
-
-          <View style={[styles.stageCardFooter, { borderTopColor: theme.border }]}>
-            <Text style={[styles.actionLinkText, { color: theme.accentText }]}>Ver requisitos y avanzar</Text>
-            <ChevronRight color={colors.primary} size={18} />
-          </View>
-        </TouchableOpacity>
-      ) : (
-        <Text style={[styles.emptyText, { color: theme.subText }]}>No tienes etapas activas cargadas.</Text>
-      )}
-
-      {/* DIRECTORIO Y ESTADO ONLINE DE ROVERS DE LA UNIDAD */}
-      <View style={{ marginBottom: 20 }}>
-        <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 8 }]}>⚜️ Rovers</Text>
-        {roversList.length === 0 ? (
-          <View style={[styles.emptyEventsCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-            <Text style={{ color: theme.subText, fontSize: 13 }}>Sé el primer Rover registrado en esta unidad.</Text>
-          </View>
-        ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={{ flexDirection: 'row', gap: 10, paddingVertical: 4 }}>
-              {roversList.map(rover => (
-                <View
-                  key={rover.id}
-                  style={{
-                    backgroundColor: theme.cardBg,
-                    borderColor: theme.border,
-                    borderWidth: 1,
-                    borderRadius: 16,
-                    padding: 12,
-                    alignItems: 'center',
-                    minWidth: 115,
-                    elevation: 2,
-                  }}
-                >
-                  <View style={{ position: 'relative', marginBottom: 6 }}>
-                    <DualProfileAvatar
-                      scoutAvatarUrl={rover.avatar_url}
-                      customAvatarUrl={rover.custom_avatar_url}
-                      unit={rover.unit || 'clan'}
-                      size={52}
-                      editable={false}
-                    />
-                    <View style={{
-                      position: 'absolute',
-                      bottom: 0,
-                      right: 0,
-                      width: 12,
-                      height: 12,
-                      borderRadius: 6,
-                      backgroundColor: rover.isOnline ? '#22c55e' : '#9ca3af',
-                      borderWidth: 2,
-                      borderColor: 'white'
-                    }} />
-                  </View>
-
-                  <TouchableOpacity
-                    onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: rover.id })}
-                    style={{ alignItems: 'center' }}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text, textAlign: 'center' }} numberOfLines={1}>
-                      {rover.name || 'Rover'}
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  <View style={{ backgroundColor: rover.isOnline ? 'rgba(34, 197, 94, 0.15)' : 'rgba(156, 163, 175, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginTop: 4 }}>
-                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: rover.isOnline ? (isDarkMode ? '#4ade80' : '#16a34a') : (isDarkMode ? '#a1a1aa' : '#6b7280') }}>
-                      {rover.isOnline ? '🟢 En línea' : '⚪ Desconectado'}
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity
-                    style={{
-                      marginTop: 8,
-                      paddingVertical: 3,
-                      paddingHorizontal: 8,
-                      borderRadius: 8,
-                      backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
-                    }}
-                    onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: rover.id })}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold' }}>
-                      Ver Perfil ⚜️
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-          </ScrollView>
-        )}
-      </View>
-
-      {/* Próximos Eventos */}
-      <View style={styles.sectionHeader}>
-        <CalendarIcon color={colors.primary} size={20} />
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Próximas Actividades</Text>
-        <TouchableOpacity style={{ marginLeft: 'auto' }} onPress={() => navigation.navigate('Calendario')}>
-          <Text style={[styles.seeAllText, { color: theme.accentText }]}>Ver todo</Text>
-        </TouchableOpacity>
-      </View>
-
-      {upcomingEvents.length === 0 ? (
-        <View style={[styles.emptyEventsCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-          <Text style={[styles.emptyText, { color: theme.subText }]}>No hay actividades programadas próximamente.</Text>
         </View>
       ) : (
-        upcomingEvents.map(evt => {
-          const color = UNIT_COLORS[evt.unit?.toLowerCase()] || colors.primary;
-          const displayTitle = (evt.title || '').replace(/\[6P\s*/gi, '[CIP ').replace(/\b6P\b/gi, 'CIP').replace(/6P/g, 'CIP');
-          const displayDesc = evt.description ? evt.description.replace(/\b6P\b/gi, 'CIP').replace(/6P/g, 'CIP') : '';
-          const hasPrograma = evt.id && String(evt.id).startsWith('prog_');
-
-          return (
-            <TouchableOpacity
-              key={evt.id}
-              style={[styles.eventCard, { backgroundColor: theme.cardBg, borderColor: hasPrograma ? '#9333ea' : theme.border }]}
-              onPress={() => handlePressEvent(evt)}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.eventCircle, { backgroundColor: color }]}>
-                <Text style={styles.eventCircleText}>{evt.unit?.charAt(0).toUpperCase()}</Text>
-              </View>
-              <View style={styles.eventInfo}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                  <Text style={[styles.eventTitle, { color: theme.text, flex: 1 }]}>{displayTitle}</Text>
-                  {hasPrograma && (
-                    <View style={{ backgroundColor: isDarkMode ? '#581c87' : '#f3e8ff', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#d8b4fe' }}>
-                      <Text style={{ fontSize: 11, color: isDarkMode ? '#f3e8ff' : '#7e22ce', fontWeight: 'bold' }}>📄 Ficha Oficial</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={[styles.eventDate, { color: theme.subText }]}>📅 {evt.date}</Text>
-                {displayDesc ? <Text style={[styles.eventDesc, { color: theme.subText }]}>{displayDesc}</Text> : null}
-              </View>
-              <ChevronRight size={18} color={theme.subText} style={{ marginLeft: 4 }} />
-            </TouchableOpacity>
-          );
-        })
+        <>
+          {stageAndRoversSection}
+          {upcomingSection}
+        </>
       )}
 
       {/* MODAL DE PREVISUALIZACIÓN OFICIAL EN PDF / IMPRESIÓN DEL PROGRAMA SCOUT */}
