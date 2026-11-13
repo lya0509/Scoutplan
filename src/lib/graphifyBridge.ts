@@ -7,6 +7,10 @@ import { autoSaveService } from '../services/autoSaveService';
 import { notificationService } from '../services/notificationService';
 import { presenceService } from '../services/presenceService';
 import { webPushService } from '../services/webPushService';
+import { showBadgeCelebration } from './celebration';
+import { stagesData } from '../data/progressionTemplate';
+import { STAGE_COLORS } from '../theme/stageColors';
+import { BADGE_IMAGES } from '../components/StageBadgeIcon';
 
 export interface GraphifyRuntimeState {
   currentRoute: string;
@@ -159,6 +163,18 @@ export function initGraphifyBridge() {
           return true;
         }
         return false;
+      },
+      /** Muestra la celebración de una insignia sin aprobar nada (QA / vista previa). */
+      celebrate: (stageId: string = 'precursor') => {
+        const idx = stagesData.findIndex(st => st.id === stageId);
+        return showBadgeCelebration({
+          title: stagesData[idx]?.title || stageId,
+          color: STAGE_COLORS[stageId] || '#7c3aed',
+          badge: BADGE_IMAGES[stageId],
+          isMax: idx === stagesData.length - 1,
+          unitLabel: 'Clan',
+          nextTitle: stagesData[idx + 1]?.title,
+        });
       },
     },
     services: {

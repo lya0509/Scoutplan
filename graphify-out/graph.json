@@ -2,17 +2,17 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-13T17:49:45.919Z",
+    "generatedAt": "2026-11-13T18:49:48.053Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
-      "totalNodes": 141,
-      "totalEdges": 137,
+      "totalNodes": 144,
+      "totalEdges": 141,
       "totalHyperedges": 4,
       "totalScreens": 29,
-      "totalComponents": 39,
+      "totalComponents": 40,
       "totalContexts": 3,
-      "totalServices": 31,
+      "totalServices": 33,
       "totalCatalogs": 12,
       "totalDatabaseTables": 11,
       "totalQaSuites": 14
@@ -97,8 +97,8 @@
       "file": "App.tsx",
       "role": "Initializes Graphify Bridge, registers /sw.js Service Worker on Web, listens to window online events to flush dataService.syncPendingRequirements(), and wraps ThemeProvider -> AuthProvider -> NotificationProvider -> AppNavigator.",
       "exists": true,
-      "lines": 67,
-      "bytes": 2628,
+      "lines": 69,
+      "bytes": 2746,
       "exports": [
         "App"
       ],
@@ -109,6 +109,7 @@
         "./src/context/ThemeContext",
         "./src/context/NotificationContext",
         "./src/components/LiveNotificationToast",
+        "./src/components/BadgeCelebrationWatcher",
         "./src/components/OfflineStatusBanner",
         "./src/navigation/AppNavigator",
         "expo-status-bar",
@@ -773,8 +774,8 @@
       "file": "src/lib/graphifyBridge.ts",
       "role": "Mounts window.__SCOUT_GRAPHIFY__ for Claude Code programmatic navigation, state inspection, and diagnostics.",
       "exists": true,
-      "lines": 214,
-      "bytes": 12329,
+      "lines": 230,
+      "bytes": 13097,
       "exports": [
         "GraphifyRuntimeState",
         "registerGraphifyControllers",
@@ -791,7 +792,11 @@
         "../services/autoSaveService",
         "../services/notificationService",
         "../services/presenceService",
-        "../services/webPushService"
+        "../services/webPushService",
+        "./celebration",
+        "../data/progressionTemplate",
+        "../theme/stageColors",
+        "../components/StageBadgeIcon"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1062,8 +1067,8 @@
       "route": "PlanProgresivo",
       "role": "Displays the 4 Rover/Clan progression stages (Precursor, Expedicionario, Descubridor, Fundador) with completion percentages and lock status.",
       "exists": true,
-      "lines": 210,
-      "bytes": 9547,
+      "lines": 204,
+      "bytes": 9396,
       "exports": [
         "PlanProgresivoScreen"
       ],
@@ -1082,7 +1087,8 @@
         "../components/NotificationHeaderBell",
         "../data/unitTemplates",
         "../components/Skeleton",
-        "../theme/layout"
+        "../theme/layout",
+        "../theme/stageColors"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1098,8 +1104,8 @@
       "route": "StageDetail",
       "role": "Interactive checklist of stage requirements, linking to CatalogSelectorScreen, NochesAireLibreModal, VidaGrupoModal, CertificateUploadScreen, and stage review submission.",
       "exists": true,
-      "lines": 1288,
-      "bytes": 58437,
+      "lines": 1266,
+      "bytes": 57633,
       "exports": [
         "StageDetailScreen"
       ],
@@ -1292,8 +1298,8 @@
       "route": "ScouterDashboard",
       "role": "Unit leader dashboard: lists unit scouts with online presence, pending stage reviews, quarterly plan feedback, unit programs, and profile photo moderation.",
       "exists": true,
-      "lines": 1271,
-      "bytes": 63288,
+      "lines": 1165,
+      "bytes": 58304,
       "exports": [
         "ScouterDashboardScreen"
       ],
@@ -1789,8 +1795,8 @@
       "route": "CertificateUpload",
       "role": "Uploads and categorizes Scout certificates/courses to Supabase Storage and syncs them automatically into CurriculumScout.",
       "exists": true,
-      "lines": 1358,
-      "bytes": 63843,
+      "lines": 1365,
+      "bytes": 64328,
       "exports": [
         "CertificateUploadScreen"
       ],
@@ -2291,8 +2297,9 @@
       "role": "Renders vector insignias for Precursor, Expedicionario, Descubridor, and Fundador.",
       "exists": true,
       "lines": 53,
-      "bytes": 1575,
+      "bytes": 1582,
       "exports": [
+        "BADGE_IMAGES",
         "StageBadgeIcon"
       ],
       "imports": [
@@ -3523,6 +3530,81 @@
       ]
     },
     {
+      "id": "BadgeCelebrationWatcher.tsx",
+      "label": "BadgeCelebrationWatcher.tsx (Badge approval celebration trigger)",
+      "type": "component",
+      "community": "ui_modals_components",
+      "file": "src/components/BadgeCelebrationWatcher.tsx",
+      "role": "Mounted in App.tsx (scouts only, web). On open, on «badge» notifications and on returning to the app, compares stage_progress with @scout_celebrated_stages_<id> via planCelebrations(); shows each newly approved stage once (first run: only those approved in the last 7 days). Skipped under navigator.webdriver.",
+      "exists": true,
+      "lines": 86,
+      "bytes": 4089,
+      "exports": [
+        "BadgeCelebrationWatcher"
+      ],
+      "imports": [
+        "react",
+        "react-native",
+        "@react-native-async-storage/async-storage",
+        "../context/AuthContext",
+        "../context/NotificationContext",
+        "../lib/dataService",
+        "../data/unitTemplates",
+        "../utils/badgeCelebration",
+        "../lib/celebration",
+        "../theme/stageColors",
+        "./StageBadgeIcon"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "celebration.web.ts",
+      "label": "celebration.web.ts (Full-screen badge celebration)",
+      "type": "service",
+      "community": "backend_offline_services",
+      "file": "src/lib/celebration.web.ts",
+      "role": "showBadgeCelebration(): HTML/CSS overlay animating only transform/opacity (rays, ripples, confetti); the unit max badge (last stage, Clan = Rover Ciudadano) gets the golden version with fireworks, golden rain and stars. Queues several, waits for the start splash; celebration.ts is the native no-op.",
+      "exists": true,
+      "lines": 312,
+      "bytes": 16951,
+      "exports": [
+        "CelebrationOptions",
+        "showBadgeCelebration"
+      ],
+      "imports": [
+        "react-native-web/dist/modules/AssetRegistry"
+      ],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
+      "id": "badgeCelebration.ts",
+      "label": "badgeCelebration.ts (Which badges to celebrate)",
+      "type": "service",
+      "community": "backend_offline_services",
+      "file": "src/utils/badgeCelebration.ts",
+      "role": "Pure planCelebrations(statuses, seen, dates, order) and isMaxBadge(); unit-tested in tests/unit/badgeCelebration.test.mjs.",
+      "exists": true,
+      "lines": 58,
+      "bytes": 2428,
+      "exports": [
+        "RECENT_DAYS",
+        "CelebrationPlan",
+        "planCelebrations",
+        "isMaxBadge"
+      ],
+      "imports": [],
+      "supabaseTables": [],
+      "supabaseBuckets": [],
+      "realtimeChannels": [],
+      "storageKeys": []
+    },
+    {
       "id": "errorReporter.ts",
       "label": "errorReporter.ts (Automatic error reports)",
       "type": "service",
@@ -4175,6 +4257,26 @@
       "from": "DualProfileAvatar.tsx",
       "to": "PhotoCropModal.tsx",
       "relation": "renders"
+    },
+    {
+      "from": "App.tsx",
+      "to": "BadgeCelebrationWatcher.tsx",
+      "relation": "renders"
+    },
+    {
+      "from": "BadgeCelebrationWatcher.tsx",
+      "to": "badgeCelebration.ts",
+      "relation": "calls"
+    },
+    {
+      "from": "BadgeCelebrationWatcher.tsx",
+      "to": "dataService.ts",
+      "relation": "reads_stage_status"
+    },
+    {
+      "from": "BadgeCelebrationWatcher.tsx",
+      "to": "celebration.web.ts",
+      "relation": "calls"
     },
     {
       "from": "App.tsx",

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Image } from 'react-native';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 
-const BADGE_IMAGES: Record<string, any> = {
+export const BADGE_IMAGES: Record<string, any> = {
   'precursor': require('../../assets/badges/precursor.png'),
   'expedicionario': require('../../assets/badges/expedicionario.png'),
   'descubridor': require('../../assets/badges/descubridor.png'),

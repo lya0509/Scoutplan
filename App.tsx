@@ -5,6 +5,7 @@ import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { NotificationProvider } from './src/context/NotificationContext';
 import LiveNotificationToast from './src/components/LiveNotificationToast';
+import BadgeCelebrationWatcher from './src/components/BadgeCelebrationWatcher';
 import OfflineStatusBanner from './src/components/OfflineStatusBanner';
 import AppNavigator from './src/navigation/AppNavigator';
 import { StatusBar } from 'expo-status-bar';
@@ -54,6 +55,7 @@ export default function App() {
         <NotificationProvider>
           <StatusBar style="auto" />
           <LiveNotificationToast />
+          <BadgeCelebrationWatcher />
           <AppErrorBoundary>
             <AppNavigator />
           </AppErrorBoundary>

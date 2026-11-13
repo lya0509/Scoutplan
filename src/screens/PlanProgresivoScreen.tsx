@@ -13,14 +13,8 @@ import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { getStagesForUnit } from '../data/unitTemplates';
 import { SkeletonScreen } from '../components/Skeleton';
 import { contentMax } from '../theme/layout';
+import { STAGE_COLORS } from '../theme/stageColors';
 
-const STAGE_COLORS: Record<string, string> = {
-  'precursor':      '#ffb300',
-  'expedicionario': '#1e88e5',
-  'descubridor':    '#43a047',
-  'fundador':       '#e53935',
-  'rover_ciudadano':'#8e24aa'
-};
 
 export default function PlanProgresivoScreen({ navigation }: any) {
   const { user } = useAuth();
