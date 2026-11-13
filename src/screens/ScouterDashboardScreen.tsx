@@ -503,6 +503,17 @@ export default function ScouterDashboardScreen({ navigation }: any) {
   };
 
 
+  const quickLinks = [
+    { label: 'Programas', Icon: Calendar, onPress: () => navigation.navigate('ProgramaScout') },
+    { label: 'Documentos & PDFs', Icon: BookOpen, onPress: () => navigation.navigate('Documentos') },
+    { label: 'Especialidades', Icon: Award, onPress: () => navigation.navigate('Especialidades') },
+    { label: 'Plan Trimestral', Icon: Compass, onPress: () => navigation.navigate('QuarterlyPlan', { unit: user?.unit || 'clan' }) },
+    { label: 'Drive Fotos', Icon: Camera, onPress: () => navigation.navigate('TemporalDrive') },
+    { label: 'Calendario', Icon: Calendar, onPress: () => navigation.navigate('CalendarStandalone') },
+    { label: 'Manuales', Icon: BookOpen, onPress: () => navigation.navigate('NudosManual') },
+    { label: 'Cancionero', Icon: Music, onPress: () => navigation.navigate('Cancionero') },
+  ];
+
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       
@@ -517,161 +528,42 @@ export default function ScouterDashboardScreen({ navigation }: any) {
       />
       </View>
 
-      {/* BARRA DE HERRAMIENTAS Y ACCESOS RÁPIDOS (WRAP EN ESCRITORIO) */}
+      {/* BARRA DE HERRAMIENTAS Y ACCESOS RÁPIDOS: en computadora, cuadrícula pareja de 4 por fila;
+          en el teléfono, tira deslizable */}
       <View style={[{ paddingVertical: 10, paddingHorizontal: 16 }, contentMax]}>
         {isDesktop ? (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('ProgramaScout')}
-              activeOpacity={0.8}
-            >
-              <Calendar size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Programas</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('Documentos')}
-              activeOpacity={0.8}
-            >
-              <BookOpen size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Documentos & PDFs</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('Especialidades')}
-              activeOpacity={0.8}
-            >
-              <Award size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Especialidades</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('QuarterlyPlan', { unit: user?.unit || 'clan' })}
-              activeOpacity={0.8}
-            >
-              <Compass size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Plan Trimestral</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('TemporalDrive')}
-              activeOpacity={0.8}
-            >
-              <Camera size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Drive Fotos</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('CalendarStandalone')}
-              activeOpacity={0.8}
-            >
-              <Calendar size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Calendario</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('NudosManual')}
-              activeOpacity={0.8}
-            >
-              <BookOpen size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Manuales</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('Cancionero')}
-              activeOpacity={0.8}
-            >
-              <Music size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Cancionero</Text>
-            </TouchableOpacity>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+            {quickLinks.map(q => (
+              <TouchableOpacity
+                key={q.label}
+                style={[styles.scouterQuickBtn, styles.scouterQuickBtnGrid, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+                onPress={q.onPress}
+                activeOpacity={0.8}
+              >
+                <q.Icon size={18} color={primaryColor} />
+                <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>{q.label}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('ProgramaScout')}
-              activeOpacity={0.8}
-            >
-              <Calendar size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Programas</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('Documentos')}
-              activeOpacity={0.8}
-            >
-              <BookOpen size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Documentos & PDFs</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('Especialidades')}
-              activeOpacity={0.8}
-            >
-              <Award size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Especialidades</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('QuarterlyPlan', { unit: user?.unit || 'clan' })}
-              activeOpacity={0.8}
-            >
-              <Compass size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Plan Trimestral</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('TemporalDrive')}
-              activeOpacity={0.8}
-            >
-              <Camera size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Drive Fotos</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('CalendarStandalone')}
-              activeOpacity={0.8}
-            >
-              <Calendar size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Calendario</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('NudosManual')}
-              activeOpacity={0.8}
-            >
-              <BookOpen size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Manuales</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-              onPress={() => navigation.navigate('Cancionero')}
-              activeOpacity={0.8}
-            >
-              <Music size={18} color={primaryColor} />
-              <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>Cancionero</Text>
-            </TouchableOpacity>
+            {quickLinks.map(q => (
+              <TouchableOpacity
+                key={q.label}
+                style={[styles.scouterQuickBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+                onPress={q.onPress}
+                activeOpacity={0.8}
+              >
+                <q.Icon size={18} color={primaryColor} />
+                <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>{q.label}</Text>
+              </TouchableOpacity>
+            ))}
           </ScrollView>
         )}
       </View>
 
       {/* ESTADÍSTICAS */}
-      <View style={styles.statsRow}>
+      <View style={[styles.statsRow, contentMax]}>
         <View style={[styles.statCard, { borderTopColor: primaryColor, backgroundColor: theme.cardBg }]}>
           <Text style={[styles.statNumber, { color: theme.text }]}>{stats.total}</Text>
           <Text style={[styles.statLabel, { color: theme.subText }]}>Scouts</Text>
@@ -717,8 +609,8 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                   <Text style={{ color: theme.subText, fontSize: 13 }}>No hay Rovers registrados en el Clan aún.</Text>
                 </View>
               ) : (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <View style={{ flexDirection: 'row', gap: 10, paddingVertical: 4 }}>
+                <ScrollView horizontal={!isDesktop} scrollEnabled={!isDesktop} showsHorizontalScrollIndicator={false}>
+                  <View style={{ flexDirection: 'row', flexWrap: isDesktop ? 'wrap' : 'nowrap', gap: 10, paddingVertical: 4 }}>
                     {scouts.map(rover => (
                       <View
                         key={`clan_rover_${rover.id}`}
@@ -730,6 +622,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                           padding: 12,
                           alignItems: 'center',
                           minWidth: 115,
+                          width: isDesktop ? 140 : undefined,
                           elevation: 2,
                         }}
                       >
@@ -1160,6 +1053,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  scouterQuickBtnGrid: { flexGrow: 1, flexBasis: '22%', justifyContent: 'center' },
   scouterQuickBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1194,7 +1088,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)', width: 44, height: 44,
     borderRadius: 22, justifyContent: 'center', alignItems: 'center',
   },
-  statsRow: { flexDirection: 'row', paddingHorizontal: 16, marginTop: -16, gap: 10 },
+  statsRow: { flexDirection: 'row', paddingHorizontal: 16, marginTop: 2, gap: 10 },
   statCard: {
     flex: 1, borderRadius: 14, padding: 14,
     alignItems: 'center', borderTopWidth: 3,
