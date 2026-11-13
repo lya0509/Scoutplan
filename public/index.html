@@ -81,6 +81,8 @@
       #scout-splash .ss-title { margin-top: 26px; color: #fff; text-align: center; }
       #scout-splash .ss-title b { display: block; font-size: 22px; font-weight: 800; letter-spacing: .5px; }
       #scout-splash .ss-title span { display: block; margin-top: 4px; font-size: 13px; opacity: .78; letter-spacing: .3px; }
+      /* App instalada: quieta en el primer cuadro (igual al ícono) mientras Android desvanece su pantalla */
+      #scout-splash.ss-wait, #scout-splash.ss-wait * { animation-play-state: paused !important; }
       #scout-splash.ss-out { opacity: 0; pointer-events: none; }
       #scout-splash.ss-out .ss-stage { transform: scale(1.08); }
       /* Empieza con el logo del tamaño y en el lugar de la pantalla del teléfono (--dx, --dy, --s0) */
@@ -143,6 +145,29 @@
         var test = !!navigator.webdriver; // pruebas automáticas: se quita al instante
         var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
         var introDone = test || still, appReady = false, closing = false;
+        // App instalada (Android): Chrome muestra su pantalla con el ícono hasta que la página pinta o
+        // termina de cargar, y la quita desvaneciéndola. Si la animación ya se moviera, se verían las
+        // dos encimadas; por eso espera quieta (idéntica al ícono) hasta la carga + el desvanecido.
+        var installed = !test && ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true);
+        var playing = !installed, fallbackArmed = false;
+        function armFallback() {
+          // si el navegador no anima (ahorro de batería), no esperar para siempre
+          if (fallbackArmed) return;
+          fallbackArmed = true;
+          setTimeout(close, 4000);
+        }
+        function play() {
+          if (playing || closing) return;
+          playing = true;
+          el.classList.remove('ss-wait');
+          if (appReady) armFallback();
+        }
+        if (installed) {
+          el.classList.add('ss-wait');
+          var afterLoad = function () { setTimeout(play, 450); };
+          if (document.readyState === 'complete') afterLoad(); else window.addEventListener('load', afterLoad);
+          setTimeout(play, 3500); // si la carga se atasca, arrancar igual
+        }
         function remove() { if (el.parentNode) el.parentNode.removeChild(el); }
         function close() {
           if (closing) return;
@@ -157,7 +182,7 @@
         window.__hideScoutSplash = function () {
           appReady = true;
           maybeClose();
-          setTimeout(close, 4000); // si el navegador no anima (ahorro de batería), no esperar para siempre
+          if (playing) armFallback();
         };
         setTimeout(close, 15000); // por si la app no llega a avisar
       })();
