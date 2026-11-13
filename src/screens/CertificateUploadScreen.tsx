@@ -172,6 +172,9 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
     setShowFormModal(true);
   };
 
+  // Especialidades y cursos cumplen requisitos de las etapas: sin la foto/diploma no valen.
+  const fileRequired = !editingCertId && (category === 'especialidades' || category === 'cursos' || !!returnToStage);
+
   const handleUpload = async () => {
     if (!user) {
       showAlert('Sesión Requerida', 'Debes estar autenticado para guardar una acreditación.');
@@ -179,6 +182,10 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
     }
     if (!title.trim()) {
       showAlert('Campo Requerido', 'Por favor ingresa un título o selecciona una especialidad.');
+      return;
+    }
+    if (fileRequired && !fileUrl.trim()) {
+      showAlert('Falta el certificado', 'Sube la foto o el diploma del certificado. Sin él no se puede registrar ni cumplir el requisito.');
       return;
     }
 
@@ -1147,7 +1154,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                 </View>
               </TouchableOpacity>
 
-              <Text style={[modalStyles.label, { color: theme.subText }]}>FOTO O ADJUNTO DEL CERTIFICADO (OPCIONAL)</Text>
+              <Text style={[modalStyles.label, { color: theme.subText }]}>{fileRequired ? 'FOTO O ADJUNTO DEL CERTIFICADO (OBLIGATORIO)' : 'FOTO O ADJUNTO DEL CERTIFICADO (OPCIONAL)'}</Text>
               
               <TouchableOpacity
                 style={[modalStyles.deviceFileBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: colors.primary }]}

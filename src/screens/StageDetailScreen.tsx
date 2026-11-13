@@ -236,10 +236,6 @@ export default function StageDetailScreen({ route, navigation }: any) {
                 stageTitle: stg.title,
                 reqText: r.text
               };
-              usedMap[link.certTitle.toLowerCase()] = {
-                stageTitle: stg.title,
-                reqText: r.text
-              };
             }
           }
         }
@@ -252,7 +248,9 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const handleSelectCert = async (cert: any) => {
     if (!user || !selectedReqForCert || isReadOnly) return;
 
-    const usedIn = usedElsewhereMap[cert.id] || usedElsewhereMap[`${cert.title}_${cert.level || ''}`.toLowerCase()] || usedElsewhereMap[cert.title.toLowerCase()];
+    // Mismo criterio que la lista: el certificado exacto, o el mismo título EN EL MISMO NIVEL.
+    // (Cocina Bronce y Cocina Plata son insignias distintas: usar una no bloquea la otra.)
+    const usedIn = usedElsewhereMap[cert.id] || usedElsewhereMap[`${cert.title}_${cert.level || ''}`.toLowerCase()];
     if (usedIn) {
       showAlert(
         'Certificado Ya Utilizado',
@@ -281,8 +279,10 @@ export default function StageDetailScreen({ route, navigation }: any) {
     setShowCertModal(false);
   };
 
+  // Solo para DESMARCAR. Marcar sin certificado ya no se permite: hay que subirlo y vincularlo.
   const handleQuickToggleCert = async (newVal: boolean) => {
     if (!user || !selectedReqForCert || isReadOnly) return;
+    if (newVal) return;
 
     setChecks(prev => ({ ...prev, [selectedReqForCert.id]: newVal }));
     if (!newVal) {
@@ -806,29 +806,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                       Desmarcar
                     </Text>
                   </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    style={{
-                      flex: 1,
-                      backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
-                      borderWidth: 1,
-                      borderColor: theme.border,
-                      paddingVertical: 12,
-                      paddingHorizontal: 10,
-                      borderRadius: 12,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 6
-                    }}
-                    onPress={() => handleQuickToggleCert(true)}
-                  >
-                    <CheckCircle size={16} color={colors.primary} />
-                    <Text style={{ color: theme.text, fontWeight: 'bold', fontSize: 12 }}>
-                      Marcar Directo
-                    </Text>
-                  </TouchableOpacity>
-                )}
+                ) : null}
               </View>
 
               {/* FILTROS DE NIVEL SI ES REQUISITO DE ESPECIALIDAD */}
@@ -975,7 +953,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                         No se encontraron certificados para este requisito.
                       </Text>
                       <Text style={{ fontSize: 12, color: theme.subText, textAlign: 'center', marginTop: 4 }}>
-                        Usa el botón superior "Subir Nueva" para adjuntar tu diploma o "Marcar Directo" si ya lo completaste.
+                        Usa el botón "Subir Nueva" para subir tu certificado; luego vincúlalo aquí. Sin certificado no se puede marcar.
                       </Text>
                     </View>
                   );
