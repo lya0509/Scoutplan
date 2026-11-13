@@ -47,7 +47,8 @@
     "test:sql": "node tests/sql/run.mjs",
     "test:unit": "node --test \"tests/unit/*.test.mjs\"",
     "test:e2e": "node tests/e2e/run.mjs --build",
-    "test": "npm run test:unit && npm run test:sql && npm run test:e2e",
+    "test:flujos": "node tests/e2e/flujos.mjs",
+    "test": "npm run test:unit && npm run test:sql && npm run test:e2e && npm run test:flujos",
     "build:vercel": "npm run test:unit && npm run test:sql && npm run build:web"
   },
   "private": true,

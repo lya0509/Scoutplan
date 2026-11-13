@@ -28,6 +28,7 @@ Before running broad file searches, read the pre-indexed Full-System Graphify su
    ```bash
    npm run test:unit     # cálculos puros (tests/unit)
    npm run test:e2e      # build + 25 pantallas × 4 roles × claro/oscuro + offline (tests/e2e/run.mjs)
+   npm run test:flujos   # 22 flujos reales (crear CIP, guardar, aprobar…) × teléfono y computadora (tests/e2e/flujos.mjs)
    npm test              # todo: unit + sql + e2e
    ```
    Vercel runs `npm run build:vercel` (unit + SQL tests, then build: a failing test blocks the deploy); GitHub Actions (`.github/workflows/pruebas.yml`) runs everything on each push.

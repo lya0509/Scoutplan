@@ -172,8 +172,17 @@ export function fakeSession(p, { expired = false } = {}) {
  * Conecta el Supabase simulado a un contexto de Playwright.
  * Devuelve un registro de lo que la app pidió (para revisar escrituras inesperadas).
  */
-export async function attachMockSupabase(context, currentProfile) {
+/**
+ * opts.persist = true → las escrituras (POST/PATCH/DELETE) se guardan en una copia en memoria
+ * de FIXTURES propia de este contexto, para probar flujos completos (crear y luego ver lo creado).
+ * Sin persist (pruebas de pantallas) se responden pero no se guardan.
+ */
+export async function attachMockSupabase(context, currentProfile, opts = {}) {
   const log = { writes: [], inserts: [], unknownTables: new Set() };
+  const DB = opts.persist ? JSON.parse(JSON.stringify(FIXTURES)) : FIXTURES;
+  log.db = DB;
+  let seq = 0;
+  const newId = () => `e2e00000-0000-4000-8000-${String(++seq).padStart(12, '0')}`;
   await context.route(/^https:\/\/[a-z0-9-]+\.supabase\.co\//, async (route) => {
     const req = route.request();
     const url = new URL(req.url());
@@ -221,10 +230,32 @@ export async function attachMockSupabase(context, currentProfile) {
         let body = [];
         try { body = req.postDataJSON(); } catch {}
         if (method === 'POST') log.inserts.push({ table, body });
-        return json(Array.isArray(body) ? body : body ? [body] : [], method === 'POST' ? 201 : 200);
+        if (!opts.persist) return json(Array.isArray(body) ? body : body ? [body] : [], method === 'POST' ? 201 : 200);
+        const rowsT = (DB[table] = DB[table] || []);
+        const params = [...url.searchParams.entries()];
+        const single = (req.headers()['accept'] || '').includes('vnd.pgrst.object');
+        const out = (list, status) => json(single ? (list[0] ?? null) : list, status);
+        if (method === 'POST') {
+          const items = Array.isArray(body) ? body : [body];
+          const conflict = (url.searchParams.get('on_conflict') || '').split(',').filter(Boolean);
+          const upsert = /resolution=merge-duplicates/.test(req.headers()['prefer'] || '');
+          const saved = items.map(it => {
+            const keys = conflict.length ? conflict : ['id'];
+            const prev = upsert || it.id ? rowsT.find(r => keys.every(k => it[k] !== undefined && String(r[k]) === String(it[k]))) : null;
+            if (prev) { Object.assign(prev, it); return prev; }
+            const row = { id: newId(), created_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...it };
+            rowsT.push(row);
+            return row;
+          });
+          return out(saved, 201);
+        }
+        const hit = filterRows(rowsT, params);
+        if (method === 'PATCH') { hit.forEach(r => Object.assign(r, body, { updated_at: new Date().toISOString() })); return out(hit, 200); }
+        if (method === 'DELETE') { DB[table] = rowsT.filter(r => !hit.includes(r)); return out(hit, 200); }
+        return json([], 200);
       }
-      if (!(table in FIXTURES)) log.unknownTables.add(table);
-      const rows = filterRows(FIXTURES[table] || [], [...url.searchParams.entries()]);
+      if (!(table in DB)) log.unknownTables.add(table);
+      const rows = filterRows(DB[table] || [], [...url.searchParams.entries()]);
       const total = rows.length;
       const range = { 'content-range': `0-${Math.max(0, total - 1)}/${total}` };
       if (method === 'HEAD') return route.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*', ...range } });

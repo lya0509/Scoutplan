@@ -37,7 +37,12 @@ export default function CipManagerModal({ visible, onClose, members }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const memberIds = useMemo(() => members.map(m => m.id), [members]);
+  // El panel que abre esta ventana pasa una lista NUEVA en cada dibujado (y en el teléfono se redibuja
+  // al abrirse el teclado). Antes eso recargaba todo y borraba el formulario «Nuevo CIP» a medio
+  // escribir. Ahora solo se recarga si cambian de verdad los jóvenes.
+  const idsKey = members.map(m => m.id).join(',');
+  const memberIds = useMemo(() => (idsKey ? idsKey.split(',') : []), [idsKey]);
+  const [loadedOnce, setLoadedOnce] = useState(false);
   const nameOf = (id: string) => members.find(m => m.id === id)?.name || 'Joven';
 
   const load = useCallback(async () => {
@@ -54,6 +59,7 @@ export default function CipManagerModal({ visible, onClose, members }: Props) {
       setStatuses(Object.fromEntries(st));
     } finally {
       setLoading(false);
+      setLoadedOnce(true);
     }
   }, [memberIds]);
 
@@ -215,7 +221,8 @@ export default function CipManagerModal({ visible, onClose, members }: Props) {
           ))}
         </View>
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-          {loading ? <ActivityIndicator style={{ marginTop: 30 }} color={primaryColor} />
+          {/* La ruedita solo la primera vez: al recargar no se desmonta lo que se está escribiendo */}
+          {loading && !loadedOnce ? <ActivityIndicator style={{ marginTop: 30 }} color={primaryColor} />
             : tab === 'solicitudes' ? renderRequests()
             : selected ? renderAttendance(selected)
             : renderCatalog()}

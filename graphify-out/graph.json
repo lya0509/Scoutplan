@@ -2,7 +2,7 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-13T20:12:51.302Z",
+    "generatedAt": "2026-11-13T21:10:59.964Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
@@ -3183,8 +3183,8 @@
       "file": "src/components/CipManagerModal.tsx",
       "role": "Scouter/Jefatura: catalog of official CIPs (cip_oficiales: create, list), mark attendance per youth (cip_sel_* in certificates, counts to the current stage requirement of that level), review old-CIP requests (cip_sol_*) made under the Scout Law.",
       "exists": true,
-      "lines": 366,
-      "bytes": 20822,
+      "lines": 373,
+      "bytes": 21362,
       "exports": [
         "CipManagerModal"
       ],

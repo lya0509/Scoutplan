@@ -44,10 +44,15 @@ jobs:
       - name: Pruebas de pantallas (compila la app y la recorre)
         run: node tests/e2e/run.mjs --build
 
+      - name: Pruebas de flujos (crear, guardar, aprobar… en teléfono y computadora)
+        run: node tests/e2e/flujos.mjs
+
       - name: Guardar capturas de las pantallas que fallaron
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: capturas-fallas
-          path: /tmp/scoutplan-e2e-fallas
+          path: |
+            /tmp/scoutplan-e2e-fallas
+            /tmp/scoutplan-flujos
           if-no-files-found: ignore
