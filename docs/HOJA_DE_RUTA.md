@@ -197,7 +197,7 @@ del Clan, y conseguir el material oficial de Manada, Tropa y Caminantes.
 
 | Fase | Qué incluye | Depende de |
 |---|---|---|
-| **A0 · Pulir** | ✅ Pantallas «Esta página no existe», «No se puede conectar con el servidor» y «No se pudo cargar la app», con código de error (publicadas el 2026-11-14, commit 907315d). Falta: piloto del Clan de 1–2 semanas y que el dueño confirme en su teléfono el arreglo de Gestionar CIP (versión «13 nov., 7:22 p. m.» o posterior en Personalizar). | — |
+| **A0 · Pulir** | ✅ Pantallas «Esta página no existe», «No se puede conectar con el servidor» y «No se pudo cargar la app», con código de error (publicadas el 2026-11-14, commit 907315d). El dueño confirmó en su teléfono el arreglo de Gestionar CIP; el piloto con el Clan ya está activo. | — |
 | **A1 · Cimientos** | Trayectoria de cada persona con fechas (unidad, rol y estado: desde, hasta, motivo). Estados (activo, en pausa, retirado, comunidad activa). **Cuenta de representante con varios hijos.** Sexo en el registro. Tabla de edades sin solapes. **Permisos por unidad** (§7, pregunta 4). | Respuestas de §7 |
 | **A2 · Pasos** | Paso de unidad (la Jefatura propone y el scouter de destino acepta, con avisos y anulación). «Mis caminos». Después del Clan. Cambio de scouter. | A1 |
 | **A3 · Manada** | Etapas oficiales en `src/data/unitTemplates.ts`. El scouter llena el plan y el representante sube evidencias. Seisenas. PDF por seisena. | Material oficial, A1 |
