@@ -172,11 +172,32 @@ Cada unidad (A3 a A6) se publica **entera** cuando esté lista, no a pedazos (ve
 
 ---
 
+## Cómo arrancar el próximo chat
+
+**Estado al 2026-11-14:** el Clan está en producción y probado (19 pruebas unitarias, pruebas SQL, 70 de pantallas
+y 52 flujos en teléfono y computadora). Las unidades Manada, Tropa y Caminantes ya pueden registrarse y usar todo,
+pero ven las etapas del Clan con un aviso.
+
+**Siguiente paso: diseñar la fase A1 (Cimientos)**, sin esperar el material oficial:
+1. Leer este archivo completo.
+2. Revisar el código actual: `profiles` (un solo campo `unit`), reglas de Supabase (`puede_gestionar` deja a
+   cualquier scouter tocar todo el grupo), `AdministracionScreen`, `RegisterScreen` y `src/data/unitTemplates.ts`.
+3. Escribir el diseño en `docs/` (por ejemplo `docs/A1-cimientos.md`): tablas nuevas (trayectoria con fechas, familia
+   representante–hijos), cambios de registro (sexo, «Agregar hijo»), edades sin solapes, reglas por unidad y la base
+   de datos de pruebas (§5). El dueño lo aprueba antes de programar.
+4. Trabajar en una rama (§5), no directo en `main`.
+
+**Otros pendientes del dueño** (no bloquean A1): primer respaldo semanal automático (domingo 15-nov), probar el
+Plan Trimestral de Lisbeth con una cuenta real, decidir el requisito de cursos marcado sin certificado de una joven
+del Clan, y conseguir el material oficial de Manada, Tropa y Caminantes.
+
+---
+
 ## 4. Fases de la Parte A
 
 | Fase | Qué incluye | Depende de |
 |---|---|---|
-| **A0 · Pulir** | Pantallas «Esta página no existe», «No se puede conectar con el servidor» y «No se pudo cargar la app», con código de error (hechas el 2026-11-14). Piloto del Clan de 1–2 semanas. Confirmar el arreglo de CIP en el teléfono. | — |
+| **A0 · Pulir** | ✅ Pantallas «Esta página no existe», «No se puede conectar con el servidor» y «No se pudo cargar la app», con código de error (publicadas el 2026-11-14, commit 907315d). Falta: piloto del Clan de 1–2 semanas y que el dueño confirme en su teléfono el arreglo de Gestionar CIP (versión «13 nov., 7:22 p. m.» o posterior en Personalizar). | — |
 | **A1 · Cimientos** | Trayectoria de cada persona con fechas (unidad, rol y estado: desde, hasta, motivo). Estados (activo, en pausa, retirado, comunidad activa). **Cuenta de representante con varios hijos.** Sexo en el registro. Tabla de edades sin solapes. **Permisos por unidad** (§7, pregunta 4). | Respuestas de §7 |
 | **A2 · Pasos** | Paso de unidad (la Jefatura propone y el scouter de destino acepta, con avisos y anulación). «Mis caminos». Después del Clan. Cambio de scouter. | A1 |
 | **A3 · Manada** | Etapas oficiales en `src/data/unitTemplates.ts`. El scouter llena el plan y el representante sube evidencias. Seisenas. PDF por seisena. | Material oficial, A1 |
