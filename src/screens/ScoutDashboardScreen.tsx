@@ -21,6 +21,7 @@ import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
 import { useNotifications } from '../context/NotificationContext';
 import { SkeletonScreen } from '../components/Skeleton';
 import { contentMax, contentWide, WIDE_BREAKPOINT } from '../theme/layout';
+import { getUnitInfo } from '../data/unitTemplates';
 
 const UNIT_COLORS: Record<string, string> = {
   'manada': '#ffb300',
@@ -56,6 +57,7 @@ const ONBOARDING_SLIDES = [
 
 export default function ScoutDashboardScreen({ navigation }: any) {
   const { user } = useAuth();
+  const myUnitInfo = getUnitInfo(user?.unit);
   const { isDarkMode, theme, primaryColor } = useTheme();
   // Pantalla grande (1080p, 2K): el inicio usa casi todo el ancho; etapa y rovers a la izquierda,
   // próximas actividades a la derecha.
@@ -402,10 +404,10 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
       {/* DIRECTORIO Y ESTADO ONLINE DE ROVERS DE LA UNIDAD */}
       <View style={{ marginBottom: 20 }}>
-        <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 8 }]}>⚜️ Rovers</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 8 }]}>⚜️ {myUnitInfo && myUnitInfo.key !== 'clan' ? `Mi ${myUnitInfo.label}` : 'Rovers'}</Text>
         {roversList.length === 0 ? (
           <View style={[styles.emptyEventsCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-            <Text style={{ color: theme.subText, fontSize: 13 }}>Sé el primer Rover registrado en esta unidad.</Text>
+            <Text style={{ color: theme.subText, fontSize: 13 }}>{myUnitInfo && myUnitInfo.key !== 'clan' ? 'Aún no hay más miembros registrados en tu unidad.' : 'Sé el primer Rover registrado en esta unidad.'}</Text>
           </View>
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>

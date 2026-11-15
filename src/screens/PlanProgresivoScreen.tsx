@@ -26,6 +26,7 @@ export default function PlanProgresivoScreen({ navigation }: any) {
   const btn = buttonVariants(theme, isDarkMode, primaryColor);
   const canCelebrate = Platform.OS === 'web';
   const canVideo = canCelebrate && canMakeCelebrationVideo();
+  const myUnit = getStagesForUnit(user?.role === 'scout' ? user?.unit : null).unit;
 
   // Datos de la insignia para volver a ver la celebración o crear el video
   const celebrationFor = (stage: any) => {
@@ -97,7 +98,7 @@ export default function PlanProgresivoScreen({ navigation }: any) {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flex: 1, paddingRight: 8 }}>
             <Text style={[styles.title, { color: theme.text }]}>Mi Plan Progresivo</Text>
-            <Text style={[styles.subtitle, { color: theme.subText }]}>Sigue tu camino hacia la Insignia de Madera o Ciudadano Rover.</Text>
+            <Text style={[styles.subtitle, { color: theme.subText }]}>{myUnit && myUnit.key !== 'clan' ? `Sigue tu camino de progresión en ${myUnit.label}.` : 'Sigue tu camino hacia la Insignia de Madera o Ciudadano Rover.'}</Text>
           </View>
           <NotificationHeaderBell />
         </View>
@@ -109,7 +110,7 @@ export default function PlanProgresivoScreen({ navigation }: any) {
         return (
           <View style={[styles.templateNotice, { backgroundColor: isDarkMode ? '#1e1b4b' : '#eff6ff', borderColor: isDarkMode ? '#3730a3' : '#bfdbfe' }]}>
             <Text style={[styles.templateNoticeText, { color: isDarkMode ? '#c7d2fe' : '#1e3a8a' }]}>
-              La plantilla de etapas de la {tpl.unit.label} ({tpl.unit.minAge}–{tpl.unit.maxAge} años) aún no está cargada. Mientras tanto ves las etapas del Clan; tu avance se conserva.
+              La plantilla de etapas de {tpl.unit.label} ({tpl.unit.minAge}–{tpl.unit.maxAge} años) aún no está cargada. Mientras tanto ves las etapas del Clan; tu avance se conserva.
             </Text>
           </View>
         );

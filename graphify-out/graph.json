@@ -2,7 +2,7 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-13T23:18:48.925Z",
+    "generatedAt": "2026-11-15T01:50:03.864Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
@@ -1020,8 +1020,8 @@
       "route": "Resumen",
       "role": "Main Scout home dashboard: ScoutUserIcon greeting badge, progression summary, active stage progress bar, unit Rovers directory (directorio_grupo RPC), quick access cards, CarnetScoutModal, OnboardingGuideModal, and HelpFloatingFAB.",
       "exists": true,
-      "lines": 893,
-      "bytes": 40697,
+      "lines": 895,
+      "bytes": 40971,
       "exports": [
         "ScoutDashboardScreen"
       ],
@@ -1048,7 +1048,8 @@
         "../components/PullToRefreshScrollView",
         "../context/NotificationContext",
         "../components/Skeleton",
-        "../theme/layout"
+        "../theme/layout",
+        "../data/unitTemplates"
       ],
       "supabaseTables": [
         "calendar_events",
@@ -1068,8 +1069,8 @@
       "route": "PlanProgresivo",
       "role": "Displays the 4 Rover/Clan progression stages (Precursor, Expedicionario, Descubridor, Fundador) with completion percentages and lock status.",
       "exists": true,
-      "lines": 257,
-      "bytes": 12248,
+      "lines": 258,
+      "bytes": 12422,
       "exports": [
         "PlanProgresivoScreen"
       ],
@@ -1572,8 +1573,8 @@
       "route": "QuarterlyPlan",
       "role": "Quarterly planner (Trimestres I-IV) supporting individual Rover plans and shared unit plans linked to ProgramaScoutEditor.",
       "exists": true,
-      "lines": 2119,
-      "bytes": 103820,
+      "lines": 2123,
+      "bytes": 104096,
       "exports": [
         "QuarterlyPlanScreen"
       ],
@@ -1599,7 +1600,8 @@
         "../utils/reportTable",
         "./quarterlyPlan/styles",
         "../theme/buttons",
-        "../components/Skeleton"
+        "../components/Skeleton",
+        "../data/unitTemplates"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
