@@ -15,6 +15,7 @@ import { initGraphifyBridge } from './src/lib/graphifyBridge';
 import { installErrorReporter } from './src/lib/errorReporter';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
 import UpdateAvailableBanner from './src/components/UpdateAvailableBanner';
+import ServerStatusBanner from './src/components/ServerStatusBanner';
 
 export default function App() {
   useEffect(() => {
@@ -62,6 +63,7 @@ export default function App() {
           </AppErrorBoundary>
           <OfflineStatusBanner />
           <UpdateAvailableBanner />
+          <ServerStatusBanner />
         </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>

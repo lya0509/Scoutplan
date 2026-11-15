@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, AuthRetryableFetchError } from '@supabase/supabase-js';
+import { markServerDown, markServerUp } from './serverStatus';
 
 if (Platform.OS !== 'web') {
   require('react-native-url-polyfill/auto');
@@ -50,10 +51,28 @@ const offlineAwareFetch: typeof fetch = (input: any, init: any = {}) => {
 
   // Una cancelación pedida por la propia app (init.signal) no cuenta como servidor caído;
   // nuestro corte por tiempo sí.
+  // Además avisa a ServerStatusBanner: respuesta 5xx = servidor con problemas; sin respuesta
+  // (con internet) = no se llega al servidor. Cualquier otra respuesta = el servidor está bien.
   const track = (p: Promise<Response>, timedOut: () => boolean = () => false) => p.then(
-    res => { unreachableUntil = 0; return res; },
+    res => {
+      if (res.status >= 500) {
+        // Servidor con error: igual que sin respuesta, las lecturas de los siguientes 15 s van
+        // directo a la copia del teléfono (si no, cada consulta reintentaba ~8 s y el Inicio
+        // se quedaba en gris medio minuto)
+        unreachableUntil = Date.now() + UNREACHABLE_COOLDOWN_MS;
+        markServerDown(`SERVIDOR-${res.status}`);
+      } else {
+        unreachableUntil = 0;
+        markServerUp();
+      }
+      return res;
+    },
     err => {
-      if (isFetchNetworkFailure(err) || timedOut()) unreachableUntil = Date.now() + UNREACHABLE_COOLDOWN_MS;
+      if (isFetchNetworkFailure(err) || timedOut()) {
+        unreachableUntil = Date.now() + UNREACHABLE_COOLDOWN_MS;
+        const online = typeof navigator === 'undefined' || navigator.onLine !== false;
+        if (online) markServerDown(timedOut() ? 'TIEMPO-AGOTADO' : 'SIN-RESPUESTA');
+      }
       throw err;
     },
   );
@@ -146,6 +165,27 @@ if (originalCallRefresh) {
 if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
   window.addEventListener('online', () => {
     unreachableUntil = 0;
+    markServerUp();
     supabase.auth.getSession().catch(() => {});
   });
+}
+
+/** ¿Responde el servidor? (para el botón «Reintentar»; no pasa por los bloqueos de arriba) */
+export async function pingServer(timeoutMs = 8000): Promise<{ ok: boolean; code: string }> {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return { ok: false, code: 'SIN-INTERNET' };
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = setTimeout(() => controller?.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${supabaseUrl}/auth/v1/health`, { headers: { apikey: supabaseAnonKey }, signal: controller?.signal });
+    if (res.status >= 500) { markServerDown(`SERVIDOR-${res.status}`); return { ok: false, code: `SERVIDOR-${res.status}` }; }
+    unreachableUntil = 0;
+    markServerUp();
+    return { ok: true, code: '' };
+  } catch (e: any) {
+    const code = controller?.signal.aborted ? 'TIEMPO-AGOTADO' : 'SIN-RESPUESTA';
+    markServerDown(code);
+    return { ok: false, code };
+  } finally {
+    clearTimeout(timer);
+  }
 }

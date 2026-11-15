@@ -30,6 +30,7 @@ import ProgramaScoutScreen from '../screens/ProgramaScoutScreen';
 import ProgramaScoutEditorScreen from '../screens/ProgramaScoutEditorScreen';
 import EspecialidadesScreen from '../screens/EspecialidadesScreen';
 import VerificarCarnetScreen from '../screens/VerificarCarnetScreen';
+import NoEncontradaScreen from '../screens/NoEncontradaScreen';
 import CuentaEnRevisionScreen from '../screens/CuentaEnRevisionScreen';
 import AdministracionScreen from '../screens/AdministracionScreen';
 import NuevaContrasenaScreen from '../screens/NuevaContrasenaScreen';
@@ -88,6 +89,8 @@ const linking: any = {
       ProgramaScout: 'programas-actividades',
       ProgramaScoutEditor: 'programa-editor',
       VerificarCarnet: 'verificar/:id',
+      // Cualquier otra dirección: «Esta página no existe»
+      NoEncontrada: '*',
     }
   }
 };
@@ -291,6 +294,7 @@ export default function AppNavigator() {
             <Stack.Screen name="ProgramaScout" component={ProgramaScoutScreen} options={{ headerShown: true, title: 'Programas de Actividades' }} />
             <Stack.Screen name="ProgramaScoutEditor" component={ProgramaScoutEditorScreen} options={{ headerShown: false }} />
             <Stack.Screen name="VerificarCarnet" component={VerificarCarnetScreen} options={{ headerShown: false, title: 'Verificar carnet' }} />
+            <Stack.Screen name="NoEncontrada" component={NoEncontradaScreen} options={{ headerShown: false, title: 'Página no encontrada' }} />
           </Stack.Group>
         )}
       </Stack.Navigator>

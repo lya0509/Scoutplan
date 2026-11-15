@@ -372,6 +372,54 @@ const FLOWS = [
       must(db.profiles.find(p => p.name === 'Nuevo Pendiente').account_status === 'approved', 'La cuenta no quedó aprobada');
     },
   },
+  // ───────────── Avisos de error (Fase 0) ─────────────
+  {
+    name: 'errores · dirección que no existe: «Esta página no existe» y volver al inicio',
+    role: 'scout',
+    async run(page) {
+      await go(page, 'ruta-que-no-existe');
+      await see(page, 'Esta página no existe');
+      await see(page, 'PAGINA-404');
+      await click(page, 'Ir al inicio', { exact: true, wait: 1500 });
+      await see(page, /¡Hola, Joven/, '«Ir al inicio» no llevó al Inicio');
+    },
+  },
+  {
+    name: 'errores · servidor con error 503: aviso con código y «Reintentar» cuando vuelve',
+    role: 'scout',
+    async run(page) {
+      const caido = r => r.fulfill({ status: 503, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"message":"Service Unavailable"}' });
+      await page.context().route(/supabase\.co\/(rest|auth)\//, caido);
+      await go(page, 'inicio');
+      await see(page, 'No se puede conectar con el servidor', 'No apareció el aviso de servidor caído', 20000);
+      await see(page, 'SERVIDOR-503');
+      await page.context().unroute(/supabase\.co\/(rest|auth)\//, caido);
+      await click(page, 'Reintentar', { exact: true, wait: 4000 });
+      await notSee(page, 'No se puede conectar con el servidor', 'El aviso siguió después de volver el servidor');
+      await see(page, /¡Hola, Joven/);
+    },
+  },
+  {
+    name: 'errores · servidor que no responde (con internet): aviso SIN-RESPUESTA',
+    role: 'scout',
+    async run(page) {
+      await page.context().route(/supabase\.co\//, r => r.abort('connectionrefused'));
+      await go(page, 'inicio');
+      await see(page, 'No se puede conectar con el servidor', 'No apareció el aviso de servidor sin respuesta', 20000);
+      await see(page, 'SIN-RESPUESTA');
+    },
+  },
+  {
+    name: 'errores · la app no termina de descargar: «No se pudo cargar la app» con Reintentar',
+    role: 'scout',
+    async run(page) {
+      await page.context().route(/\/_expo\/static\/js\//, r => r.abort('failed'));
+      await go(page, 'inicio');
+      await see(page, 'No se pudo cargar la app');
+      await see(page, 'CARGA-FALLIDA');
+      await see(page, 'Reintentar');
+    },
+  },
 ];
 
 // ───────────── ejecución ─────────────

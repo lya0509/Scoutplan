@@ -23,6 +23,9 @@ export function isNetworkError(err: any): boolean {
   if (NETWORK_PATTERNS.test(text)) return true;
   // postgrest-js marca los fallos de fetch con status 0
   if (err.status === 0) return true;
+  // Servidor caído o sobrecargado (5xx): no es culpa de los datos, se reintenta más tarde
+  if (typeof err.status === 'number' && err.status >= 500) return true;
+  if (/service unavailable|bad gateway|gateway time-?out/i.test(text)) return true;
   return false;
 }
 

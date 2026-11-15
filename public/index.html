@@ -104,6 +104,14 @@
         78%  { transform: rotate(378deg); }
         100% { transform: rotate(360deg); }
       }
+      /* No se pudo cargar la app (red mala o archivo que no llegó): mensaje y «Reintentar» */
+      #scout-splash .ss-fail { display: none; margin-top: 22px; max-width: 320px; padding: 0 20px; color: #fff; text-align: center; }
+      #scout-splash.ss-failed .ss-fail { display: block; }
+      #scout-splash.ss-failed .ss-logo { animation: none !important; }
+      #scout-splash .ss-fail b { display: block; font-size: 18px; font-weight: 800; }
+      #scout-splash .ss-fail p { margin: 6px 0 14px; font-size: 14px; line-height: 1.4; opacity: .9; }
+      #scout-splash .ss-fail button { font: inherit; font-size: 15px; font-weight: 800; color: #612499; background: #fff; border: 0; border-radius: 12px; padding: 11px 26px; min-height: 44px; cursor: pointer; }
+      #scout-splash .ss-fail small { display: block; margin-top: 12px; font-size: 12px; opacity: .75; }
       @keyframes ss-tie { 0% { transform: none; } 35% { transform: scale(1.35); } 100% { transform: none; } }
     </style>
   </head>
@@ -126,6 +134,12 @@
           <div class="ss-layer ss-fleurL"><svg viewBox="268 109 420 440"><path d="M538.41,356.85s2.51,3.3,2.51,7.23-2.51,7.24-2.51,7.24h-119.92s-2.51-3.3-2.51-7.24,2.51-7.23,2.51-7.23h14.95c-.86-4.63-5.1-21.98-21.11-29.73-10.67-5.16-25-3.19-32.68,6.49-3.06,3.85-9.25,15.24-1.54,31.96-20.45-1.63-38.92-18.8-43.01-38.78-11.02-53.74,62.4-84.58,95.42-29.72,0,0,16.49,22.34,17.19,59.79h11.53c.23-12.62-3.13-33.7-10.85-51.17-4.48-12.3-16.46-33.23-19.88-51.99-6.78-37.22,24.53-74.65,49.96-96.8,25.42,22.15,56.74,59.58,49.96,96.8-3.42,18.76-15.4,39.68-19.88,51.99-7.72,17.48-11.09,38.55-10.85,51.17h11.53c.7-37.45,17.19-59.79,17.19-59.79,33.02-54.85,106.43-24.01,95.42,29.72-4.09,19.99-22.56,37.15-43.01,38.78,7.71-16.71,1.52-28.1-1.54-31.96-7.69-9.68-22.02-11.65-32.68-6.49-16.02,7.75-20.25,25.1-21.11,29.73h14.95ZM478.45,466.08s-24.51-12.3-39.89-31.46c0,0,17.88-20.7,20.2-53.74h14.55s.81,37.46,5.14,56.64c4.32-19.18,5.14-56.64,5.14-56.64h14.55c2.32,33.04,20.2,53.74,20.2,53.74-15.38,19.15-39.89,31.46-39.89,31.46h0ZM446.77,381.07h-14.22s-2.58,10.6-10.91,16.16c-6.72,4.49-16.5,6.46-27.69-.99-8.16,23.88,24.26,38.82,42.53,14.69,5.58-7.36,9.55-21,10.3-29.86h0ZM510.13,381.07c.74,8.85,4.72,22.49,10.3,29.86,18.26,24.14,50.68,9.19,42.53-14.69-11.19,7.45-20.97,5.47-27.69.99-8.33-5.56-10.91-16.16-10.91-16.16h-14.22ZM472.84,356.85h11.22s.6-22.56,0-75.43c-.6-52.87-5.61-80.43-5.61-80.43,0,0-5,27.56-5.61,80.43-.6,52.87,0,75.43,0,75.43h0ZM376.55,294.95l-10.46-10.46,2.06,14.32-13.13,7.06,14.92,2.33,2.13,14.46,6.93-13.19,14.26,2.33-10.26-10.53,6.66-12.99-13.13,6.66h0ZM580.35,294.95l-13.13-6.66,6.66,12.99-10.26,10.53,14.26-2.33,6.93,13.19,2.13-14.46,14.92-2.33-13.13-7.06,2.06-14.32-10.46,10.46Z"/></svg></div>
         </div>
         <div class="ss-title"><b>Plan Progresivo</b><span>Scouts de Venezuela</span></div>
+        <div class="ss-fail" role="alert">
+          <b>No se pudo cargar la app</b>
+          <p>Revisa tu conexión a internet e inténtalo de nuevo.</p>
+          <button type="button" onclick="location.reload()">Reintentar</button>
+          <small>Código: <span class="ss-code">CARGA-LENTA</span></small>
+        </div>
       </div>
     </div>
     <script>
@@ -182,10 +196,33 @@
         el.querySelector('.ss-title').addEventListener('animationend', function () { introDone = true; maybeClose(); });
         window.__hideScoutSplash = function () {
           appReady = true;
+          if (failed) return remove(); // llegó tarde, pero llegó: quitar el aviso de error
           maybeClose();
           if (playing) armFallback();
         };
-        setTimeout(close, 15000); // por si la app no llega a avisar
+        // Si a los 20 s la app no avisó: si igual se dibujó, quitar la animación; si no, la app no
+        // terminó de descargar → mostrar «No se pudo cargar la app» con «Reintentar» (antes la
+        // animación se quitaba y quedaba la pantalla en blanco sin explicación).
+        var failed = false;
+        function fail(code) {
+          if (appReady || failed) return;
+          failed = true;
+          closing = true;
+          try { el.querySelector('.ss-code').textContent = code; } catch (e) {}
+          el.removeAttribute('aria-hidden');
+          el.className = 'ss-failed';
+        }
+        setTimeout(function () {
+          if (appReady) return;
+          var root = document.getElementById('root');
+          if (root && root.innerText && root.innerText.trim().length > 0) close();
+          else fail('CARGA-LENTA');
+        }, 20000);
+        // El archivo principal de la app no se pudo descargar
+        window.addEventListener('error', function (ev) {
+          var t = ev && ev.target;
+          if (t && t.tagName === 'SCRIPT' && /\/_expo\//.test(t.src || '')) fail('CARGA-FALLIDA');
+        }, true);
       })();
     </script>
     <!-- The root element for your Expo app. -->

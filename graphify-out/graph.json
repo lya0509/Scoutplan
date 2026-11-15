@@ -2,7 +2,7 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-15T01:50:03.864Z",
+    "generatedAt": "2026-11-15T03:02:30.809Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
@@ -97,8 +97,8 @@
       "file": "App.tsx",
       "role": "Initializes Graphify Bridge, registers /sw.js Service Worker on Web, listens to window online events to flush dataService.syncPendingRequirements(), and wraps ThemeProvider -> AuthProvider -> NotificationProvider -> AppNavigator.",
       "exists": true,
-      "lines": 71,
-      "bytes": 2858,
+      "lines": 73,
+      "bytes": 2961,
       "exports": [
         "App"
       ],
@@ -118,7 +118,8 @@
         "./src/lib/graphifyBridge",
         "./src/lib/errorReporter",
         "./src/components/AppErrorBoundary",
-        "./src/components/UpdateAvailableBanner"
+        "./src/components/UpdateAvailableBanner",
+        "./src/components/ServerStatusBanner"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -133,8 +134,8 @@
       "file": "src/navigation/AppNavigator.tsx",
       "role": "Routes unauthenticated users to Login/Register and authenticated users by role (scout -> DrawerNavigator, scouter -> ScouterDashboard, jefe_grupo -> JefeDashboard, comisionados/nacional/admin -> ComisionadoDashboard) plus shared screens.",
       "exists": true,
-      "lines": 300,
-      "bytes": 13655,
+      "lines": 304,
+      "bytes": 13952,
       "exports": [
         "hasPendingVerify",
         "AppNavigator"
@@ -170,6 +171,7 @@
         "../screens/ProgramaScoutEditorScreen",
         "../screens/EspecialidadesScreen",
         "../screens/VerificarCarnetScreen",
+        "../screens/NoEncontradaScreen",
         "../screens/CuentaEnRevisionScreen",
         "../screens/AdministracionScreen",
         "../screens/NuevaContrasenaScreen",
@@ -394,15 +396,16 @@
       "file": "src/lib/supabaseClient.ts",
       "role": "Configures @supabase/supabase-js with AsyncStorage session persistence.",
       "exists": true,
-      "lines": 152,
-      "bytes": 6518,
+      "lines": 192,
+      "bytes": 8449,
       "exports": [
         "supabase"
       ],
       "imports": [
         "react-native",
         "@react-native-async-storage/async-storage",
-        "@supabase/supabase-js"
+        "@supabase/supabase-js",
+        "./serverStatus"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -515,8 +518,8 @@
       "file": "src/lib/offline/net.ts",
       "role": "isOnline, isNetworkError, isRetryableError, must() (supabase-js returns {error} instead of throwing when offline), isDuplicateError, newId (UUID).",
       "exists": true,
-      "lines": 75,
-      "bytes": 3053,
+      "lines": 78,
+      "bytes": 3302,
       "exports": [
         "isOnline",
         "isNetworkError",

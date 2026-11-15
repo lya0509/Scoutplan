@@ -10,6 +10,7 @@
 ---
 
 ## 2. Always Start With the Full-System Graphify Artifacts
+0. **[`docs/HOJA_DE_RUTA.md`](file:///home/lya/proyectos/plan-progresivo/docs/HOJA_DE_RUTA.md)**: visión (sistema Scout completo de la ASV), reglas ya decididas por el dueño, fases y preguntas abiertas. Léela antes de diseñar o construir funciones nuevas (paso de unidad, seisenas, patrullas, adultos…) y no repitas preguntas que ya estén respondidas ahí.
 Before running broad file searches, read the pre-indexed Full-System Graphify suite:
 1. **[`SYSTEM_GRAPH.md`](file:///home/lya/proyectos/plan-progresivo/SYSTEM_GRAPH.md)**: Master Mermaid architecture diagram, interface contracts, role matrix, and incremental synchronization log (Protocolo Graphy).
 2. **[`graphify-out/GRAPH_REPORT.md`](file:///home/lya/proyectos/plan-progresivo/graphify-out/GRAPH_REPORT.md)**: Exhaustive architectural manual covering all **8 system communities**, **29 screens**, **40 components**, **3 contexts**, **34 services**, **12 static catalogs**, **11 database tables**, and **14 QA suites**.
@@ -28,7 +29,7 @@ Before running broad file searches, read the pre-indexed Full-System Graphify su
    ```bash
    npm run test:unit     # cálculos puros (tests/unit)
    npm run test:e2e      # build + 25 pantallas × 4 roles × claro/oscuro + offline (tests/e2e/run.mjs)
-   npm run test:flujos   # 22 flujos reales (crear CIP, guardar, aprobar…) × teléfono y computadora (tests/e2e/flujos.mjs)
+   npm run test:flujos   # 26 flujos reales (crear CIP, guardar, aprobar, avisos de error…) × teléfono y computadora (tests/e2e/flujos.mjs)
    npm test              # todo: unit + sql + e2e
    ```
    Vercel runs `npm run build:vercel` (unit + SQL tests, then build: a failing test blocks the deploy); GitHub Actions (`.github/workflows/pruebas.yml`) runs everything on each push.
