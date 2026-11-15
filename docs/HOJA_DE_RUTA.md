@@ -3,7 +3,7 @@
 > **Para cualquier chat nuevo:** lee este archivo antes de diseñar o construir una función nueva.
 > Aquí están la visión, las reglas que ya decidió el dueño del proyecto (✅), lo que falta decidir (❓),
 > el orden de trabajo y cómo se publica. No repitas preguntas que ya tienen respuesta aquí.
-> Última actualización: 2026-11-14 (segunda ronda de respuestas del dueño). Cuando se decida algo, se actualiza aquí.
+> Última actualización: 2026-11-14 (tercera ronda de respuestas del dueño). Cuando se decida algo, se actualiza aquí.
 
 ---
 
@@ -71,7 +71,7 @@ Cada unidad (A3 a A6) se publica **entera** cuando esté lista, no a pedazos (ve
 | Unidad | Edades | Pasa a la siguiente al cumplir |
 |---|---|---|
 | Manada | 7 a 10 | **11** → Tropa |
-| Tropa | 11 a 15 | **16** → Caminantes (❓ deducido: el dueño confirmó 10–15 y 16–18 en la app; confirmar) |
+| Tropa | 11 a 15 | **16** → Caminantes |
 | Caminantes | 16 a 17 | **18** → Clan |
 | Clan | 18 a 20 | **21** → máxima insignia (Rover Ciudadano) o partida de la unidad |
 - ✅ La edad **no** pasa a nadie sola: solo avisa a la Jefatura que «ya le toca».
@@ -99,8 +99,10 @@ Cada unidad (A3 a A6) se publica **entera** cuando esté lista, no a pedazos (ve
   «¿Tiene permiso para usar un teléfono propio?»; «¿Está de acuerdo en que el joven empiece a manejar su plan
   progresivo él solo?». Si dice **sí**, el joven recibe su propio acceso (correo y contraseña) y su historial completo.
   Si dice **no**, el joven no maneja su cuenta y sigue como en Manada.
-- ✅ En Tropa, el joven con cuenta propia **mira y sube sus certificados**.
-- ❓ Ver §7, preguntas 1 a 3: qué puede hacer exactamente el joven de Tropa con permiso, y si el representante sigue viendo.
+- ✅ En Tropa, el joven con cuenta propia **ve su avance, sube sus certificados y marca sus requisitos**
+  (❓ lo de marcar requisitos está aún por confirmar por el dueño).
+- ✅ Después de la cesión, **el representante ya no ve nada** de ese hijo (deja de estar en su cuenta).
+- ✅ Los hijos de Manada (sin correo propio) los **agrega el representante desde su cuenta** («Agregar hijo»).
 
 ### 3.4 Después del Clan
 - ✅ La máxima insignia del Clan es **Rover Ciudadano**. Si cumple 21 sin terminarla, sale sin la máxima; su historial
@@ -115,6 +117,8 @@ Cada unidad (A3 a A6) se publica **entera** cuando esté lista, no a pedazos (ve
 ### 3.5 Scouters
 - ✅ Una unidad puede tener **varios scouters**, y todos pueden hacer cambios administrativos: seisenas, patrullas,
   aprobar o devolver el plan.
+- ✅ **Cada scouter solo ve y cambia a los jóvenes de su unidad**; la Jefatura, a todo el grupo. Hoy la base de datos
+  deja a cualquier scouter tocar todo el grupo: se corrige en A1 (reglas de Supabase por unidad).
 - ✅ Un scouter puede retirarse de la unidad o del grupo, o tomarse un tiempo. La **Jefatura** hace el «cambio de
   scouter»: el que sale **pierde el acceso** a la unidad, y la Jefatura puede darle otra función (por ejemplo, una
   parte administrativa).
@@ -135,10 +139,16 @@ Cada unidad (A3 a A6) se publica **entera** cuando esté lista, no a pedazos (ve
 
 ### 3.7 Patrullas (Tropa)
 - ✅ Los nombres son **libres**: los jóvenes eligen el animal que quieren representar.
-- ✅ Cargos de una **lista general para todos los grupos**: guía, subguía, secretario, tesorero… (❓ lista completa).
+- ✅ Cargos de una **lista general para todos los grupos**: guía, subguía, secretario, tesorero… El dueño no tiene la
+  lista completa: se saca del material oficial (A4).
 - ✅ Una patrulla se puede cerrar, crear, fusionar o **refundar** con un nombre viejo. **Todo lo que la app guarde
   de la patrulla migra** a la nueva, y queda el antecedente («antes se llamaba Lobos»). Más adelante se agregarán más
   datos de patrulla.
+- Propuesta de qué guarda una patrulla (❓ el dueño pidió sugerencias; elegir en A4): miembros con su cargo y fechas;
+  nombre, animal, color, grito y lema; **libro de patrulla** (actas del consejo de patrulla, acuerdos); **puntos** de las
+  competencias de la Tropa; campamentos y salidas con quiénes fueron; álbum de fotos (Drive); **inventario del rincón**
+  (carpas, ollas, cuerdas) a cargo del intendente; **caja** de la patrulla a cargo del tesorero; avance del plan de sus
+  miembros. Todo eso migra al cerrar o renombrar la patrulla.
 - ✅ Las reorganizaciones se hacen cuando hacen falta, no en fechas fijas.
 - ✅ Un joven normalmente **no** cambia de patrulla a mitad de año, salvo casos especiales (problemas, o un subguía
   que toma el liderazgo de otra patrulla que quedó vacía). La app lo permite, pero deja registro.
@@ -146,7 +156,7 @@ Cada unidad (A3 a A6) se publica **entera** cuando esté lista, no a pedazos (ve
 ### 3.8 Caminantes y Clan
 - ✅ El Clan es **individual en su desarrollo y grupal en las actividades**. Tiene cargos de la lista general:
   secretario, tesorero, armador del programa (hace los programas de los fines de semana), intendente…
-- ❓ Caminantes: no se sabe si tienen cargos o equipos.
+- ❓ Caminantes: el dueño no sabe si tienen cargos o equipos; se revisa en el material oficial (A5).
 
 ### 3.9 Configuración y visibilidad
 - ✅ Cada grupo configura **colores y nombres**. Son nacionales las **edades** y las **listas de cargos**.
@@ -182,7 +192,7 @@ Cuando empiece cada fase se escribe su diseño detallado en `docs/` y se aprueba
 
 ---
 
-## 5. Cómo se publica (propuesto, ❓ por aprobar)
+## 5. Cómo se publica (✅ aprobada la idea; se arma al empezar A1)
 
 **Hoy:** cada cambio subido a `main` se publica solo en Vercel en 2–3 minutos y lo ven todos.
 
@@ -213,18 +223,7 @@ Cuando empiece cada fase se escribe su diseño detallado en `docs/` y se aprueba
 ---
 
 ## 7. Preguntas abiertas (❓)
-1. **Joven de Tropa con permiso del representante:** el representante aceptó que «maneje su plan él solo». ¿Eso
-   significa que marca sus requisitos como en el Clan, o solo que ve su avance y sube certificados mientras el scouter
-   sigue marcando? (En una respuesta dijiste «solo mira o sube certificados» y en otra «rellena su plan él solo».)
-2. **Después de la cesión:** ¿el representante sigue viendo el avance de ese hijo y recibiendo avisos (por lo menos
-   hasta los 18)?
-3. **Hijos de Manada sin correo:** el niño no tiene correo propio; su perfil cuelga de la cuenta del representante.
-   ¿Lo crea el representante al registrarse («agregar hijo»), o lo crea la scouter y luego se vincula al representante?
-4. **Permisos por unidad.** Hoy la base de datos deja que un scouter del Clan cambie a un joven de Tropa del mismo
-   grupo; la app no se lo muestra, pero técnicamente puede. Para que el «cambio de scouter» realmente quite el acceso
-   (tu punto 29), propongo que **cada scouter solo pueda ver y cambiar a los jóvenes de su unidad, y la Jefatura a
-   todo el grupo**. ¿De acuerdo?
-5. **Edad de paso de Tropa a Caminantes:** ¿al cumplir 16?
-6. **Listas de cargos:** completas para Tropa y Clan; y si Caminantes tiene cargos o equipos.
-7. **Datos de patrulla para el futuro:** ¿puntos, libro de patrulla, campamentos, fotos?
-8. **Forma de publicar** (§5): ¿de acuerdo con ramas, vista previa y base de datos de pruebas aparte?
+1. **Joven de Tropa con cuenta propia:** confirmar si marca él mismo sus requisitos (respuesta provisional: sí).
+2. **Listas de cargos** de Tropa y Clan, y si Caminantes tiene cargos o equipos: sacarlas del material oficial.
+3. **Qué guarda una patrulla:** elegir de la propuesta de §3.7.
+4. **Material oficial** de Manada, Tropa y Caminantes: el dueño lo consigue en los archivos de la ASV (necesario para A3).
