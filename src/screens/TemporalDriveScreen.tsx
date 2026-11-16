@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import {
   View,
   Text,
@@ -650,7 +651,7 @@ export default function TemporalDriveScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 18, borderBottomWidth: 1 },
   headerInner: { maxWidth: 960, width: '100%', alignSelf: 'center' },
@@ -687,9 +688,9 @@ const styles = StyleSheet.create({
   photoThumb: { width: '100%', height: '100%' },
   photoInfoOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', padding: 6 },
   photoUploader: { color: 'white', fontSize: 12, fontWeight: 'bold' }
-});
+}));
 
-const modalStyles = StyleSheet.create({
+const modalStyles = liveStyles(() => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end', alignItems: 'center' },
   sheet: { width: '100%', maxWidth: 520, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderRadius: Platform.OS === 'web' ? 24 : undefined, paddingBottom: 30, overflow: 'hidden' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1 },
@@ -705,4 +706,4 @@ const modalStyles = StyleSheet.create({
   fullPhotoImage: { maxWidth: '90%', maxHeight: '70%', width: 700, height: 500 },
   fullPhotoFooter: { alignItems: 'center', marginTop: 14 },
   downloadBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, marginTop: 12 }
-});
+}));

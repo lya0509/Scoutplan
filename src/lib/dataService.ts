@@ -323,6 +323,12 @@ export const dataService = {
         id: stageTemplate.id,
         name: stageTemplate.title,
         progress: progress,
+        completed,
+        total: totalReqs,
+        /** Requisitos que faltan (para «Qué te falta» del Inicio). */
+        pending: stageTemplate.requirements
+          .filter(r => !completedReqSet.has(`${stageTemplate.id}:${r.id}`))
+          .map(r => ({ id: r.id, title: r.text })),
       };
     });
   },

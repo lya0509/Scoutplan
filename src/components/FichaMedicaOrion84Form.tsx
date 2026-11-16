@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Platform } from 'react-native';
 import { Download, Save, AlertCircle } from 'lucide-react-native';
 import { dataService } from '../lib/dataService';
@@ -331,7 +332,7 @@ export default function FichaMedicaOrion84Form({ targetUserId, readOnly, theme, 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   sheet: { borderRadius: 18, padding: 18, borderWidth: 1, maxWidth: 850, width: '100%', alignSelf: 'center' },
   introBanner: { backgroundColor: 'rgba(97, 36, 153, 0.08)', padding: 10, borderRadius: 10 },
   changesBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.12)', padding: 8, borderRadius: 8, marginTop: 10 },
@@ -347,4 +348,4 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: '#10b981', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
   exportBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   btnText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
-});
+}));

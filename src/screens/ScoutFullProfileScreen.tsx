@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import { isSafeFileUrl } from '../utils/safeUrl';
 import {
   View,
@@ -516,7 +517,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
   profileHeaderCard: { margin: 16, borderRadius: 20, padding: 20, borderWidth: 1, elevation: 3 },
   avatarRow: { flexDirection: 'row', alignItems: 'center' },
@@ -554,9 +555,9 @@ const styles = StyleSheet.create({
   zoomHintOverlay: { position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.7)', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   zoomHintText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   emptyCertCard: { padding: 20, borderRadius: 14, borderWidth: 1, alignItems: 'center' }
-});
+}));
 
-const viewerStyles = StyleSheet.create({
+const viewerStyles = liveStyles(() => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', padding: 16 },
   sheet: { borderRadius: 24, overflow: 'hidden', maxHeight: '90%' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1 },
@@ -569,7 +570,7 @@ const viewerStyles = StyleSheet.create({
   downloadBtn: { flex: 1, backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14 },
   downloadBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 },
   deleteActionBtn: { backgroundColor: '#fee2e2', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 14, justifyContent: 'center', alignItems: 'center' }
-});
+}));
 
 const modalStyles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },

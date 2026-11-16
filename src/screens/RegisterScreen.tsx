@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import { 
   View, Text, StyleSheet, TouchableOpacity, TextInput, 
   ScrollView, ActivityIndicator, Modal, FlatList
@@ -99,7 +100,7 @@ function WheelColumn({ items, selected, onSelect, labelFn }: {
   );
 }
 
-const wheelStyles = StyleSheet.create({
+const wheelStyles = liveStyles(() => StyleSheet.create({
   column: { flex: 1, height: ITEM_HEIGHT * 5, overflow: 'hidden' },
   selectionLines: { 
     position: 'absolute', top: ITEM_HEIGHT * 2, left: 0, right: 0, 
@@ -109,7 +110,7 @@ const wheelStyles = StyleSheet.create({
   item: { height: ITEM_HEIGHT, justifyContent: 'center', alignItems: 'center' },
   itemText: { fontSize: 17, color: '#aaa' },
   itemTextSelected: { fontSize: 20, fontWeight: 'bold', color: colors.primary },
-});
+}));
 
 function SelectorGrid({ options, selected, onSelect, isDarkMode }: {
   options: { id: string; label: string; color?: string }[];
@@ -649,7 +650,7 @@ export default function RegisterScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   screenWrapper: { flex: 1 },
   container: {
     flex: 1,
@@ -707,9 +708,9 @@ const styles = StyleSheet.create({
   backButton: { alignItems: 'center', marginTop: 20, padding: 10 },
   backButtonText: { fontSize: 14, textDecorationLine: 'underline' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-});
+}));
 
-const modalStyles = StyleSheet.create({
+const modalStyles = liveStyles(() => StyleSheet.create({
   card: { width: '100%', maxWidth: 400, borderRadius: 20, padding: 24, alignItems: 'center' },
   title: { fontSize: 18, fontWeight: 'bold', marginBottom: 8 },
   desc: { fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 10 },
@@ -719,9 +720,9 @@ const modalStyles = StyleSheet.create({
   btnSecondaryText: { color: '#64748b', fontWeight: 'bold', fontSize: 13 },
   btnPrimary: { flex: 1, paddingVertical: 12, backgroundColor: colors.primary, borderRadius: 10, alignItems: 'center' },
   btnPrimaryText: { color: 'white', fontWeight: 'bold', fontSize: 13 },
-});
+}));
 
-const pickerStyles = StyleSheet.create({
+const pickerStyles = liveStyles(() => StyleSheet.create({
   overlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end',
   },
@@ -754,4 +755,4 @@ const pickerStyles = StyleSheet.create({
     borderTopWidth: 1, marginHorizontal: 20,
   },
   previewText: { fontSize: 16, color: colors.primary, fontWeight: '600' },
-});
+}));

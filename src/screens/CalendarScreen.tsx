@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, ActivityIndicator, Platform } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
 import { Plus, X, Sun, Moon } from 'lucide-react-native';
@@ -558,7 +559,7 @@ export default function CalendarScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 20, borderBottomWidth: 1 },
   title: { fontSize: 22, fontWeight: 'bold' },
@@ -602,4 +603,4 @@ const styles = StyleSheet.create({
   unitChipText: { fontSize: 12 },
   saveBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginTop: 24, marginBottom: 30 },
   saveBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 }
-});
+}));

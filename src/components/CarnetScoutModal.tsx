@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import {
   View,
   Text,
@@ -205,7 +206,7 @@ export const CarnetScoutModal: React.FC<CarnetScoutModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 16 },
   card: { width: '100%', maxWidth: 520, borderRadius: 20, maxHeight: '90%', overflow: 'hidden' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1 },
@@ -263,4 +264,4 @@ const styles = StyleSheet.create({
 
   downloadBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 14, width: '100%', marginTop: 24 },
   downloadBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 }
-});
+}));

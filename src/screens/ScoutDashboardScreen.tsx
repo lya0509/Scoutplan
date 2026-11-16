@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, useWindowDimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
@@ -8,14 +9,15 @@ import { supabase } from '../lib/supabaseClient';
 import { readCached, writeCached } from '../lib/offline/readCache';
 import { dataService } from '../lib/dataService';
 import { presenceService } from '../services/presenceService';
-import { colors } from '../theme/colors';
 import { useFocusEffect } from '@react-navigation/native';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { DualProfileAvatar } from '../components/DualProfileAvatar';
 import { ScoutUserIcon } from '../components/ScoutUserIcon';
 import { ProgramaPdfPreviewModal } from '../components/ProgramaPdfPreviewModal';
 import { ProgramaScout } from '../types/programa';
-import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, Target, FileText, CheckCircle, Info, Eye, ShieldAlert, ShieldCheck, Clock } from 'lucide-react-native';
+import { Calendar as CalendarIcon, Award, ChevronRight, Bell, XCircle, Compass, Target, FileText, CheckCircle, ShieldAlert, ShieldCheck, Clock, Users, Check, Lock } from 'lucide-react-native';
+import { Btn, Card, Chip, CountUp, Enter, ProgressBar, SectionTitle, CheckMark } from '../components/ui';
+import { RADIUS, SPACE, TYPE } from '../theme/tokens';
 import { todayLocal, daysUntil, formatDateEs } from '../utils/dateLocal';
 import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
 import { useNotifications } from '../context/NotificationContext';
@@ -23,34 +25,25 @@ import { SkeletonScreen } from '../components/Skeleton';
 import { contentMax, contentWide, WIDE_BREAKPOINT } from '../theme/layout';
 import { getUnitInfo } from '../data/unitTemplates';
 
-const UNIT_COLORS: Record<string, string> = {
-  'manada': '#ffb300',
-  'tropa': '#43a047',
-  'caminantes': '#1e88e5',
-  'comunidad': '#1e88e5',
-  'clan': '#e53935',
-  'grupo': '#8e24aa',
-};
-
 const ONBOARDING_SLIDES = [
   {
     icon: Compass,
-    title: '⚜️ ¡Bienvenido a tu Plan Progresivo!',
+    title: '¡Bienvenido a tu Plan Progresivo!',
     desc: 'Te acompañamos en tu camino de adelanto scout. Aquí llevarás el registro digital de tus insignias y etapas en la Asociación de Scouts de Venezuela.'
   },
   {
     icon: Target,
-    title: '🎯 Catálogo de Actividades',
+    title: 'Catálogo de Actividades',
     desc: 'Dentro de cada etapa podrás abrir el catálogo de 328 actividades. Selecciona tus 12 Básicas y 9 Opcionales utilizando la barra de progreso en vivo.'
   },
   {
     icon: FileText,
-    title: '📜 Certificados e Iniciativas',
+    title: 'Certificados e Iniciativas',
     desc: 'Sube tus acreditaciones de Especialidades (Bronce, Plata, Oro), Cursos (Horqueta, Remo, Canoa) e Iniciativas de Programa Nacionales (ej: Enseñas).'
   },
   {
     icon: CheckCircle,
-    title: '⚜️ Aprobación y Validez Nacional',
+    title: 'Aprobación y Validez Nacional',
     desc: 'Tus dirigentes revisarán y certificarán tus insignias con validez oficial ante la Asociación de Scouts de Venezuela.'
   }
 ];
@@ -361,72 +354,87 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
   const SlideIcon = ONBOARDING_SLIDES[currentSlide].icon;
 
+  const statusTone = stageStatus === 'Aprobada' ? 'ok' : stageStatus === 'En Revision' ? 'warn' : 'accent';
+  const statusLabel = stageStatus === 'En Revision' ? 'En revisión' : stageStatus === 'Aprobada' ? 'Aprobada' : 'En progreso';
+  const StatusIcon = stageStatus === 'Aprobada' ? Check : stageStatus === 'En Revision' ? Clock : undefined;
+  const pendingReqs: { id: string; title: string }[] = currentStage?.pending || [];
+  const unitTitle = myUnitInfo && myUnitInfo.key !== 'clan' ? `Mi ${myUnitInfo.label}` : 'Rovers';
+  const onlineCount = roversList.filter(r => r.isOnline).length;
+
   // Secciones del inicio (en pantalla grande van en dos columnas)
   const stageAndRoversSection = (
     <>
       {/* Etapa Actual */}
-      <View style={styles.sectionHeader}>
-        <Award color={colors.primary} size={20} />
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Tu Etapa Actual</Text>
-      </View>
-
-      {currentStage ? (
-        <TouchableOpacity
-          style={[styles.stageCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-          activeOpacity={0.85}
-          onPress={() => navigation.navigate('StageDetail', { stageId: currentStage.id })}
-        >
-          <View style={styles.stageCardHeader}>
-            <Text style={[styles.stageName, { color: theme.text }]}>{currentStage.name}</Text>
-            <View style={[
-              styles.statusBadge,
-              stageStatus === 'Aprobada' ? styles.statusApproved :
-              stageStatus === 'En Revision' ? styles.statusReview :
-              styles.statusProgress
-            ]}>
-              <Text style={styles.statusText}>{stageStatus}</Text>
+      <Enter index={1} style={styles.section}>
+        <SectionTitle>Tu Etapa Actual</SectionTitle>
+        {currentStage ? (
+          <Card active onPress={() => navigation.navigate('StageDetail', { stageId: currentStage.id })} accessibilityLabel={`${currentStage.name}, ${currentStage.progress} % completado. Ver requisitos y avanzar`}>
+            <View style={styles.stageCardHeader}>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={[TYPE.h3, { color: theme.text }]} numberOfLines={1}>{currentStage.name}</Text>
+                <Text style={[TYPE.tiny, { color: theme.subText, marginTop: 2 }]}>
+                  {currentStage.total ? `${currentStage.completed} de ${currentStage.total} requisitos` : `${currentStage.progress}% completado`}
+                </Text>
+              </View>
+              <CountUp value={currentStage.progress} suffix=" %" style={[TYPE.h3, { color: theme.accentText }]} />
             </View>
-          </View>
+            <ProgressBar value={currentStage.progress} />
+            <View style={styles.stageCardFooter}>
+              <Chip label={statusLabel} tone={statusTone} Icon={StatusIcon} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={[styles.actionLinkText, { color: theme.accentText }]}>Ver requisitos y avanzar</Text>
+                <ChevronRight color={theme.accentText} size={18} />
+              </View>
+            </View>
+          </Card>
+        ) : (
+          <Card muted><Text style={[TYPE.small, { color: theme.subText }]}>No tienes etapas activas cargadas.</Text></Card>
+        )}
+      </Enter>
 
-          <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${currentStage.progress}%` }]} />
+      {/* Qué te falta: los requisitos pendientes más cercanos, con acceso directo */}
+      {currentStage && stageStatus !== 'Aprobada' && stageStatus !== 'En Revision' && pendingReqs.length > 0 && (
+        <Enter index={2} style={styles.section}>
+          <SectionTitle right={<Text style={[TYPE.tiny, { color: theme.subText }]}>{pendingReqs.length} {pendingReqs.length === 1 ? 'pendiente' : 'pendientes'}</Text>}>Qué te falta</SectionTitle>
+          <View style={{ gap: SPACE.sm }}>
+            {pendingReqs.slice(0, 3).map(req => (
+              <Card key={req.id} onPress={() => navigation.navigate('StageDetail', { stageId: currentStage.id })} style={styles.rowCard} accessibilityLabel={`Pendiente: ${req.title}`}>
+                <CheckMark />
+                <Text style={[TYPE.small, { color: theme.text, fontWeight: '600', flex: 1 }]} numberOfLines={2}>{req.title}</Text>
+                <ChevronRight size={18} color={theme.subText} />
+              </Card>
+            ))}
           </View>
-          <Text style={[styles.progressText, { color: theme.subText }]}>{currentStage.progress}% completado</Text>
-
-          <View style={[styles.stageCardFooter, { borderTopColor: theme.border }]}>
-            <Text style={[styles.actionLinkText, { color: theme.accentText }]}>Ver requisitos y avanzar</Text>
-            <ChevronRight color={colors.primary} size={18} />
-          </View>
-        </TouchableOpacity>
-      ) : (
-        <Text style={[styles.emptyText, { color: theme.subText }]}>No tienes etapas activas cargadas.</Text>
+        </Enter>
+      )}
+      {currentStage && stageStatus === 'En Revision' && (
+        <Enter index={2} style={styles.section}>
+          <Card style={styles.rowCard}>
+            <Clock size={20} color={theme.warn} />
+            <Text style={[TYPE.small, { color: theme.text, flex: 1 }]}>Tu dirigente está revisando esta etapa. Te llegará un aviso cuando responda.</Text>
+          </Card>
+        </Enter>
       )}
 
-      {/* DIRECTORIO Y ESTADO ONLINE DE ROVERS DE LA UNIDAD */}
-      <View style={{ marginBottom: 20 }}>
-        <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 8 }]}>⚜️ {myUnitInfo && myUnitInfo.key !== 'clan' ? `Mi ${myUnitInfo.label}` : 'Rovers'}</Text>
+      {/* DIRECTORIO Y ESTADO ONLINE DE LA UNIDAD */}
+      <Enter index={3} style={styles.section}>
+        <SectionTitle right={roversList.length > 0 ? <Text style={[TYPE.tiny, { color: theme.subText }]}>{onlineCount} en línea</Text> : undefined}>{unitTitle}</SectionTitle>
         {roversList.length === 0 ? (
-          <View style={[styles.emptyEventsCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-            <Text style={{ color: theme.subText, fontSize: 13 }}>{myUnitInfo && myUnitInfo.key !== 'clan' ? 'Aún no hay más miembros registrados en tu unidad.' : 'Sé el primer Rover registrado en esta unidad.'}</Text>
-          </View>
+          <Card muted style={{ alignItems: 'center', gap: SPACE.sm }}>
+            <Users size={24} color={theme.subText} />
+            <Text style={[TYPE.small, { color: theme.subText, textAlign: 'center' }]}>{myUnitInfo && myUnitInfo.key !== 'clan' ? 'Aún no hay más miembros registrados en tu unidad.' : 'Sé el primer Rover registrado en esta unidad.'}</Text>
+          </Card>
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={{ flexDirection: 'row', gap: 10, paddingVertical: 4 }}>
+            <View style={{ flexDirection: 'row', gap: SPACE.sm, paddingVertical: 2 }}>
               {roversList.map(rover => (
-                <View
+                <Card
                   key={rover.id}
-                  style={{
-                    backgroundColor: theme.cardBg,
-                    borderColor: theme.border,
-                    borderWidth: 1,
-                    borderRadius: 16,
-                    padding: 12,
-                    alignItems: 'center',
-                    minWidth: 115,
-                    elevation: 2,
-                  }}
+                  onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: rover.id })}
+                  accessibilityLabel={`Ver perfil de ${rover.name || 'Rover'}, ${rover.isOnline ? 'en línea' : 'desconectado'}`}
+                  style={styles.memberCard}
                 >
-                  <View style={{ position: 'relative', marginBottom: 6 }}>
+                  <View style={{ position: 'relative' }}>
                     <DualProfileAvatar
                       scoutAvatarUrl={rover.avatar_url}
                       customAvatarUrl={rover.custom_avatar_url}
@@ -434,108 +442,56 @@ export default function ScoutDashboardScreen({ navigation }: any) {
                       size={52}
                       editable={false}
                     />
-                    <View style={{
-                      position: 'absolute',
-                      bottom: 0,
-                      right: 0,
-                      width: 12,
-                      height: 12,
-                      borderRadius: 6,
-                      backgroundColor: rover.isOnline ? '#22c55e' : '#9ca3af',
-                      borderWidth: 2,
-                      borderColor: 'white'
-                    }} />
+                    <View style={[styles.presenceDot, { backgroundColor: rover.isOnline ? '#16a34a' : theme.subText, borderColor: theme.cardBg }]} />
                   </View>
-
-                  <TouchableOpacity
-                    onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: rover.id })}
-                    style={{ alignItems: 'center' }}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text, textAlign: 'center' }} numberOfLines={1}>
-                      {rover.name || 'Rover'}
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  <View style={{ backgroundColor: rover.isOnline ? 'rgba(34, 197, 94, 0.15)' : 'rgba(156, 163, 175, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginTop: 4 }}>
-                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: rover.isOnline ? (isDarkMode ? '#4ade80' : '#16a34a') : (isDarkMode ? '#a1a1aa' : '#6b7280') }}>
-                      {rover.isOnline ? '🟢 En línea' : '⚪ Desconectado'}
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity
-                    style={{
-                      marginTop: 8,
-                      paddingVertical: 3,
-                      paddingHorizontal: 8,
-                      borderRadius: 8,
-                      backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
-                    }}
-                    onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: rover.id })}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold' }}>
-                      Ver Perfil ⚜️
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                  <Text style={[TYPE.tiny, { fontWeight: '700', color: theme.text, textAlign: 'center' }]} numberOfLines={1}>
+                    {rover.name || 'Rover'}
+                  </Text>
+                  <Text style={[TYPE.tiny, { color: rover.isOnline ? theme.ok : theme.subText }]}>
+                    {rover.isOnline ? 'En línea' : 'Desconectado'}
+                  </Text>
+                </Card>
               ))}
             </View>
           </ScrollView>
         )}
-      </View>
+      </Enter>
     </>
   );
   const upcomingSection = (
-    <>
+    <Enter index={isWide ? 1 : 4} style={styles.section}>
       {/* Próximos Eventos */}
-      <View style={styles.sectionHeader}>
-        <CalendarIcon color={colors.primary} size={20} />
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Próximas Actividades</Text>
-        <TouchableOpacity style={{ marginLeft: 'auto' }} onPress={() => navigation.navigate('Calendario')}>
-          <Text style={[styles.seeAllText, { color: theme.accentText }]}>Ver todo</Text>
-        </TouchableOpacity>
-      </View>
+      <SectionTitle right={<Btn variant="text" small label="Ver todo" onPress={() => navigation.navigate('Calendario')} />}>Próximas Actividades</SectionTitle>
 
       {upcomingEvents.length === 0 ? (
-        <View style={[styles.emptyEventsCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-          <Text style={[styles.emptyText, { color: theme.subText }]}>No hay actividades programadas próximamente.</Text>
-        </View>
+        <Card muted style={{ alignItems: 'center', gap: SPACE.sm }}>
+          <CalendarIcon size={24} color={theme.subText} />
+          <Text style={[TYPE.small, { color: theme.subText, textAlign: 'center' }]}>No hay actividades programadas próximamente.</Text>
+        </Card>
       ) : (
-        upcomingEvents.map(evt => {
-          const color = UNIT_COLORS[evt.unit?.toLowerCase()] || colors.primary;
-          const displayTitle = (evt.title || '').replace(/\[6P\s*/gi, '[CIP ').replace(/\b6P\b/gi, 'CIP').replace(/6P/g, 'CIP');
-          const displayDesc = evt.description ? evt.description.replace(/\b6P\b/gi, 'CIP').replace(/6P/g, 'CIP') : '';
-          const hasPrograma = evt.id && String(evt.id).startsWith('prog_');
+        <View style={{ gap: SPACE.sm }}>
+          {upcomingEvents.map(evt => {
+            const displayTitle = (evt.title || '').replace(/\[6P\s*/gi, '[CIP ').replace(/\b6P\b/gi, 'CIP').replace(/6P/g, 'CIP');
+            const displayDesc = evt.description ? evt.description.replace(/\b6P\b/gi, 'CIP').replace(/6P/g, 'CIP') : '';
+            const hasPrograma = evt.id && String(evt.id).startsWith('prog_');
 
-          return (
-            <TouchableOpacity
-              key={evt.id}
-              style={[styles.eventCard, { backgroundColor: theme.cardBg, borderColor: hasPrograma ? '#9333ea' : theme.border }]}
-              onPress={() => handlePressEvent(evt)}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.eventCircle, { backgroundColor: color }]}>
-                <Text style={styles.eventCircleText}>{evt.unit?.charAt(0).toUpperCase()}</Text>
-              </View>
-              <View style={styles.eventInfo}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                  <Text style={[styles.eventTitle, { color: theme.text, flex: 1 }]}>{displayTitle}</Text>
-                  {hasPrograma && (
-                    <View style={{ backgroundColor: isDarkMode ? '#581c87' : '#f3e8ff', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#d8b4fe' }}>
-                      <Text style={{ fontSize: 11, color: isDarkMode ? '#f3e8ff' : '#7e22ce', fontWeight: 'bold' }}>📄 Ficha Oficial</Text>
-                    </View>
-                  )}
+            return (
+              <Card key={evt.id} onPress={() => handlePressEvent(evt)} style={styles.rowCard}>
+                <View style={[styles.eventCircle, { backgroundColor: theme.accentSoft }]}>
+                  <CalendarIcon size={20} color={theme.accentText} />
                 </View>
-                <Text style={[styles.eventDate, { color: theme.subText }]}>📅 {evt.date}</Text>
-                {displayDesc ? <Text style={[styles.eventDesc, { color: theme.subText }]}>{displayDesc}</Text> : null}
-              </View>
-              <ChevronRight size={18} color={theme.subText} style={{ marginLeft: 4 }} />
-            </TouchableOpacity>
-          );
-        })
+                <View style={styles.eventInfo}>
+                  <Text style={[TYPE.small, { color: theme.text, fontWeight: '600' }]}>{displayTitle}</Text>
+                  <Text style={[TYPE.tiny, { color: theme.subText, marginTop: 2 }]}>{formatDateEs(evt.date)}{displayDesc ? ` · ${displayDesc}` : ''}</Text>
+                  {hasPrograma && <Chip label="Ficha Oficial" tone="accent" Icon={FileText} style={{ marginTop: 6 }} />}
+                </View>
+                <ChevronRight size={18} color={theme.subText} />
+              </Card>
+            );
+          })}
+        </View>
       )}
-    </>
+    </Enter>
   );
 
   return (
@@ -545,7 +501,7 @@ export default function ScoutDashboardScreen({ navigation }: any) {
       {/* AVISOS SIN LEER: 2 a la vista; el resto con «Ver todos» (antes se apilaban todos) */}
       {notifications.slice(0, showAllNotifs ? notifications.length : 2).map(notif => {
         const negative = /no aprobad|rechaz|devuelt|vencid|removid|no fue/i.test(`${notif.title} ${notif.message || ''}`);
-        const accent = negative ? '#dc2626' : theme.accentText;
+        const accent = negative ? theme.err : theme.accentText;
         return (
           <View key={notif.id} style={[styles.notifBanner, { backgroundColor: theme.cardBg, borderColor: theme.border, borderLeftColor: accent }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
@@ -596,24 +552,25 @@ export default function ScoutDashboardScreen({ navigation }: any) {
         if (unitKey === 'manada') motto = '¡Siempre lo Mejor!';
         else if (unitKey === 'caminantes' || unitKey === 'comunidad') motto = '¡Siempre Adelante!';
         else if (unitKey === 'clan') motto = '¡Siempre Listo para Servir!';
+        const heroFg = isDarkMode ? '#ffffff' : theme.onPrimary;
 
         return (
-          <View style={[styles.welcomeCard, isDarkMode && { backgroundColor: '#000000', borderWidth: 1, borderColor: '#27272a' }]}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Enter style={[styles.welcomeCard, { backgroundColor: isDarkMode ? theme.cardBg : theme.primary }, isDarkMode && { borderWidth: 1, borderColor: theme.border }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: SPACE.sm }}>
               <View style={{ flex: 1 }}>
                 <View style={styles.welcomeTagRow}>
                   <ScoutUserIcon unit={user?.unit} size={36} />
-                  <Text style={[styles.welcomeTag, { marginBottom: 0 }]}>{motto}</Text>
+                  <Text style={[TYPE.over, { color: heroFg, flexShrink: 1 }]}>{motto}</Text>
                 </View>
-                <Text style={styles.welcomeName}>¡Hola, {user?.name || 'Scout'}!</Text>
-                <Text style={styles.welcomeGroup}>
+                <Text style={[TYPE.h2, { color: heroFg }]}>¡Hola, {user?.name || 'Scout'}!</Text>
+                <Text style={[TYPE.small, { color: heroFg, opacity: 0.9, marginTop: 4 }]}>
                   {user?.group_name ? `${user.group_name} • ` : ''}
                   {user?.unit ? user.unit.toUpperCase() : 'SCOUT'}
                 </Text>
               </View>
-              <NotificationHeaderBell color="#ffffff" />
+              <NotificationHeaderBell color={heroFg} />
             </View>
-          </View>
+          </Enter>
         );
       })()}
 
@@ -650,9 +607,9 @@ export default function ScoutDashboardScreen({ navigation }: any) {
         }
         if (!tone) return null;
         const pal = {
-          warn: { bg: isDarkMode ? '#2a1d06' : '#fffbeb', border: isDarkMode ? '#78350f' : '#fde68a', fg: isDarkMode ? '#fcd34d' : '#92400e' },
-          danger: { bg: isDarkMode ? '#2a1215' : '#fef2f2', border: isDarkMode ? '#7f1d1d' : '#fecaca', fg: isDarkMode ? '#fca5a5' : '#991b1b' },
-          info: { bg: isDarkMode ? '#0c1a33' : '#eff6ff', border: isDarkMode ? '#1e3a8a' : '#bfdbfe', fg: isDarkMode ? '#93c5fd' : '#1e40af' },
+          warn: { bg: theme.warnSoft, border: theme.warnSoft, fg: theme.warn },
+          danger: { bg: theme.errSoft, border: theme.errLine, fg: theme.err },
+          info: { bg: theme.accentSoft, border: theme.accentSoft, fg: theme.accentText },
         }[tone];
         const Icon = tone === 'info' ? Clock : tone === 'warn' ? ShieldCheck : ShieldAlert;
         return (
@@ -699,41 +656,33 @@ export default function ScoutDashboardScreen({ navigation }: any) {
       {/* MODAL INFORMATIVO PARA ACTIVIDADES SIN PROGRAMA PUBLICADO */}
       <Modal visible={!!selectedEventPendingModal} transparent animationType="fade" onRequestClose={() => setSelectedEventPendingModal(null)}>
         <View style={styles.tourModalBg}>
-          <View style={[styles.tourModalCard, { backgroundColor: theme.cardBg, maxWidth: 400 }]}>
-            <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(99, 102, 241, 0.12)', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
-              <CalendarIcon size={26} color={colors.primary} />
+          <View style={[styles.tourModalCard, { backgroundColor: theme.cardBg, maxWidth: 400, gap: SPACE.md }]}>
+            <View style={[styles.eventCircle, { width: 56, height: 56, borderRadius: 28, backgroundColor: theme.accentSoft }]}>
+              <CalendarIcon size={26} color={theme.accentText} />
             </View>
-
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.text, textAlign: 'center', marginBottom: 4 }}>
+            <Text style={[TYPE.h3, { color: theme.text, textAlign: 'center' }]}>
               {selectedEventPendingModal?.title}
             </Text>
-
-            <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', padding: 10, borderRadius: 10, width: '100%', marginVertical: 8 }}>
-              <Text style={{ fontSize: 12, color: theme.text, textAlign: 'center', fontWeight: 'bold' }}>
-                📅 {selectedEventPendingModal?.date} • {selectedEventPendingModal?.unit?.toUpperCase()}
+            <View style={{ backgroundColor: theme.inputBg, padding: SPACE.md, borderRadius: RADIUS.md, width: '100%' }}>
+              <Text style={[TYPE.small, { color: theme.text, textAlign: 'center', fontWeight: '600' }]}>
+                {formatDateEs(selectedEventPendingModal?.date)} • {selectedEventPendingModal?.unit?.toUpperCase()}
               </Text>
               {selectedEventPendingModal?.description ? (
-                <Text style={{ fontSize: 12, color: theme.subText, textAlign: 'center', marginTop: 4 }}>
+                <Text style={[TYPE.tiny, { color: theme.subText, textAlign: 'center', marginTop: 4 }]}>
                   {selectedEventPendingModal?.description}
                 </Text>
               ) : null}
             </View>
-
-            <View style={{ backgroundColor: isDarkMode ? '#451a03' : '#fef3c7', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#fde68a', marginVertical: 8 }}>
-              <Text style={{ fontSize: 12, color: '#b45309', fontWeight: 'bold', textAlign: 'center' }}>
-                ⏳ Aún no se ha publicado el Programa Oficial
-              </Text>
-              <Text style={{ fontSize: 12, color: '#92400e', textAlign: 'center', marginTop: 4 }}>
-                Tu equipo de scouters publicará próximamente la minuta detallada, horarios por bloques y lista de materiales para esta actividad.
-              </Text>
+            <View style={{ backgroundColor: theme.warnSoft, padding: SPACE.md, borderRadius: RADIUS.md, width: '100%', flexDirection: 'row', gap: SPACE.sm }}>
+              <Clock size={20} color={theme.warn} />
+              <View style={{ flex: 1 }}>
+                <Text style={[TYPE.small, { color: theme.warn, fontWeight: '700' }]}>Aún no se ha publicado el Programa Oficial</Text>
+                <Text style={[TYPE.tiny, { color: theme.warn, marginTop: 4 }]}>
+                  Tu equipo de scouters publicará próximamente la minuta detallada, horarios por bloques y lista de materiales para esta actividad.
+                </Text>
+              </View>
             </View>
-
-            <TouchableOpacity
-              style={{ backgroundColor: colors.primary, width: '100%', paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginTop: 10 }}
-              onPress={() => setSelectedEventPendingModal(null)}
-            >
-              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>Entendido</Text>
-            </TouchableOpacity>
+            <Btn label="Entendido" block onPress={() => setSelectedEventPendingModal(null)} />
           </View>
         </View>
       </Modal>
@@ -742,9 +691,8 @@ export default function ScoutDashboardScreen({ navigation }: any) {
       <Modal visible={showOnboarding} transparent animationType="fade">
         <View style={styles.tourModalBg}>
           <View style={[styles.tourModalCard, { backgroundColor: theme.cardBg }]}>
-            
-            <View style={styles.tourIconCircle}>
-              <SlideIcon size={44} color={colors.primary} />
+            <View style={[styles.tourIconCircle, { backgroundColor: theme.accentSoft }]}>
+              <SlideIcon size={44} color={theme.accentText} />
             </View>
 
             <Text style={[styles.tourTitle, { color: theme.text }]}>{ONBOARDING_SLIDES[currentSlide].title}</Text>
@@ -756,7 +704,8 @@ export default function ScoutDashboardScreen({ navigation }: any) {
                   key={idx}
                   style={[
                     styles.dot,
-                    currentSlide === idx && styles.dotActive
+                    { backgroundColor: theme.border },
+                    currentSlide === idx && { width: 24, backgroundColor: theme.primary }
                   ]}
                 />
               ))}
@@ -764,28 +713,13 @@ export default function ScoutDashboardScreen({ navigation }: any) {
 
             <View style={styles.tourNavRow}>
               {currentSlide > 0 ? (
-                <TouchableOpacity
-                  style={styles.tourPrevBtn}
-                  onPress={() => setCurrentSlide(prev => prev - 1)}
-                >
-                  <Text style={[styles.tourPrevText, { color: theme.subText }]}>Anterior</Text>
-                </TouchableOpacity>
+                <Btn variant="text" label="Anterior" onPress={() => setCurrentSlide(prev => prev - 1)} />
               ) : <View style={{ flex: 1 }} />}
 
               {currentSlide < ONBOARDING_SLIDES.length - 1 ? (
-                <TouchableOpacity
-                  style={styles.tourNextBtn}
-                  onPress={() => setCurrentSlide(prev => prev + 1)}
-                >
-                  <Text style={styles.tourNextText}>Siguiente</Text>
-                </TouchableOpacity>
+                <Btn label="Siguiente" onPress={() => setCurrentSlide(prev => prev + 1)} />
               ) : (
-                <TouchableOpacity
-                  style={styles.tourFinishBtn}
-                  onPress={handleFinishOnboarding}
-                >
-                  <Text style={styles.tourFinishText}>¡Empezar Aventura!</Text>
-                </TouchableOpacity>
+                <Btn label="¡Empezar Aventura!" onPress={handleFinishOnboarding} />
               )}
             </View>
 
@@ -801,94 +735,36 @@ export default function ScoutDashboardScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 16, paddingBottom: 40 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  content: { padding: SPACE.lg, paddingBottom: 40 },
+  section: { gap: SPACE.md, marginBottom: SPACE.xl },
   notifBanner: {
-    borderLeftWidth: 4,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between'
+    borderLeftWidth: 4, borderWidth: 1, borderRadius: RADIUS.md, padding: SPACE.md, marginBottom: 10,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
-  notifTitle: { fontWeight: 'bold', color: '#991B1B', fontSize: 13 },
-  notifBody: { color: '#7F1D1D', fontSize: 12, marginTop: 2 },
-  notifReason: { color: '#B91C1C', fontSize: 12, marginTop: 2 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 8 },
-  membershipCard: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 16 },
-  membershipTitle: { fontSize: 15, fontWeight: '800' },
-  membershipDetail: { fontSize: 13, marginTop: 2, lineHeight: 18, opacity: 0.95 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginLeft: 8 },
-  installCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    marginBottom: 16,
-    gap: 12
-  },
-  installCardIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  installCardTitle: {
-    fontSize: 14,
-    fontWeight: 'bold'
-  },
-  installCardSubtitle: {
-    fontSize: 12,
-    marginTop: 2
-  },
-  welcomeCard: { backgroundColor: colors.primary, borderRadius: 16, padding: 20, marginBottom: 20 },
-  welcomeTag: { color: '#E0D4F7', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 4 },
-  welcomeTagRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
-  welcomeName: { color: '#FFF', fontSize: 22, fontWeight: 'bold' },
-  welcomeGroup: { color: '#E0D4F7', fontSize: 13, marginTop: 4 },
-  seeAllText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
-  stageCard: { borderRadius: 16, padding: 16, marginBottom: 20, borderWidth: 1 },
-  stageCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  stageName: { fontSize: 18, fontWeight: 'bold' },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-  statusProgress: { backgroundColor: '#FEF3C7' },
-  statusReview: { backgroundColor: '#DBEAFE' },
-  statusApproved: { backgroundColor: '#D1FAE5' },
-  statusText: { fontSize: 12, fontWeight: 'bold', color: '#1E293B' },
-  progressBarBg: { height: 8, backgroundColor: '#E2E8F0', borderRadius: 4, overflow: 'hidden' },
-  progressBarFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 4 },
-  progressText: { fontSize: 12, marginTop: 6, fontWeight: '500' },
-  stageCardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingTop: 10, borderTopWidth: 1 },
-  actionLinkText: { color: colors.primary, fontWeight: 'bold', fontSize: 13 },
-  eventCard: { borderRadius: 12, padding: 14, marginBottom: 10, flexDirection: 'row', alignItems: 'center', borderWidth: 1 },
-  eventCircle: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  eventCircleText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
-  eventInfo: { flex: 1 },
-  eventTitle: { fontSize: 15, fontWeight: 'bold' },
-  eventDate: { fontSize: 12, marginTop: 2 },
-  eventDesc: { fontSize: 12, marginTop: 2 },
-  emptyEventsCard: { borderRadius: 12, padding: 20, alignItems: 'center', borderWidth: 1 },
-  emptyText: { fontSize: 14 },
+  notifTitle: { fontWeight: '700', fontSize: 13 },
+  notifReason: { fontSize: 12, marginTop: 2 },
+  membershipCard: { flexDirection: 'row', alignItems: 'center', gap: SPACE.md, borderWidth: 1, borderRadius: RADIUS.lg, padding: 14, marginBottom: SPACE.lg },
+  membershipTitle: { fontSize: 15, fontWeight: '700' },
+  membershipDetail: { fontSize: 13, marginTop: 2, lineHeight: 18 },
+  welcomeCard: { borderRadius: RADIUS.lg, padding: 20, marginBottom: SPACE.xl },
+  welcomeTagRow: { flexDirection: 'row', alignItems: 'center', gap: SPACE.sm, marginBottom: 6 },
+  stageCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: SPACE.md, marginBottom: SPACE.md },
+  stageCardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: SPACE.sm, marginTop: SPACE.md },
+  actionLinkText: { fontWeight: '600', fontSize: 14 },
+  rowCard: { flexDirection: 'row', alignItems: 'center', gap: SPACE.md, paddingVertical: SPACE.md, minHeight: 64 },
+  memberCard: { alignItems: 'center', gap: 4, padding: SPACE.md, minWidth: 116 },
+  presenceDot: { position: 'absolute', bottom: 0, right: 0, width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
+  eventCircle: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  eventInfo: { flex: 1, minWidth: 0 },
 
-  tourModalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  tourModalCard: { width: '92%', maxWidth: 420, borderRadius: 24, padding: 26, alignItems: 'center' },
-  tourIconCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#F3E8FF', justifyContent: 'center', alignItems: 'center', marginBottom: 18 },
-  tourTitle: { fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginBottom: 10 },
-  tourDesc: { fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
-  dotsRow: { flexDirection: 'row', marginBottom: 24 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#CBD5E1', marginHorizontal: 4 },
-  dotActive: { width: 24, backgroundColor: colors.primary },
+  tourModalBg: { flex: 1, backgroundColor: 'rgba(15,23,42,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  tourModalCard: { width: '92%', maxWidth: 420, borderRadius: RADIUS.xl, padding: SPACE.xl, alignItems: 'center' },
+  tourIconCircle: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', marginBottom: 18 },
+  tourTitle: { fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 10 },
+  tourDesc: { fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: SPACE.xl },
+  dotsRow: { flexDirection: 'row', marginBottom: SPACE.xl },
+  dot: { width: 8, height: 8, borderRadius: 4, marginHorizontal: 4 },
   tourNavRow: { flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center' },
-  tourPrevBtn: { paddingVertical: 10, paddingHorizontal: 16 },
-  tourPrevText: { fontWeight: 'bold', fontSize: 14 },
-  tourNextBtn: { backgroundColor: colors.primary, paddingVertical: 12, paddingHorizontal: 22, borderRadius: 12 },
-  tourNextText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
-  tourFinishBtn: { backgroundColor: '#4EAE49', paddingVertical: 12, paddingHorizontal: 22, borderRadius: 12 },
-  tourFinishText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 }
-});
+}));

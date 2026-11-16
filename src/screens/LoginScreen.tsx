@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import {
   View,
   Text,
@@ -315,7 +316,7 @@ export default function LoginScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   verifyNotice: { borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 16 },
   screenWrapper: {
     flex: 1,
@@ -543,4 +544,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700'
   }
-});
+}));

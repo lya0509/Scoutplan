@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -7,14 +7,15 @@ import { dataService } from '../lib/dataService';
 import { formatDateEs } from '../utils/dateLocal';
 import { supabase } from '../lib/supabaseClient';
 import { colors } from '../theme/colors';
-import { ChevronRight, PartyPopper, Clapperboard } from 'lucide-react-native';
+import { ChevronRight, PartyPopper, Clapperboard, Check, Clock, Info, Award } from 'lucide-react-native';
+import { Btn, Card, Chip, CountUp, EmptyState, Enter, Notice, ProgressBar } from '../components/ui';
+import { SPACE, TYPE } from '../theme/tokens';
 import { StageBadgeIcon, BADGE_IMAGES } from '../components/StageBadgeIcon';
 import NotificationHeaderBell from '../components/NotificationHeaderBell';
 import { getStagesForUnit } from '../data/unitTemplates';
 import { SkeletonScreen } from '../components/Skeleton';
 import { contentMax } from '../theme/layout';
 import { STAGE_COLORS } from '../theme/stageColors';
-import { buttonVariants } from '../theme/buttons';
 import { isMaxBadge } from '../utils/badgeCelebration';
 import { showBadgeCelebration } from '../lib/celebration';
 import { openCelebrationVideo, canMakeCelebrationVideo } from '../lib/celebrationVideo';
@@ -23,7 +24,6 @@ import { openCelebrationVideo, canMakeCelebrationVideo } from '../lib/celebratio
 export default function PlanProgresivoScreen({ navigation }: any) {
   const { user } = useAuth();
   const { isDarkMode, theme, primaryColor } = useTheme();
-  const btn = buttonVariants(theme, isDarkMode, primaryColor);
   const canCelebrate = Platform.OS === 'web';
   const canVideo = canCelebrate && canMakeCelebrationVideo();
   const myUnit = getStagesForUnit(user?.role === 'scout' ? user?.unit : null).unit;
@@ -93,165 +93,95 @@ export default function PlanProgresivoScreen({ navigation }: any) {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={contentMax}>
-      <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderBottomColor: theme.border }]}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ flex: 1, paddingRight: 8 }}>
-            <Text style={[styles.title, { color: theme.text }]}>Mi Plan Progresivo</Text>
-            <Text style={[styles.subtitle, { color: theme.subText }]}>{myUnit && myUnit.key !== 'clan' ? `Sigue tu camino de progresión en ${myUnit.label}.` : 'Sigue tu camino hacia la Insignia de Madera o Ciudadano Rover.'}</Text>
-          </View>
-          <NotificationHeaderBell />
+    <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={[contentMax, styles.content]}>
+      <Enter style={styles.header}>
+        <View style={{ flex: 1 }}>
+          <Text style={[TYPE.h2, { color: theme.text }]} accessibilityRole="header">Mi Plan Progresivo</Text>
+          <Text style={[TYPE.small, { color: theme.subText, marginTop: 4 }]}>{myUnit && myUnit.key !== 'clan' ? `Sigue tu camino de progresión en ${myUnit.label}.` : 'Sigue tu camino hacia la Insignia de Madera o Ciudadano Rover.'}</Text>
         </View>
-      </View>
+        <NotificationHeaderBell />
+      </Enter>
 
       {(() => {
         const tpl = getStagesForUnit(user?.role === 'scout' ? user?.unit : null);
         if (!tpl.isFallback || !tpl.unit) return null;
         return (
-          <View style={[styles.templateNotice, { backgroundColor: isDarkMode ? '#1e1b4b' : '#eff6ff', borderColor: isDarkMode ? '#3730a3' : '#bfdbfe' }]}>
-            <Text style={[styles.templateNoticeText, { color: isDarkMode ? '#c7d2fe' : '#1e3a8a' }]}>
-              La plantilla de etapas de {tpl.unit.label} ({tpl.unit.minAge}–{tpl.unit.maxAge} años) aún no está cargada. Mientras tanto ves las etapas del Clan; tu avance se conserva.
-            </Text>
-          </View>
+          <Notice Icon={Info}>
+            La plantilla de etapas de {tpl.unit.label} ({tpl.unit.minAge}–{tpl.unit.maxAge} años) aún no está cargada. Mientras tanto ves las etapas del Clan; tu avance se conserva.
+          </Notice>
         );
       })()}
 
-      <View style={styles.listContainer}>
-        {stages.map((stage) => {
-          const color        = STAGE_COLORS[stage.id] || colors.primary;
-          const isLocked     = stage.displayStatus === 'Bloqueada';
-          const isApproved   = stage.displayStatus === 'Aprobada';
-          const isInReview   = stage.displayStatus === 'En Revision';
+      {stages.length === 0 && (
+        <EmptyState Icon={Award} title="Aún no hay etapas" text="Cuando tu unidad tenga su plan cargado, aquí verás cada etapa y tu avance." />
+      )}
 
-          return (
-            <TouchableOpacity
-              key={stage.id}
-              style={[
-                styles.card,
-                { backgroundColor: theme.cardBg, borderColor: theme.border },
-                isLocked   && (isDarkMode ? styles.cardLockedDark : styles.cardLocked),
-                isApproved && (isDarkMode ? styles.cardApprovedDark : styles.cardApproved),
-                isInReview && (isDarkMode ? styles.cardInReviewDark : styles.cardInReview),
-              ]}
+      {stages.map((stage, index) => {
+        const isLocked     = stage.displayStatus === 'Bloqueada';
+        const isApproved   = stage.displayStatus === 'Aprobada';
+        const isInReview   = stage.displayStatus === 'En Revision';
+        const isCurrent    = !isLocked && !isApproved && !isInReview;
+        const stageColor   = STAGE_COLORS[stage.id] || theme.primary;
+
+        return (
+          <Enter key={stage.id} index={index + 1}>
+            <Card
+              active={isCurrent}
+              muted={isLocked}
               onPress={() => navigation.navigate('StageDetail', { stageId: stage.id })}
-              activeOpacity={0.7}
+              accessibilityLabel={`${stage.name}: ${isApproved ? 'aprobada' : isInReview ? 'en revisión' : isLocked ? 'bloqueada' : `${stage.progress} % completado`}`}
+              style={{ gap: SPACE.md }}
             >
               <View style={styles.cardHeader}>
-                <View style={styles.badgeWrapper}>
-                  <StageBadgeIcon stageId={stage.id} size={46} isLocked={isLocked} />
-                </View>
-
-                <View style={{ flex: 1, marginLeft: 15 }}>
-                  <Text style={[styles.stageName, { color: theme.text }, isLocked && { color: isDarkMode ? '#a1a1aa' : '#475569' }]}>
-                    {stage.name}
-                  </Text>
-                  <Text style={[styles.statusLabel, { color: theme.subText },
-                    isApproved && { color: '#22c55e', fontWeight: 'bold' },
-                    isInReview && { color: '#f59e0b', fontWeight: 'bold' },
-                    isLocked   && { color: isDarkMode ? '#94a3b8' : '#64748b' },
-                  ]}>
-                    {isApproved ? '✓ Aprobada • Toca para previsualizar'
-                     : isInReview ? '⏳ En Revisión • Toca para previsualizar'
-                     : isLocked  ? '🔒 Bloqueada • Toca para previsualizar'
-                     : `${stage.progress}% completado`}
+                <StageBadgeIcon stageId={stage.id} size={48} isLocked={isLocked} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={[TYPE.h3, { color: isLocked ? theme.subText : theme.text }]} numberOfLines={1}>{stage.name}</Text>
+                  <Text style={[TYPE.tiny, { color: theme.subText, marginTop: 2 }]}>
+                    {isApproved ? (stage.approvedAt ? `Aprobada el ${formatDateEs(stage.approvedAt.slice(0, 10))}` : 'Etapa completada y aprobada')
+                     : isInReview ? 'Tu dirigente la está revisando'
+                     : isLocked  ? 'Bloqueada · toca para ver los requisitos'
+                     : stage.total ? `${stage.completed} de ${stage.total} requisitos · etapa actual` : `${stage.progress}% completado`}
                   </Text>
                 </View>
-
-                {!isLocked && !isApproved && !isInReview && (
-                  <Text style={[styles.progressText, { color }]}>{stage.progress}%</Text>
-                )}
-                <ChevronRight size={18} color={isLocked ? (isDarkMode ? '#64748b' : '#94a3b8') : color} />
+                {isApproved && <Chip label="Aprobada" tone="ok" Icon={Check} />}
+                {isInReview && <Chip label="En revisión" tone="warn" Icon={Clock} />}
+                {isCurrent && <CountUp value={stage.progress} suffix=" %" style={[TYPE.h3, { color: theme.accentText }]} />}
+                {!isApproved && !isInReview && <ChevronRight size={18} color={isLocked ? theme.subText : theme.accentText} />}
               </View>
 
-              {!isLocked && !isApproved && (
-                <View style={[styles.progressBarBackground, { backgroundColor: isDarkMode ? '#27272a' : '#eaebed' }]}>
-                  <View style={[
-                    styles.progressBarFill,
-                    { width: `${stage.progress}%`, backgroundColor: isInReview ? '#f59e0b' : color }
-                  ]} />
-                </View>
-              )}
-
-              {isApproved && (
-                <View style={[styles.approvedBanner, isDarkMode && { backgroundColor: '#064e3b' }]}>
-                  <Text style={[styles.approvedBannerText, isDarkMode && { color: '#6ee7b7' }]}>🏅 {stage.approvedAt ? `Aprobada el ${formatDateEs(stage.approvedAt.slice(0, 10))}` : 'Etapa completada y aprobada'} • Toca para ver lo que registraste</Text>
-                </View>
-              )}
+              {(isCurrent || isInReview) && <ProgressBar value={stage.progress} />}
 
               {isApproved && canCelebrate && (
                 <View style={styles.celebrateRow}>
-                  <TouchableOpacity
-                    style={[styles.celebrateBtn, btn.secondary]}
+                  <Btn
+                    variant="secondary" small label="Ver celebración" Icon={PartyPopper} iconColor={stageColor}
                     onPress={() => { showBadgeCelebration(celebrationFor(stage)); }}
-                    accessibilityRole="button"
                     accessibilityLabel={`Ver la celebración de ${stage.name}`}
-                  >
-                    <PartyPopper size={16} color={color} />
-                    <Text style={[styles.celebrateBtnText, btn.secondaryText]}>Ver celebración</Text>
-                  </TouchableOpacity>
+                    style={styles.celebrateBtn}
+                  />
                   {canVideo && (
-                    <TouchableOpacity
-                      style={[styles.celebrateBtn, btn.secondary]}
+                    <Btn
+                      variant="secondary" small label="Descargar video" Icon={Clapperboard} iconColor={stageColor}
                       onPress={() => openCelebrationVideo(celebrationFor(stage))}
-                      accessibilityRole="button"
                       accessibilityLabel={`Descargar el video de ${stage.name}`}
-                    >
-                      <Clapperboard size={16} color={color} />
-                      <Text style={[styles.celebrateBtnText, btn.secondaryText]}>Descargar video</Text>
-                    </TouchableOpacity>
+                      style={styles.celebrateBtn}
+                    />
                   )}
                 </View>
               )}
-
-              {isLocked && (
-                <View style={[styles.approvedBanner, isDarkMode ? { backgroundColor: '#1e293b' } : { backgroundColor: '#f1f5f9' }]}>
-                  <Text style={[styles.approvedBannerText, isDarkMode ? { color: '#94a3b8' } : { color: '#64748b' }]}>🔒 Etapa bloqueada • Toca para consultar el contenido y requisitos</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+            </Card>
+          </Enter>
+        );
+      })}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  templateNotice: { marginHorizontal: 16, marginTop: 14, borderWidth: 1, borderRadius: 12, padding: 12 },
-  templateNoticeText: { fontSize: 13, lineHeight: 19 },
   container: { flex: 1 },
-  header: { padding: 20, borderBottomWidth: 1 },
-  title: { fontSize: 24, fontWeight: 'bold' },
-  subtitle: { fontSize: 14, marginTop: 5 },
-  listContainer: { padding: 16 },
-
-  card: {
-    borderRadius: 15, padding: 20,
-    marginBottom: 14, borderWidth: 1, elevation: 2,
-    shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 5, shadowOffset: { width: 0, height: 2 },
-  },
-  cardLocked:   { backgroundColor: '#fafafa', borderColor: '#eee', elevation: 0 },
-  cardLockedDark: { backgroundColor: '#0d0d0e', borderColor: '#1f1f22', elevation: 0 },
-  cardApproved: { backgroundColor: '#f0fdf4', borderWidth: 1.5, borderColor: '#86efac' },
-  cardApprovedDark: { backgroundColor: '#022c22', borderWidth: 1.5, borderColor: '#065f46' },
-  cardInReview: { backgroundColor: '#fffbeb', borderWidth: 1.5, borderColor: '#fcd34d' },
-  cardInReviewDark: { backgroundColor: '#451a03', borderWidth: 1.5, borderColor: '#b45309' },
-
-  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  celebrateRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
-  celebrateBtn: { flexGrow: 1, flexBasis: 140, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10 },
-  celebrateBtnText: { fontSize: 13, fontWeight: '700' },
-  badgeWrapper: { alignItems: 'center', justifyContent: 'center' },
-  stageName: { fontSize: 17, fontWeight: 'bold' },
-  statusLabel: { fontSize: 13, marginTop: 2 },
-  progressText: { fontSize: 16, fontWeight: 'bold', marginRight: 6 },
-
-  progressBarBackground: { height: 8, borderRadius: 4, overflow: 'hidden' },
-  progressBarFill: { height: '100%', borderRadius: 4 },
-
-  approvedBanner: {
-    backgroundColor: '#dcfce7', borderRadius: 8, padding: 10, marginTop: 4,
-    alignItems: 'center',
-  },
-  approvedBannerText: { color: '#16a34a', fontSize: 13, fontWeight: '600' },
+  content: { padding: SPACE.lg, gap: SPACE.md, paddingBottom: 40 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: SPACE.sm, paddingBottom: SPACE.xs },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACE.md },
+  celebrateRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm },
+  celebrateBtn: { flexGrow: 1, flexBasis: 140 },
 });

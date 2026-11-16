@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import {
   View,
   Text,
@@ -547,7 +548,7 @@ export default function HelpFloatingFAB() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   fabContainer: { position: 'absolute', bottom: 20, right: 20, alignItems: 'flex-end', zIndex: 999 },
   mainFab: {
     width: 56,
@@ -591,4 +592,4 @@ const styles = StyleSheet.create({
 
   sendReportBtn: { backgroundColor: '#ef4444', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 14, borderRadius: 12 },
   sendReportBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 }
-});
+}));

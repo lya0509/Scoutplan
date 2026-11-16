@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Modal, FlatList, ActivityIndicator
@@ -727,7 +728,7 @@ export default function ProfileScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   headerCard: {
@@ -764,9 +765,9 @@ const styles = StyleSheet.create({
     position: 'absolute', top: 0, bottom: 0, left: 0, right: 0,
     backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center',
   },
-});
+}));
 
-const mStyles = StyleSheet.create({
+const mStyles = liveStyles(() => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: 'white', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 36, paddingTop: 8 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
@@ -778,4 +779,4 @@ const mStyles = StyleSheet.create({
   wheels: { flexDirection: 'row', paddingHorizontal: 20, backgroundColor: '#fafafa', marginHorizontal: 16, borderRadius: 16 },
   sep: { width: 1, backgroundColor: '#eee', marginVertical: 8 },
   preview: { textAlign: 'center', paddingTop: 14, color: colors.primary, fontWeight: 'bold', fontSize: 15 },
-});
+}));

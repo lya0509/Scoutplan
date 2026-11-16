@@ -319,8 +319,9 @@ const FLOWS = [
         'exp_cip_distrital', 'exp_cip_regional', 'exp_cip_nacional', 'exp_cursos', 'exp_noches'];
       for (const id of ids) db.requirement_progress.push({ id: 'rp_' + id, scout_id: PROFILES.scout.id, stage_id: 'expedicionario', requirement_id: id, completed: true, updated_at: new Date().toISOString() });
       await go(page, 'etapa/expedicionario');
-      await click(page, 'ENVIAR ETAPA A REVISIÓN', { exact: true, wait: 800 });
-      await click(page, 'Enviar', { exact: true, wait: 2500 });
+      await click(page, 'Enviar etapa a revisión', { exact: true, wait: 800 });
+      await click(page, 'Enviar a revisión', { exact: true, wait: 2500 });
+      await see(page, '¡Etapa enviada!', 'No apareció la confirmación de envío');
       must(db.stage_progress.find(r => r.stage_id === 'expedicionario').status === 'En Revision', `La etapa no quedó en revisión (avisos: ${dialogs.slice(-2).join(' | ')})`);
     },
   },

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import {
   View,
   Text,
@@ -559,7 +560,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
@@ -752,4 +753,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   }
-});
+}));

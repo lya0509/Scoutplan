@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { colors } from '../theme/colors';
 import { Search, Moon, Sun, Bookmark, ArrowLeft } from 'lucide-react-native';
@@ -223,7 +224,7 @@ export default function ActivityCenterScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 18, borderBottomWidth: 1 },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
@@ -280,4 +281,4 @@ const styles = StyleSheet.create({
   emptyCard: { borderRadius: 14, padding: 30, alignItems: 'center', borderWidth: 1, marginTop: 20 },
   emptyTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 6 },
   emptyDesc: { fontSize: 13, textAlign: 'center' }
-});
+}));

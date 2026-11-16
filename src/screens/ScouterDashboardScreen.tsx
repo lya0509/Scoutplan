@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import {
   View,
   Text,
@@ -1101,7 +1102,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
   scouterQuickBtnGrid: { flexGrow: 1, flexBasis: '22%', justifyContent: 'center' },
   scouterQuickBtn: {
@@ -1152,9 +1153,9 @@ const styles = StyleSheet.create({
     gap: 8, paddingVertical: 16, borderTopWidth: 1,
   },
   logoutText: { color: colors.error, fontSize: 15, fontWeight: 'bold' },
-});
+}));
 
-const panelStyles = StyleSheet.create({
+const panelStyles = liveStyles(() => StyleSheet.create({
   wrapper: {
     borderRadius: 16, marginBottom: 14,
     shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8,
@@ -1197,9 +1198,9 @@ const panelStyles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', marginLeft: 8,
   },
   trashBtnConfirm: { backgroundColor: '#e53935' },
-});
+}));
 
-const modalStyles = StyleSheet.create({
+const modalStyles = liveStyles(() => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '85%' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1 },
@@ -1211,4 +1212,4 @@ const modalStyles = StyleSheet.create({
   scopeChipText: { fontSize: 12 },
   saveBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginTop: 24, marginBottom: 30 },
   saveBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 }
-});
+}));

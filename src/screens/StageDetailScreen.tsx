@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import {
   View,
   Text,
@@ -13,7 +14,7 @@ import {
   Linking
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { CheckSquare, Square, Lock, Send, Flag, X, CheckCircle, Award, Sparkles, Plus, Trash2, LayoutGrid, List, ArrowLeft, ExternalLink } from 'lucide-react-native';
+import { CheckSquare, Square, Lock, Send, Clock, Check, ChevronRight, CalendarDays, Undo2, WifiOff, Flag, X, CheckCircle, Award, Sparkles, Plus, Trash2, LayoutGrid, List, ArrowLeft, ExternalLink } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -33,6 +34,9 @@ import { formatDateEs, humanDuration } from '../utils/dateLocal';
 import { SecureImage } from '../components/SecureImage';
 import CipStageModal from '../components/CipStageModal';
 import { SkeletonScreen } from '../components/Skeleton';
+import { Btn, Card, Chip, CheckMark, CountUp, Enter, Notice, Pop, Press, ProgressBar } from '../components/ui';
+import { RADIUS, SPACE, TYPE } from '../theme/tokens';
+import { useNotifications } from '../context/NotificationContext';
 
 export default function StageDetailScreen({ route, navigation }: any) {
   const { stageId } = route.params || { stageId: 'precursor' };
@@ -45,6 +49,10 @@ export default function StageDetailScreen({ route, navigation }: any) {
   const [checks, setChecks]   = useState<Record<string, boolean>>({});
   const [status, setStatus]   = useState<string>('En Progreso');
   const [confirming, setConfirming] = useState(false);
+  // Hoja de envío: mensaje opcional para el dirigente; y pantalla de confirmación al terminar
+  const [sendNote, setSendNote] = useState('');
+  const [sent, setSent] = useState<null | 'ok' | 'queued'>(null);
+  const { notifications: allNotifs } = useNotifications();
 
   // Modal para seleccionar Eventos CIP (Ciclos Institucionales de Programa)
   const [showCipModal, setShowCipModal] = useState(false);
@@ -307,7 +315,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
     if (!checkProfileCompletion(user, navigation)) return;
 
     if (isBlocked) {
-      showAlert('🔒 Etapa Bloqueada', 'Debes completar y tener aprobada la etapa anterior para poder interactuar con los requisitos de esta etapa.');
+      showAlert('Etapa bloqueada', 'Debes completar y tener aprobada la etapa anterior para poder interactuar con los requisitos de esta etapa.');
       return;
     }
 
@@ -340,7 +348,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
         let sels: any[] = [];
         try { sels = user ? await dataService.getCipSelections(user.id, stageId, req.id) : []; } catch {}
         showAlert(
-          `🚩 ${req.text}`,
+          `${req.text}`,
           sels.length
             ? sels.map((c: any) => `• ${c.title}${c.date ? ` (${formatDateEs(String(c.date).slice(0, 10))})` : ''}`).join('\n')
             : 'Convalidado al aprobar la etapa (no se registró cuáles actividades fueron).'
@@ -350,7 +358,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
       if (req.type === 'cursos' || req.type === 'especialidad') {
         const link = linkedCertMap[req.id];
         showAlert(
-          `🏅 ${req.text}`,
+          `${req.text}`,
           link?.certTitle
             ? `Acreditado con: ${link.certTitle}${link.level ? ` (${link.level})` : ''}`
             : 'Convalidado al aprobar la etapa (sin certificado vinculado).'
@@ -358,7 +366,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
         return;
       }
       showAlert(
-        status === 'Aprobada' ? '✅ Etapa aprobada' : '⏳ En revisión',
+        status === 'Aprobada' ? 'Etapa aprobada' : 'En revisión',
         `${req.text}\n\n${checks[req.id] ? 'Cumplido.' : 'No marcado.'}${status === 'En Revision' ? ' La etapa está en revisión y no se puede modificar.' : ''}`
       );
       return;
@@ -429,23 +437,21 @@ export default function StageDetailScreen({ route, navigation }: any) {
     if (!user) return;
     if (!checkProfileCompletion(user, navigation)) return;
     setConfirming(false);
+    const note = sendNote.trim();
     // El aviso a los dirigentes viaja con el envío: sin red, ambos esperan en la cola
     const res = await dataService.submitStageForReview(user.id, stageId, {
       senderId: user.id,
       groupName: user.group_name || undefined,
       unit: user.unit || undefined,
       receiverRole: 'scouter',
-      title: '⚜️ Ficha Enviada a Revisión',
-      message: `${user.name || 'Scout'} ha enviado la etapa "${stageTemplate?.title || 'Etapa'}" a revisión.`,
+      title: 'Ficha Enviada a Revisión',
+      message: `${user.name || 'Scout'} ha enviado la etapa "${stageTemplate?.title || 'Etapa'}" a revisión.${note ? ` Mensaje: ${note}` : ''}`,
       type: 'badge'
     });
     setStatus('En Revision');
-
-    if (res?.queued) {
-      showAlert('¡Ficha lista para enviar!', 'No hay conexión: tu etapa quedó marcada como "En revisión" en el teléfono y le llegará a tu dirigente cuando tengas internet.');
-      return;
-    }
-    showAlert('¡Ficha Enviada!', 'Tu etapa ha sido enviada a revisión por tu dirigente.');
+    setSendNote('');
+    // Pantalla de confirmación (antes era una ventana de aviso del navegador)
+    setSent(res?.queued ? 'queued' : 'ok');
   };
 
   if (loading || !stageTemplate) {
@@ -455,56 +461,135 @@ export default function StageDetailScreen({ route, navigation }: any) {
   }
 
   const progress = isBlocked ? 0 : calculateProgress();
+  const totalReqs = stageTemplate.requirements.length;
+  const doneReqs = stageTemplate.requirements.filter(r => checks[r.id]).length;
+  const missing = totalReqs - doneReqs;
+  const stageIdx = stagesData.findIndex(s => s.id === stageId);
+  const nextStage = stageIdx >= 0 ? stagesData[stageIdx + 1] : undefined;
+
+  // Etapa devuelta por el dirigente: el último aviso «Devuelta» que nombra esta etapa
+  const returnedNotif = status === 'En Progreso'
+    ? allNotifs.find(n => /devuelt/i.test(n.title || '') && String(n.message || '').includes(`"${stageTemplate.title}"`))
+    : undefined;
+  const returnedReason = returnedNotif
+    ? (String(returnedNotif.message || '').split(`"${stageTemplate.title}":`)[1] || '').trim()
+    : '';
+
+  const statusChip = status === 'Aprobada' ? { label: 'Aprobada', tone: 'ok' as const, Icon: Check }
+    : status === 'En Revision' ? { label: 'En revisión', tone: 'warn' as const, Icon: Clock }
+    : status === 'Bloqueada' ? { label: 'Bloqueada', tone: 'neutral' as const, Icon: Lock }
+    : returnedNotif ? { label: 'Devuelta', tone: 'err' as const, Icon: Undo2 }
+    : progress === 100 ? { label: 'Completa', tone: 'accent' as const, Icon: undefined }
+    : { label: 'En progreso', tone: 'accent' as const, Icon: undefined };
+
+  /** Línea de ayuda bajo cada requisito: qué hay registrado y qué pasa al tocarlo. */
+  const hintFor = (req: any, isChecked: boolean): { text: string; done: boolean } | null => {
+    const t = req.text.toLowerCase();
+    if (req.type === 'basica' || req.type === 'opcional') {
+      return { text: isChecked ? 'Completo · toca para ver el catálogo' : 'Toca para abrir el catálogo', done: isChecked };
+    }
+    if (req.type === 'cursos' || req.type === 'especialidad') {
+      const link = linkedCertMap[req.id];
+      if (link?.certTitle) return { text: `Acreditado: ${link.certTitle}`, done: true };
+      return isChecked
+        ? { text: 'Convalidado · toca para vincular el certificado', done: true }
+        : { text: 'Toca para vincular una especialidad o certificado', done: false };
+    }
+    if (req.type === 'ciclos' || t.includes('ciclo')) {
+      const need = req.requiredCount || 1;
+      const have = (cipCountMap[req.id] || 0) > 0 ? cipCountMap[req.id] : isChecked ? need : 0;
+      return { text: `${have} de ${need} CIP acreditados · toca para ver o pedir uno anterior`, done: have >= need };
+    }
+    if (req.type === 'vida_grupo' || t.includes('peregrinaje') || t.includes('campamento') || t.includes('proyecto de servicio') || t.includes('vida de grupo')) {
+      const need = req.requiredCount || 1;
+      const have = vidaGrupoCountMap[req.id] || 0;
+      if (have === 0 && isChecked) return { text: 'Convalidado en etapa aprobada', done: true };
+      return { text: `${have} de ${need} registros guardados · toca para ver o agregar`, done: have >= need };
+    }
+    if (req.type === 'personales') {
+      const need = req.requiredCount || 3;
+      const have = personalesCountMap[req.id] || 0;
+      if (have === 0 && isChecked) return { text: 'Marcado · toca para anotar cuáles fueron', done: true };
+      return { text: `${have} de ${need} actividades registradas · toca para ver o agregar`, done: have >= need };
+    }
+    if (req.type === 'aire_libre' || t.includes('noche')) {
+      const need = req.requiredCount || 10;
+      const have = (nochesCountMap[req.id] || 0) > 0 ? nochesCountMap[req.id] : isChecked ? need : 0;
+      return { text: `${have} de ${need} noches registradas · toca para ver o agregar fechas`, done: have >= need };
+    }
+    return null;
+  };
+
+  // ── Confirmación después de enviar ──────────────────────────────────────────────────────
+  if (sent) {
+    return (
+      <ScrollView style={{ flex: 1, backgroundColor: theme.bg }} contentContainerStyle={styles.sentWrap}>
+        <Pop trigger={sent}>
+          <Enter style={[styles.sentMark, { backgroundColor: theme.accentSoft }]}>
+            <Check size={56} color={theme.accentText} strokeWidth={3} />
+          </Enter>
+        </Pop>
+        <Enter index={2} style={{ alignItems: 'center', gap: SPACE.sm }}>
+          <Text style={[TYPE.h1, { color: theme.text, textAlign: 'center' }]} accessibilityRole="header">¡Etapa enviada!</Text>
+          <Text style={[TYPE.body, { color: theme.subText, textAlign: 'center' }]}>Tu etapa {stageTemplate.title} ya está en manos de tu dirigente.</Text>
+        </Enter>
+
+        <Enter index={3} style={{ alignSelf: 'stretch' }}>
+          <Card style={{ gap: SPACE.lg }}>
+            <Text style={[TYPE.over, { color: theme.subText }]}>Qué sigue</Text>
+            <View style={styles.stepRow}>
+              <CheckMark checked />
+              <View style={{ flex: 1 }}>
+                <Text style={[TYPE.small, { color: theme.text, fontWeight: '600' }]}>Enviada</Text>
+                <Text style={[TYPE.tiny, { color: theme.subText }]}>Hoy</Text>
+              </View>
+            </View>
+            <View style={styles.stepRow}>
+              <View style={[styles.stepIcon, { backgroundColor: theme.accentSoft }]}><Clock size={14} color={theme.accentText} /></View>
+              <View style={{ flex: 1 }}>
+                <Text style={[TYPE.small, { color: theme.text, fontWeight: '600' }]}>Tu dirigente la revisa</Text>
+                <Text style={[TYPE.tiny, { color: theme.subText }]}>Te llegará un aviso cuando responda.</Text>
+              </View>
+            </View>
+            <View style={styles.stepRow}>
+              <CheckMark locked />
+              <View style={{ flex: 1 }}>
+                <Text style={[TYPE.small, { color: theme.subText, fontWeight: '600' }]}>Insignia y celebración</Text>
+                <Text style={[TYPE.tiny, { color: theme.subText }]}>{nextStage ? `Al aprobarse se desbloquea ${nextStage.title}.` : 'Al aprobarse recibes tu insignia.'}</Text>
+              </View>
+            </View>
+          </Card>
+        </Enter>
+
+        {sent === 'queued' && (
+          <Enter index={4} style={{ alignSelf: 'stretch' }}>
+            <Notice tone="warn" Icon={WifiOff}>No hay conexión: quedó guardada en el teléfono y le llegará a tu dirigente cuando tengas internet.</Notice>
+          </Enter>
+        )}
+
+        <Enter index={5} style={{ alignSelf: 'stretch', gap: SPACE.sm, marginTop: SPACE.sm }}>
+          <Btn label="Volver a mi plan" block onPress={() => { setSent(null); navigateBackOrHome(navigation, user?.role); }} />
+          <Btn variant="text" label="Ver la etapa" block onPress={() => setSent(null)} />
+        </Enter>
+      </ScrollView>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       {/* CABECERA */}
-      <View style={[styles.header, { backgroundColor: isDarkMode ? '#121214' : 'white', borderColor: theme.border }]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-          <TouchableOpacity
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingVertical: 5,
-              paddingHorizontal: 10,
-              borderRadius: 8,
-              backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
-              marginRight: 10,
-              gap: 4
-            }}
-            onPress={() => navigateBackOrHome(navigation, user?.role)}
-          >
-            <ArrowLeft size={16} color={theme.text} />
-            <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>
-          </TouchableOpacity>
-          <StageBadgeIcon stageId={stageId} size={32} isLocked={isBlocked} />
-          <View style={{ marginLeft: 10, flex: 1 }}>
-            <Text style={[styles.title, { color: theme.text }]}>{stageTemplate.title}</Text>
-            <Text style={[styles.subtitle, { color: theme.subText }]}>{stageTemplate.estimatedTime}</Text>
+      <View style={[styles.header, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+        <View style={styles.headerRow}>
+          <Press onPress={() => navigateBackOrHome(navigation, user?.role)} accessibilityLabel="Volver" style={[styles.backBtn, { backgroundColor: theme.inputBg }]} scaleTo={0.94}>
+            <ArrowLeft size={18} color={theme.text} />
+            <Text style={[TYPE.tiny, { fontWeight: '700', color: theme.text }]}>Volver</Text>
+          </Press>
+          <StageBadgeIcon stageId={stageId} size={40} isLocked={isBlocked} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[TYPE.h3, { color: theme.text }]} numberOfLines={1} accessibilityRole="header">{stageTemplate.title}</Text>
+            <Text style={[TYPE.tiny, { color: theme.subText }]}>{stageTemplate.estimatedTime}</Text>
           </View>
-          <View style={[styles.statusBadge, {
-            backgroundColor: status === 'Aprobada'
-              ? 'rgba(34, 197, 94, 0.15)'
-              : status === 'En Revision'
-              ? 'rgba(234, 179, 8, 0.15)'
-              : status === 'Bloqueada'
-              ? (isDarkMode ? '#27272a' : '#f1f5f9')
-              : 'rgba(99, 102, 241, 0.15)',
-            borderWidth: status === 'Bloqueada' ? 1 : 0,
-            borderColor: isDarkMode ? '#3f3f46' : '#cbd5e1'
-          }]}>
-            <Text style={[styles.statusText, {
-              color: status === 'Aprobada'
-                ? '#16a34a'
-                : status === 'En Revision'
-                ? '#ca8a04'
-                : status === 'Bloqueada'
-                ? (isDarkMode ? '#94a3b8' : '#64748b')
-                : (isDarkMode ? theme.accentText : colors.primary)
-            }]}>
-              {status === 'Bloqueada' ? '🔒 Bloqueada' : status}
-            </Text>
-          </View>
+          <Chip label={statusChip.label} tone={statusChip.tone} Icon={statusChip.Icon} />
         </View>
 
         {/* LÍNEA DE TIEMPO: cuándo empezó (aprobación de la etapa anterior) y cuándo se aprobó */}
@@ -524,210 +609,114 @@ export default function StageDetailScreen({ route, navigation }: any) {
           }
           if (!text) return null;
           return (
-            <Text style={{ fontSize: 12, color: theme.subText, marginTop: 6 }} accessibilityLabel={text}>
-              🗓️ {text}
-            </Text>
+            <View style={styles.timeline} accessibilityLabel={text}>
+              <CalendarDays size={14} color={theme.subText} />
+              <Text style={[TYPE.tiny, { color: theme.subText, flex: 1 }]}>{text}</Text>
+            </View>
           );
         })()}
 
         {/* BARRA DE PROGRESO */}
         <View style={styles.progressSection}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: theme.subText }}>
-              {isBlocked ? 'Progreso (Etapa bloqueada)' : 'Progreso de la Etapa'}
-            </Text>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', color: isBlocked ? (isDarkMode ? '#94a3b8' : '#64748b') : colors.primary }}>
-              {progress}%
-            </Text>
-          </View>
-          <View style={[styles.progressBarBg, { backgroundColor: theme.inputBg }]}>
-            <View style={[styles.progressBarFill, { width: `${progress}%`, backgroundColor: isBlocked ? (isDarkMode ? '#52525b' : '#cbd5e1') : colors.primary }]} />
-          </View>
+          <ProgressBar value={progress} style={{ flex: 1 }} />
+          <CountUp value={progress} suffix=" %" style={[TYPE.small, { fontWeight: '700', color: isBlocked ? theme.subText : theme.accentText, minWidth: 48, textAlign: 'right' }]} />
         </View>
+        <Text style={[TYPE.tiny, { color: theme.subText, marginTop: 4 }]}>
+          {isBlocked ? 'Etapa bloqueada: solo consulta' : `${doneReqs} de ${totalReqs} requisitos cumplidos`}
+        </Text>
       </View>
 
       {/* LISTA DE REQUISITOS */}
-      <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 100 }}>
-        {stageTemplate.requirements.map(req => {
+      <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 24, gap: SPACE.sm }}>
+        {/* Etapa devuelta: qué dijo el dirigente y qué corregir */}
+        {returnedNotif && (
+          <Enter>
+            <View style={[styles.returned, { backgroundColor: theme.errSoft, borderColor: theme.errLine }]} accessibilityRole="alert">
+              <Undo2 size={20} color={theme.err} />
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={[TYPE.small, { color: theme.err, fontWeight: '700' }]}>Tu dirigente devolvió esta etapa</Text>
+                <Text style={[TYPE.small, { color: theme.text }]}>
+                  {returnedReason || 'Hay requisitos pendientes por completar.'}
+                </Text>
+                <Text style={[TYPE.tiny, { color: theme.subText }]}>
+                  {missing > 0 ? `Completa ${missing === 1 ? 'el requisito que falta' : `los ${missing} requisitos que faltan`} y vuelve a enviarla.` : 'Revisa lo que te indicó y vuelve a enviarla.'}
+                </Text>
+              </View>
+            </View>
+          </Enter>
+        )}
+
+        {stageTemplate.requirements.map((req, index) => {
           const isChecked = !!checks[req.id];
-          const isVidaGrupo = req.type === 'vida_grupo' || req.text.toLowerCase().includes('peregrinaje') || req.text.toLowerCase().includes('campamento') || req.text.toLowerCase().includes('proyecto de servicio') || req.text.toLowerCase().includes('vida de grupo');
-          const isCiclos = req.type === 'ciclos' || req.text.toLowerCase().includes('ciclo');
+          const hint = hintFor(req, isChecked);
+          const wasReturned = !!returnedNotif && !isChecked;
 
           return (
-            <TouchableOpacity
-              key={req.id}
-              style={[
-                styles.reqRow,
-                { backgroundColor: isDarkMode ? '#18181b' : 'white', borderColor: theme.border },
-                // Marcado: en modo oscuro, fondo apenas teñido y borde suave (antes un azul-morado intenso que «brillaba»)
-                isChecked && (isDarkMode
-                  ? { borderColor: '#3f3550', backgroundColor: '#1c1824' }
-                  : { borderColor: colors.primary, backgroundColor: 'rgba(99, 102, 241, 0.04)' })
-              ]}
-              onPress={() => handleRequirementClick(req)}
-              activeOpacity={0.7}
-            >
-              <View style={{ marginRight: 12, marginTop: 2 }}>
-                {isChecked ? (
-                  <CheckSquare color={isDarkMode ? theme.accentText : colors.primary} size={22} />
-                ) : (
-                  <Square color={isDarkMode ? '#52525b' : '#cbd5e1'} size={22} />
-                )}
-              </View>
-
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.reqText, { color: theme.text }, isChecked && styles.reqTextChecked, isChecked && isDarkMode && { color: theme.text }]}>
-                  {req.text}
-                </Text>
-
-                {(req.type === 'basica' || req.type === 'opcional') && (
-                  <Text style={[styles.reqBadge, isDarkMode && { color: theme.accentText }]}>Toca para abrir el catálogo</Text>
-                )}
-
-                {(req.type === 'cursos' || req.type === 'especialidad') && (
-                  <View style={{ marginTop: 4 }}>
-                    {linkedCertMap[req.id]?.certTitle ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Sparkles size={12} color="#10b981" style={{ marginRight: 4 }} />
-                        <Text style={{ fontSize: 12, color: '#10b981', fontWeight: 'bold' }}>
-                          Acreditado: {linkedCertMap[req.id].certTitle}
-                        </Text>
-                      </View>
-                    ) : isChecked ? (
-                      <Text style={[styles.reqBadge, { color: isDarkMode ? theme.accentText : colors.primary, fontWeight: 'bold' }]}>
-                        ✓ Requisito convalidado en etapa aprobada (Toca para vincular certificado)
-                      </Text>
-                    ) : (
-                      <Text style={[styles.reqBadge, isDarkMode && { color: theme.accentText }]}>Toca para vincular especialidad / certificado</Text>
-                    )}
-                  </View>
-                )}
-
-                {isCiclos && (
-                  <View style={{ marginTop: 4 }}>
-                    <Text style={[styles.reqBadge, { color: isDarkMode ? theme.accentText : colors.primary, fontWeight: 'bold' }]}>
-                      🚩 {(cipCountMap[req.id] || 0) > 0
-                        ? `${cipCountMap[req.id]} / ${req.requiredCount || 1} CIP acreditados`
-                        : isChecked
-                        ? `${req.requiredCount || 1} / ${req.requiredCount || 1} CIP acreditados`
-                        : `0 / ${req.requiredCount || 1} CIP acreditados`} (Toca para ver o pedir uno anterior)
+            <Enter key={req.id} index={Math.min(index, 6)}>
+              <Press
+                onPress={() => handleRequirementClick(req)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: isChecked }}
+                accessibilityLabel={`${req.text}${hint ? `. ${hint.text}` : ''}`}
+                scaleTo={0.985}
+                hoverStyle={{ borderColor: theme.primary }}
+                style={[
+                  styles.reqRow,
+                  { backgroundColor: theme.cardBg, borderColor: wasReturned ? theme.errLine : theme.border },
+                ]}
+              >
+                <CheckMark checked={isChecked} locked={isBlocked} error={wasReturned} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={[TYPE.small, { color: isBlocked ? theme.subText : theme.text, fontWeight: '600' }]}>
+                    {req.text}
+                  </Text>
+                  {hint && (
+                    <Text style={[TYPE.tiny, { color: theme.subText, marginTop: 2 }]}>
+                      {hint.text}
                     </Text>
-                  </View>
-                )}
-
-                {isVidaGrupo && (
-                  <View style={{ marginTop: 4 }}>
-                    <Text style={[styles.reqBadge, { color: isDarkMode ? theme.accentText : '#8b5cf6', fontWeight: 'bold' }]}>
-                      🏕️ {(vidaGrupoCountMap[req.id] || 0) > 0
-                        ? `${vidaGrupoCountMap[req.id]} / ${req.requiredCount || 1} registros guardados`
-                        : isChecked
-                        ? `${req.requiredCount || 1} / ${req.requiredCount || 1} convalidado en etapa aprobada`
-                        : `0 / ${req.requiredCount || 1} registros guardados`} (Toca para ver o agregar)
-                    </Text>
-                  </View>
-                )}
-
-                {req.type === 'personales' && (
-                  <View style={{ marginTop: 4 }}>
-                    <Text style={[styles.reqBadge, { color: isDarkMode ? theme.accentText : '#d97706', fontWeight: 'bold' }]}>
-                      💡 {(personalesCountMap[req.id] || 0) > 0
-                        ? `${personalesCountMap[req.id]} / ${req.requiredCount || 3} actividades registradas`
-                        : isChecked
-                        ? 'Marcado · toca para anotar cuáles fueron'
-                        : `0 / ${req.requiredCount || 3} actividades registradas`} (Toca para ver o agregar)
-                    </Text>
-                  </View>
-                )}
-
-                {(req.type === 'aire_libre' || req.text.toLowerCase().includes('noche')) && (
-                  <View style={{ marginTop: 4 }}>
-                    <Text style={[styles.reqBadge, { color: isDarkMode ? theme.accentText : '#0ea5e9', fontWeight: 'bold' }]}>
-                      🏕️ {(nochesCountMap[req.id] || 0) > 0
-                        ? `${nochesCountMap[req.id]} / ${req.requiredCount || 10} noches registradas`
-                        : isChecked
-                        ? `${req.requiredCount || 10} / ${req.requiredCount || 10} noches convalidadas`
-                        : `0 / ${req.requiredCount || 10} noches registradas`} (Toca para ver o agregar fechas)
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
+                  )}
+                </View>
+                <ChevronRight size={18} color={theme.subText} />
+              </Press>
+            </Enter>
           );
         })}
       </ScrollView>
 
       {/* BOTÓN O INFORMACIÓN DE ESTADO INFERIOR */}
-      {status === 'Bloqueada' ? (
-        <View style={styles.footerAction}>
-          <View style={{
-            backgroundColor: isDarkMode ? '#18181b' : '#f8fafc',
-            padding: 14,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: isDarkMode ? '#27272a' : '#e2e8f0',
-            alignItems: 'center',
-            flexDirection: 'row',
-            gap: 10
-          }}>
-            <Lock size={18} color={isDarkMode ? '#94a3b8' : '#64748b'} />
-            <Text style={{ fontSize: 12, color: isDarkMode ? '#94a3b8' : '#64748b', flex: 1, fontWeight: '500' }}>
-              Esta etapa está en modo de consulta (bloqueada). Se habilitará para registro cuando tu dirigente apruebe la etapa anterior.
-            </Text>
-          </View>
-        </View>
-      ) : status === 'Aprobada' ? (
-        <View style={styles.footerAction}>
-          <View style={{
-            backgroundColor: isDarkMode ? '#064e3b' : '#f0fdf4',
-            padding: 14,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: isDarkMode ? '#065f46' : '#86efac',
-            alignItems: 'center',
-            flexDirection: 'row',
-            gap: 10
-          }}>
-            <CheckCircle size={18} color="#16a34a" />
-            <Text style={{ fontSize: 12, color: isDarkMode ? '#6ee7b7' : '#15803d', flex: 1, fontWeight: 'bold' }}>
-              🏅 ¡Etapa aprobada por tu dirigente! Puedes consultar todos los requisitos completados.
-            </Text>
-          </View>
-        </View>
-      ) : status === 'En Revision' ? (
-        <View style={styles.footerAction}>
-          <View style={{
-            backgroundColor: isDarkMode ? '#451a03' : '#fffbeb',
-            padding: 14,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: isDarkMode ? '#b45309' : '#fcd34d',
-            alignItems: 'center',
-            flexDirection: 'row',
-            gap: 10
-          }}>
-            <Sparkles size={18} color="#d97706" />
-            <Text style={{ fontSize: 12, color: isDarkMode ? '#fde68a' : '#b45309', flex: 1, fontWeight: 'bold' }}>
-              ⏳ Etapa enviada a revisión. Tu dirigente evaluará tus requisitos próximamente.
-            </Text>
-          </View>
-        </View>
-      ) : (
-        <View style={styles.footerAction}>
-          <TouchableOpacity
-            style={[
-              styles.sendReviewBtn,
-              progress < 100 && styles.sendReviewBtnDisabled
-            ]}
-            onPress={() => setConfirming(true)}
-            disabled={progress < 100}
-          >
-            <Send size={18} color="white" style={{ marginRight: 8 }} />
-            <Text style={styles.sendReviewBtnText}>
-              {progress === 100 ? 'ENVIAR ETAPA A REVISIÓN' : 'COMPLETA EL 100% PARA ENVIAR'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      <View style={[styles.footerAction, { backgroundColor: theme.cardBg, borderTopColor: theme.border }]}>
+        {status === 'Bloqueada' ? (
+          <Notice tone="neutral" Icon={Lock}>
+            Esta etapa está en modo de consulta (bloqueada). Se habilitará para registro cuando tu dirigente apruebe la etapa anterior.
+          </Notice>
+        ) : status === 'Aprobada' ? (
+          <Notice tone="ok" Icon={CheckCircle}>
+            ¡Etapa aprobada por tu dirigente! Puedes consultar todos los requisitos completados.
+          </Notice>
+        ) : status === 'En Revision' ? (
+          <Notice tone="warn" Icon={Clock}>
+            Etapa enviada a revisión. Tu dirigente evaluará tus requisitos próximamente.
+          </Notice>
+        ) : (
+          <>
+            {/* Al llegar al 100 % el botón «late» una vez para llamar la atención */}
+            <Pop trigger={progress === 100}>
+              <Btn
+                label={returnedNotif ? 'Volver a enviar a revisión' : 'Enviar etapa a revisión'}
+                Icon={Send}
+                block
+                disabled={progress < 100}
+                onPress={() => setConfirming(true)}
+              />
+            </Pop>
+            {progress < 100 && (
+              <Text style={[TYPE.tiny, { color: theme.subText, textAlign: 'center' }]}>
+                {missing === 1 ? 'Te falta 1 requisito para poder enviarla.' : `Te faltan ${missing} requisitos para poder enviarla.`}
+              </Text>
+            )}
+          </>
+        )}
+      </View>
 
       {/* MODAL SELECCIÓN / VINCULACIÓN DE ESPECIALIDADES Y CURSOS */}
       <Modal visible={showCertModal} transparent animationType="slide" onRequestClose={() => setShowCertModal(false)}>
@@ -1127,29 +1116,36 @@ export default function StageDetailScreen({ route, navigation }: any) {
 
       {/* MODAL DE CONFIRMACIÓN */}
 
-      <Modal visible={confirming} transparent animationType="fade" onRequestClose={() => setConfirming(false)}>
-        <View style={modalStyles.overlay}>
-          <View style={[modalStyles.card, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
-            <Send size={40} color={colors.primary} style={{ marginBottom: 12 }} />
-            <Text style={[modalStyles.title, { color: theme.text }]}>¿Enviar etapa a revisión?</Text>
-            <Text style={[modalStyles.desc, { color: theme.subText }]}>
-              Tu dirigente recibirá una notificación para validar y verificar tus requisitos cumplidos.
-            </Text>
-
-            <View style={modalStyles.btnRow}>
-              <TouchableOpacity
-                style={[modalStyles.btnSecondary, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9' }]}
-                onPress={() => setConfirming(false)}
-              >
-                <Text style={{ color: theme.subText, fontWeight: 'bold' }}>Cancelar</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={modalStyles.btnPrimary}
-                onPress={handleSendToReview}
-              >
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>Enviar</Text>
-              </TouchableOpacity>
+      <Modal visible={confirming} transparent animationType="slide" onRequestClose={() => setConfirming(false)}>
+        <View style={styles.sheetOverlay}>
+          <View style={[styles.sheet, { backgroundColor: theme.cardBg }]} accessibilityViewIsModal>
+            <View style={[styles.sheetGrab, { backgroundColor: theme.border }]} />
+            <View style={{ gap: SPACE.sm }}>
+              <Text style={[TYPE.h2, { color: theme.text }]} accessibilityRole="header">¿Enviar {stageTemplate.title} a revisión?</Text>
+              <Text style={[TYPE.small, { color: theme.subText }]}>
+                Tu dirigente revisará lo que registraste. Mientras esté en revisión no podrás modificar la etapa.
+              </Text>
+            </View>
+            <View style={[styles.sheetSummary, { backgroundColor: theme.bg, borderColor: theme.border }]}>
+              <Text style={[TYPE.small, { color: theme.subText }]}>Requisitos cumplidos</Text>
+              <Text style={[TYPE.small, { color: theme.text, fontWeight: '700' }]}>{doneReqs} de {totalReqs}</Text>
+            </View>
+            <View style={{ gap: 6 }}>
+              <Text style={[TYPE.tiny, { color: theme.text, fontWeight: '600' }]}>Mensaje para tu dirigente (opcional)</Text>
+              <TextInput
+                value={sendNote}
+                onChangeText={setSendNote}
+                placeholder="Algo que quieras contarle sobre esta etapa"
+                placeholderTextColor={theme.subText}
+                multiline
+                maxLength={300}
+                accessibilityLabel="Mensaje para tu dirigente"
+                style={[styles.sheetInput, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
+              />
+            </View>
+            <View style={{ gap: SPACE.sm }}>
+              <Btn label="Enviar a revisión" Icon={Send} block onPress={handleSendToReview} />
+              <Btn variant="secondary" label="Todavía no" block onPress={() => setConfirming(false)} />
             </View>
           </View>
         </View>
@@ -1217,28 +1213,33 @@ export default function StageDetailScreen({ route, navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
-  header: { padding: 20, borderBottomWidth: 1 },
-  title: { fontSize: 18, fontWeight: 'bold' },
-  subtitle: { fontSize: 12, marginTop: 2 },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  statusText: { fontSize: 12, fontWeight: 'bold' },
-  progressSection: { marginTop: 10 },
-  progressBarBg: { height: 8, borderRadius: 4, overflow: 'hidden' },
-  progressBarFill: { height: '100%', borderRadius: 4 },
-  scroll: { flex: 1, paddingHorizontal: 16, paddingTop: 12 },
-  reqRow: { flexDirection: 'row', alignItems: 'flex-start', padding: 14, borderRadius: 14, marginBottom: 10, borderWidth: 1 },
-  reqText: { fontSize: 14, fontWeight: '600', lineHeight: 20 },
-  reqTextChecked: { color: colors.primary, fontWeight: 'bold' },
-  reqBadge: { fontSize: 12, color: '#9333ea', fontWeight: 'bold', marginTop: 4 },
-  footerAction: { padding: 16, paddingBottom: 40 },
-  sendReviewBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 14 },
-  sendReviewBtnDisabled: { backgroundColor: '#64748b' },
-  sendReviewBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 }
-});
+  header: { padding: SPACE.lg, borderBottomWidth: 1 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: SPACE.sm },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, paddingHorizontal: SPACE.md, borderRadius: RADIUS.md },
+  timeline: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: SPACE.md },
+  progressSection: { flexDirection: 'row', alignItems: 'center', gap: SPACE.sm, marginTop: SPACE.md },
+  scroll: { flex: 1, paddingHorizontal: SPACE.lg, paddingTop: SPACE.md },
+  reqRow: { flexDirection: 'row', alignItems: 'center', gap: SPACE.md, minHeight: 64, paddingVertical: SPACE.md, paddingHorizontal: SPACE.lg, borderRadius: RADIUS.lg, borderWidth: 1 },
+  returned: { flexDirection: 'row', gap: SPACE.md, padding: SPACE.lg, borderRadius: RADIUS.lg, borderWidth: 1 },
+  footerAction: { padding: SPACE.lg, paddingTop: SPACE.md, borderTopWidth: 1, gap: SPACE.sm },
 
-const modalStyles = StyleSheet.create({
+  // Hoja inferior de envío
+  sheetOverlay: { flex: 1, backgroundColor: 'rgba(15,23,42,0.55)', justifyContent: 'flex-end' },
+  sheet: { borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl, padding: SPACE.lg, paddingTop: SPACE.md, gap: SPACE.lg, width: '100%', maxWidth: 560, alignSelf: 'center' },
+  sheetGrab: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center' },
+  sheetSummary: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: SPACE.lg, borderRadius: RADIUS.lg, borderWidth: 1 },
+  sheetInput: { minHeight: 88, borderWidth: 1.5, borderRadius: RADIUS.md, padding: SPACE.md, fontSize: 16, textAlignVertical: 'top' },
+
+  // Confirmación de envío
+  sentWrap: { flexGrow: 1, alignItems: 'center', padding: SPACE.xl, paddingTop: 56, gap: SPACE.xl, width: '100%', maxWidth: 520, alignSelf: 'center' },
+  sentMark: { width: 112, height: 112, borderRadius: 56, alignItems: 'center', justifyContent: 'center' },
+  stepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.md },
+  stepIcon: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+}));
+
+const modalStyles = liveStyles(() => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '80%' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1 },
@@ -1261,5 +1262,5 @@ const modalStyles = StyleSheet.create({
   btnRow: { flexDirection: 'row', gap: 10, width: '100%' },
   btnSecondary: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
   btnPrimary: { flex: 1, paddingVertical: 12, backgroundColor: colors.primary, borderRadius: 10, alignItems: 'center' }
-});
+}));
 

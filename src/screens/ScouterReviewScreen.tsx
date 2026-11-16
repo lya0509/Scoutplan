@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen, Flag, Moon, ArrowLeft, Compass, Tent, HeartHandshake, Sparkles, Lightbulb } from 'lucide-react-native';
 import { dataService } from '../lib/dataService';
@@ -633,7 +634,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 20, backgroundColor: colors.primary, alignItems: 'center' },
   title: { fontSize: 24, fontWeight: 'bold', color: 'white' },
@@ -657,4 +658,4 @@ const styles = StyleSheet.create({
   approveButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16, letterSpacing: 1 },
   viewDocBtn: { backgroundColor: 'rgba(255, 255, 255, 0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'white' },
   viewDocBtnText: { color: 'white', fontWeight: 'bold', fontSize: 12 }
-});
+}));

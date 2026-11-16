@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import {
   View,
   Text,
@@ -1209,7 +1210,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 18, borderBottomWidth: 1 },
   asociacionBanner: { fontSize: 12, fontWeight: '900', color: colors.primary, letterSpacing: 0.5 },
@@ -1238,4 +1239,4 @@ const styles = StyleSheet.create({
   saveBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
   bottomExportBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   bottomExportBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 }
-});
+}));

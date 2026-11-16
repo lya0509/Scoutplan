@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import { isSafeFileUrl } from '../utils/safeUrl';
 import {
   View,
@@ -1259,7 +1260,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 18, borderBottomWidth: 1 },
   title: { fontSize: 20, fontWeight: 'bold' },
@@ -1323,9 +1324,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     lineHeight: 16
   }
-});
+}));
 
-const viewerStyles = StyleSheet.create({
+const viewerStyles = liveStyles(() => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', padding: 16 },
   sheet: { borderRadius: 24, overflow: 'hidden', maxHeight: '90%' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1 },
@@ -1338,9 +1339,9 @@ const viewerStyles = StyleSheet.create({
   downloadBtn: { flex: 1, backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14 },
   downloadBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 },
   deleteActionBtn: { backgroundColor: '#fee2e2', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 14, justifyContent: 'center', alignItems: 'center' }
-});
+}));
 
-const modalStyles = StyleSheet.create({
+const modalStyles = liveStyles(() => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '85%' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1 },
@@ -1361,4 +1362,4 @@ const modalStyles = StyleSheet.create({
   previewImg: { width: '100%', height: 120, borderRadius: 8 },
   saveSubmitBtn: { backgroundColor: colors.primary, paddingVertical: 16, borderRadius: 14, alignItems: 'center', marginTop: 24, marginBottom: 30 },
   saveSubmitText: { color: 'white', fontWeight: 'bold', fontSize: 15 }
-});
+}));

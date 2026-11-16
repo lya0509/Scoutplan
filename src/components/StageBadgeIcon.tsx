@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Image } from 'react-native';
-import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import { Lock } from 'lucide-react-native';
+import { useTheme } from '../context/ThemeContext';
 
 export const BADGE_IMAGES: Record<string, any> = {
   'precursor': require('../../assets/badges/precursor.png'),
@@ -17,14 +18,12 @@ interface StageBadgeIconProps {
 }
 
 export const StageBadgeIcon: React.FC<StageBadgeIconProps> = ({ stageId, size = 48, isLocked = false }) => {
+  const { theme } = useTheme();
   if (isLocked) {
     return (
-      <Svg width={size} height={size} viewBox="0 0 100 100">
-        <Rect x="2" y="2" width="96" height="96" rx="12" fill="#E2E8F0" stroke="#94A3B8" strokeWidth="4" />
-        <Circle cx="50" cy="50" r="28" fill="#CBD5E1" />
-        <Path d="M38 48 V40 A12 12 0 0 1 62 40 V48" stroke="#64748B" strokeWidth="5" fill="none" strokeLinecap="round" />
-        <Rect x="34" y="48" width="32" height="24" rx="4" fill="#64748B" />
-      </Svg>
+      <View style={{ width: size, height: size, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: theme.subText, backgroundColor: theme.inputBg, alignItems: 'center', justifyContent: 'center' }}>
+        <Lock size={Math.round(size * 0.45)} color={theme.subText} />
+      </View>
     );
   }
 
@@ -37,7 +36,7 @@ export const StageBadgeIcon: React.FC<StageBadgeIconProps> = ({ stageId, size = 
         style={{
           width: size,
           height: size,
-          borderRadius: 6,
+          borderRadius: 10,
           resizeMode: 'cover',
         }}
       />

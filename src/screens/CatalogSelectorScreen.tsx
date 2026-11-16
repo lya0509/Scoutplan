@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { liveStyles } from '../theme/liveStyles';
 import {
   View,
   Text,
@@ -460,7 +461,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 18, borderBottomWidth: 1 },
   title: { fontSize: 18, fontWeight: 'bold' },
@@ -501,4 +502,4 @@ const styles = StyleSheet.create({
   modalDesc: { fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
   modalBtn: { backgroundColor: colors.primary, paddingVertical: 12, paddingHorizontal: 30, borderRadius: 10 },
   modalBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 }
-});
+}));
