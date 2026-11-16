@@ -1,8 +1,9 @@
 import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
-import { AuthProvider } from './src/context/AuthContext';
-import { ThemeProvider } from './src/context/ThemeContext';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { accentForUser } from './src/theme/tokens';
 import { NotificationProvider } from './src/context/NotificationContext';
 import LiveNotificationToast from './src/components/LiveNotificationToast';
 import BadgeCelebrationWatcher from './src/components/BadgeCelebrationWatcher';
@@ -16,6 +17,15 @@ import { installErrorReporter } from './src/lib/errorReporter';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
 import UpdateAvailableBanner from './src/components/UpdateAvailableBanner';
 import ServerStatusBanner from './src/components/ServerStatusBanner';
+
+/** Fija el color de partida según la rama y el rol de quien inició sesión. */
+function RamaAccentSync() {
+  const { user } = useAuth();
+  const { setRamaAccent } = useTheme();
+  const accent = accentForUser(user);
+  useEffect(() => { setRamaAccent(accent); }, [accent, setRamaAccent]);
+  return null;
+}
 
 export default function App() {
   useEffect(() => {
@@ -55,6 +65,7 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <NotificationProvider>
+          <RamaAccentSync />
           <StatusBar style="auto" />
           <LiveNotificationToast />
           <BadgeCelebrationWatcher />

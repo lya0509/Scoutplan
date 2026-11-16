@@ -121,7 +121,7 @@ export const FULL_SYSTEM_GRAPH_MANIFEST = {
     { key: '@scout_temporal_drive_albums', purpose: 'Caché local de álbumes fotográficos de evidencia (Drive Temporal)' },
     { key: '@scout_autosave_*', purpose: 'Borradores autoguardados con debounce de formularios largos (Ficha Médica, Currículum, Programa, Plan Trimestral)' },
     { key: 'app_dark_mode', purpose: 'Preferencia de modo oscuro/claro persistida' },
-    { key: 'app_primary_color', purpose: 'Color primario personalizado de la interfaz' },
+    { key: 'app_accent_custom', purpose: 'Color de acento personalizado (si no existe, se usa el de la rama)' },
   ],
 };
 

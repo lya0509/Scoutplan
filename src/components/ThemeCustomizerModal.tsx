@@ -40,7 +40,7 @@ export function ThemeCustomizerModal({ visible, onClose }: Props) {
       return;
     }
     await setPrimaryColor(cleanHex);
-    showAlert('🎨 Tema Actualizado', 'El color de la aplicación ha sido personalizado exitosamente.');
+    showAlert('Color actualizado', 'El color de la aplicación se cambió.');
     onClose();
   };
 
@@ -50,9 +50,8 @@ export function ThemeCustomizerModal({ visible, onClose }: Props) {
   };
 
   const handleReset = async () => {
-    setCustomHex('#612499');
     await resetToDefaultColor();
-    showAlert('Color Restaurado', 'Se ha restablecido el Morado Scout Oficial (#612499).');
+    showAlert('Color restaurado', 'Volviste al color de tu rama.');
   };
 
   return (
@@ -131,14 +130,14 @@ export function ThemeCustomizerModal({ visible, onClose }: Props) {
                 style={[styles.applyBtn, { backgroundColor: primaryColor }]}
                 onPress={handleApplyHex}
               >
-                <Text style={styles.applyBtnText}>Aplicar</Text>
+                <Text style={[styles.applyBtnText, { color: theme.onPrimary }]}>Aplicar</Text>
               </TouchableOpacity>
             </View>
 
             {/* Botón Restaurar */}
             <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
               <RotateCcw size={14} color={theme.subText} style={{ marginRight: 6 }} />
-              <Text style={[styles.resetText, { color: theme.subText }]}>Restablecer color morado original</Text>
+              <Text style={[styles.resetText, { color: theme.subText }]}>Volver al color de mi rama</Text>
             </TouchableOpacity>
 
             {/* Versión que tiene este teléfono: para saber si ya llegó un arreglo */}

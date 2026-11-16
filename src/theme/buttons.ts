@@ -5,12 +5,14 @@
 //   peligro    → borde y letra rojos: borrar, limpiar, rechazar
 // Antes cada pantalla pintaba sus botones de un color distinto (verde, rojo, ámbar, morado).
 
+import { onColor } from './tokens';
+
 interface ThemeLike { cardBg: string; border: string; text: string }
 
 export function buttonVariants(theme: ThemeLike, isDarkMode: boolean, primaryColor: string) {
   return {
     primary: { backgroundColor: primaryColor, borderWidth: 1, borderColor: primaryColor },
-    primaryText: { color: '#ffffff' },
+    primaryText: { color: onColor(primaryColor) },
     secondary: { backgroundColor: theme.cardBg, borderWidth: 1, borderColor: theme.border },
     secondaryText: { color: theme.text },
     danger: { backgroundColor: isDarkMode ? 'rgba(248, 113, 113, 0.08)' : '#fff5f5', borderWidth: 1, borderColor: isDarkMode ? '#7f1d1d' : '#fecaca' },
