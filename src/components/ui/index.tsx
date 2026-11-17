@@ -73,6 +73,20 @@ export function ScreenTransition({ children }: { children: React.ReactNode }) {
   );
 }
 
+// ── Sacudida: «eso no es» (correo o contraseña equivocados). Se repite cada vez que cambia `trigger` ──
+export function Shake({ trigger, children, style }: { trigger: unknown; children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
+  const v = useRef(new Animated.Value(0)).current;
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) { first.current = false; return; }
+    if (!trigger || prefersReducedMotion()) return;
+    v.setValue(0);
+    Animated.sequence([10, -10, 7, -7, 4, 0].map(x =>
+      Animated.timing(v, { toValue: x, duration: 60, easing: Easing.linear, useNativeDriver: NATIVE }))).start();
+  }, [trigger, v]);
+  return <Animated.View style={[style, { transform: [{ translateX: v }] }]}>{children}</Animated.View>;
+}
+
 // ── Rebote corto: para logros (casilla marcada, envío, botón que pide atención) ─────────
 export function Pop({ trigger, children, style }: { trigger: unknown; children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   const v = useRef(new Animated.Value(1)).current;

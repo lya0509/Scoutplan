@@ -1081,11 +1081,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
         </View>
       </Modal>
 
-      {/* CERRAR SESIÓN */}
-      <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: theme.cardBg, borderTopColor: theme.border }]} onPress={signOut}>
-        <LogOut size={16} color={colors.error} />
-        <Text style={styles.logoutText}>Cerrar Sesión</Text>
-      </TouchableOpacity>
+      {/* Cerrar sesión queda solo arriba, en la cabecera (PanelHeader) */}
 
       {/* BOTÓN FLOTANTE DE AYUDA Y REPORTES */}
       <HelpFloatingFAB />
@@ -1145,11 +1141,6 @@ const styles = liveStyles(() => StyleSheet.create({
   statNumber: { fontSize: 28, fontWeight: '700' },
   statLabel: { fontSize: 12, color: colors.textLight, marginTop: 2, textAlign: 'center' },
   scroll: { flex: 1, marginTop: 16 },
-  logoutBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, paddingVertical: 16, borderTopWidth: 1,
-  },
-  logoutText: { color: colors.error, fontSize: 15, fontWeight: 'bold' },
 }));
 
 const panelStyles = liveStyles(() => StyleSheet.create({

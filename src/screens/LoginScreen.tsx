@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Btn, Enter } from '../components/ui';
+import { Btn, Enter, Notice, Shake } from '../components/ui';
 import { liveStyles } from '../theme/liveStyles';
 import {
   View,
@@ -43,16 +43,22 @@ export default function LoginScreen({ navigation }: any) {
   const { width } = useWindowDimensions();
   const isWebLarge = width > 768;
 
+  // Error al ingresar: se muestra dentro del formulario, con una sacudida y los campos en rojo
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [shake, setShake] = useState(0);
+  const failLogin = (msg: string) => { setLoginError(msg); setShake(n => n + 1); };
+
   const handleLogin = async () => {
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanPassword = (password || '').trim();
 
     if (!cleanEmail || !cleanPassword) {
-      showAlert('Campos Requeridos', 'Por favor ingresa tu correo electrónico y tu contraseña.');
+      failLogin('Escribe tu correo y tu contraseña.');
       return;
     }
 
     setLoading(true);
+    setLoginError(null);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
@@ -62,9 +68,9 @@ export default function LoginScreen({ navigation }: any) {
       if (error) {
         setLoading(false);
         if (error.message.includes('Invalid login credentials')) {
-          showAlert('Credenciales Incorrectas', 'El correo o la contraseña ingresados no son válidos. Verifica tus datos o usa "¿Olvidaste tu contraseña?".');
+          failLogin('El correo o la contraseña no coinciden. Revísalos o usa «¿Olvidaste tu contraseña?».');
         } else {
-          showAlert('Error de Inicio de Sesión', error.message);
+          failLogin(error.message);
         }
         return;
       }
@@ -179,18 +185,19 @@ export default function LoginScreen({ navigation }: any) {
         })()}
 
         {/* FORMULARIO */}
-        <View style={styles.formContainer}>
+        <Shake trigger={shake} style={styles.formContainer}>
+          {loginError ? <Notice tone="err" style={{ marginBottom: 12 }}>{loginError}</Notice> : null}
           
           {/* Email Input */}
           <Text style={[styles.label, { color: isDarkMode ? '#e4e4e7' : '#4b5563' }]}>Correo Electrónico</Text>
-          <View style={[styles.inputWrapper, dynamicStyles.inputBg]}>
+          <View style={[styles.inputWrapper, dynamicStyles.inputBg, loginError ? { borderColor: theme.err } : null]}>
             <Mail size={18} color={isDarkMode ? '#a1a1aa' : '#71717a'} style={styles.inputIcon} />
             <TextInput
               style={[styles.input, { color: dynamicStyles.inputBg.color }]}
               placeholder="correo@ejemplo.com"
               placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(t) => { setEmail(t); setLoginError(null); }}
               keyboardType="email-address"
               autoCapitalize="none"
             />
@@ -198,14 +205,14 @@ export default function LoginScreen({ navigation }: any) {
 
           {/* Password Input */}
           <Text style={[styles.label, { color: isDarkMode ? '#e4e4e7' : '#4b5563' }]}>Contraseña</Text>
-          <View style={[styles.inputWrapper, dynamicStyles.inputBg]}>
+          <View style={[styles.inputWrapper, dynamicStyles.inputBg, loginError ? { borderColor: theme.err } : null]}>
             <Lock size={18} color={isDarkMode ? '#a1a1aa' : '#71717a'} style={styles.inputIcon} />
             <TextInput
               style={[styles.input, { color: dynamicStyles.inputBg.color }]}
               placeholder="••••••••••••"
               placeholderTextColor={isDarkMode ? '#71717a' : '#a1a1aa'}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(t) => { setPassword(t); setLoginError(null); }}
               secureTextEntry={!showPassword}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
@@ -231,7 +238,7 @@ export default function LoginScreen({ navigation }: any) {
 
           {/* Botón de Ingreso */}
           <Btn label="Ingresar" block loading={loading} onPress={handleLogin} style={{ marginTop: 6 }} />
-        </View>
+        </Shake>
 
         {/* Footer */}
         <View style={styles.footerContainer}>
