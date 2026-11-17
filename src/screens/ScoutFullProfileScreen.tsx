@@ -229,6 +229,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
             customAvatarUrl={profile?.custom_avatar_url}
             unit={profile?.unit}
             role={profile?.role || "scout"}
+            groupName={profile?.group_name}
             size={80}
             editable={false}
             showTabs={true}

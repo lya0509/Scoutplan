@@ -149,6 +149,7 @@ function CustomDrawerContent(props: any & { onOpenCustomizer: () => void; onOpen
             unit={user?.unit || undefined}
             role={user?.role}
             size={72}
+            isOwn
             editable={false}
             showTabs={false}
           />

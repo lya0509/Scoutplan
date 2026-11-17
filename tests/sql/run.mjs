@@ -309,6 +309,28 @@ anonBug.err || anonBug.rows[0].n === 0 ? ok('Sin sesión no se ve nada') : bad('
 await as(U(1), 'La Jefatura intenta borrar un reporte', `DELETE FROM public.bug_reports`, true);
 (await db.query(`SELECT count(*)::int n FROM public.bug_reports`)).rows[0].n === 2 ? ok('…pero no borra nada (solo lectura)') : bad('La Jefatura pudo borrar reportes');
 
+// ───────────────────────── Pañoleta del grupo ─────────────────────────
+section('supabase_panoleta_grupo.sql');
+for (let k = 0; k < 2; k++) await run('supabase_panoleta_grupo.sql', sqlFile('supabase_panoleta_grupo.sql'));
+const panoleta = async (g) => (await db.query(`SELECT scarf FROM public.scout_groups WHERE name='${g}'`)).rows[0]?.scarf;
+await as(U(1), 'La Jefatura guarda la pañoleta de su grupo (fondo + 2 franjas)', `SELECT public.guardar_panoleta_grupo('#7A1F3D', ARRAY['#ffffff','#29B6F6'])`, true);
+const pOrion = await panoleta('Grupo Orión #84');
+pOrion && pOrion.base === '#7a1f3d' && pOrion.stripes.join() === '#ffffff,#29b6f6' ? ok('…queda guardada en su grupo, en orden') : bad('Pañoleta mal guardada: ' + JSON.stringify(pOrion));
+(await panoleta('QA Pruebas')) == null ? ok('…y no toca la de otro grupo') : bad('Cambió la pañoleta de otro grupo');
+await as(U(2), 'El Scouter intenta cambiar la pañoleta', `SELECT public.guardar_panoleta_grupo('#000000')`, false);
+await as(U(3), 'El joven intenta cambiar la pañoleta', `SELECT public.guardar_panoleta_grupo('#000000')`, false);
+await as(U(1), 'La Jefatura intenta editar la columna directo (sin la función)', `UPDATE public.scout_groups SET scarf='{"base":"#000000","stripes":[]}' WHERE name='QA Pruebas'`, true);
+(await panoleta('QA Pruebas')) == null ? ok('…pero no cambia nada (la regla de la tabla no la deja)') : bad('La Jefatura editó la pañoleta de otro grupo directo en la tabla');
+await as(U(1), 'Color de fondo que no es un color', `SELECT public.guardar_panoleta_grupo('rojo')`, false);
+await as(U(1), 'Franja que no es un color', `SELECT public.guardar_panoleta_grupo('#000000', ARRAY['#fff'])`, false);
+await as(U(1), 'Más de 8 franjas', `SELECT public.guardar_panoleta_grupo('#000000', ARRAY['#111111','#222222','#333333','#444444','#555555','#666666','#777777','#888888','#999999'])`, false);
+await as(U(1), 'Pañoleta de 7 franjas', `SELECT public.guardar_panoleta_grupo('#000000', ARRAY['#111111','#222222','#333333','#444444','#555555','#666666','#777777'])`, true);
+(await rowsAs(U(6), `SELECT scarf FROM public.scout_groups WHERE name='Grupo Orión #84'`))[0]?.scarf?.stripes?.length === 7 ? ok('Un joven de otro grupo ve la pañoleta (con sesión)') : bad('No se ve la pañoleta de otro grupo con sesión');
+const anonP = await asRole('anon', `SELECT public.guardar_panoleta_grupo('#000000')`);
+anonP.err ? ok('Sin sesión no se puede llamar la función') : bad('Sin sesión se pudo llamar guardar_panoleta_grupo');
+await as(U(1), 'La Jefatura quita la pañoleta (vuelve a la blanca)', `SELECT public.guardar_panoleta_grupo(NULL)`, true);
+(await panoleta('Grupo Orión #84')) == null ? ok('…queda sin definir') : bad('No se quitó la pañoleta');
+
 // ───────────────────────── Historial de etapas y requisitos ─────────────────────────
 // Caso real 2026-11-03: se aprobaron y luego se quitaron etapas de un Rover y no se supo quién.
 section('supabase_historial_etapas.sql');

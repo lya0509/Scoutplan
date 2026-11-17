@@ -434,6 +434,7 @@ export default function ProfileScreen({ navigation }: any) {
             unit={user?.unit || undefined}
             role={user?.role}
             size={96}
+            isOwn
             editable={true}
             onPhotoChange={handlePhotoChange}
             onDeletePhoto={handleDeletePhoto}

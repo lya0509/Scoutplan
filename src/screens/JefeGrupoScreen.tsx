@@ -34,6 +34,7 @@ import PullToRefreshScrollView from '../components/PullToRefreshScrollView';
 import CipManagerModal from '../components/CipManagerModal';
 import { styles, modalStyles } from './jefeGrupo/styles';
 import { AppErrorsModal } from '../components/AppErrorsModal';
+import { PanoletaGrupoModal } from '../components/PanoletaGrupoModal';
 import { SkeletonScreen } from '../components/Skeleton';
 import { PanelHeader } from '../components/PanelHeader';
 import { contentMax, contentWide, WIDE_BREAKPOINT } from '../theme/layout';
@@ -62,6 +63,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
   // Subtítulos de cada rama: gris de apoyo (antes violeta), para que el acento quede en las acciones
   const subCatDark = { color: theme.subText };
   const [showAppErrors, setShowAppErrors] = useState(false);
+  const [showPanoleta, setShowPanoleta] = useState(false);
   const indigoText = isDarkMode ? colors.accentText : colors.primary;
 
   const [showCustomizer, setShowCustomizer] = useState(false);
@@ -569,6 +571,19 @@ export default function JefeGrupoScreen({ navigation }: any) {
         <ShieldCheck size={18} color="#2563eb" />
         <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Roles y miembros</Text>
       </TouchableOpacity>
+
+      {/* PAÑOLETA DEL GRUPO (colores que todo el grupo ve en su avatar) */}
+      {!!user?.group_name && (
+        <TouchableOpacity
+          style={[styles.quickToolBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+          onPress={() => setShowPanoleta(true)}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+        >
+          <Palette size={18} color={colors.primary} />
+          <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Pañoleta del grupo</Text>
+        </TouchableOpacity>
+      )}
 
       {/* ERRORES DE LA APP (registrados solos o reportados con el botón de ayuda) */}
       <TouchableOpacity
@@ -1719,6 +1734,9 @@ export default function JefeGrupoScreen({ navigation }: any) {
         onClose={() => setShowCustomizer(false)}
       />
       <AppErrorsModal visible={showAppErrors} onClose={() => setShowAppErrors(false)} />
+      {!!user?.group_name && (
+        <PanoletaGrupoModal visible={showPanoleta} onClose={() => setShowPanoleta(false)} groupName={user.group_name} />
+      )}
       <CipManagerModal
         visible={showCipManager}
         onClose={() => setShowCipManager(false)}

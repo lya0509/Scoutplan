@@ -28,6 +28,10 @@ interface Props {
   onPhotoChange?: (type: 'scout' | 'custom', newUrl: string) => Promise<void>;
   onDeletePhoto?: (type: 'scout' | 'custom') => Promise<void>;
   showTabs?: boolean;
+  /** true cuando es el avatar de quien inició sesión (sigue su color personalizado). */
+  isOwn?: boolean;
+  /** Grupo de la persona (para su pañoleta). Si falta, se usa el de quien inició sesión. */
+  groupName?: string | null;
 }
 
 export function DualProfileAvatar({
@@ -40,6 +44,8 @@ export function DualProfileAvatar({
   onPhotoChange,
   onDeletePhoto,
   showTabs,
+  isOwn = false,
+  groupName,
 }: Props) {
   const { isDarkMode, primaryColor } = useTheme();
 
@@ -198,7 +204,7 @@ export function DualProfileAvatar({
               onError={() => markFailed(currentPhotoUrl)}
             />
           ) : activeTab === 'scout' ? (
-            <UserScoutAvatar unit={unit} role={role} size={size - 6} />
+            <UserScoutAvatar unit={unit} role={role} size={size - 6} isOwn={isOwn} groupName={groupName} />
           ) : (
             <View style={[styles.customPlaceholder, { width: size - 6, height: size - 6, borderRadius: (size - 6) / 2 }]}>
               <Sparkles size={size * 0.35} color="#10b981" />
@@ -377,7 +383,7 @@ export function DualProfileAvatar({
               <View style={[styles.zoomImage, styles.zoomPlaceholderContainer]}>
                 {activeTab === 'scout' ? (
                   <>
-                    <UserScoutAvatar unit={unit} role={role} size={140} />
+                    <UserScoutAvatar unit={unit} role={role} size={140} isOwn={isOwn} groupName={groupName} />
                     <Text style={styles.zoomPlaceholderTitle}>Sin Foto Scout Oficial</Text>
                     <Text style={styles.zoomPlaceholderSub}>No se ha subido aún el retrato oficial con uniforme.</Text>
                   </>
