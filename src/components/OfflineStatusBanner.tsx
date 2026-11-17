@@ -4,6 +4,7 @@ import { WifiOff, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react-nat
 import { useTheme } from '../context/ThemeContext';
 import { outbox, OutboxStatus } from '../lib/offline/outbox';
 import PendingChangesModal from './PendingChangesModal';
+import { Enter } from './ui';
 
 /**
  * Píldora flotante que avisa:
@@ -102,6 +103,8 @@ export default function OfflineStatusBanner() {
 
   return (
     <View pointerEvents="box-none" style={[styles.wrapper, !expanded && styles.wrapperCollapsed]}>
+      {/* Baja desde arriba cada vez que cambia el estado (sin conexión, enviando, enviado, error) */}
+      <Enter key={toneKey} from={-16}>
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={onPress}
@@ -120,6 +123,7 @@ export default function OfflineStatusBanner() {
           <Text style={[styles.chipText, { color: palette.fg }]}>{chipText}</Text>
         )}
       </TouchableOpacity>
+      </Enter>
     </View>
   );
 }
@@ -164,7 +168,7 @@ const styles = StyleSheet.create({
     maxWidth: 440,
     paddingVertical: 9,
     paddingHorizontal: 14,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     shadowColor: '#000',
     shadowOpacity: 0.25,

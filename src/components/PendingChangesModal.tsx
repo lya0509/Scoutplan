@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   card: { width: '100%', maxWidth: 460, borderRadius: 18, borderWidth: 1, overflow: 'hidden' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: 1 },
   title: { fontSize: 17, fontWeight: '800' },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginTop: 14, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginTop: 14, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 12 },
   statusText: { fontSize: 13, flexShrink: 1 },
   section: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 },
   empty: { textAlign: 'center', fontSize: 14, paddingVertical: 24 },

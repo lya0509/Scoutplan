@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   li: { fontSize: 14, lineHeight: 21, marginLeft: 4 },
   warn: { fontSize: 13, lineHeight: 18, color: '#b45309', marginTop: 10 },
   label: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 14, marginBottom: 6 },
-  input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, minHeight: 46, fontSize: 16, letterSpacing: 2 },
+  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, minHeight: 46, fontSize: 16, letterSpacing: 2 },
   error: { color: '#dc2626', fontSize: 13.5, marginTop: 10 },
   actions: { flexDirection: 'row', gap: 8, marginTop: 16 },
   secondary: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 12, borderWidth: 1, minHeight: 46 },

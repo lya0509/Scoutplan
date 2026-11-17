@@ -193,7 +193,7 @@ export const ManualVisualDiagram: React.FC<ManualVisualDiagramProps> = ({
             <Path d="M 140 120 Q 125 90 140 70 Q 155 90 140 120" fill={fireYellow} />
             <Path d="M 140 120 Q 132 100 140 85 Q 148 100 140 120" fill={fireColor} />
 
-            <SvgText x="70" y="25" fill="#f97316" fontSize="11" fontWeight="bold">🔥 Entrada de viento orientada a barlovento</SvgText>
+            <SvgText x="70" y="25" fill="#f97316" fontSize="11" fontWeight="bold">Entrada de viento orientada a barlovento</SvgText>
             <SvgText x="60" y="152" fill={isDarkMode ? '#94a3b8' : '#64748b'} fontSize="10">Yesca en el corazón + cono de ramitas secas</SvgText>
           </Svg>
         );
@@ -261,7 +261,7 @@ export const ManualVisualDiagram: React.FC<ManualVisualDiagramProps> = ({
             <Circle cx="120" cy="105" r="9" fill={stoneColor} />
             <Circle cx="160" cy="55" r="11" fill={stoneColor} />
 
-            <SvgText x="70" y="30" fill="#16a34a" fontSize="12" fontWeight="bold">➜ Seguir esta Dirección</SvgText>
+            <SvgText x="70" y="30" fill="#16a34a" fontSize="12" fontWeight="bold">Seguir esta Dirección</SvgText>
             <SvgText x="55" y="145" fill={isDarkMode ? '#94a3b8' : '#64748b'} fontSize="10">Señalizar en el suelo a la derecha del camino</SvgText>
           </Svg>
         );

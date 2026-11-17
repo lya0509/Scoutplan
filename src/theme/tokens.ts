@@ -40,9 +40,9 @@ export const MOTION = {
 export const TOUCH_MIN = 44;
 
 /** Color de acento de partida por rama. Son los colores oficiales, oscurecidos lo justo
- *  para que la letra blanca sobre el botón se lea (Manada conserva su amarillo, con letra oscura). */
+ *  para que la letra blanca sobre el botón se lea. */
 export const RAMA_ACCENTS: Record<string, string> = {
-  manada: '#ffb300',
+  manada: '#a85d00', // ámbar oscuro: el amarillo oficial (#ffb300) no deja leer la letra blanca
   tropa: '#2e7d32',
   comunidad: '#1565c0',
   clan: '#d32f2f',

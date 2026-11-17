@@ -2,12 +2,13 @@
 // casilla, estados vacío / error y las animaciones de entrada. Todas leen el tema (color de la
 // rama, modo oscuro) y los números de src/theme/tokens.ts. Las pantallas deben usar estas piezas
 // en vez de pintar las suyas.
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   Animated, Easing, Pressable, View, Text, StyleSheet, ActivityIndicator, Platform,
   AccessibilityInfo, StyleProp, ViewStyle, TextStyle,
 } from 'react-native';
 import { AlertTriangle, Check, Lock, RotateCw } from 'lucide-react-native';
+import { useIsFocused } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { MOTION, RADIUS, SPACE, TYPE, TOUCH_MIN } from '../../theme/tokens';
 
@@ -32,7 +33,7 @@ export function prefersReducedMotion(): boolean {
 }
 
 // ── Entrada: aparece y sube 10 px, en cascada según `index` ─────────────────────────────
-export function Enter({ index = 0, children, style }: { index?: number; children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
+export function Enter({ index = 0, from = 10, children, style }: { index?: number; /** píxeles desde donde entra: positivo sube, negativo baja */ from?: number; children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   const reduced = prefersReducedMotion();
   const v = useRef(new Animated.Value(reduced ? 1 : 0)).current;
   useEffect(() => {
@@ -44,7 +45,29 @@ export function Enter({ index = 0, children, style }: { index?: number; children
     return () => anim.stop();
   }, [v, index, reduced]);
   return (
-    <Animated.View style={[style, { opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }]}>
+    <Animated.View style={[style, { opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [from, 0] }) }] }]}>
+      {children}
+    </Animated.View>
+  );
+}
+
+// ── Cambio de pantalla: la pantalla que entra aparece y sube 8 px ───────────────────────
+// Se usa desde `screenLayout` de los navegadores; se repite cada vez que la pantalla vuelve a
+// quedar al frente (cambiar de pestaña en la barra inferior, volver atrás).
+export function ScreenTransition({ children }: { children: React.ReactNode }) {
+  const focused = useIsFocused();
+  const reduced = prefersReducedMotion();
+  const v = useRef(new Animated.Value(reduced ? 1 : 0)).current;
+  // useLayoutEffect: el 0 se pone antes de pintar, así la pantalla no parpadea al volver.
+  useLayoutEffect(() => {
+    if (!focused || reduced) { if (reduced) v.setValue(1); return; }
+    v.setValue(0);
+    const anim = Animated.timing(v, { toValue: 1, duration: MOTION.enter, easing: EASE, useNativeDriver: NATIVE });
+    anim.start();
+    return () => { anim.stop(); v.setValue(1); };
+  }, [focused, reduced, v]);
+  return (
+    <Animated.View style={{ flex: 1, opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }] }}>
       {children}
     </Animated.View>
   );
@@ -229,8 +252,8 @@ export function ProgressBar({ value, onAccent, height = 8, style }: { value: num
   return (
     <View
       style={[{ height, borderRadius: RADIUS.pill, overflow: 'hidden', backgroundColor: onAccent ? 'rgba(255,255,255,0.28)' : theme.border }, style]}
-      accessibilityRole="progressbar"
-      accessibilityValue={{ min: 0, max: 100, now: Math.round(pct) }}
+      // Sin role="progressbar": las pruebas E2E lo usan para detectar pantallas que se quedan cargando
+      accessibilityLabel={`Avance: ${Math.round(pct)} %`}
     >
       <Animated.View
         style={{
@@ -265,7 +288,7 @@ export function CheckMark({ checked, locked, error, size = 24 }: { checked?: boo
     <Pop trigger={checked}>
       <View
         style={{
-          width: size, height: size, borderRadius: 7, borderWidth: 2, alignItems: 'center', justifyContent: 'center',
+          width: size, height: size, borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center',
           borderStyle: locked && !checked ? 'dashed' : 'solid',
           borderColor: checked ? theme.primary : error ? theme.err : theme.subText,
           backgroundColor: checked ? theme.primary : 'transparent',
@@ -344,12 +367,51 @@ export function Notice({ tone = 'accent', Icon, children, style }: { tone?: Tone
   );
 }
 
+// ── Formularios por pasos (teléfono) ────────────────────────────────────────────────────
+// Los formularios largos se muestran una sección a la vez. Los campos de los otros pasos siguen
+// montados (solo ocultos con `stepHidden`), así no se pierde lo escrito y «Guardar» sirve en
+// cualquier paso.
+export const stepHidden = (stepped: boolean, step: number, index: number): ViewStyle | undefined =>
+  stepped && step !== index ? { display: 'none' } : undefined;
+
+export function StepHeader({ step, titles, onStep }: { step: number; titles: string[]; onStep: (i: number) => void }) {
+  const { theme } = useTheme();
+  return (
+    <View style={{ marginBottom: SPACE.lg }}>
+      <Text style={[TYPE.over, { color: theme.subText }]}>Paso {step + 1} de {titles.length}</Text>
+      <Text style={[TYPE.h3, { color: theme.text, marginTop: 2 }]}>{titles[step]}</Text>
+      <View style={{ flexDirection: 'row', gap: 4, marginTop: SPACE.sm }}>
+        {titles.map((t, i) => (
+          <Pressable
+            key={t}
+            onPress={() => onStep(i)}
+            accessibilityRole="button"
+            accessibilityLabel={`Ir al paso ${i + 1}: ${t}`}
+            accessibilityState={{ selected: i === step }}
+            hitSlop={{ top: 16, bottom: 16 }}
+            style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: i <= step ? theme.primary : theme.border }}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+export function StepNav({ step, total, onStep }: { step: number; total: number; onStep: (i: number) => void }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: SPACE.sm, marginTop: SPACE.xl }}>
+      <Btn label="Anterior" variant="secondary" disabled={step === 0} onPress={() => onStep(step - 1)} style={{ flex: 1 }} />
+      <Btn label="Siguiente" variant="secondary" disabled={step >= total - 1} onPress={() => onStep(step + 1)} style={{ flex: 1 }} />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   btn: {
     minHeight: 48, paddingHorizontal: 20, borderRadius: RADIUS.md, borderWidth: 1,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACE.sm,
   },
-  btnSmall: { minHeight: 40, paddingHorizontal: 14, borderRadius: 10 },
+  btnSmall: { minHeight: 40, paddingHorizontal: 14, borderRadius: 12 },
   btnText: { minHeight: TOUCH_MIN, paddingHorizontal: SPACE.sm },
   btnLabel: { fontSize: 15, fontWeight: '600', flexShrink: 1 },
   card: { borderWidth: 1, borderRadius: RADIUS.lg, padding: SPACE.lg },

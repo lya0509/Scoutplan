@@ -24,7 +24,7 @@ interface Props {
 export function PanelHeaderButton({ onPress, label, children, danger }: { onPress: () => void; label: string; children: React.ReactNode; danger?: boolean }) {
   return (
     <TouchableOpacity
-      style={[styles.iconBtn, danger && { backgroundColor: 'rgba(239, 68, 68, 0.25)' }]}
+      style={styles.iconBtn}
       onPress={onPress}
       activeOpacity={0.8}
       accessibilityRole="button"
@@ -36,47 +36,48 @@ export function PanelHeaderButton({ onPress, label, children, danger }: { onPres
 }
 
 export function PanelHeader({ eyebrow, eyebrowIcon, title, subtitle, extraActions, showBell = true, onCustomize, onSignOut }: Props) {
-  const { isDarkMode, toggleDarkMode, primaryColor } = useTheme();
+  const { isDarkMode, toggleDarkMode, theme } = useTheme();
+  const fg = isDarkMode ? '#ffffff' : theme.onPrimary;
   return (
     <View
       style={[
         styles.header,
-        { backgroundColor: isDarkMode ? '#121214' : primaryColor },
-        isDarkMode && { borderBottomWidth: 1, borderBottomColor: '#27272a' },
+        { backgroundColor: isDarkMode ? theme.cardBg : theme.primary },
+        isDarkMode && { borderBottomWidth: 1, borderBottomColor: theme.border },
       ]}
     >
       <View style={styles.topRow}>
         <View style={styles.eyebrowWrap}>
           {eyebrowIcon}
-          <Text style={styles.eyebrow} numberOfLines={1}>{eyebrow}</Text>
+          <Text style={[styles.eyebrow, { color: fg }]} numberOfLines={1}>{eyebrow}</Text>
         </View>
         <View style={styles.actions}>
           {extraActions}
-          {showBell && <NotificationHeaderBell color="#ffffff" style={styles.iconBtn} />}
+          {showBell && <NotificationHeaderBell color={fg} style={styles.iconBtn} />}
           <PanelHeaderButton onPress={onCustomize} label="Personalizar colores">
-            <Palette color="#ffffff" size={20} />
+            <Palette color={fg} size={20} />
           </PanelHeaderButton>
           <PanelHeaderButton onPress={toggleDarkMode} label={isDarkMode ? 'Modo claro' : 'Modo oscuro'}>
-            {isDarkMode ? <Sun color="#f59e0b" size={20} /> : <Moon color="#ffffff" size={20} />}
+            {isDarkMode ? <Sun color={fg} size={20} /> : <Moon color={fg} size={20} />}
           </PanelHeaderButton>
           <PanelHeaderButton onPress={onSignOut} label="Cerrar sesión" danger>
-            <LogOut color="#fca5a5" size={20} />
+            <LogOut color={fg} size={20} />
           </PanelHeaderButton>
         </View>
       </View>
-      <Text style={styles.title} numberOfLines={2}>{title}</Text>
-      {!!subtitle && <Text style={styles.subtitle} numberOfLines={2}>{subtitle}</Text>}
+      <Text style={[styles.title, { color: fg }]} numberOfLines={2} accessibilityRole="header">{title}</Text>
+      {!!subtitle && <Text style={[styles.subtitle, { color: fg }]} numberOfLines={2}>{subtitle}</Text>}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { paddingHorizontal: 18, paddingTop: 16, paddingBottom: 20, borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
+  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  eyebrowWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, backgroundColor: 'rgba(255,255,255,0.16)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
-  eyebrow: { color: '#ffffff', fontSize: 12, fontWeight: '700', letterSpacing: 0.3, flexShrink: 1 },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  iconBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.18)' },
-  title: { color: '#ffffff', fontSize: 24, fontWeight: '800', marginTop: 14 },
-  subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 },
+  eyebrowWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, backgroundColor: 'rgba(255,255,255,0.18)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
+  eyebrow: { fontSize: 12, fontWeight: '600', letterSpacing: 0.3, flexShrink: 1 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  iconBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.14)' },
+  title: { fontSize: 22, lineHeight: 28, fontWeight: '700', marginTop: 12 },
+  subtitle: { fontSize: 14, marginTop: 2, opacity: 0.9 },
 });

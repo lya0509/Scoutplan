@@ -9,8 +9,10 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
-  Platform
+  Platform,
+  useWindowDimensions
 } from 'react-native';
+import { Btn, StepHeader, StepNav, stepHidden } from '../components/ui';
 import { FileText, Download, Shield, Plus, Trash2, Camera, CheckCircle, AlertCircle, Save, ArrowLeft } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -45,6 +47,16 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
   const targetUserId = route?.params?.targetUserId || user?.id;
   // Ver la ficha de otra persona es siempre de solo lectura: el guardado escribe en el perfil propio (user.id).
   const isViewOnlyForScouter = targetUserId !== user?.id;
+  // Teléfono: el formulario va por pasos (una sección a la vez). Quien solo lo consulta lo ve entero.
+  const { width: winWidth } = useWindowDimensions();
+  const stepped = winWidth < 768 && !isViewOnlyForScouter;
+  const [step, setStep] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+  const STEP_TITLES = ['Datos del participante', 'Contacto de emergencia', 'Salud, sangre y vacunas', 'Firma'];
+  const goStep = (i: number) => {
+    setStep(Math.max(0, Math.min(STEP_TITLES.length - 1, i)));
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  };
 
   const [activeTab, setActiveTab] = useState<FichaTab>(route?.params?.formato === 'orion84' ? 'orion84' : 'scout');
   const [loading, setLoading] = useState(true);
@@ -553,7 +565,7 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
         </View>
       </View>
 
-      <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 60 }}>
+      <ScrollView ref={scrollRef} style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 60 }}>
         {activeTab === 'orion84' ? (
           <FichaMedicaOrion84Form
             targetUserId={targetUserId}
@@ -567,6 +579,9 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
         ) : (
           <View style={[styles.sheet, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
             
+            {stepped && <StepHeader step={step} titles={STEP_TITLES} onStep={goStep} />}
+
+            <View style={stepHidden(stepped, step, 0)}>
             {/* SECCIÓN 1: DATOS DEL PARTICIPANTE */}
             <Text style={[styles.sectionTitle, { color: theme.accentText }]}>1. Datos del Participante</Text>
             
@@ -669,6 +684,9 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
               </View>
             </View>
 
+            </View>
+
+            <View style={stepHidden(stepped, step, 1)}>
             {/* SECCIÓN 2: CONTACTO DE EMERGENCIA */}
             <Text style={[styles.sectionTitle, { color: theme.accentText, marginTop: 20 }]}>2. En Caso de Emergencia Avisar A</Text>
 
@@ -709,6 +727,9 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
               </View>
             </View>
 
+            </View>
+
+            <View style={stepHidden(stepped, step, 2)}>
             {/* SECCIÓN 3: SALUD, SANGRE Y VACUNAS */}
             <Text style={[styles.sectionTitle, { color: theme.accentText, marginTop: 20 }]}>3. Datos Clínicos, Sangre y Vacunas</Text>
             
@@ -754,12 +775,15 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
               </View>
             </View>
 
+            </View>
+
+            <View style={stepHidden(stepped, step, 3)}>
             {/* FIRMA DIGITAL */}
             <Text style={[styles.sectionTitle, { color: theme.accentText, marginTop: 20 }]}>4. Firma Digital del Declarante / Representante</Text>
             
             <View style={styles.signatureBanner}>
               <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText }}>
-                💡 Recomendación para una Firma Limpia y Profesional:
+                Recomendación para una Firma Limpia y Profesional:
               </Text>
               <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                 Sube tu firma escaneada o en imagen sin fondo (PNG transparente) para que encaje perfectamente sobre la línea de firma del documento Word.
@@ -782,30 +806,18 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
               )}
             </View>
 
+            </View>
+
+            {stepped && <StepNav step={step} total={STEP_TITLES.length} onStep={goStep} />}
+
             {/* BOTONES INFERIORES: GUARDAR Y EXPORTAR EN LA PARTE DE ABAJO */}
             <View style={{ marginTop: 24, gap: 10 }}>
+              {/* Una sola acción principal (guardar); las descargas van como secundarias */}
               {!isViewOnlyForScouter && (
-                <TouchableOpacity style={styles.saveBtn} onPress={handleSaveMedicalData} disabled={saving}>
-                  {saving ? (
-                    <ActivityIndicator color="white" />
-                  ) : (
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Save size={16} color="white" style={{ marginRight: 6 }} />
-                      <Text style={styles.saveBtnText}>Guardar Ficha Médica</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
+                <Btn label="Guardar Ficha Médica" Icon={Save} onPress={handleSaveMedicalData} loading={saving} block />
               )}
-
-              <TouchableOpacity style={styles.bottomExportBtn} onPress={handleExportMedicalPdf} disabled={exportingPdf}>
-                {exportingPdf ? <ActivityIndicator size="small" color="white" style={{ marginRight: 8 }} /> : <Download size={18} color="white" style={{ marginRight: 8 }} />}
-                <Text style={styles.bottomExportBtnText}>Descargar Ficha Médica (PDF)</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={[styles.bottomExportBtn, { backgroundColor: '#1e40af', marginTop: 8 }]} onPress={handleExportMedicalDoc}>
-                <Download size={18} color="white" style={{ marginRight: 8 }} />
-                <Text style={styles.bottomExportBtnText}>Descargar en Word (.docx)</Text>
-              </TouchableOpacity>
+              <Btn label="Descargar Ficha Médica (PDF)" variant="secondary" Icon={Download} onPress={handleExportMedicalPdf} loading={exportingPdf} block />
+              <Btn label="Descargar en Word (.docx)" variant="secondary" Icon={Download} onPress={handleExportMedicalDoc} block />
             </View>
 
           </View>
@@ -818,7 +830,7 @@ export default function FichaMedicaScreen({ route, navigation }: any) {
 const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 18, borderBottomWidth: 1 },
-  asociacionBanner: { fontSize: 12, fontWeight: '900', color: colors.primary, letterSpacing: 0.5 },
+  asociacionBanner: { fontSize: 12, fontWeight: '900', color: colors.accentText, letterSpacing: 0.5 },
   title: { fontSize: 17, fontWeight: 'bold', marginTop: 2 },
   scouterBadge: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   exportHeaderBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
@@ -826,23 +838,23 @@ const styles = liveStyles(() => StyleSheet.create({
   changesBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.12)', padding: 8, borderRadius: 8, marginTop: 8 },
   headerInner: { maxWidth: 850, width: '100%', alignSelf: 'center' },
   tabBar: { flexDirection: 'row', borderRadius: 12, padding: 4, marginTop: 10, gap: 4 },
-  tab: { flex: 1, paddingVertical: 9, paddingHorizontal: 6, borderRadius: 9, alignItems: 'center' },
+  tab: { flex: 1, paddingVertical: 9, paddingHorizontal: 6, borderRadius: 12, alignItems: 'center' },
   tabActive: { backgroundColor: colors.primary },
   tabText: { fontSize: 12, fontWeight: 'bold', textAlign: 'center' },
 
   sheet: { borderRadius: 18, padding: 18, borderWidth: 1, maxWidth: 850, width: '100%', alignSelf: 'center' },
   sectionTitle: { fontSize: 14, fontWeight: 'bold', marginBottom: 6 },
   label: { fontSize: 12, fontWeight: '800', marginBottom: 4, marginTop: 8 },
-  input: { borderRadius: 10, borderWidth: 1, padding: 8, fontSize: 12 },
+  input: { borderRadius: 12, borderWidth: 1, padding: 8, fontSize: 12 },
   natChip: { flex: 1, height: 38, borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', justifyContent: 'center', alignItems: 'center', marginTop: 4 },
   genderChip: { flex: 1, height: 38, paddingHorizontal: 4, borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', justifyContent: 'center', alignItems: 'center' },
   chip: { flex: 1, height: 34, borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', justifyContent: 'center', alignItems: 'center' },
-  bloodChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1 },
-  signatureBanner: { backgroundColor: 'rgba(99, 102, 241, 0.08)', padding: 10, borderRadius: 10, marginTop: 6 },
+  bloodChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1 },
+  signatureBanner: { backgroundColor: colors.accentSoft, padding: 10, borderRadius: 12, marginTop: 6 },
   signaturePreviewBox: { width: 140, height: 60, borderRadius: 8, borderWidth: 1, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
   uploadSigBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
-  saveBtn: { backgroundColor: '#059669', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
+  saveBtn: { backgroundColor: '#059669', paddingVertical: 14, borderRadius: 16, alignItems: 'center' },
   saveBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
-  bottomExportBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  bottomExportBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 16, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   bottomExportBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 }
 }));

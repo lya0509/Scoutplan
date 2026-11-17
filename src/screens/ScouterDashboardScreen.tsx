@@ -55,7 +55,7 @@ function formatDateWithDayOfWeek(dateStr: string): string {
     const monthName = dateObj.toLocaleDateString('es-ES', { month: 'long' });
     const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
     const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-    return `📅 ${capitalizedDay}, ${+d} de ${capitalizedMonth} de ${y}`;
+    return `${capitalizedDay}, ${+d} de ${capitalizedMonth} de ${y}`;
   } catch (e) {
     return dateStr;
   }
@@ -64,7 +64,7 @@ function formatDateWithDayOfWeek(dateStr: string): string {
 const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
   'Aprobada':    { color: '#22c55e', label: 'Aprobada' },
   'En Revision': { color: '#f59e0b', label: 'En Revisión' },
-  'En Progreso': { color: colors.primary, label: 'En Progreso' },
+  'En Progreso': { get color() { return colors.primary; }, label: 'En Progreso' },
   'Bloqueada':   { color: '#d1d5db', label: 'Bloqueada' },
 };
 
@@ -128,7 +128,7 @@ function MembersPanel({ scouts, onReview, onViewProfile, isDarkMode, theme }: { 
                       right: 0,
                       width: 11,
                       height: 11,
-                      borderRadius: 5.5,
+                      borderRadius: 8.5,
                       backgroundColor: presenceService.isUserOnline(scout.id, scout.updated_at) ? '#22c55e' : '#9ca3af',
                       borderWidth: 2,
                       borderColor: isDarkMode ? '#18181b' : 'white',
@@ -139,7 +139,7 @@ function MembersPanel({ scouts, onReview, onViewProfile, isDarkMode, theme }: { 
                   <View style={{ flex: 1, marginLeft: 12 }}>
                     <Text style={[panelStyles.memberName, { color: theme.text }]}>{scout.name}</Text>
                     <Text style={[panelStyles.memberSub, { color: theme.subText }]}>
-                      {hasReview ? '⚠️ Pendiente de revisión (Toca para ver perfil)' : `Etapa: ${activeStage?.title || 'Sin etapa'} (Toca para ver perfil)`}
+                      {hasReview ? 'Pendiente de revisión' : `Etapa: ${activeStage?.title || 'Sin etapa'}`}
                     </Text>
 
                     <View style={panelStyles.stagesRow}>
@@ -161,8 +161,8 @@ function MembersPanel({ scouts, onReview, onViewProfile, isDarkMode, theme }: { 
                       <Text style={panelStyles.reviewBtnText}>Revisar</Text>
                     </TouchableOpacity>
                   ) : (
-                    <TouchableOpacity style={panelStyles.profileBtn} onPress={() => onViewProfile(scout)}>
-                      <Text style={panelStyles.profileBtnText}>Ver Perfil</Text>
+                    <TouchableOpacity style={[panelStyles.profileBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]} onPress={() => onViewProfile(scout)}>
+                      <Text style={[panelStyles.profileBtnText, { color: theme.text }]}>Ver Perfil</Text>
                     </TouchableOpacity>
                   )}
                 </TouchableOpacity>
@@ -251,7 +251,7 @@ function ActivitiesPanel({ unitFilter, isDarkMode, theme, onAddCip }: { unitFilt
             }}
           >
             <Plus size={15} color="white" style={{ marginRight: 4 }} />
-            <Text style={[panelStyles.addCipBtnText, { fontSize: 12 }]}>🚩 Gestionar CIP</Text>
+            <Text style={[panelStyles.addCipBtnText, { fontSize: 12 }]}>Gestionar CIP</Text>
           </TouchableOpacity>
 
           {loaded && (
@@ -397,7 +397,7 @@ function OnlineRosterPanel({ unit, groupName, isDarkMode, theme, navigation }: {
                     />
                     <View style={{
                       position: 'absolute', bottom: 0, right: 0,
-                      width: 10, height: 10, borderRadius: 5,
+                      width: 10, height: 10, borderRadius: 8,
                       backgroundColor: member.isOnline ? '#22c55e' : '#9ca3af',
                       borderWidth: 1.5, borderColor: isDarkMode ? '#27272a' : 'white',
                       zIndex: 10
@@ -406,8 +406,8 @@ function OnlineRosterPanel({ unit, groupName, isDarkMode, theme, navigation }: {
                   <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text, textAlign: 'center' }} numberOfLines={1}>
                     {member.name?.split(' ')[0] || 'Scout'}
                   </Text>
-                  <Text style={{ fontSize: 11, color: member.isOnline ? (isDarkMode ? '#4ade80' : '#16a34a') : (isDarkMode ? '#a1a1aa' : '#6b7280'), marginTop: 2 }}>
-                    {member.isOnline ? '🟢 En línea' : '⚪ Desconectado'}
+                  <Text style={{ fontSize: 12, color: member.isOnline ? (isDarkMode ? '#4ade80' : '#16a34a') : (isDarkMode ? '#a1a1aa' : '#6b7280'), marginTop: 2 }}>
+                    {member.isOnline ? 'En línea' : 'Desconectado'}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -546,7 +546,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
           {user?.unit?.toLowerCase() === 'clan' && (
             <View style={{ marginBottom: 20 }}>
               <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.text, marginBottom: 10, paddingHorizontal: 4 }}>
-                ⚜️ Rovers del Clan ({scouts.length})
+                Rovers del Clan ({scouts.length})
               </Text>
               {scouts.length === 0 ? (
                 <View style={[panelStyles.wrapper, { backgroundColor: theme.cardBg, borderColor: theme.border, padding: 16, alignItems: 'center' }]}>
@@ -584,7 +584,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                             right: 0,
                             width: 12,
                             height: 12,
-                            borderRadius: 6,
+                            borderRadius: 8,
                             backgroundColor: presenceService.isUserOnline(rover.id, rover.updated_at) ? '#22c55e' : '#9ca3af',
                             borderWidth: 2,
                             borderColor: isDarkMode ? '#18181b' : 'white',
@@ -602,9 +602,9 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                           </Text>
                         </TouchableOpacity>
 
-                        <View style={{ backgroundColor: presenceService.isUserOnline(rover.id, rover.updated_at) ? 'rgba(34, 197, 94, 0.15)' : 'rgba(156, 163, 175, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginTop: 4 }}>
+                        <View style={{ backgroundColor: presenceService.isUserOnline(rover.id, rover.updated_at) ? 'rgba(34, 197, 94, 0.15)' : 'rgba(156, 163, 175, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, marginTop: 4 }}>
                           <Text style={{ fontSize: 12, fontWeight: 'bold', color: presenceService.isUserOnline(rover.id, rover.updated_at) ? (isDarkMode ? '#4ade80' : '#16a34a') : (isDarkMode ? '#a1a1aa' : '#6b7280') }}>
-                            {presenceService.isUserOnline(rover.id, rover.updated_at) ? '🟢 En línea' : '⚪ Desconectado'}
+                            {presenceService.isUserOnline(rover.id, rover.updated_at) ? 'En línea' : 'Desconectado'}
                           </Text>
                         </View>
                       </View>
@@ -658,7 +658,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
           <View style={[panelStyles.wrapper, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
             <View style={[panelStyles.header, { paddingBottom: 10 }]}>
               <View style={panelStyles.headerLeft}>
-                <ShieldCheck size={20} color="#7c3aed" />
+                <ShieldCheck size={20} color={colors.primary} />
                 <Text style={[panelStyles.headerTitle, { color: theme.text }]}>Gestión de Carnet y Membresía</Text>
               </View>
             </View>
@@ -694,7 +694,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                            mStatus === 'approved' ? `✅ Aprobada hasta: ${formatDateEs(mDate)}` :
                            mStatus === 'pending_approval' ? `⏳ Pendiente: ${mDate}` :
                            mStatus === 'rejected' ? `❌ Rechazada: ${scout.membership_rejected_reason || 'Sin motivo'}` :
-                           '📋 Sin membresía asignada'}
+                           'Sin membresía asignada'}
                         </Text>
                       </View>
                       <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -709,7 +709,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                         </TouchableOpacity>
                         {/* Asignar / Modificar fecha */}
                         <TouchableOpacity
-                          style={{ backgroundColor: '#7c3aed', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8 }}
+                          style={{ backgroundColor: colors.primary, paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8 }}
                           onPress={() => {
                             setSelectedScoutForMembership(scout);
                             setMembershipDateInput(mDate || defaultMembershipDate());
@@ -727,7 +727,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                               style={{ backgroundColor: '#22c55e', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8 }}
                               onPress={async () => {
                                 await dataService.approveMembershipDate(scout.id, mDate, user?.name);
-                                showAlert('✅ Membresía Aprobada', `La membresía de ${scout.name} fue aprobada hasta el ${mDate}.`);
+                                showAlert('Membresía Aprobada', `La membresía de ${scout.name} fue aprobada hasta el ${mDate}.`);
                                 loadScouts();
                               }}
                             >
@@ -794,7 +794,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                 onPress={q.onPress}
                 activeOpacity={0.8}
               >
-                <q.Icon size={18} color={primaryColor} />
+                <q.Icon size={18} color={theme.accentText} />
                 <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>{q.label}</Text>
               </TouchableOpacity>
             ))}
@@ -808,7 +808,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                 onPress={q.onPress}
                 activeOpacity={0.8}
               >
-                <q.Icon size={18} color={primaryColor} />
+                <q.Icon size={18} color={theme.accentText} />
                 <Text style={[styles.scouterQuickBtnText, { color: theme.text }]}>{q.label}</Text>
               </TouchableOpacity>
             ))}
@@ -818,16 +818,17 @@ export default function ScouterDashboardScreen({ navigation }: any) {
 
       {/* ESTADÍSTICAS */}
       <View style={[styles.statsRow, frame]}>
-        <View style={[styles.statCard, { borderTopColor: primaryColor, backgroundColor: theme.cardBg }]}>
+        <View style={[styles.statCard, { borderColor: theme.border, backgroundColor: theme.cardBg }]}>
           <Text style={[styles.statNumber, { color: theme.text }]}>{stats.total}</Text>
           <Text style={[styles.statLabel, { color: theme.subText }]}>Scouts</Text>
         </View>
-        <View style={[styles.statCard, { borderTopColor: '#f59e0b', backgroundColor: theme.cardBg }]}>
-          <Text style={[styles.statNumber, { color: '#f59e0b' }]}>{stats.inReview}</Text>
+        {/* Solo la cifra que pide atención toma el acento */}
+        <View style={[styles.statCard, { borderColor: stats.inReview > 0 ? theme.primary : theme.border, backgroundColor: theme.cardBg }]}>
+          <Text style={[styles.statNumber, { color: stats.inReview > 0 ? theme.accentText : theme.text }]}>{stats.inReview}</Text>
           <Text style={[styles.statLabel, { color: theme.subText }]}>En Revisión</Text>
         </View>
-        <View style={[styles.statCard, { borderTopColor: '#22c55e', backgroundColor: theme.cardBg }]}>
-          <Text style={[styles.statNumber, { color: '#22c55e' }]}>{stats.approved}</Text>
+        <View style={[styles.statCard, { borderColor: theme.border, backgroundColor: theme.cardBg }]}>
+          <Text style={[styles.statNumber, { color: theme.text }]}>{stats.approved}</Text>
           <Text style={[styles.statLabel, { color: theme.subText }]}>Con Aprobada</Text>
         </View>
       </View>
@@ -874,7 +875,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
       <Modal visible={showMembershipModal} transparent animationType="fade" onRequestClose={() => setShowMembershipModal(false)}>
         <View style={modalStyles.overlay}>
           <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', padding: 24, borderRadius: 20 }]}>
-            <Text style={{ fontSize: 17, fontWeight: 'bold', color: theme.text, marginBottom: 4 }}>📅 Fecha de Membresía</Text>
+            <Text style={{ fontSize: 17, fontWeight: 'bold', color: theme.text, marginBottom: 4 }}>Fecha de Membresía</Text>
             <Text style={{ fontSize: 12, color: theme.subText, marginBottom: 16 }}>
               Scout: <Text style={{ fontWeight: 'bold', color: theme.text }}>{selectedScoutForMembership?.name}</Text>
             </Text>
@@ -906,9 +907,9 @@ export default function ScouterDashboardScreen({ navigation }: any) {
               </View>
             </TouchableOpacity>
 
-            <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#fffbeb', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: isDarkMode ? '#3f3f46' : '#fef08a', marginTop: 4 }}>
+            <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#fffbeb', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: isDarkMode ? '#3f3f46' : '#fef08a', marginTop: 4 }}>
               <Text style={{ fontSize: 12, color: isDarkMode ? '#fef08a' : '#92400e' }}>
-                💡 Elige la fecha con el calendario interactivo.
+                Elige la fecha con el calendario interactivo.
                 {user?.role === 'scouter' ? ' La fecha quedará en "Esperando Aprobación" hasta que Jefatura la valide.' : ' Como Jefe de Grupo, la fecha se aprobará de inmediato.'}
               </Text>
             </View>
@@ -917,7 +918,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                 <Text style={{ color: theme.subText }}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={{ backgroundColor: primaryColor, padding: 12, borderRadius: 10 }}
+                style={{ backgroundColor: primaryColor, padding: 12, borderRadius: 12 }}
                 onPress={async () => {
                   const finalDate = membershipDateInput || todayLocal();
                   if (!finalDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
@@ -930,7 +931,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                     notificationService.sendNotification({
                       senderId: user?.id,
                       receiverId: selectedScoutForMembership.id,
-                      title: '🪪 Membresía Aprobada',
+                      title: 'Membresía Aprobada',
                       message: `Tu carnet scout oficial está activo con vigencia hasta ${formatDateWithDayOfWeek(finalDate)}.`,
                       type: 'membership'
                     }).catch(() => {});
@@ -940,7 +941,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                       senderId: user?.id,
                       groupName: user?.group_name || undefined,
                       receiverRole: 'jefe_grupo',
-                      title: '⏳ Propuesta de Membresía',
+                      title: 'Propuesta de Membresía',
                       message: `El Scouter ${user?.name} propuso vigencia de membresía para ${selectedScoutForMembership?.name} hasta ${formatDateWithDayOfWeek(finalDate)}.`,
                       type: 'membership'
                     }).catch(() => {});
@@ -1002,7 +1003,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
       <Modal visible={showRejectModal} transparent animationType="fade" onRequestClose={() => setShowRejectModal(false)}>
         <View style={modalStyles.overlay}>
           <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', padding: 24, borderRadius: 20 }]}>
-            <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#ef4444', marginBottom: 12 }}>❌ Rechazar Membresía</Text>
+            <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#ef4444', marginBottom: 12 }}>Rechazar Membresía</Text>
             <Text style={{ fontSize: 12, color: theme.subText, marginBottom: 10 }}>
               Scout: <Text style={{ fontWeight: 'bold', color: theme.text }}>{selectedScoutForMembership?.name}</Text>
             </Text>
@@ -1020,7 +1021,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                 <Text style={{ color: theme.subText }}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={{ backgroundColor: '#ef4444', padding: 12, borderRadius: 10 }}
+                style={{ backgroundColor: '#ef4444', padding: 12, borderRadius: 12 }}
                 onPress={async () => {
                   if (!rejectReason.trim()) {
                     showAlert('Campo Obligatorio', 'Debes indicar el motivo del rechazo.');
@@ -1043,7 +1044,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
       <Modal visible={showPhotoRejectModal} transparent animationType="fade" onRequestClose={() => setShowPhotoRejectModal(false)}>
         <View style={modalStyles.overlay}>
           <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', padding: 24, borderRadius: 20 }]}>
-            <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#dc2626', marginBottom: 12 }}>🚫 Eliminar Foto No Institucional</Text>
+            <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#dc2626', marginBottom: 12 }}>Eliminar Foto No Institucional</Text>
             <Text style={{ fontSize: 12, color: theme.subText, marginBottom: 10 }}>
               Scout: <Text style={{ fontWeight: 'bold', color: theme.text }}>{photoRejectScout?.name}</Text>
             </Text>
@@ -1061,7 +1062,7 @@ export default function ScouterDashboardScreen({ navigation }: any) {
                 <Text style={{ color: theme.subText }}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={{ backgroundColor: '#dc2626', padding: 12, borderRadius: 10 }}
+                style={{ backgroundColor: '#dc2626', padding: 12, borderRadius: 12 }}
                 onPress={async () => {
                   if (!photoRejectReason.trim()) {
                     showAlert('Campo Obligatorio', 'Debes indicar por qué se elimina la foto.');
@@ -1110,7 +1111,7 @@ const styles = liveStyles(() => StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 14,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     gap: 8,
     shadowColor: '#000',
@@ -1140,12 +1141,8 @@ const styles = liveStyles(() => StyleSheet.create({
     borderRadius: 22, justifyContent: 'center', alignItems: 'center',
   },
   statsRow: { flexDirection: 'row', paddingHorizontal: 16, marginTop: 2, gap: 10 },
-  statCard: {
-    flex: 1, borderRadius: 14, padding: 14,
-    alignItems: 'center', borderTopWidth: 3,
-    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
-  },
-  statNumber: { fontSize: 26, fontWeight: 'bold' },
+  statCard: { flex: 1, borderRadius: 16, padding: 12, alignItems: 'center', borderWidth: 1 },
+  statNumber: { fontSize: 28, fontWeight: '700' },
   statLabel: { fontSize: 12, color: colors.textLight, marginTop: 2, textAlign: 'center' },
   scroll: { flex: 1, marginTop: 16 },
   logoutBtn: {
@@ -1156,19 +1153,15 @@ const styles = liveStyles(() => StyleSheet.create({
 }));
 
 const panelStyles = liveStyles(() => StyleSheet.create({
-  wrapper: {
-    borderRadius: 16, marginBottom: 14,
-    shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 }, elevation: 3, overflow: 'hidden', borderWidth: 1
-  },
+  wrapper: { borderRadius: 16, marginBottom: 12, overflow: 'hidden', borderWidth: 1 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   headerTitle: { fontSize: 16, fontWeight: 'bold' },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   addCipBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
   addCipBtnText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
-  badge: { backgroundColor: colors.primary, width: 22, height: 22, borderRadius: 11, justifyContent: 'center', alignItems: 'center' },
-  badgeText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
+  badge: { backgroundColor: colors.primary, width: 22, height: 22, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  badgeText: { color: colors.onPrimary, fontSize: 12, fontWeight: 'bold' },
   body: { paddingHorizontal: 16, paddingBottom: 12, borderTopWidth: 1 },
   empty: { color: '#aaa', textAlign: 'center', padding: 20, fontStyle: 'italic' },
   memberRow: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 14 },
@@ -1177,14 +1170,14 @@ const panelStyles = liveStyles(() => StyleSheet.create({
   memberName: { fontSize: 16, fontWeight: 'bold' },
   memberSub: { fontSize: 12, marginTop: 2, marginBottom: 6 },
   stagesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  stagePill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, borderWidth: 1 },
+  stagePill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 12, borderWidth: 1 },
   stagePillText: { fontSize: 12, fontWeight: '600' },
-  reviewBtn: { backgroundColor: '#f59e0b', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, alignSelf: 'center' },
-  reviewBtnText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
-  profileBtn: { backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, alignSelf: 'center' },
-  profileBtnText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
+  reviewBtn: { backgroundColor: colors.primary, minHeight: 40, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 12, alignSelf: 'center' },
+  reviewBtnText: { color: colors.onPrimary, fontSize: 13, fontWeight: '600' },
+  profileBtn: { borderWidth: 1, minHeight: 40, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 12, alignSelf: 'center' },
+  profileBtnText: { fontSize: 13, fontWeight: '600' },
   activityRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
-  dateBox: { borderRadius: 10, width: 52, paddingVertical: 8, alignItems: 'center' },
+  dateBox: { borderRadius: 12, width: 52, paddingVertical: 8, alignItems: 'center' },
   dateMonth: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   dateDay: { color: 'white', fontSize: 20, fontWeight: '900' },
   activityTitle: { fontSize: 15, fontWeight: 'bold', marginBottom: 2 },

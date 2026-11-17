@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   bellBtn: {
     position: 'relative',
     padding: 6,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     top: 2,
     right: 2,
     backgroundColor: '#ef4444',
-    borderRadius: 9,
+    borderRadius: 12,
     minWidth: 16,
     height: 16,
     alignItems: 'center',
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: '#ffffff',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
   }
 });

@@ -82,15 +82,15 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
       case 'membership':
         return <ShieldCheck size={18} color="#10b981" />;
       case 'calendar':
-        return <Calendar size={18} color="#6366f1" />;
+        return <Calendar size={18} color={colors.primary} />;
       case 'program':
-        return <FileText size={18} color="#9333ea" />;
+        return <FileText size={18} color={colors.primary} />;
       case 'plan':
         return <Sparkles size={18} color="#3b82f6" />;
       case 'alert':
         return <AlertTriangle size={18} color="#ef4444" />;
       default:
-        return <Bell size={18} color="#6366f1" />;
+        return <Bell size={18} color={colors.primary} />;
     }
   };
 
@@ -98,11 +98,11 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
     switch (type) {
       case 'badge': return '#f59e0b';
       case 'membership': return '#10b981';
-      case 'calendar': return '#6366f1';
-      case 'program': return '#9333ea';
+      case 'calendar': return colors.primary;
+      case 'program': return colors.primary;
       case 'plan': return '#3b82f6';
       case 'alert': return '#ef4444';
-      default: return '#6366f1';
+      default: return colors.primary;
     }
   };
 
@@ -194,8 +194,8 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
               style={[styles.tabBtn, activeTab === 'inbox' && styles.tabBtnActive]}
               onPress={() => setActiveTab('inbox')}
             >
-              <Text style={[styles.tabBtnText, { color: activeTab === 'inbox' ? colors.primary : theme.subText }]}>
-                📥 Bandeja ({notifications.length})
+              <Text style={[styles.tabBtnText, { color: activeTab === 'inbox' ? colors.accentText : theme.subText }]}>
+                Bandeja ({notifications.length})
               </Text>
             </TouchableOpacity>
 
@@ -203,8 +203,8 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
               style={[styles.tabBtn, activeTab === 'test' && styles.tabBtnActive]}
               onPress={() => setActiveTab('test')}
             >
-              <Text style={[styles.tabBtnText, { color: activeTab === 'test' ? colors.primary : theme.subText }]}>
-                🧪 Probar en Vivo (Push y Sonido)
+              <Text style={[styles.tabBtnText, { color: activeTab === 'test' ? colors.accentText : theme.subText }]}>
+                Probar en Vivo (Push y Sonido)
               </Text>
             </TouchableOpacity>
           </View>
@@ -261,7 +261,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
               }}>
                 <CheckCircle2 size={16} color="#16a34a" />
                 <Text style={{ fontSize: 12, fontWeight: 'bold', color: isDarkMode ? '#86efac' : '#15803d', flex: 1 }}>
-                  Push del Sistema, Segundo Plano y Pantalla de Bloqueo Activados ✅
+                  Push del Sistema, Segundo Plano y Pantalla de Bloqueo Activados
                 </Text>
               </View>
             )}
@@ -384,7 +384,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                         {!!notif.unit && (
                           <View style={{ flexDirection: 'row', marginTop: 6 }}>
                             <View style={[styles.unitTag, { backgroundColor: isDarkMode ? '#3f3f46' : '#e4e4e7' }]}>
-                              <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.text }}>
+                              <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>
                                 ⚜️ {notif.unit.toUpperCase()}
                               </Text>
                             </View>
@@ -414,9 +414,9 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
             ) : (
               /* BANCO DE PRUEBAS EN VIVO */
               <View style={styles.testSuite}>
-                <View style={[styles.testIntroCard, { backgroundColor: isDarkMode ? '#1e1b4b' : 'rgba(99, 102, 241, 0.12)' }]}>
+                <View style={[styles.testIntroCard, { backgroundColor: isDarkMode ? colors.accentSoft : colors.accentSoft }]}>
                   <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.accentText }}>
-                    🧪 Simulador de Notificaciones en Tiempo Real
+                    Simulador de Notificaciones en Tiempo Real
                   </Text>
                   <Text style={{ fontSize: 12, color: isDarkMode ? '#e4e4e7' : '#4b5563', marginTop: 4, lineHeight: 16 }}>
                     Haz clic en cualquiera de los siguientes botones para emitir una notificación real por WebSockets. Podrás ver el banner flotante superior aparecer al instante en tu pantalla y en cualquier dispositivo conectado.
@@ -434,22 +434,22 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
 
                 {/* BOTÓN 1: ALERTA GENERAL */}
                 <TouchableOpacity
-                  style={[styles.testCardBtn, { borderColor: '#6366f1' }]}
+                  style={[styles.testCardBtn, { borderColor: colors.primary }]}
                   onPress={() => runLiveTest(
                     'info',
-                    '🔔 Notificación de Prueba del Sistema',
+                    'Notificación de Prueba del Sistema',
                     '¡El sistema de WebSockets está funcionando al 100% en tiempo real!'
                   )}
                   disabled={testingType !== null}
                 >
-                  <View style={[styles.testBtnIconBox, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
-                    <Bell size={20} color="#6366f1" />
+                  <View style={[styles.testBtnIconBox, { backgroundColor: colors.accentSoft }]}>
+                    <Bell size={20} color={colors.primary} />
                   </View>
                   <View style={{ flex: 1, marginLeft: 10 }}>
                     <Text style={[styles.testBtnTitle, { color: theme.text }]}>1. Alerta Instantánea del Sistema</Text>
                     <Text style={[styles.testBtnDesc, { color: theme.subText }]}>Prueba básica de entrega WebSocket</Text>
                   </View>
-                  {testingType === 'info' ? <ActivityIndicator color="#6366f1" /> : <Play size={16} color="#6366f1" />}
+                  {testingType === 'info' ? <ActivityIndicator color={colors.primary} /> : <Play size={16} color={colors.primary} />}
                 </TouchableOpacity>
 
                 {/* BOTÓN 2: APROBACIÓN DE INSIGNIA / ADELANTO */}
@@ -457,7 +457,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                   style={[styles.testCardBtn, { borderColor: '#f59e0b' }]}
                   onPress={() => runLiveTest(
                     'badge',
-                    '🎖️ ¡Felicidades! Insignia Aprobada',
+                    '¡Felicidades! Insignia Aprobada',
                     `Tu Scouter ha aprobado tu etapa de adelanto scout en la unidad ${(user?.unit || 'Clan').toUpperCase()}.`
                   )}
                   disabled={testingType !== null}
@@ -474,22 +474,22 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
 
                 {/* BOTÓN 3: ACTIVIDAD DE CALENDARIO */}
                 <TouchableOpacity
-                  style={[styles.testCardBtn, { borderColor: '#6366f1' }]}
+                  style={[styles.testCardBtn, { borderColor: colors.primary }]}
                   onPress={() => runLiveTest(
                     'calendar',
-                    '📅 Nueva Actividad de Grupo Programada',
+                    'Nueva Actividad de Grupo Programada',
                     'Asamblea de Grupo y Gran Fogata Scout este sábado a las 3:00 PM en la Sede.'
                   )}
                   disabled={testingType !== null}
                 >
-                  <View style={[styles.testBtnIconBox, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
-                    <Calendar size={20} color="#6366f1" />
+                  <View style={[styles.testBtnIconBox, { backgroundColor: colors.accentSoft }]}>
+                    <Calendar size={20} color={colors.primary} />
                   </View>
                   <View style={{ flex: 1, marginLeft: 10 }}>
                     <Text style={[styles.testBtnTitle, { color: theme.text }]}>3. Nueva Actividad en Calendario</Text>
                     <Text style={[styles.testBtnDesc, { color: theme.subText }]}>Simula evento publicado por Jefatura</Text>
                   </View>
-                  {testingType === 'calendar' ? <ActivityIndicator color="#6366f1" /> : <Play size={16} color="#6366f1" />}
+                  {testingType === 'calendar' ? <ActivityIndicator color={colors.primary} /> : <Play size={16} color={colors.primary} />}
                 </TouchableOpacity>
 
                 {/* BOTÓN 4: PLAN TRIMESTRAL */}
@@ -497,7 +497,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                   style={[styles.testCardBtn, { borderColor: '#3b82f6' }]}
                   onPress={() => runLiveTest(
                     'plan',
-                    '📑 Plan Trimestral Actualizado',
+                    'Plan Trimestral Actualizado',
                     `Se han actualizado las metas y el cronograma del Plan Trimestral de ${(user?.unit || 'Clan').toUpperCase()}.`
                   )}
                   disabled={testingType !== null}
@@ -517,7 +517,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                   style={[styles.testCardBtn, { borderColor: '#10b981' }]}
                   onPress={() => runLiveTest(
                     'membership',
-                    '🛡️ Membresía y Carnet Oficial Aprobados',
+                    'Membresía y Carnet Oficial Aprobados',
                     'Tu registro institucional anual 2026 ha sido validado con éxito por Jefatura de Grupo.'
                   )}
                   disabled={testingType !== null}
@@ -537,7 +537,7 @@ export default function NotificationCenterModal({ visible, onClose }: Notificati
                   style={[styles.testCardBtn, { borderColor: '#ef4444' }]}
                   onPress={() => runLiveTest(
                     'alert',
-                    '🩺 Ficha Médica de Emergencia Actualizada',
+                    'Ficha Médica de Emergencia Actualizada',
                     'Se han registrado nuevas indicaciones de alergias y contactos de emergencia.'
                   )}
                   disabled={testingType !== null}
@@ -592,8 +592,8 @@ const styles = liveStyles(() => StyleSheet.create({
   bellIconBox: {
     position: 'relative',
     padding: 6,
-    borderRadius: 10,
-    backgroundColor: 'rgba(99, 102, 241, 0.12)',
+    borderRadius: 12,
+    backgroundColor: colors.accentSoft,
   },
   unreadBadgeMini: {
     position: 'absolute',
@@ -609,7 +609,7 @@ const styles = liveStyles(() => StyleSheet.create({
   },
   unreadBadgeText: {
     color: '#ffffff',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   headerTitle: {
@@ -677,20 +677,20 @@ const styles = liveStyles(() => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 12,
   },
   notifItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     marginBottom: 10,
   },
   notifIconWrap: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -728,13 +728,13 @@ const styles = liveStyles(() => StyleSheet.create({
     borderWidth: 1,
     borderColor: '#10b981',
     padding: 10,
-    borderRadius: 10,
+    borderRadius: 12,
   },
   testCardBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1.5,
     backgroundColor: 'rgba(0,0,0,0.02)',
   },

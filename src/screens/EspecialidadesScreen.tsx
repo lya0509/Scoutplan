@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { liveStyles } from '../theme/liveStyles';
+import { colors } from '../theme/colors';
 import {
   View,
   Text,
@@ -380,7 +382,7 @@ export default function EspecialidadesScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -433,7 +435,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 13,
-    color: '#f3e8ff',
+    color: colors.accentText,
     textAlign: 'center',
     lineHeight: 18,
     maxWidth: 580,
@@ -476,7 +478,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: Platform.OS === 'ios' ? 12 : 8,
     shadowColor: '#000',
@@ -528,7 +530,7 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 48,
     height: 48,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -543,7 +545,7 @@ const styles = StyleSheet.create({
   categoryTag: {
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1,
   },
   categoryTagText: {
@@ -553,7 +555,7 @@ const styles = StyleSheet.create({
   officialTag: {
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   officialTagText: {
     fontSize: 12,
@@ -580,7 +582,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 9,
-    borderRadius: 10,
+    borderRadius: 12,
     gap: 6,
   },
   viewBtn: {},
@@ -669,7 +671,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 18,
-    borderRadius: 10,
+    borderRadius: 12,
     gap: 8,
   },
   openExternalBtnText: {
@@ -677,4 +679,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-});
+}));

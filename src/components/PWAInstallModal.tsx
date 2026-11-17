@@ -68,7 +68,7 @@ export function PWAInstallModal({ visible, onClose }: Props) {
       promptToUse.prompt();
       const { outcome } = await promptToUse.userChoice;
       if (outcome === 'accepted') {
-        showAlert('🎉 ¡Instalación Iniciada!', 'La aplicación de Plan Progresivo se ha instalado en tu dispositivo.');
+        showAlert('¡Instalación Iniciada!', 'La aplicación de Plan Progresivo se ha instalado en tu dispositivo.');
         deferredInstallPrompt = null;
         setInstallPrompt(null);
         onClose();
@@ -77,7 +77,7 @@ export function PWAInstallModal({ visible, onClose }: Props) {
       // Instrucciones en pantalla para iOS Safari
     } else {
       showAlert(
-        'Instalar Aplicación 📲',
+        'Instalar Aplicación',
         'En el menú de 3 puntos (⋮) de tu navegador Chrome o Edge, selecciona "Instalar aplicación" o "Añadir a la pantalla principal".'
       );
     }
@@ -128,7 +128,7 @@ export function PWAInstallModal({ visible, onClose }: Props) {
                   </TouchableOpacity>
                 ) : isIOS ? (
                   <View style={[styles.iosInstructions, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }]}>
-                    <Text style={[styles.iosTitle, { color: theme.accentText }]}>🍎 Pasos para iPhone / iPad (Safari):</Text>
+                    <Text style={[styles.iosTitle, { color: theme.accentText }]}>Pasos para iPhone / iPad (Safari):</Text>
                     
                     <View style={styles.stepRow}>
                       <View style={[styles.stepNum, { backgroundColor: primaryColor }]}>
@@ -159,7 +159,7 @@ export function PWAInstallModal({ visible, onClose }: Props) {
                   </View>
                 ) : (
                   <View style={[styles.iosInstructions, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border }]}>
-                    <Text style={[styles.iosTitle, { color: theme.accentText }]}>🤖 Pasos para Android (Chrome / Samsung):</Text>
+                    <Text style={[styles.iosTitle, { color: theme.accentText }]}>Pasos para Android (Chrome / Samsung):</Text>
                     
                     <View style={styles.stepRow}>
                       <View style={[styles.stepNum, { backgroundColor: primaryColor }]}>
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    borderRadius: 14,
+    borderRadius: 16,
     marginBottom: 16
   },
   primaryInstallBtnText: {
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   stepNum: {
     width: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,

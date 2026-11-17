@@ -244,7 +244,7 @@ const styles = liveStyles(() => StyleSheet.create({
   },
   
   tabsWrapper: { flexDirection: 'row', borderRadius: 12, padding: 4, marginBottom: 10 },
-  tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center' },
+  tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center' },
   tabBtnActive: { backgroundColor: colors.primary },
   tabText: { fontSize: 14, fontWeight: '600', color: '#64748b' },
   tabTextActive: { color: '#ffffff', fontWeight: 'bold' },
@@ -262,7 +262,7 @@ const styles = liveStyles(() => StyleSheet.create({
   chipText: { fontSize: 12 },
 
   activityCard: {
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
@@ -272,13 +272,13 @@ const styles = liveStyles(() => StyleSheet.create({
     elevation: 2
   },
   cardTopRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' },
-  badgeTag: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  badgeTag: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   badgeTagText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   subAreaText: { fontSize: 12 },
   areaText: { fontSize: 12 },
   activityText: { fontSize: 15, fontWeight: '600', lineHeight: 22 },
 
-  emptyCard: { borderRadius: 14, padding: 30, alignItems: 'center', borderWidth: 1, marginTop: 20 },
+  emptyCard: { borderRadius: 16, padding: 30, alignItems: 'center', borderWidth: 1, marginTop: 20 },
   emptyTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 6 },
   emptyDesc: { fontSize: 13, textAlign: 'center' }
 }));

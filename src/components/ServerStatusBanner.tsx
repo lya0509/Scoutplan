@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    backgroundColor: '#7f1d1d', borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14,
+    backgroundColor: '#7f1d1d', borderRadius: 16, paddingVertical: 12, paddingHorizontal: 14,
     maxWidth: 560, width: '100%',
     shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 6,
   },
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   detail: { color: '#fee2e2', fontSize: 13, marginTop: 3, lineHeight: 18 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, gap: 8, flexWrap: 'wrap' },
   code: { color: '#fecaca', fontSize: 12, fontWeight: '700', letterSpacing: 0.3 },
-  btn: { backgroundColor: '#fff', borderRadius: 10, paddingVertical: 7, paddingHorizontal: 14, minHeight: 34, minWidth: 96, alignItems: 'center', justifyContent: 'center' },
+  btn: { backgroundColor: '#fff', borderRadius: 12, paddingVertical: 7, paddingHorizontal: 14, minHeight: 34, minWidth: 96, alignItems: 'center', justifyContent: 'center' },
   btnText: { color: '#7f1d1d', fontWeight: '800', fontSize: 13 },
   close: { padding: 4, marginTop: -2 },
 });

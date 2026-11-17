@@ -117,7 +117,7 @@ export function PendingAccountsCard({ members, groupName, onChanged }: Props) {
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderRadius: 14, padding: 14 },
+  card: { borderWidth: 1, borderRadius: 16, padding: 14 },
   head: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', marginBottom: 6 },
   title: { fontSize: 15, fontWeight: '800' },
   sub: { fontSize: 12, marginTop: 2, lineHeight: 17 },
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   name: { fontSize: 14, fontWeight: '700' },
   meta: { fontSize: 12, marginTop: 1 },
   actions: { flexDirection: 'row', gap: 6, alignItems: 'center' },
-  btn: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 10, paddingHorizontal: 12, minHeight: 40 },
+  btn: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 12, paddingHorizontal: 12, minHeight: 40 },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  btnIcon: { borderWidth: 1, borderRadius: 10, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  btnIcon: { borderWidth: 1, borderRadius: 12, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
 });

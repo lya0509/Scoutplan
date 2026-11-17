@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors as defaultColors } from '../theme/colors';
 import { DEFAULT_ACCENT, accentOnDark, accentAsText, onColor, mix } from '../theme/tokens';
 
 const CUSTOM_COLOR_KEY = 'app_accent_custom';
+const LARGE_TEXT_KEY = 'app_large_text';
 
 export const THEME_COLOR_PRESETS = [
   { id: 'scout_purple', name: 'Morado Scout', hex: '#612499' },
@@ -30,6 +32,11 @@ interface ThemeContextType {
   setRamaAccent: (hex: string) => void;
   /** true si la persona eligió un color propio en «Personalizar». */
   hasCustomColor: boolean;
+  /** Letra grande: encendida sola para los lobatos (Manada); cualquiera la puede cambiar en «Personalizar». */
+  largeText: boolean;
+  setLargeText: (on: boolean) => Promise<void>;
+  /** La fija App.tsx según quien inició sesión (true para jóvenes de Manada). */
+  setLargeTextDefault: (on: boolean) => void;
   theme: {
     bg: string;
     cardBg: string;
@@ -60,6 +67,24 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [customColor, setCustomColor] = useState<string | null>(null);
   const [ramaAccent, setRamaAccent] = useState<string>(DEFAULT_ACCENT);
   const primaryColor = customColor || ramaAccent;
+  // Letra grande: elección guardada (null = seguir lo que toca por rama)
+  const [largeTextChoice, setLargeTextChoice] = useState<boolean | null>(null);
+  const [largeTextDefault, setLargeTextDefault] = useState(false);
+  const largeText = largeTextChoice ?? largeTextDefault;
+
+  // Web: agranda solo los textos (los <Text> de primer nivel salen como div[dir=auto]); así no
+  // cambia el ancho que la app cree tener, como pasaría con un zoom de toda la página.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const id = 'scout-large-text';
+    if (!document.getElementById(id)) {
+      const el = document.createElement('style');
+      el.id = id;
+      el.textContent = 'html.scout-letra-grande div[dir="auto"]{zoom:1.12}';
+      document.head.appendChild(el);
+    }
+    document.documentElement.classList.toggle('scout-letra-grande', largeText);
+  }, [largeText]);
 
   useEffect(() => {
     // Cargar preferencia del tema y color al iniciar
@@ -84,6 +109,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (savedColor) {
           setCustomColor(savedColor);
         }
+        const savedLarge = await AsyncStorage.getItem(LARGE_TEXT_KEY);
+        if (savedLarge === 'on' || savedLarge === 'off') setLargeTextChoice(savedLarge === 'on');
       } catch (e) {
         console.error('Error cargando preferencias de tema:', e);
       }
@@ -108,6 +135,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       await AsyncStorage.setItem(CUSTOM_COLOR_KEY, hex);
     } catch (e) {
       console.error('Error guardando color primario:', e);
+    }
+  };
+
+  const setLargeText = async (on: boolean) => {
+    setLargeTextChoice(on);
+    try {
+      await AsyncStorage.setItem(LARGE_TEXT_KEY, on ? 'on' : 'off');
+    } catch (e) {
+      console.error('Error guardando el tamaño de letra:', e);
     }
   };
 
@@ -149,6 +185,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     errLine: isDarkMode ? '#7f1d1d' : '#fecaca',
   };
 
+  // Copias en vivo para estilos escritos fuera de los componentes (ver theme/liveStyles.ts)
+  defaultColors.accentText = theme.accentText;
+  defaultColors.accentSoft = theme.accentSoft;
+  defaultColors.onPrimary = theme.onPrimary;
+
   return (
     <ThemeContext.Provider value={{
       isDarkMode,
@@ -159,6 +200,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       resetToDefaultColor,
       setRamaAccent,
       hasCustomColor: !!customColor,
+      largeText,
+      setLargeText,
+      setLargeTextDefault,
       theme
     }}>
       {children}

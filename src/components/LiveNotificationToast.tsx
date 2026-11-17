@@ -1,4 +1,5 @@
 import React from 'react';
+import { colors } from '../theme/colors';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Platform } from 'react-native';
 import { useNotifications } from '../context/NotificationContext';
 import { useTheme } from '../context/ThemeContext';
@@ -19,15 +20,15 @@ export default function LiveNotificationToast() {
       case 'membership':
         return <ShieldCheck size={20} color="#10b981" />;
       case 'calendar':
-        return <Calendar size={20} color="#6366f1" />;
+        return <Calendar size={20} color={colors.primary} />;
       case 'program':
-        return <FileText size={20} color="#9333ea" />;
+        return <FileText size={20} color={colors.primary} />;
       case 'plan':
         return <Sparkles size={20} color="#3b82f6" />;
       case 'alert':
         return <AlertTriangle size={20} color="#ef4444" />;
       default:
-        return <Bell size={20} color="#6366f1" />;
+        return <Bell size={20} color={colors.primary} />;
     }
   };
 
@@ -35,11 +36,11 @@ export default function LiveNotificationToast() {
     switch (activeToast.type) {
       case 'badge': return '#f59e0b';
       case 'membership': return '#10b981';
-      case 'calendar': return '#6366f1';
-      case 'program': return '#9333ea';
+      case 'calendar': return colors.primary;
+      case 'program': return colors.primary;
       case 'plan': return '#3b82f6';
       case 'alert': return '#ef4444';
-      default: return '#6366f1';
+      default: return colors.primary;
     }
   };
 
@@ -129,7 +130,7 @@ const styles = StyleSheet.create({
   },
   liveBadgeText: {
     color: '#ffffff',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
     letterSpacing: 0.5,
   },

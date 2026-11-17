@@ -1,5 +1,8 @@
 export const colors = {
-  primary: '#612499',       // Morado Scout Oficial extraído de la insignia
+  primary: '#612499',       // Color de acento EN VIVO (ThemeContext lo cambia según rama, personalización y modo oscuro)
+  accentText: '#612499',    // Acento legible como texto (en vivo)
+  accentSoft: '#efe9f5',    // Fondo suave de acento (en vivo)
+  onPrimary: '#ffffff',     // Letra sobre fondo de acento (en vivo)
   primaryLight: '#7c3aed',  // Morado claro para highlights y hover
   purple: '#612499',        // Morado Scout Oficial
   gold: '#f59e0b',          // Dorado para detalles de insignias

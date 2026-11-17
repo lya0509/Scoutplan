@@ -109,7 +109,7 @@ const wheelStyles = liveStyles(() => StyleSheet.create({
   selectionLine: { height: 1, backgroundColor: colors.primary, opacity: 0.5 },
   item: { height: ITEM_HEIGHT, justifyContent: 'center', alignItems: 'center' },
   itemText: { fontSize: 17, color: '#aaa' },
-  itemTextSelected: { fontSize: 20, fontWeight: 'bold', color: colors.primary },
+  itemTextSelected: { fontSize: 20, fontWeight: 'bold', color: colors.accentText },
 }));
 
 function SelectorGrid({ options, selected, onSelect, isDarkMode }: {
@@ -366,7 +366,7 @@ export default function RegisterScreen({ navigation }: any) {
       borderWidth: isDarkMode ? 1 : 0
     },
     title: {
-      color: isDarkMode ? '#f4f4f5' : colors.primary,
+      color: isDarkMode ? '#f4f4f5' : colors.accentText,
     },
     label: {
       color: isDarkMode ? '#f4f4f5' : '#444',
@@ -471,7 +471,7 @@ export default function RegisterScreen({ navigation }: any) {
           <Text style={[styles.label, dynamicStyles.label]}>Fecha de Nacimiento <Text style={styles.required}>*</Text></Text>
           <TouchableOpacity style={[styles.input, styles.dateButton, dynamicStyles.input]} onPress={() => setShowPicker(true)}>
             {birthDate ? (
-              <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '600' }}>{formatBirthDisplay()}</Text>
+              <Text style={{ color: colors.accentText, fontSize: 15, fontWeight: '600' }}>{formatBirthDisplay()}</Text>
             ) : (
               <Text style={{ color: isDarkMode ? '#71717a' : '#aaa', fontSize: 15 }}>Toca para seleccionar fecha de nacimiento</Text>
             )}
@@ -526,8 +526,8 @@ export default function RegisterScreen({ navigation }: any) {
             isDarkMode={isDarkMode}
           />
           {selectedUnit === 'manada' && (
-            <View style={{ backgroundColor: 'rgba(99, 102, 241, 0.12)', borderLeftWidth: 4, borderLeftColor: colors.primary, padding: 12, borderRadius: 8, marginTop: 10 }}>
-              <Text style={{ fontWeight: 'bold', fontSize: 12, color: colors.primary }}>🐾 Registro de Unidad Manada (Perfil del Representante):</Text>
+            <View style={{ backgroundColor: colors.accentSoft, borderLeftWidth: 4, borderLeftColor: colors.primary, padding: 12, borderRadius: 8, marginTop: 10 }}>
+              <Text style={{ fontWeight: 'bold', fontSize: 12, color: colors.accentText }}>Registro de Unidad Manada (Perfil del Representante):</Text>
               <Text style={{ fontSize: 12, color: isDarkMode ? '#e4e4e7' : '#4b5563', marginTop: 4, lineHeight: 16 }}>
                 Esta cuenta será administrada por el padre o representante. Si tu hijo(a) avanza en el futuro a Tropa, Caminantes o Clan, podrán actualizar el correo electrónico registrado en cualquier momento para mantener la misma cuenta e historial scout.
               </Text>
@@ -700,7 +700,7 @@ const styles = liveStyles(() => StyleSheet.create({
   dividerLine: { flex: 1, height: 1 },
   dividerText: { marginHorizontal: 12, fontSize: 12, fontWeight: '700', letterSpacing: 1 },
   submitButton: {
-    backgroundColor: colors.primary, padding: 18, borderRadius: 14,
+    backgroundColor: colors.primary, padding: 18, borderRadius: 16,
     alignItems: 'center', marginTop: 28,
     shadowColor: colors.primary, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5,
   },
@@ -714,11 +714,11 @@ const modalStyles = liveStyles(() => StyleSheet.create({
   card: { width: '100%', maxWidth: 400, borderRadius: 20, padding: 24, alignItems: 'center' },
   title: { fontSize: 18, fontWeight: 'bold', marginBottom: 8 },
   desc: { fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 10 },
-  suggestedText: { fontSize: 16, fontWeight: 'bold', color: colors.primary, marginBottom: 20 },
+  suggestedText: { fontSize: 16, fontWeight: 'bold', color: colors.accentText, marginBottom: 20 },
   btnRow: { flexDirection: 'row', width: '100%', gap: 10 },
-  btnSecondary: { flex: 1, paddingVertical: 12, backgroundColor: '#f1f5f9', borderRadius: 10, alignItems: 'center' },
+  btnSecondary: { flex: 1, paddingVertical: 12, backgroundColor: '#f1f5f9', borderRadius: 12, alignItems: 'center' },
   btnSecondaryText: { color: '#64748b', fontWeight: 'bold', fontSize: 13 },
-  btnPrimary: { flex: 1, paddingVertical: 12, backgroundColor: colors.primary, borderRadius: 10, alignItems: 'center' },
+  btnPrimary: { flex: 1, paddingVertical: 12, backgroundColor: colors.primary, borderRadius: 12, alignItems: 'center' },
   btnPrimaryText: { color: 'white', fontWeight: 'bold', fontSize: 13 },
 }));
 
@@ -737,7 +737,7 @@ const pickerStyles = liveStyles(() => StyleSheet.create({
   },
   title: { fontSize: 17, fontWeight: 'bold' },
   cancel: { fontSize: 16, color: colors.textLight },
-  confirm: { fontSize: 16, color: colors.primary, fontWeight: 'bold' },
+  confirm: { fontSize: 16, color: colors.accentText, fontWeight: 'bold' },
   columnLabels: {
     flexDirection: 'row', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4,
   },
@@ -754,5 +754,5 @@ const pickerStyles = liveStyles(() => StyleSheet.create({
     alignItems: 'center', paddingVertical: 14, marginTop: 8,
     borderTopWidth: 1, marginHorizontal: 20,
   },
-  previewText: { fontSize: 16, color: colors.primary, fontWeight: '600' },
+  previewText: { fontSize: 16, color: colors.accentText, fontWeight: '600' },
 }));

@@ -832,10 +832,10 @@ export default function StageDetailScreen({ route, navigation }: any) {
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    backgroundColor: isDarkMode ? '#1e1b4b' : '#ede9fe',
-                    borderColor: '#8b5cf6',
+                    backgroundColor: isDarkMode ? colors.accentSoft : colors.accentSoft,
+                    borderColor: colors.primary,
                     borderWidth: 1,
-                    borderRadius: 10,
+                    borderRadius: 12,
                     paddingVertical: 8,
                     paddingHorizontal: 12,
                     marginBottom: 12,
@@ -848,11 +848,11 @@ export default function StageDetailScreen({ route, navigation }: any) {
                   }}
                   activeOpacity={0.8}
                 >
-                  <Award size={16} color="#8b5cf6" />
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: isDarkMode ? '#c4b5fd' : '#6d28d9' }}>
+                  <Award size={16} color={colors.primary} />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: isDarkMode ? colors.accentText : colors.accentText }}>
                     Ver Catálogo y Guías Oficiales de Especialidades (ASV)
                   </Text>
-                  <ExternalLink size={14} color="#8b5cf6" />
+                  <ExternalLink size={14} color={colors.primary} />
                 </TouchableOpacity>
               )}
 
@@ -862,7 +862,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                   Selecciona tu acreditación:
                 </Text>
 
-                <View style={{ flexDirection: 'row', backgroundColor: isDarkMode ? '#27272a' : '#e2e8f0', borderRadius: 10, padding: 2 }}>
+                <View style={{ flexDirection: 'row', backgroundColor: isDarkMode ? '#27272a' : '#e2e8f0', borderRadius: 12, padding: 2 }}>
                   <TouchableOpacity
                     style={{
                       flexDirection: 'row',
@@ -967,11 +967,11 @@ export default function StageDetailScreen({ route, navigation }: any) {
                               modalStyles.gridCertCard,
                               {
                                 backgroundColor: isSelected
-                                  ? (isDarkMode ? '#1e1b4b' : '#f5f3ff')
+                                  ? (isDarkMode ? colors.accentSoft : colors.accentSoft)
                                   : usedIn
                                   ? (isDarkMode ? '#1c1917' : '#fef2f2')
                                   : theme.cardBg,
-                                borderColor: isSelected ? '#8b5cf6' : usedIn ? '#fca5a5' : theme.border,
+                                borderColor: isSelected ? colors.primary : usedIn ? '#fca5a5' : theme.border,
                                 borderWidth: isSelected ? 2 : 1,
                                 opacity: usedIn ? 0.75 : 1
                               }
@@ -992,7 +992,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                               <View>
                                 {!!cert.level && (
                                   <View style={{ alignSelf: 'flex-start', backgroundColor: colors.primary, paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginBottom: 3 }}>
-                                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>{cert.level.toUpperCase()}</Text>
+                                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>{cert.level.toUpperCase()}</Text>
                                   </View>
                                 )}
                                 <Text style={[modalStyles.gridCertTitle, { color: theme.text }]} numberOfLines={2}>
@@ -1003,7 +1003,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                               <View style={{
                                 marginTop: 6,
                                 paddingVertical: 4,
-                                borderRadius: 6,
+                                borderRadius: 8,
                                 backgroundColor: isSelected ? '#10b981' : usedIn ? (isDarkMode ? '#44403c' : '#e2e8f0') : colors.primary,
                                 alignItems: 'center'
                               }}>
@@ -1034,12 +1034,12 @@ export default function StageDetailScreen({ route, navigation }: any) {
                         modalStyles.eventCard,
                         {
                           backgroundColor: isSelected
-                            ? (isDarkMode ? '#1e1b4b' : '#f5f3ff')
+                            ? (isDarkMode ? colors.accentSoft : colors.accentSoft)
                             : usedIn
                             ? (isDarkMode ? '#1c1917' : '#fef2f2')
                             : theme.cardBg,
                           borderColor: isSelected
-                            ? '#8b5cf6'
+                            ? colors.primary
                             : usedIn
                             ? '#fca5a5'
                             : theme.border,
@@ -1057,8 +1057,8 @@ export default function StageDetailScreen({ route, navigation }: any) {
                             {cert.title}
                           </Text>
                           {!!cert.level && (
-                            <View style={{ backgroundColor: colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-                              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>
+                            <View style={{ backgroundColor: colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+                              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>
                                 {cert.level.toUpperCase()}
                               </Text>
                             </View>
@@ -1072,7 +1072,7 @@ export default function StageDetailScreen({ route, navigation }: any) {
                         </Text>
                         {usedIn && (
                           <Text style={{ fontSize: 12, color: '#ef4444', fontWeight: 'bold', marginTop: 3 }}>
-                            🔒 Utilizado en: {usedIn.stageTitle} — {usedIn.reqText}
+                            Utilizado en: {usedIn.stageTitle} — {usedIn.reqText}
                           </Text>
                         )}
                       </View>
@@ -1245,12 +1245,12 @@ const modalStyles = liveStyles(() => StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1 },
   title: { fontSize: 18, fontWeight: 'bold' },
   subtitle: { fontSize: 13, marginBottom: 16, lineHeight: 18 },
-  emptyCard: { padding: 24, borderRadius: 14, borderWidth: 1, alignItems: 'center' },
+  emptyCard: { padding: 24, borderRadius: 16, borderWidth: 1, alignItems: 'center' },
   emptyText: { fontSize: 13, textAlign: 'center' },
   eventCard: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 12, borderWidth: 1, marginBottom: 10 },
   eventTitle: { fontSize: 15, fontWeight: 'bold' },
   eventDesc: { fontSize: 12, marginTop: 2 },
-  eventDate: { fontSize: 12, color: colors.primary, marginTop: 4, fontWeight: 'bold' },
+  eventDate: { fontSize: 12, color: colors.accentText, marginTop: 4, fontWeight: 'bold' },
 
   gridCertCard: { width: '48%', borderRadius: 12, overflow: 'hidden', borderWidth: 1, marginBottom: 10 },
   gridCertImage: { width: '100%', height: 90 },
@@ -1260,7 +1260,7 @@ const modalStyles = liveStyles(() => StyleSheet.create({
   card: { width: '90%', alignSelf: 'center', borderRadius: 20, padding: 24, alignItems: 'center' },
   desc: { fontSize: 14, textAlign: 'center', marginBottom: 20, lineHeight: 20 },
   btnRow: { flexDirection: 'row', gap: 10, width: '100%' },
-  btnSecondary: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  btnPrimary: { flex: 1, paddingVertical: 12, backgroundColor: colors.primary, borderRadius: 10, alignItems: 'center' }
+  btnSecondary: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+  btnPrimary: { flex: 1, paddingVertical: 12, backgroundColor: colors.primary, borderRadius: 12, alignItems: 'center' }
 }));
 

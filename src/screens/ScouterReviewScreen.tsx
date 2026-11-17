@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { liveStyles } from '../theme/liveStyles';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen, Flag, Moon, ArrowLeft, Compass, Tent, HeartHandshake, Sparkles, Lightbulb } from 'lucide-react-native';
+import { CheckSquare, Square, CheckCircle, ChevronDown, ChevronUp, BookOpen, Flag, Moon, ArrowLeft, Compass, Tent, HeartHandshake, Sparkles, Lightbulb, Pencil, Undo2 } from 'lucide-react-native';
+import { Btn, CheckMark } from '../components/ui';
 import { dataService } from '../lib/dataService';
 import { useTheme } from '../context/ThemeContext';
 import { stagesData } from '../data/progressionTemplate';
@@ -146,11 +147,11 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
 
   const toggleCheck = async (req: any) => {
     if (isBlocked) {
-      showAlert('🔒 Etapa bloqueada', `${scoutName} todavía no llega a esta etapa: primero debe tener aprobada la anterior. Aquí solo puedes consultar.`);
+      showAlert('Etapa bloqueada', `${scoutName} todavía no llega a esta etapa: primero debe tener aprobada la anterior. Aquí solo puedes consultar.`);
       return;
     }
     if (!editMode) {
-      showAlert('Modo consulta', 'Para marcar o desmarcar requisitos, pulsa primero «✏️ Editar requisitos» arriba de la lista.');
+      showAlert('Modo consulta', 'Para marcar o desmarcar requisitos, pulsa primero «Editar requisitos» arriba de la lista.');
       return;
     }
     const newValue = !checks[req.id];
@@ -199,10 +200,13 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
     }
   };
 
+  // El botón dice lo que va a pasar: aprobar si está todo marcado; si falta algo, devolver.
+  const allCheckedNow = !!stageTemplate?.requirements.every(req => checks[req.id]);
+  const pendingCount = (stageTemplate?.requirements || []).filter(req => !checks[req.id]).length;
   const getButtonText = () => {
-    if (confirmStep === 'approve') return '¿SEGURO? HAZ CLIC PARA APROBAR';
-    if (confirmStep === 'reject') return '¿SEGURO? HAZ CLIC PARA DEVOLVER FICHA';
-    return 'APROBAR Y FINALIZAR';
+    if (confirmStep === 'approve') return '¿Seguro? Toca otra vez para aprobar';
+    if (confirmStep === 'reject') return '¿Seguro? Toca otra vez para devolver';
+    return allCheckedNow ? 'Aprobar etapa' : 'Devolver etapa';
   };
 
   if (loading || !stageTemplate) {
@@ -223,7 +227,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
               alignItems: 'center',
               paddingVertical: 6,
               paddingHorizontal: 12,
-              borderRadius: 10,
+              borderRadius: 12,
               backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
               gap: 6
             }}
@@ -243,40 +247,41 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
             style={styles.viewDocBtn}
             onPress={() => navigation.navigate('FichaMedica', { targetUserId: scoutId })}
           >
-            <Text style={styles.viewDocBtnText}>📋 Ver Ficha Médica</Text>
+            <Text style={styles.viewDocBtnText}>Ver Ficha Médica</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.viewDocBtn}
             onPress={() => navigation.navigate('CurriculumScout', { targetUserId: scoutId })}
           >
-            <Text style={styles.viewDocBtnText}>📜 Ver Currículum Scout</Text>
+            <Text style={styles.viewDocBtnText}>Ver Currículum Scout</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView style={styles.scroll}>
         {isBlocked ? (
-          <View style={[styles.banner, { backgroundColor: isDarkMode ? '#450a0a' : '#fee2e2', borderColor: '#ef4444' }]}>
-            <Text style={{ color: isDarkMode ? '#fca5a5' : '#b91c1c', fontSize: 13, fontWeight: 'bold' }}>
-              🔒 Etapa bloqueada: {scoutName} todavía no llega aquí (primero debe tener aprobada la etapa anterior). Solo puedes consultarla; no se puede aprobar ni marcar.
+          <View style={[styles.banner, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
+            <Text style={{ color: theme.text, fontSize: 13, fontWeight: '600' }}>
+              Etapa bloqueada: {scoutName} todavía no llega aquí (primero debe tener aprobada la etapa anterior). Solo puedes consultarla; no se puede aprobar ni marcar.
             </Text>
           </View>
         ) : (
-          <View style={[styles.banner, { backgroundColor: theme.cardBg, borderColor: editMode ? colors.warning : theme.border }]}>
+          <View style={[styles.banner, { backgroundColor: theme.cardBg, borderColor: editMode ? theme.primary : theme.border }]}>
             <Text style={{ color: theme.text, fontSize: 13 }}>
               {editMode
-                ? '✏️ Modo edición: cada toque marca o desmarca el requisito y se guarda al momento. Si desmarcas algo, al pulsar el botón de abajo la etapa se devuelve.'
+                ? 'Modo edición: cada toque marca o desmarca el requisito y se guarda al momento. Si desmarcas algo, al pulsar el botón de abajo la etapa se devuelve.'
                 : stageStatus === 'Aprobada'
-                  ? '✅ Etapa aprobada. Estás en modo consulta: tocar un requisito no cambia nada.'
-                  : '👀 Modo consulta: revisa los registros. Para marcar o desmarcar algo, pulsa «Editar requisitos».'}
+                  ? 'Etapa aprobada. Estás en modo consulta: tocar un requisito no cambia nada.'
+                  : 'Modo consulta: revisa los registros. Para marcar o desmarcar algo, pulsa «Editar requisitos».'}
             </Text>
-            <TouchableOpacity
+            <Btn
+              small
+              variant={editMode ? 'secondary' : 'primary'}
+              label={editMode ? 'Terminar edición' : 'Editar requisitos'}
+              Icon={editMode ? undefined : Pencil}
               onPress={() => setEditMode(e => !e)}
-              style={[styles.editBtn, { backgroundColor: editMode ? colors.warning : colors.primary }]}
-              accessibilityRole="button"
-            >
-              <Text style={styles.editBtnText}>{editMode ? 'Terminar edición' : '✏️ Editar requisitos'}</Text>
-            </TouchableOpacity>
+              style={{ alignSelf: 'flex-start' }}
+            />
           </View>
         )}
 
@@ -300,21 +305,17 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                 style={[
                   styles.reqRow, 
                   { backgroundColor: theme.cardBg, borderColor: theme.border },
-                  !isChecked && (isDarkMode ? styles.reqRowErrorDark : styles.reqRowError)
+                  // Rosado solo cuando hay un problema real: la etapa fue enviada y este requisito no está cumplido
+                  !isChecked && stageStatus === 'En Revision' && { borderColor: theme.errLine, backgroundColor: theme.errSoft }
                 ]}
                 onPress={() => toggleCheck(req)}
                 activeOpacity={editMode && !isBlocked ? 0.7 : 1}
               >
-                {isChecked ? (
-                  <CheckSquare color={colors.primary} size={24} />
-                ) : (
-                  <Square color={colors.error} size={24} />
-                )}
-                <View style={{ flex: 1, marginLeft: 15 }}>
+                <CheckMark checked={!!isChecked} locked={isBlocked} error={!isChecked && stageStatus === 'En Revision'} />
+                <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[
                     styles.reqText, 
                     { color: theme.text },
-                    !isChecked && styles.reqTextError
                   ]}>
                     {req.text}
                   </Text>
@@ -385,13 +386,13 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                         toggleShowDetails(req.id);
                       }}
                     >
-                      <Compass size={14} color="#8b5cf6" style={{ marginRight: 4 }} />
-                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#8b5cf6' }}>
+                      <Compass size={14} color={colors.primary} style={{ marginRight: 4 }} />
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.accentText }}>
                         {isExpanded
                           ? 'Ocultar desglose de Vida de Grupo'
                           : `Ver desglose de registros (${reqVgEntries.length > 0 ? `${reqVgEntries.length} de ${req.requiredCount || 1}` : isChecked ? 'convalidado' : `0 de ${req.requiredCount || 1}`})`}
                       </Text>
-                      {isExpanded ? <ChevronUp size={14} color="#8b5cf6" style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color="#8b5cf6" style={{ marginLeft: 2 }} />}
+                      {isExpanded ? <ChevronUp size={14} color={colors.primary} style={{ marginLeft: 2 }} /> : <ChevronDown size={14} color={colors.primary} style={{ marginLeft: 2 }} />}
                     </TouchableOpacity>
                   )}
 
@@ -406,7 +407,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                     >
                       <Moon size={14} color="#0284c7" style={{ marginRight: 4 }} />
                       <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#0284c7' }}>
-                        🏕️ Ver registro de pernoctas ({totalNightsLogged > 0 ? `${totalNightsLogged} de ${req.requiredCount || 10} noches registradas` : isChecked ? `${req.requiredCount || 10} noches convalidadas` : '0 noches registradas'})
+                        Ver registro de pernoctas ({totalNightsLogged > 0 ? `${totalNightsLogged} de ${req.requiredCount || 10} noches registradas` : isChecked ? `${req.requiredCount || 10} noches convalidadas` : '0 noches registradas'})
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -485,7 +486,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                             {(cip.title || '').replace(/\[6P\s*/gi, '[CIP ').replace(/\b6P\b/gi, 'CIP')}
                           </Text>
                           <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
-                            📅 Fecha / Año: {cip.date || 'Sin fecha'} {cip.scope ? `(${cip.scope.toUpperCase()})` : ''}
+                            Fecha / Año: {cip.date || 'Sin fecha'} {cip.scope ? `(${cip.scope.toUpperCase()})` : ''}
                           </Text>
                           {cip.description ? (
                             <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic', marginTop: 1 }}>
@@ -507,8 +508,8 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
 
               {/* LISTA DESPLEGABLE DE REGISTROS DE VIDA DE GRUPO */}
               {isVidaGrupoReq && isExpanded && (
-                <View style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: '#8b5cf6', borderRadius: 12, padding: 12, marginTop: -4, marginLeft: 10, marginRight: 10 }}>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#8b5cf6', marginBottom: 8 }}>
+                <View style={{ backgroundColor: theme.inputBg, borderWidth: 1, borderColor: colors.primary, borderRadius: 12, padding: 12, marginTop: -4, marginLeft: 10, marginRight: 10 }}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.accentText, marginBottom: 8 }}>
                     Desglose de Vida de Grupo ({reqVgEntries.length} de {req.requiredCount || 1} registrados):
                   </Text>
                   {reqVgEntries.length === 0 ? (
@@ -525,7 +526,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                         ) : entry.type === 'campamento' ? (
                           <Tent size={18} color="#16a34a" style={{ marginRight: 8, marginTop: 2 }} />
                         ) : (
-                          <HeartHandshake size={18} color="#8b5cf6" style={{ marginRight: 8, marginTop: 2 }} />
+                          <HeartHandshake size={18} color={colors.primary} style={{ marginRight: 8, marginTop: 2 }} />
                         )}
                         <View style={{ flex: 1 }}>
                           <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>
@@ -533,11 +534,11 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                           </Text>
                           {entry.location ? (
                             <Text style={{ fontSize: 12, color: theme.text, marginTop: 2 }}>
-                              📍 Destino / Lugar: <Text style={{ fontWeight: 'bold' }}>{entry.location}</Text>
+                              Destino / Lugar: <Text style={{ fontWeight: 'bold' }}>{entry.location}</Text>
                             </Text>
                           ) : null}
                           <Text style={{ fontSize: 12, color: theme.subText, marginTop: 1 }}>
-                            📅 Fecha: {entry.date || 'Sin fecha'} {entry.subtype ? `• Tipo: ${entry.subtype}` : ''}
+                            Fecha: {entry.date || 'Sin fecha'} {entry.subtype ? `• Tipo: ${entry.subtype}` : ''}
                           </Text>
                           {entry.description ? (
                             <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic', marginTop: 2 }}>
@@ -570,7 +571,7 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
                         <View style={{ flex: 1 }}>
                           <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text }}>{entry.title}</Text>
                           <Text style={{ fontSize: 12, color: theme.subText, marginTop: 1 }}>
-                            📅 Fecha: {entry.date || 'Sin fecha'}
+                            Fecha: {entry.date || 'Sin fecha'}
                           </Text>
                           {entry.description ? (
                             <Text style={{ fontSize: 12, color: theme.subText, fontStyle: 'italic', marginTop: 2 }}>
@@ -618,16 +619,18 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
 
       {!isBlocked && (
       <View style={[styles.footer, { backgroundColor: theme.cardBg, borderTopColor: theme.border }]}>
-        <TouchableOpacity
-          style={[
-            styles.approveButton, 
-            confirmStep === 'reject' && { backgroundColor: colors.warning }
-          ]} 
+        {confirmStep === 'none' && !allCheckedNow && (
+          <Text style={{ color: theme.subText, fontSize: 12, textAlign: 'center', marginBottom: 8 }}>
+            {pendingCount === 1 ? 'Falta 1 requisito: al devolverla, el joven recibe el aviso con lo que falta.' : `Faltan ${pendingCount} requisitos: al devolverla, el joven recibe el aviso con lo que falta.`}
+          </Text>
+        )}
+        <Btn
+          block
+          variant={(confirmStep === 'none' ? allCheckedNow : confirmStep === 'approve') ? 'primary' : 'danger'}
+          Icon={(confirmStep === 'none' ? allCheckedNow : confirmStep === 'approve') ? CheckCircle : Undo2}
+          label={getButtonText()}
           onPress={handleApprove}
-        >
-          <CheckCircle color="white" size={24} style={{ marginRight: 10 }} />
-          <Text style={styles.approveButtonText}>{getButtonText()}</Text>
-        </TouchableOpacity>
+        />
       </View>
       )}
     </View>
@@ -636,26 +639,26 @@ export default function ScouterReviewScreen({ route, navigation }: any) {
 
 const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
-  header: { padding: 20, backgroundColor: colors.primary, alignItems: 'center' },
-  title: { fontSize: 24, fontWeight: 'bold', color: 'white' },
-  subtitle: { fontSize: 14, color: '#e0e0e0', marginBottom: 4 },
+  header: { padding: 16, backgroundColor: colors.primary, alignItems: 'center', borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  title: { fontSize: 22, fontWeight: '700', color: colors.onPrimary },
+  subtitle: { fontSize: 14, color: colors.onPrimary, opacity: 0.9, marginBottom: 4 },
   scroll: { flex: 1, padding: 20 },
   instructionText: { fontSize: 14, marginBottom: 20, fontStyle: 'italic', textAlign: 'center' },
   banner: { borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 16, gap: 10 },
-  editBtn: { alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10 },
+  editBtn: { alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 12 },
   editBtnText: { color: 'white', fontWeight: 'bold', fontSize: 13 },
   reqRow: { 
     flexDirection: 'row', alignItems: 'center', 
-    padding: 16, borderRadius: 12, marginBottom: 10,
+    padding: 16, borderRadius: 16, marginBottom: 8, gap: 12,
     borderWidth: 1
   },
   reqRowError: { borderColor: colors.error, backgroundColor: '#fef2f2' },
   reqRowErrorDark: { borderColor: '#ef4444', backgroundColor: '#450a0a' },
-  reqText: { fontSize: 15, marginLeft: 15, flex: 1 },
+  reqText: { fontSize: 14, fontWeight: '600', flex: 1 },
   reqTextError: { color: colors.error, textDecorationLine: 'line-through' },
-  footer: { padding: 20, borderTopWidth: 1 },
+  footer: { padding: 16, borderTopWidth: 1 },
   approveButton: { backgroundColor: '#16a34a', padding: 16, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   approveButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16, letterSpacing: 1 },
-  viewDocBtn: { backgroundColor: 'rgba(255, 255, 255, 0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'white' },
-  viewDocBtnText: { color: 'white', fontWeight: 'bold', fontSize: 12 }
+  viewDocBtn: { backgroundColor: 'rgba(255, 255, 255, 0.18)', minHeight: 40, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 12 },
+  viewDocBtnText: { color: colors.onPrimary, fontWeight: '600', fontSize: 13 }
 }));

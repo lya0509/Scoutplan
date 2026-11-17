@@ -9,8 +9,10 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
-  Platform
+  Platform,
+  useWindowDimensions
 } from 'react-native';
+import { Btn, StepHeader, StepNav, stepHidden } from '../components/ui';
 import { Award, FileText, Download, User, Briefcase, GraduationCap, Compass, CheckCircle, Plus, Trash2, Camera, Shield, Save, AlertCircle, RefreshCw, ArrowLeft } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -33,6 +35,16 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
   // Si se pasa targetUserId por params (Vista de Scouter / Jefe de Grupo)
   const targetUserId = route?.params?.targetUserId || user?.id;
   const isViewOnlyForScouter = targetUserId !== user?.id && (user?.role === 'scouter' || user?.role === 'jefe_grupo' || (user?.role as any) === 'admin');
+  // Teléfono: el formulario va por pasos (una sección a la vez). Quien solo lo consulta lo ve entero.
+  const { width: winWidth } = useWindowDimensions();
+  const stepped = winWidth < 768 && !isViewOnlyForScouter;
+  const [step, setStep] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+  const STEP_TITLES = ['Datos personales', 'Datos scouts y unidades', 'Cursos', 'Talleres', 'Condecoraciones', 'Eventos y actividades', 'Programas y proyectos'];
+  const goStep = (i: number) => {
+    setStep(Math.max(0, Math.min(STEP_TITLES.length - 1, i)));
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  };
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -536,12 +548,15 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
         </View>
       </View>
 
-      <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 60 }}>
+      <ScrollView ref={scrollRef} style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 60 }}>
         {loading ? (
           <SkeletonScreen variant="form" fill={false} />
         ) : (
           <View style={[styles.sheet, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
             
+            {stepped && <StepHeader step={step} titles={STEP_TITLES} onStep={goStep} />}
+
+            <View style={stepHidden(stepped, step, 0)}>
             {/* SUBIDA DE FOTO DE PERFIL */}
             <View style={styles.photoUploadCard}>
               <View style={styles.photoBox}>
@@ -568,24 +583,24 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
             {/* BOTÓN INTELIGENTE DE SINCRONIZACIÓN DE CERTIFICADOS */}
             {!isViewOnlyForScouter && (
               <TouchableOpacity
-                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? '#1e1b4b' : '#f5f3ff', padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: '#8b5cf6', marginVertical: 14 }}
+                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? colors.accentSoft : colors.accentSoft, padding: 14, borderRadius: 16, borderWidth: 1.5, borderColor: colors.primary, marginVertical: 14 }}
                 onPress={handleSyncCertificates}
                 disabled={syncingCerts}
                 activeOpacity={0.8}
               >
-                <Award size={22} color="#8b5cf6" style={{ marginRight: 10 }} />
+                <Award size={22} color={colors.primary} style={{ marginRight: 10 }} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: isDarkMode ? '#c4b5fd' : '#6d28d9' }}>
-                    📥 Sincronizar desde mis Certificados Subidos
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: isDarkMode ? colors.accentText : colors.accentText }}>
+                    Sincronizar desde mis Certificados Subidos
                   </Text>
-                  <Text style={{ fontSize: 12, color: isDarkMode ? '#a78bfa' : '#7c3aed', marginTop: 2 }}>
+                  <Text style={{ fontSize: 12, color: isDarkMode ? colors.accentText : colors.accentText, marginTop: 2 }}>
                     Importa de 1 clic tus Cursos (Horqueta, Remo, Canoa), Programas Mundiales (Tribu de la Tierra, Scout Solar, Enseñas) y Especialidades con sus fechas.
                   </Text>
                 </View>
                 {syncingCerts ? (
-                  <ActivityIndicator size="small" color="#8b5cf6" style={{ marginLeft: 8 }} />
+                  <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 8 }} />
                 ) : (
-                  <View style={{ backgroundColor: '#8b5cf6', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, marginLeft: 8 }}>
+                  <View style={{ backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, marginLeft: 8 }}>
                     <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>Sincronizar</Text>
                   </View>
                 )}
@@ -717,7 +732,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
             </View>
 
             {/* CHECK: ¿ESTUDIA? */}
-            <View style={{ marginTop: 12, backgroundColor: theme.inputBg, padding: 10, borderRadius: 10, borderWidth: 1, borderColor: theme.border }}>
+            <View style={{ marginTop: 12, backgroundColor: theme.inputBg, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: theme.border }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>¿ACTUALMENTE ESTUDIA?</Text>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -765,7 +780,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
             </View>
 
             {/* CHECK: ¿TRABAJA? */}
-            <View style={{ marginTop: 10, backgroundColor: theme.inputBg, padding: 10, borderRadius: 10, borderWidth: 1, borderColor: theme.border }}>
+            <View style={{ marginTop: 10, backgroundColor: theme.inputBg, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: theme.border }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>¿ACTUALMENTE TRABAJA?</Text>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -865,6 +880,9 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
               editable={!isViewOnlyForScouter}
             />
 
+            </View>
+
+            <View style={stepHidden(stepped, step, 1)}>
             {/* SECCIÓN 2: DATOS SCOUTS Y TRAYECTORIA POR UNIDAD */}
             <Text style={[styles.sectionTitle, { color: theme.accentText, marginTop: 20 }]}>2. Datos Scouts y Unidades Pertenecidas</Text>
 
@@ -925,6 +943,9 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
               })}
             </View>
 
+            </View>
+
+            <View style={stepHidden(stepped, step, 2)}>
             {/* SECCIÓN 3: CURSOS */}
             <Text style={[styles.sectionTitle, { color: theme.accentText, marginTop: 20 }]}>3. Cursos</Text>
 
@@ -936,7 +957,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
               { label: 'Remo', state: remoCert, setter: setRemoCert },
               { label: 'Canoa', state: canoaCert, setter: setCanoaCert }
             ].map((c, idx) => (
-              <View key={idx} style={{ backgroundColor: theme.inputBg, padding: 10, borderRadius: 10, marginTop: 8, borderWidth: 1, borderColor: theme.border }}>
+              <View key={idx} style={{ backgroundColor: theme.inputBg, padding: 10, borderRadius: 12, marginTop: 8, borderWidth: 1, borderColor: theme.border }}>
                 <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText, marginBottom: 6 }}>{c.label}</Text>
                 <View style={{ gap: 6 }}>
                   <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -978,6 +999,9 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
               </View>
             ))}
 
+            </View>
+
+            <View style={stepHidden(stepped, step, 3)}>
             {/* SECCIÓN 4: TALLERES O CURSOS REALIZADOS */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
               <Text style={[styles.sectionTitle, { color: theme.accentText, marginBottom: 0 }]}>4. Talleres o Cursos Realizados</Text>
@@ -993,7 +1017,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
             </View>
 
             {workshopsList.map((w, idx) => (
-              <View key={idx} style={{ backgroundColor: theme.inputBg, padding: 10, borderRadius: 10, marginTop: 8, borderWidth: 1, borderColor: theme.border, gap: 6 }}>
+              <View key={idx} style={{ backgroundColor: theme.inputBg, padding: 10, borderRadius: 12, marginTop: 8, borderWidth: 1, borderColor: theme.border, gap: 6 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <TextInput
                     style={[styles.input, { flex: 1, backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
@@ -1030,6 +1054,9 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
               </View>
             ))}
 
+            </View>
+
+            <View style={stepHidden(stepped, step, 4)}>
             {/* SECCIÓN 5: CONDECORACIONES Y DISTINCIONES */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
               <Text style={[styles.sectionTitle, { color: theme.accentText, marginBottom: 0 }]}>5. Condecoraciones y Distinciones</Text>
@@ -1070,6 +1097,9 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
               </View>
             ))}
 
+            </View>
+
+            <View style={stepHidden(stepped, step, 5)}>
             {/* SECCIÓN 6: EVENTOS Y ACTIVIDADES PARTICIPADAS */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
               <Text style={[styles.sectionTitle, { color: theme.accentText, marginBottom: 0 }]}>6. Eventos y Actividades Participadas</Text>
@@ -1085,7 +1115,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
             </View>
 
             {eventsList.map((e, idx) => (
-              <View key={idx} style={{ backgroundColor: theme.inputBg, padding: 10, borderRadius: 10, marginTop: 8, borderWidth: 1, borderColor: theme.border, gap: 6 }}>
+              <View key={idx} style={{ backgroundColor: theme.inputBg, padding: 10, borderRadius: 12, marginTop: 8, borderWidth: 1, borderColor: theme.border, gap: 6 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <TextInput
                     style={[styles.input, { flex: 1, backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
@@ -1122,6 +1152,9 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
               </View>
             ))}
 
+            </View>
+
+            <View style={stepHidden(stepped, step, 6)}>
             {/* SECCIÓN 7: PROYECTOS Y PROGRAMAS MUNDIALES */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
               <Text style={[styles.sectionTitle, { color: theme.accentText, marginBottom: 0 }]}>7. Programas Mundiales y Proyectos</Text>
@@ -1137,7 +1170,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
             </View>
 
             {worldProgramsList.map((wp, idx) => (
-              <View key={idx} style={{ backgroundColor: theme.inputBg, padding: 10, borderRadius: 10, marginTop: 8, borderWidth: 1, borderColor: theme.border, gap: 6, overflow: 'hidden' }}>
+              <View key={idx} style={{ backgroundColor: theme.inputBg, padding: 10, borderRadius: 12, marginTop: 8, borderWidth: 1, borderColor: theme.border, gap: 6, overflow: 'hidden' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <TextInput
                     style={[styles.input, { flex: 1, backgroundColor: theme.cardBg, color: theme.text, borderColor: theme.border }]}
@@ -1174,25 +1207,17 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
               </View>
             ))}
 
+            </View>
+
+            {stepped && <StepNav step={step} total={STEP_TITLES.length} onStep={goStep} />}
+
             {/* BOTONES INFERIORES: GUARDAR Y EXPORTAR EN LA PARTE DE ABAJO */}
             <View style={{ marginTop: 24, gap: 10 }}>
+              {/* Una sola acción principal (guardar); descargar va como secundaria */}
               {!isViewOnlyForScouter && (
-                <TouchableOpacity style={styles.saveBtn} onPress={handleSaveCurriculum} disabled={saving}>
-                  {saving ? (
-                    <ActivityIndicator color="white" />
-                  ) : (
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Save size={16} color="white" style={{ marginRight: 6 }} />
-                      <Text style={styles.saveBtnText}>Guardar Datos del Currículum</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
+                <Btn label="Guardar Datos del Currículum" Icon={Save} onPress={handleSaveCurriculum} loading={saving} block />
               )}
-
-              <TouchableOpacity style={styles.bottomExportBtn} onPress={handleExportCurriculumDoc}>
-                <Download size={18} color="white" style={{ marginRight: 8 }} />
-                <Text style={styles.bottomExportBtnText}>Descargar Currículum Oficial (.docx)</Text>
-              </TouchableOpacity>
+              <Btn label="Descargar Currículum Oficial (.docx)" variant="secondary" Icon={Download} onPress={handleExportCurriculumDoc} block />
             </View>
 
           </View>
@@ -1213,7 +1238,7 @@ export default function CurriculumScoutScreen({ route, navigation }: any) {
 const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 18, borderBottomWidth: 1 },
-  asociacionBanner: { fontSize: 12, fontWeight: '900', color: colors.primary, letterSpacing: 0.5 },
+  asociacionBanner: { fontSize: 12, fontWeight: '900', color: colors.accentText, letterSpacing: 0.5 },
   title: { fontSize: 17, fontWeight: 'bold', marginTop: 2 },
   scouterBadge: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   exportHeaderBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
@@ -1222,21 +1247,21 @@ const styles = liveStyles(() => StyleSheet.create({
   headerInner: { maxWidth: 850, width: '100%', alignSelf: 'center' },
 
   sheet: { borderRadius: 18, padding: 18, borderWidth: 1, maxWidth: 850, width: '100%', alignSelf: 'center' },
-  photoUploadCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(99, 102, 241, 0.08)', padding: 12, borderRadius: 14, marginBottom: 10 },
+  photoUploadCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.accentSoft, padding: 12, borderRadius: 16, marginBottom: 10 },
   photoBox: { width: 64, height: 72, borderRadius: 8, borderWidth: 1, borderColor: colors.primary, backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
   photoImg: { width: '100%', height: '100%' },
   uploadPhotoBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginTop: 6, alignSelf: 'flex-start' },
 
   sectionTitle: { fontSize: 14, fontWeight: 'bold', marginBottom: 6 },
   label: { fontSize: 12, fontWeight: '800', marginBottom: 4, marginTop: 8 },
-  input: { borderRadius: 10, borderWidth: 1, padding: 8, fontSize: 12 },
+  input: { borderRadius: 12, borderWidth: 1, padding: 8, fontSize: 12 },
   natChip: { flex: 1, height: 38, borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', justifyContent: 'center', alignItems: 'center', marginTop: 4 },
-  checkBtn: { width: 44, height: 28, borderRadius: 6, borderWidth: 1, borderColor: '#d1d5db', justifyContent: 'center', alignItems: 'center' },
+  checkBtn: { width: 44, height: 28, borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', justifyContent: 'center', alignItems: 'center' },
   swimChip: { flex: 1, height: 38, borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', justifyContent: 'center', alignItems: 'center', marginTop: 4 },
   unitCheckChip: { width: 90, height: 36, borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', justifyContent: 'center', alignItems: 'center' },
-  addMiniBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
-  saveBtn: { backgroundColor: '#059669', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
+  addMiniBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  saveBtn: { backgroundColor: '#059669', paddingVertical: 14, borderRadius: 16, alignItems: 'center' },
   saveBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
-  bottomExportBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  bottomExportBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 16, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   bottomExportBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 }
 }));

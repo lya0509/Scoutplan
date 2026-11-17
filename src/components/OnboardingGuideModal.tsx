@@ -15,23 +15,23 @@ const STEPS = [
     title: '¡Bienvenido a tu App Scout!',
     subtitle: 'Asociación de Scouts de Venezuela',
     description: 'Diseñada especialmente para acompañarte en tu crecimiento, insignia a insignia, facilitando el trabajo colaborativo con tus compañeros y Scouters.',
-    badge: '⚜️ Guía Rápida - Paso 1 de 6',
-    color: colors.primary
+    badge: 'Guía Rápida - Paso 1 de 6',
+    get color() { return colors.primary; }
   },
   {
     icon: Award,
     title: 'Mi Plan Progresivo & Catálogo',
     subtitle: 'Registro de Insignias y Actividades',
     description: 'Explora las etapas oficiales (Precursor, Expedicionario, Descubridor, Fundador y Rover). Selecciona tus actividades Básicas y Opcionales del catálogo oficial sin interferencias.',
-    badge: '🎯 Avance Scout - Paso 2 de 6',
+    badge: 'Avance Scout - Paso 2 de 6',
     color: '#16a34a'
   },
   {
     icon: Camera,
     title: 'Drive de Fotos (Público vs Privado)',
     subtitle: 'Álbumes de Eventos y Campamentos',
-    description: 'Crea álbumes de fotos temporales de hasta 7 días. Elige visibilidad "🌐 Pública" (todo el Grupo Scout) o "🔒 Privada" (exclusiva para tu unidad: Manada, Tropa, Caminantes o Clan).',
-    badge: '📷 Fotos & Recuerdos - Paso 3 de 6',
+    description: 'Crea álbumes de fotos temporales de hasta 7 días. Elige visibilidad "Pública" (todo el Grupo Scout) o "Privada" (exclusiva para tu unidad: Manada, Tropa, Caminantes o Clan).',
+    badge: 'Fotos & Recuerdos - Paso 3 de 6',
     color: '#0284c7'
   },
   {
@@ -39,7 +39,7 @@ const STEPS = [
     title: 'Perfil Scout & Convalidación CIP',
     subtitle: 'Verificación de Datos y Eventos',
     description: 'Completa tu perfil personal (Nombre, Grupo Scout y Unidad) para desbloquear la edición. Registra o convalida fácilmente tus eventos CIP anteriores especificando nombre y año.',
-    badge: '👤 Perfil & CIPs - Paso 4 de 6',
+    badge: 'Perfil & CIPs - Paso 4 de 6',
     color: '#eab308'
   },
   {
@@ -47,7 +47,7 @@ const STEPS = [
     title: 'Plan Trimestral Colaborativo',
     subtitle: 'Cronograma Único de Unidad',
     description: 'Toda la unidad comparte un solo Plan Trimestral. Puedes proponer actividades, editar con confirmación doble y exportar la plantilla oficial en Excel.',
-    badge: '📅 Unidad - Paso 5 de 6',
+    badge: 'Unidad - Paso 5 de 6',
     color: '#d97706'
   },
   {
@@ -55,8 +55,8 @@ const STEPS = [
     title: 'Currículum Word & Herramientas Offline',
     subtitle: 'Exportación y Manuales',
     description: 'Genera tu Currículum Scout Joven auto-rellenado en formato Word (.docx) con tu foto. Además, consulta el Manual de Nudos y Cancionero 100% sin internet.',
-    badge: '🚀 Herramientas - Paso 6 de 6',
-    color: '#7c3aed'
+    badge: 'Herramientas - Paso 6 de 6',
+    get color() { return colors.primary; }
   }
 ];
 
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   descBox: {
     width: '100%',
     padding: 14,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     marginBottom: 20,
   },
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
   },
   btnPrevText: {
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 14,
+    borderRadius: 16,
   },
   btnNextText: {
     color: 'white',

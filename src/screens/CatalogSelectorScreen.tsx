@@ -185,7 +185,7 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
 
   const handleToggleActivity = async (id: string) => {
     if (stageStatus === 'Bloqueada') {
-      showAlert('🔒 Etapa Bloqueada', 'No puedes seleccionar actividades para una etapa que se encuentra bloqueada. Completa y aprueba primero las etapas anteriores.');
+      showAlert('Etapa Bloqueada', 'No puedes seleccionar actividades para una etapa que se encuentra bloqueada. Completa y aprueba primero las etapas anteriores.');
       return;
     }
     if (isReadOnly || !user) {
@@ -273,16 +273,16 @@ export default function CatalogSelectorScreen({ route, navigation }: any) {
         </View>
 
         {stageStatus === 'Bloqueada' && (
-          <View style={{ backgroundColor: isDarkMode ? '#450a0a' : '#fee2e2', borderColor: '#ef4444', borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={{ backgroundColor: isDarkMode ? '#450a0a' : '#fee2e2', borderColor: '#ef4444', borderWidth: 1, borderRadius: 12, padding: 10, marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Lock size={18} color="#ef4444" />
             <Text style={{ color: isDarkMode ? '#fca5a5' : '#b91c1c', fontSize: 12, fontWeight: 'bold', flex: 1 }}>
-              🔒 Esta etapa está bloqueada. Debes completar y tener aprobadas las etapas anteriores antes de seleccionar actividades aquí.
+              Esta etapa está bloqueada. Debes completar y tener aprobadas las etapas anteriores antes de seleccionar actividades aquí.
             </Text>
           </View>
         )}
         
         {isClosed && (
-          <View style={{ backgroundColor: isDarkMode ? '#1e293b' : '#eff6ff', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 10, gap: 8 }}>
+          <View style={{ backgroundColor: isDarkMode ? '#1e293b' : '#eff6ff', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 12, padding: 10, marginBottom: 10, gap: 8 }}>
             <Text style={{ color: isDarkMode ? '#bfdbfe' : '#1e40af', fontSize: 13, fontWeight: 'bold' }}>
               {stageStatus === 'Aprobada' ? '✅ ' : '⏳ '}{closedStageText} Aquí solo puedes consultar.
             </Text>
@@ -467,32 +467,32 @@ const styles = liveStyles(() => StyleSheet.create({
   title: { fontSize: 18, fontWeight: 'bold' },
   counterBox: { marginVertical: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   counterText: { fontSize: 14, fontWeight: '600' },
-  counterHighlight: { color: colors.primary, fontWeight: 'bold', fontSize: 16 },
+  counterHighlight: { color: colors.accentText, fontWeight: 'bold', fontSize: 16 },
   completedBadgeWrapper: { flexDirection: 'row', alignItems: 'center' },
   completedBadge: { color: '#16a34a', fontWeight: 'bold', fontSize: 12 },
-  searchWrapper: { flexDirection: 'row', alignItems: 'center', borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, height: 40, marginTop: 4 },
+  searchWrapper: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, height: 40, marginTop: 4 },
   searchInput: { flex: 1, fontSize: 14 },
   chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, marginRight: 8 },
   chipText: { fontSize: 12 },
 
-  card: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 14, marginBottom: 10, borderWidth: 1, elevation: 2 },
-  cardSelected: { backgroundColor: '#faf5ff', borderColor: '#d8b4fe' },
-  cardSelectedDark: { backgroundColor: '#2e1065', borderColor: '#7c3aed' },
+  card: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, marginBottom: 10, borderWidth: 1, elevation: 2 },
+  cardSelected: { backgroundColor: colors.accentSoft, borderColor: colors.accentText },
+  cardSelectedDark: { backgroundColor: colors.accentSoft, borderColor: colors.primary },
   cardDisabled: { backgroundColor: '#f1f5f9', opacity: 0.7 },
   cardDisabledDark: { backgroundColor: '#0d0d0e', opacity: 0.7 },
   iconBox: { marginRight: 14 },
   cardText: { fontSize: 14, fontWeight: 'bold', lineHeight: 20 },
-  cardTextSelected: { color: colors.primary },
+  cardTextSelected: { color: colors.accentText },
   tagRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 4 },
   tagText: { fontSize: 12 },
   tagAreaText: { fontSize: 12 },
   disabledTagText: { fontSize: 12, color: '#ef4444', fontWeight: 'bold' },
 
-  emptyCard: { padding: 30, alignItems: 'center', borderRadius: 14, borderWidth: 1, marginTop: 20 },
+  emptyCard: { padding: 30, alignItems: 'center', borderRadius: 16, borderWidth: 1, marginTop: 20 },
   emptyTitle: { fontSize: 15, fontWeight: 'bold' },
 
   bottomBar: { padding: 16, borderTopWidth: 1 },
-  saveAcceptBtn: { backgroundColor: '#16a34a', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14 },
+  saveAcceptBtn: { backgroundColor: '#16a34a', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 16 },
   saveAcceptBtnPartial: { backgroundColor: colors.primary },
   saveAcceptBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14, letterSpacing: 0.5 },
 
@@ -500,6 +500,6 @@ const styles = liveStyles(() => StyleSheet.create({
   modalCard: { width: '100%', maxWidth: 360, borderRadius: 20, padding: 24, alignItems: 'center' },
   modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 6 },
   modalDesc: { fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
-  modalBtn: { backgroundColor: colors.primary, paddingVertical: 12, paddingHorizontal: 30, borderRadius: 10 },
+  modalBtn: { backgroundColor: colors.primary, paddingVertical: 12, paddingHorizontal: 30, borderRadius: 12 },
   modalBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 }
 }));

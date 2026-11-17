@@ -55,7 +55,7 @@ export function AppErrorsModal({ visible, onClose }: Props) {
         <View style={[styles.sheet, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.title, { color: theme.text }]}>🐞 Errores de la app</Text>
+              <Text style={[styles.title, { color: theme.text }]}>Errores de la app</Text>
               <Text style={{ color: theme.subText, fontSize: 13, marginTop: 2 }}>
                 Personas de tu grupo · {autos} automáticos · {reports.length - autos} enviados a mano
               </Text>
@@ -74,7 +74,7 @@ export function AppErrorsModal({ visible, onClose }: Props) {
             <Text style={[styles.empty, { color: '#dc2626' }]}>{error}</Text>
           ) : reports.length === 0 ? (
             <Text style={[styles.empty, { color: theme.subText }]}>
-              No hay errores registrados en tu grupo. 🎉{'\n'}Cuando a alguien le falle algo, aparecerá aquí.
+              No hay errores registrados en tu grupo.{'\n'}Cuando a alguien le falle algo, aparecerá aquí.
             </Text>
           ) : (
             <ScrollView style={{ maxHeight: 520 }}>

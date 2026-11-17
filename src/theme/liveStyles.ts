@@ -10,8 +10,9 @@ export function liveStyles<T extends object>(factory: () => T): T {
   let builtFor: string | null = null;
   let built: T | null = null;
   const current = (): T => {
-    if (built === null || builtFor !== colors.primary) {
-      builtFor = colors.primary;
+    const key = `${colors.primary}|${colors.accentSoft}|${colors.accentText}`;
+    if (built === null || builtFor !== key) {
+      builtFor = key;
       built = factory();
     }
     return built;

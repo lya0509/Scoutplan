@@ -197,6 +197,12 @@ const FLOWS = [
     role: 'scout',
     async run(page, db) {
       await go(page, 'ficha-medica');
+      // En teléfono el formulario va por pasos: el contacto de emergencia es el paso 2
+      if (page.viewportSize().width < 768) {
+        await see(page, 'Paso 1 de 4', 'En teléfono la ficha médica no va por pasos');
+        await click(page, 'Siguiente', { wait: 400 });
+        await see(page, 'Paso 2 de 4', '«Siguiente» no pasa al paso 2');
+      }
       await fill(page, 'Padre / Madre / Representante Legal', 'Madre Flujo');
       await click(page, 'Guardar Ficha Médica', { wait: 2500 });
       const p = db.profiles.find(x => x.id === PROFILES.scout.id);
@@ -208,6 +214,7 @@ const FLOWS = [
     role: 'scout',
     async run(page, db) {
       await go(page, 'curriculo');
+      if (page.viewportSize().width < 768) await see(page, 'Paso 1 de 7', 'En teléfono el currículum no va por pasos');
       await fill(page, 'Ej: Caracas, Miranda', 'Caracas Flujo');
       await click(page, 'Guardar Datos del Currículum', { wait: 2500 });
       const p = db.profiles.find(x => x.id === PROFILES.scout.id);
@@ -234,7 +241,7 @@ const FLOWS = [
     role: 'scouter',
     async run(page, db, { dialogs }) {
       await go(page, `scouter-revision?scoutId=${PROFILES.scout.id}&stageId=expedicionario&scoutName=Joven%20Prueba`);
-      await click(page, /^✏️ Editar requisitos$/, { wait: 800 });
+      await click(page, 'Editar requisitos', { exact: true, wait: 800 });
       await click(page, 'Especialidades (1 Plata)', { wait: 1500 });
       must(dialogs.some(d => /Convalidar sin registro/i.test(d)), 'No pidió confirmar la convalidación sin registro');
       must(db.requirement_progress.some(r => r.requirement_id === 'exp_esp_plata' && r.completed), 'No quedó marcado el requisito');
@@ -331,8 +338,8 @@ const FLOWS = [
     async run(page, db) {
       db.stage_progress.find(r => r.stage_id === 'expedicionario').status = 'En Revision';
       await go(page, `scouter-revision?scoutId=${PROFILES.scout.id}&stageId=expedicionario&scoutName=Joven%20Prueba`);
-      await click(page, 'APROBAR Y FINALIZAR', { exact: true, wait: 800 });
-      await click(page, '¿SEGURO? HAZ CLIC PARA DEVOLVER FICHA', { exact: true, wait: 2500 });
+      await click(page, 'Devolver etapa', { exact: true, wait: 800 });
+      await click(page, '¿Seguro? Toca otra vez para devolver', { exact: true, wait: 2500 });
       must(db.stage_progress.find(r => r.stage_id === 'expedicionario').status !== 'En Revision', 'La ficha no se devolvió');
     },
   },
@@ -345,8 +352,8 @@ const FLOWS = [
         'exp_cip_distrital', 'exp_cip_regional', 'exp_cip_nacional', 'exp_cursos', 'exp_noches'];
       for (const id of ids) db.requirement_progress.push({ id: 'rp_' + id, scout_id: PROFILES.scout.id, stage_id: 'expedicionario', requirement_id: id, completed: true, updated_at: new Date().toISOString() });
       await go(page, `scouter-revision?scoutId=${PROFILES.scout.id}&stageId=expedicionario&scoutName=Joven%20Prueba`);
-      await click(page, 'APROBAR Y FINALIZAR', { exact: true, wait: 800 });
-      await click(page, '¿SEGURO? HAZ CLIC PARA APROBAR', { exact: true, wait: 2500 });
+      await click(page, 'Aprobar etapa', { exact: true, wait: 800 });
+      await click(page, '¿Seguro? Toca otra vez para aprobar', { exact: true, wait: 2500 });
       must(db.stage_progress.find(r => r.stage_id === 'expedicionario').status === 'Aprobada', 'La etapa no quedó aprobada');
     },
   },

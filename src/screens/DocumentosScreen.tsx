@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { liveStyles } from '../theme/liveStyles';
+import { colors } from '../theme/colors';
 import {
   View,
   Text,
@@ -55,12 +57,12 @@ import PdfViewer from '../components/PdfViewer';
 
 const CATEGORIES = [
   { id: 'todos', label: 'Todos los Documentos', icon: Layers },
-  { id: 'especialidades', label: '🏅 Especialidades (39)', icon: Award },
-  { id: 'adelanto', label: '⚜️ Adelanto e Insignias', icon: BookOpen },
-  { id: 'iniciativas', label: '🌍 Programas e Iniciativas', icon: Globe },
-  { id: 'manuales', label: '🏕️ Manuales Técnicos', icon: FileText },
-  { id: 'reglamentos', label: '⚖️ Reglamentos ASV', icon: FileCode },
-  { id: 'formacion', label: '🎓 Formación de Adultos', icon: CheckCircle },
+  { id: 'especialidades', label: 'Especialidades (39)', icon: Award },
+  { id: 'adelanto', label: 'Adelanto e Insignias', icon: BookOpen },
+  { id: 'iniciativas', label: 'Programas e Iniciativas', icon: Globe },
+  { id: 'manuales', label: 'Manuales Técnicos', icon: FileText },
+  { id: 'reglamentos', label: 'Reglamentos ASV', icon: FileCode },
+  { id: 'formacion', label: 'Formación de Adultos', icon: CheckCircle },
 ];
 
 export default function DocumentosScreen({ navigation, route }: any) {
@@ -333,13 +335,13 @@ export default function DocumentosScreen({ navigation, route }: any) {
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              backgroundColor: isDarkMode ? '#1e1b4b' : '#ede9fe',
-              borderColor: '#8b5cf6',
+              backgroundColor: isDarkMode ? colors.accentSoft : colors.accentSoft,
+              borderColor: colors.primary,
               borderWidth: 1.5,
-              borderRadius: 14,
+              borderRadius: 16,
               padding: 14,
               gap: 12,
-              shadowColor: '#8b5cf6',
+              shadowColor: colors.primary,
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.1,
               shadowRadius: 4,
@@ -348,12 +350,12 @@ export default function DocumentosScreen({ navigation, route }: any) {
             onPress={() => setSelectedCategory('especialidades')}
             activeOpacity={0.8}
           >
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#8b5cf6', justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
               <Award size={24} color="#ffffff" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontWeight: '800', color: isDarkMode ? '#c4b5fd' : '#6d28d9' }}>
-                🏅 Especialidades Scout Oficiales (ASV)
+              <Text style={{ fontSize: 15, fontWeight: '800', color: isDarkMode ? colors.accentText : colors.accentText }}>
+                Especialidades Scout Oficiales (ASV)
               </Text>
               <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                 {selectedCategory === 'especialidades' 
@@ -361,7 +363,7 @@ export default function DocumentosScreen({ navigation, route }: any) {
                   : 'Toca aquí para ver las 39 guías de especialidades organizadas por áreas en esta sección.'}
               </Text>
             </View>
-            <Award size={18} color="#8b5cf6" />
+            <Award size={18} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
@@ -448,11 +450,11 @@ export default function DocumentosScreen({ navigation, route }: any) {
                       styles.categoryPill,
                       {
                         backgroundColor: isSubSelected
-                          ? '#8b5cf6'
+                          ? colors.primary
                           : isDarkMode
                           ? '#27272a'
                           : '#ffffff',
-                        borderColor: isSubSelected ? '#8b5cf6' : theme.border,
+                        borderColor: isSubSelected ? colors.primary : theme.border,
                         paddingVertical: 6,
                         paddingHorizontal: 12,
                       },
@@ -710,13 +712,13 @@ export default function DocumentosScreen({ navigation, route }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   container: {
     flex: 1,
   },
   offlinePanel: {
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 12,
   },
   offlinePanelIcon: {
@@ -729,7 +731,7 @@ const styles = StyleSheet.create({
   offlinePanelBtn: {
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     minHeight: 36,
     justifyContent: 'center',
   },
@@ -749,7 +751,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingVertical: 8,
     paddingHorizontal: 10,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     minHeight: 36,
   },
@@ -796,7 +798,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     height: 48,
     shadowColor: '#000',
@@ -845,7 +847,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: 'rgba(97, 36, 153, 0.08)',
+    backgroundColor: colors.accentSoft,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -857,7 +859,7 @@ const styles = StyleSheet.create({
   categoryBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   categoryBadgeText: {
     fontSize: 12,
@@ -1042,4 +1044,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: 'bold',
   },
-});
+}));

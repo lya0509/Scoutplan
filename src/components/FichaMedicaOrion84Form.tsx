@@ -265,7 +265,7 @@ export default function FichaMedicaOrion84Form({ targetUserId, readOnly, theme, 
   };
 
   // El morado de marca casi no contrasta sobre el fondo oscuro: allí se usa un violeta claro.
-  const accent = isDarkMode ? '#c4b5fd' : colors.primary;
+  const accent = isDarkMode ? colors.accentText : colors.primary;
 
   if (loading) {
     return <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 30 }} />;
@@ -334,18 +334,18 @@ export default function FichaMedicaOrion84Form({ targetUserId, readOnly, theme, 
 
 const styles = liveStyles(() => StyleSheet.create({
   sheet: { borderRadius: 18, padding: 18, borderWidth: 1, maxWidth: 850, width: '100%', alignSelf: 'center' },
-  introBanner: { backgroundColor: 'rgba(97, 36, 153, 0.08)', padding: 10, borderRadius: 10 },
+  introBanner: { backgroundColor: colors.accentSoft, padding: 10, borderRadius: 12 },
   changesBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.12)', padding: 8, borderRadius: 8, marginTop: 10 },
   sectionTitle: { fontSize: 14, fontWeight: 'bold', marginBottom: 2 },
   label: { fontSize: 12, fontWeight: '800', marginBottom: 4, marginTop: 8 },
-  input: { borderRadius: 10, borderWidth: 1, padding: 8, fontSize: 12 },
+  input: { borderRadius: 12, borderWidth: 1, padding: 8, fontSize: 12 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, minWidth: 48, alignItems: 'center' },
+  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, minWidth: 48, alignItems: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 14 },
   gridItem: { flexGrow: 1, flexBasis: 220, minWidth: 0 },
   yesNoItem: { flexGrow: 1, flexBasis: 130, minWidth: 0 },
   fullItem: { flexBasis: '100%' },
-  saveBtn: { backgroundColor: '#10b981', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
-  exportBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  saveBtn: { backgroundColor: '#10b981', paddingVertical: 14, borderRadius: 16, alignItems: 'center' },
+  exportBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 16, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   btnText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
 }));

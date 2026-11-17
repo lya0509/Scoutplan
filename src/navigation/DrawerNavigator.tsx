@@ -8,7 +8,7 @@ import {
   Moon, Sun, Palette, Home, User, Award, ClipboardList, Compass, Camera, HeartPulse, FileText, BookOpen, Music,
   FolderOpen, Medal, FileCheck, ListChecks, CalendarDays, Menu, Smartphone, LogOut,
 } from 'lucide-react-native';
-import { Press } from '../components/ui';
+import { Press, ScreenTransition } from '../components/ui';
 import { RADIUS } from '../theme/tokens';
 import { ThemeCustomizerModal } from '../components/ThemeCustomizerModal';
 import { useModalBackHandler } from '../hooks/useBackHandler';
@@ -221,7 +221,7 @@ export default function DrawerNavigator() {
         // Teléfono: barra inferior con los destinos de todos los días (el menú completo sigue en «Más»)
         screenLayout={({ children, navigation, route }: any) => (
           <View style={{ flex: 1 }}>
-            <View style={{ flex: 1 }}>{children}</View>
+            <ScreenTransition>{children}</ScreenTransition>
             {!isWide && <BottomBar navigation={navigation} current={route.name} />}
           </View>
         )}

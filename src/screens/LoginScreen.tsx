@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Btn, Enter } from '../components/ui';
 import { liveStyles } from '../theme/liveStyles';
 import {
   View,
@@ -110,7 +111,7 @@ export default function LoginScreen({ navigation }: any) {
       borderColor: isDarkMode ? '#27272a' : '#e4e4e7',
     },
     title: {
-      color: isDarkMode ? '#ffffff' : '#1e1b4b',
+      color: isDarkMode ? '#ffffff' : colors.accentText,
     },
     inputBg: {
       backgroundColor: isDarkMode ? '#27272a' : '#f4f4f5',
@@ -136,7 +137,7 @@ export default function LoginScreen({ navigation }: any) {
         )}
       </TouchableOpacity>
 
-      <View style={[styles.container, dynamicStyles.container, isWebLarge && styles.webCard]}>
+      <Enter style={[styles.container, dynamicStyles.container, isWebLarge && styles.webCard]}>
         
         {/* LOGO VECTORIAL EXTRAÍDO DE TU IMAGEN */}
         <View style={styles.logoContainer}>
@@ -157,9 +158,9 @@ export default function LoginScreen({ navigation }: any) {
             onPress={clearRecoveryError}
             accessibilityRole="button"
             accessibilityLabel="Cerrar aviso"
-            style={[styles.verifyNotice, { backgroundColor: isDarkMode ? '#2a1215' : '#fef2f2', borderColor: isDarkMode ? '#7f1d1d' : '#fecaca' }]}
+            style={[styles.verifyNotice, { backgroundColor: theme.errSoft, borderColor: theme.errLine }]}
           >
-            <Text style={{ color: isDarkMode ? '#fca5a5' : '#991b1b', fontSize: 13, lineHeight: 19 }}>{recoveryError}</Text>
+            <Text style={{ color: theme.err, fontSize: 13, lineHeight: 19 }}>{recoveryError}</Text>
           </TouchableOpacity>
         )}
 
@@ -169,8 +170,8 @@ export default function LoginScreen({ navigation }: any) {
           try { pending = typeof window !== 'undefined' && !!window.sessionStorage.getItem('@pending_verify_id'); } catch {}
           if (!pending) return null;
           return (
-            <View style={[styles.verifyNotice, { backgroundColor: isDarkMode ? '#1e1b4b' : '#eff6ff', borderColor: isDarkMode ? '#3730a3' : '#bfdbfe' }]}>
-              <Text style={{ color: isDarkMode ? '#c7d2fe' : '#1e3a8a', fontSize: 13, lineHeight: 19 }}>
+            <View style={[styles.verifyNotice, { backgroundColor: theme.accentSoft, borderColor: theme.accentSoft }]}>
+              <Text style={{ color: theme.text, fontSize: 13, lineHeight: 19 }}>
                 Para verificar un carnet tienes que iniciar sesión con tu cuenta de la app. Al entrar verás el resultado.
               </Text>
             </View>
@@ -225,28 +226,22 @@ export default function LoginScreen({ navigation }: any) {
               setShowForgotModal(true);
             }}
           >
-            <Text style={[styles.forgotText, { color: theme.primary }]}>¿Olvidaste tu contraseña?</Text>
+            <Text style={[styles.forgotText, { color: theme.accentText }]}>¿Olvidaste tu contraseña?</Text>
           </TouchableOpacity>
 
           {/* Botón de Ingreso */}
-          <TouchableOpacity style={[styles.loginButton, { backgroundColor: theme.primary }]} onPress={handleLogin} disabled={loading}>
-            {loading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={styles.loginButtonText}>Ingresar</Text>
-            )}
-          </TouchableOpacity>
+          <Btn label="Ingresar" block loading={loading} onPress={handleLogin} style={{ marginTop: 6 }} />
         </View>
 
         {/* Footer */}
         <View style={styles.footerContainer}>
           <Text style={{ color: isDarkMode ? '#a1a1aa' : '#71717a', fontSize: 14 }}>¿No tienes cuenta? </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={[styles.registerText, { color: theme.primary }]}>Regístrate aquí</Text>
+            <Text style={[styles.registerText, { color: theme.accentText }]}>Regístrate aquí</Text>
           </TouchableOpacity>
         </View>
 
-      </View>
+      </Enter>
 
       {/* MODAL PARA RESTABLECER CONTRASEÑA */}
       <Modal visible={showForgotModal} transparent animationType="fade">
@@ -255,7 +250,7 @@ export default function LoginScreen({ navigation }: any) {
             
             {resetSuccess ? (
               <View style={{ alignItems: 'center' }}>
-                <CheckCircle2 size={52} color="#10b981" />
+                <CheckCircle2 size={52} color={theme.ok} />
                 <Text style={[styles.modalTitle, { color: isDarkMode ? '#FFF' : '#1E293B' }]}>¡Correo Enviado!</Text>
                 <Text style={[styles.modalSub, { color: isDarkMode ? '#A1A1AA' : '#64748B' }]}>
                   Revisa tu bandeja de entrada o spam. Te enviamos las instrucciones para crear tu nueva clave.
@@ -269,7 +264,7 @@ export default function LoginScreen({ navigation }: any) {
               </View>
             ) : (
               <View style={{ width: '100%', alignItems: 'center' }}>
-                <KeyRound size={44} color={colors.primary} />
+                <KeyRound size={44} color={theme.accentText} />
                 <Text style={[styles.modalTitle, { color: isDarkMode ? '#FFF' : '#1E293B' }]}>Restablecer Contraseña</Text>
                 <Text style={[styles.modalSub, { color: isDarkMode ? '#A1A1AA' : '#64748B' }]}>
                   Ingresa tu correo electrónico asociado a tu cuenta para enviarte un enlace de recuperación.
@@ -418,7 +413,7 @@ const styles = liveStyles(() => StyleSheet.create({
     marginTop: -4
   },
   forgotText: {
-    color: colors.primary,
+    color: colors.accentText,
     fontSize: 13,
     fontWeight: '600'
   },
@@ -441,7 +436,7 @@ const styles = liveStyles(() => StyleSheet.create({
     marginTop: 24,
   },
   registerText: {
-    color: colors.primary,
+    color: colors.accentText,
     fontSize: 14,
     fontWeight: 'bold',
   },
@@ -495,7 +490,7 @@ const styles = liveStyles(() => StyleSheet.create({
   modalCancelBtn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     backgroundColor: '#E2E8F0',
     alignItems: 'center',
     marginRight: 8
@@ -508,7 +503,7 @@ const styles = liveStyles(() => StyleSheet.create({
   modalSendBtn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     backgroundColor: colors.primary,
     alignItems: 'center'
   },
@@ -521,7 +516,7 @@ const styles = liveStyles(() => StyleSheet.create({
     backgroundColor: colors.primary,
     paddingVertical: 12,
     paddingHorizontal: 28,
-    borderRadius: 10,
+    borderRadius: 12,
     marginTop: 16
   },
   modalConfirmText: {

@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { liveStyles } from '../theme/liveStyles';
+import { colors } from '../theme/colors';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { RefreshCw } from 'lucide-react-native';
 
@@ -37,7 +39,7 @@ export default function UpdateAvailableBanner() {
   return (
     <View pointerEvents="box-none" style={styles.wrapper}>
       <View style={styles.card} accessibilityRole="alert">
-        <RefreshCw size={18} color="#e9d5ff" />
+        <RefreshCw size={18} color={colors.accentText} />
         <Text style={styles.text}>Hay una versión nueva de la app</Text>
         <View style={styles.actions}>
         <TouchableOpacity onPress={() => setHidden(true)} accessibilityRole="button" style={styles.later}>
@@ -52,7 +54,7 @@ export default function UpdateAvailableBanner() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = liveStyles(() => StyleSheet.create({
   wrapper: {
     position: Platform.OS === 'web' ? ('fixed' as any) : 'absolute',
     left: 0, right: 0, bottom: 16,
@@ -60,14 +62,14 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap',
-    backgroundColor: '#3b0764', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14,
+    backgroundColor: colors.accentSoft, borderRadius: 16, paddingVertical: 10, paddingHorizontal: 14,
     maxWidth: 520, width: '100%',
     shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 6,
   },
-  text: { color: '#faf5ff', fontWeight: '700', fontSize: 14, flexGrow: 1, flexShrink: 1, flexBasis: 160 },
+  text: { color: colors.accentText, fontWeight: '700', fontSize: 14, flexGrow: 1, flexShrink: 1, flexBasis: 160 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 'auto' },
   later: { paddingVertical: 8, paddingHorizontal: 8, minHeight: 36, justifyContent: 'center' },
-  laterText: { color: '#e9d5ff', fontWeight: '600', fontSize: 13 },
-  btn: { backgroundColor: '#ffffff', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 14, minHeight: 36, justifyContent: 'center' },
-  btnText: { color: '#3b0764', fontWeight: '800', fontSize: 14 },
-});
+  laterText: { color: colors.accentText, fontWeight: '600', fontSize: 13 },
+  btn: { backgroundColor: '#ffffff', borderRadius: 12, paddingVertical: 8, paddingHorizontal: 14, minHeight: 36, justifyContent: 'center' },
+  btnText: { color: colors.accentText, fontWeight: '800', fontSize: 14 },
+}));

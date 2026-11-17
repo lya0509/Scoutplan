@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { colors } from '../theme/colors';
 import {
   View,
   Text,
@@ -665,7 +666,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
           senderId: user?.id,
           groupName: user?.group_name || undefined,
           unit: unit,
-          title: `📋 ¡Nuevo Programa Scout Publicado!`,
+          title: `¡Nuevo Programa Scout Publicado!`,
           message: `${title || 'Actividad Scout'} para el ${date} (${unit.toUpperCase()}). Ya puedes ver la ficha técnica, horarios y materiales.`,
           type: 'program'
         }).catch(() => {});
@@ -677,10 +678,10 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
       
       const titleMsg = targetStatus === 'draft' ? 'Boceto Guardado' : 'Programa Publicado';
       const statusMsg = targetStatus === 'draft'
-        ? '📝 El programa se guardó como boceto preliminar. Está disponible para Scouters y Jefatura (y roles autorizados).'
+        ? 'El programa se guardó como boceto preliminar. Está disponible para Scouters y Jefatura (y roles autorizados).'
         : (completedAreasCount >= 6
-            ? '🎉 Programa publicado y validado oficialmente con las 6 áreas de crecimiento.'
-            : `🚀 Programa publicado exitosamente (${completedAreasCount}/6 áreas completadas).`);
+            ? 'Programa publicado y validado oficialmente con las 6 áreas de crecimiento.'
+            : `Programa publicado exitosamente (${completedAreasCount}/6 áreas completadas).`);
 
       const handleExitAfterSave = () => {
         if (pendingNavigationActionRef.current) {
@@ -789,7 +790,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
             <Calendar size={18} color="#16a34a" style={{ marginRight: 8 }} />
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 13, fontWeight: 'bold', color: isDarkMode ? '#86efac' : '#15803d' }}>
-                📅 Actividad Vinculada al Plan Trimestral {passedInitialQuarter ? `(${passedInitialQuarter})` : ''}
+                Actividad Vinculada al Plan Trimestral {passedInitialQuarter ? `(${passedInitialQuarter})` : ''}
               </Text>
               <Text style={{ fontSize: 12, color: isDarkMode ? '#bbf7d0' : '#166534', marginTop: 1 }}>
                 Esta ficha técnica corresponde al cronograma oficial de la unidad.
@@ -797,13 +798,13 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
             </View>
           </View>
         ) : isExtraordinary ? (
-          <View style={{ backgroundColor: isDarkMode ? '#3b0764' : '#faf5ff', borderWidth: 1, borderColor: '#9333ea', padding: 12, borderRadius: 12, marginBottom: 14, flexDirection: 'row', alignItems: 'center' }}>
-            <Sparkles size={18} color="#9333ea" style={{ marginRight: 8 }} />
+          <View style={{ backgroundColor: isDarkMode ? colors.accentSoft : colors.accentSoft, borderWidth: 1, borderColor: colors.primary, padding: 12, borderRadius: 12, marginBottom: 14, flexDirection: 'row', alignItems: 'center' }}>
+            <Sparkles size={18} color={colors.primary} style={{ marginRight: 8 }} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 13, fontWeight: 'bold', color: isDarkMode ? '#d8b4fe' : '#7e22ce' }}>
-                🏕️ Actividad Extraordinaria / Otros
+              <Text style={{ fontSize: 13, fontWeight: 'bold', color: isDarkMode ? colors.accentText : colors.accentText }}>
+                Actividad Extraordinaria / Otros
               </Text>
-              <Text style={{ fontSize: 12, color: isDarkMode ? '#e9d5ff' : '#6b21a8', marginTop: 1 }}>
+              <Text style={{ fontSize: 12, color: isDarkMode ? colors.accentText : colors.accentText, marginTop: 1 }}>
                 Programa independiente fuera del Plan Trimestral regular.
               </Text>
             </View>
@@ -822,7 +823,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
           <BookOpen size={20} color="#16a34a" style={{ marginRight: 10 }} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.importBannerTitle, { color: isDarkMode ? '#86efac' : '#15803d' }]}>
-              📥 Importar desde Plan Trimestral
+              Importar desde Plan Trimestral
             </Text>
             <Text style={{ fontSize: 12, color: isDarkMode ? '#dcfce7' : '#166534' }}>
               Auto-rellena fecha, lugar y actividad planificada para tu unidad.
@@ -832,7 +833,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
         {/* 1. SECCIÓN: DATOS GENERALES DEL PROGRAMA */}
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-          <Text style={[styles.sectionHeading, { color: theme.accentText }]}>📋 1. Datos Generales de la Actividad</Text>
+          <Text style={[styles.sectionHeading, { color: theme.accentText }]}>1. Datos Generales de la Actividad</Text>
 
           <View style={styles.fieldGroup}>
             <Text style={[styles.fieldLabel, { color: theme.text }]}>Título / Nombre de la Actividad *</Text>
@@ -919,14 +920,14 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
               <TouchableOpacity
                 style={[
                   styles.sinodalToggleBtn,
-                  isSinodal ? { backgroundColor: '#7c3aed', borderColor: '#7c3aed' } : { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: theme.border }
+                  isSinodal ? { backgroundColor: colors.primary, borderColor: colors.primary } : { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: theme.border }
                 ]}
                 onPress={handleToggleSinodalMode}
                 activeOpacity={0.8}
               >
                 <Users size={13} color={isSinodal ? '#ffffff' : theme.subText} style={{ marginRight: 4 }} />
                 <Text style={[styles.sinodalToggleText, isSinodal ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.subText }]}>
-                  {isSinodal ? '🤝 Sinodal: Activada' : '🤝 ¿Actividad Sinodal?'}
+                  {isSinodal ? 'Sinodal: Activada' : '¿Actividad Sinodal?'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -971,7 +972,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                 /* MODO NORMAL: Tu unidad fijada */
                 <View style={[styles.fixedUnitBox, { backgroundColor: primaryColor + '15', borderColor: primaryColor }]}>
                   <Text style={[styles.fixedUnitText, { color: theme.accentText }]}>
-                    ⚜️ Rama: <Text style={{ fontWeight: 'bold' }}>{unit.toUpperCase()}</Text>
+                    Rama: <Text style={{ fontWeight: 'bold' }}>{unit.toUpperCase()}</Text>
                   </Text>
                   <View style={[styles.fixedUnitBadge, { backgroundColor: primaryColor }]}>
                     <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: 'bold' }}>Tu Unidad</Text>
@@ -980,7 +981,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
               )
             ) : (
               /* MODO SINODAL: Selección múltiple con tu unidad bloqueada */
-              <View style={[styles.sinodalBox, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: '#7c3aed' }]}>
+              <View style={[styles.sinodalBox, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: colors.primary }]}>
                 <Text style={{ fontSize: 12, color: theme.subText, marginBottom: 8 }}>
                   Selecciona las otras unidades participantes (tu unidad <Text style={{ fontWeight: 'bold', color: theme.accentText }}>{unit.toUpperCase()}</Text> está fija):
                 </Text>
@@ -993,7 +994,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                         key={u}
                         style={[
                           styles.unitChip,
-                          isSelected && { backgroundColor: isMyUnit ? primaryColor : '#7c3aed', borderColor: isMyUnit ? primaryColor : '#7c3aed' },
+                          isSelected && { backgroundColor: isMyUnit ? primaryColor : colors.primary, borderColor: isMyUnit ? primaryColor : colors.primary },
                           { borderColor: theme.border }
                         ]}
                         onPress={() => handleToggleSinodalUnit(u)}
@@ -1004,7 +1005,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                             isSelected ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }
                           ]}
                         >
-                          {isMyUnit ? `🔒 ${u.toUpperCase()}` : isSelected ? `✓ ${u.toUpperCase()}` : u.toUpperCase()}
+                          {isMyUnit ? `${u.toUpperCase()}` : isSelected ? `✓ ${u.toUpperCase()}` : u.toUpperCase()}
                         </Text>
                       </TouchableOpacity>
                     );
@@ -1032,7 +1033,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
         {/* 2. SECCIÓN: OBJETIVOS Y METAS */}
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-          <Text style={[styles.sectionHeading, { color: theme.accentText }]}>🎯 2. Objetivos y Metas</Text>
+          <Text style={[styles.sectionHeading, { color: theme.accentText }]}>2. Objetivos y Metas</Text>
 
           <View style={styles.fieldGroup}>
             <Text style={[styles.fieldLabel, { color: theme.text }]}>Objetivo General</Text>
@@ -1110,7 +1111,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         {/* 3. SECCIÓN: SELECTOR DE ODS (OBJETIVOS DE DESARROLLO SOSTENIBLE) */}
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
           <View style={styles.labelWithAction}>
-            <Text style={[styles.sectionHeading, { color: theme.accentText }]}>🌍 3. Objetivos de Desarrollo Sostenible (ODS)</Text>
+            <Text style={[styles.sectionHeading, { color: theme.accentText }]}>3. Objetivos de Desarrollo Sostenible (ODS)</Text>
             <View style={[styles.countBadge, { backgroundColor: primaryColor + '20' }]}>
               <Text style={{ color: theme.accentText, fontWeight: 'bold', fontSize: 12 }}>
                 {selectedSDGs.length} seleccionados
@@ -1147,7 +1148,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         {/* 4. SECCIÓN: INDICADORES DE LOGRO (6 ÁREAS DE CRECIMIENTO) */}
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
           <View style={styles.labelWithAction}>
-            <Text style={[styles.sectionHeading, { color: theme.accentText }]}>📊 4. Indicadores de Logro Oficiales</Text>
+            <Text style={[styles.sectionHeading, { color: theme.accentText }]}>4. Indicadores de Logro Oficiales</Text>
             <View style={[styles.countBadge, { backgroundColor: completedAreasCount === 6 ? '#dcfce7' : '#fee2e2' }]}>
               <Text style={{ color: completedAreasCount === 6 ? '#15803d' : '#b91c1c', fontWeight: 'bold', fontSize: 12 }}>
                 {completedAreasCount}/6 Áreas Listas
@@ -1232,7 +1233,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
         {/* 5. SECCIÓN: CRONOGRAMA / ITINERARIO DE ACTIVIDADES */}
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
           <View style={styles.labelWithAction}>
-            <Text style={[styles.sectionHeading, { color: theme.accentText }]}>⏱️ 5. Cronograma de Actividades</Text>
+            <Text style={[styles.sectionHeading, { color: theme.accentText }]}>5. Cronograma de Actividades</Text>
             <TouchableOpacity style={[styles.addScheduleBtn, { backgroundColor: primaryColor }]} onPress={handleAddScheduleRow}>
               <Plus size={14} color="#ffffff" style={{ marginRight: 4 }} />
               <Text style={styles.addScheduleBtnText}>Agregar Actividad</Text>
@@ -1321,7 +1322,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                 {activeReorderItemId === item.id && !isDragging && (
                   <View style={[styles.reorderActiveBar, { backgroundColor: primaryColor + '15', borderColor: primaryColor }]}>
                     <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold' }}>
-                      ✨ Moviendo actividad #{index + 1}
+                      Moviendo actividad #{index + 1}
                     </Text>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
                       {index > 0 && (
@@ -1445,7 +1446,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
         {/* 6. SECCIÓN: NOTAS IMPORTANTES */}
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-          <Text style={[styles.sectionHeading, { color: theme.accentText }]}>📝 6. Notas Importantes / Recomendaciones</Text>
+          <Text style={[styles.sectionHeading, { color: theme.accentText }]}>6. Notas Importantes / Recomendaciones</Text>
           <AutoGrowTextInput
             style={[styles.textArea, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', color: theme.text, borderColor: theme.border }]}
             placeholder="Ej: Cada Rover debe tener dominio del tema. Traer hidratación y uniforme completo..."
@@ -1503,7 +1504,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
           <View style={[styles.indicatorPickerModal, { backgroundColor: isDarkMode ? '#18181b' : '#ffffff' }]}>
             <View style={styles.modalHeaderRow}>
               <Text style={[styles.modalHeaderTitle, { color: theme.text }]}>
-                📅 Actividades del Plan Trimestral
+                Actividades del Plan Trimestral
               </Text>
               <TouchableOpacity onPress={() => setShowTrimestreModal(false)} style={{ padding: 4 }}>
                 <Trash2 size={20} color={theme.subText} />
@@ -1619,7 +1620,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
               {/* OPCIÓN 1: GUARDAR COMO BOCETO */}
               <View style={[styles.saveOptionCard, { backgroundColor: isDarkMode ? '#27272a' : '#fefce8', borderColor: '#f59e0b' }]}>
                 <View style={[styles.saveOptionBadge, { backgroundColor: '#f59e0b25' }]}>
-                  <Text style={[styles.saveOptionBadgeText, { color: '#d97706' }]}>📝 BOCETO / BORRADOR</Text>
+                  <Text style={[styles.saveOptionBadgeText, { color: '#d97706' }]}>BOCETO / BORRADOR</Text>
                 </View>
                 <Text style={[styles.saveOptionTitle, { color: theme.text }]}>Guardar como Boceto</Text>
                 <Text style={[styles.saveOptionDesc, { color: theme.subText }]}>
@@ -1656,7 +1657,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
                         <Text style={{ fontSize: 12, color: theme.subText }}>Permitir a otros jóvenes de la unidad revisar el boceto</Text>
                       </View>
                     </View>
-                    <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: previewGuias ? primaryColor : theme.subText, backgroundColor: previewGuias ? primaryColor : 'transparent', justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ width: 20, height: 20, borderRadius: 8, borderWidth: 1.5, borderColor: previewGuias ? primaryColor : theme.subText, backgroundColor: previewGuias ? primaryColor : 'transparent', justifyContent: 'center', alignItems: 'center' }}>
                       {previewGuias && <Check size={13} color="#ffffff" />}
                     </View>
                   </TouchableOpacity>
@@ -1675,7 +1676,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
               {/* OPCIÓN 2: GUARDAR Y PUBLICAR OFICIALMENTE */}
               <View style={[styles.saveOptionCard, { backgroundColor: isDarkMode ? '#27272a' : '#f0fdf4', borderColor: '#16a34a' }]}>
                 <View style={[styles.saveOptionBadge, { backgroundColor: '#16a34a25' }]}>
-                  <Text style={[styles.saveOptionBadgeText, { color: '#16a34a' }]}>🚀 PUBLICACIÓN OFICIAL</Text>
+                  <Text style={[styles.saveOptionBadgeText, { color: '#16a34a' }]}>PUBLICACIÓN OFICIAL</Text>
                 </View>
                 <Text style={[styles.saveOptionTitle, { color: theme.text }]}>Guardar y Publicar Final</Text>
                 <Text style={[styles.saveOptionDesc, { color: theme.subText }]}>
@@ -1793,7 +1794,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
               {/* Rueda de Horas (1 a 12) */}
               <View style={styles.timeSectionBlock}>
-                <Text style={[styles.timeSectionTitle, { color: theme.text }]}>🕐 Horas (1 a 12)</Text>
+                <Text style={[styles.timeSectionTitle, { color: theme.text }]}>Horas (1 a 12)</Text>
                 <View style={styles.hoursGrid}>
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(h => {
                     const isSelected = (timePickerTab === 'start' ? startHour : endHour) === h;
@@ -1823,7 +1824,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
               {/* Rueda de Minutos (00 a 55 en saltos de 5, y ajuste fino +-1 min) */}
               <View style={styles.timeSectionBlock}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <Text style={[styles.timeSectionTitle, { color: theme.text }]}>⏱️ Minutos</Text>
+                  <Text style={[styles.timeSectionTitle, { color: theme.text }]}>Minutos</Text>
                   <View style={{ flexDirection: 'row', gap: 6 }}>
                     <TouchableOpacity
                       style={[styles.minuteAdjustBtn, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: theme.border }]}
@@ -1880,7 +1881,7 @@ export default function ProgramaScoutEditorScreen({ route, navigation }: any) {
 
               {/* Botones de Duración Rápida (Presets scouts automáticos para Hora Fin) */}
               <View style={[styles.timeSectionBlock, { borderTopWidth: 1, borderTopColor: theme.border, paddingTop: 10 }]}>
-                <Text style={[styles.timeSectionTitle, { color: theme.text }]}>⚡ Duración Rápida (Calcula Hora Fin)</Text>
+                <Text style={[styles.timeSectionTitle, { color: theme.text }]}>Duración Rápida (Calcula Hora Fin)</Text>
                 <View style={styles.presetsRow}>
                   {[
                     { label: '+15 min', mins: 15 },

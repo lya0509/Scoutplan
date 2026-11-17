@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   track: { flex: 1, height: 32, justifyContent: 'center' },
   trackLine: { height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.25)' },
   trackFill: { position: 'absolute', left: 0, height: 4, borderRadius: 2 },
-  thumb: { position: 'absolute', width: 20, height: 20, marginLeft: -10, borderRadius: 10, backgroundColor: '#fff', borderWidth: 3 },
+  thumb: { position: 'absolute', width: 20, height: 20, marginLeft: -10, borderRadius: 12, backgroundColor: '#fff', borderWidth: 3 },
   error: { color: '#fca5a5', fontSize: 13, marginTop: 12, textAlign: 'center', maxWidth: 340 },
   actions: { flexDirection: 'row', gap: 10, marginTop: 18, flexWrap: 'wrap', justifyContent: 'center' },
   actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 11, borderRadius: 12 },

@@ -326,14 +326,14 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
         </View>
 
         {returnToStage && (
-          <View style={{ backgroundColor: isDarkMode ? '#1e1b4b' : '#f5f3ff', borderWidth: 1.5, borderColor: '#8b5cf6', borderRadius: 12, padding: 12, marginBottom: 12 }}>
+          <View style={{ backgroundColor: isDarkMode ? colors.accentSoft : colors.accentSoft, borderWidth: 1.5, borderColor: colors.primary, borderRadius: 12, padding: 12, marginBottom: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Sparkles size={18} color="#8b5cf6" style={{ marginRight: 6 }} />
-              <Text style={{ fontSize: 13, fontWeight: 'bold', color: isDarkMode ? '#c4b5fd' : '#6d28d9', flex: 1 }}>
+              <Sparkles size={18} color={colors.primary} style={{ marginRight: 6 }} />
+              <Text style={{ fontSize: 13, fontWeight: 'bold', color: isDarkMode ? colors.accentText : colors.accentText, flex: 1 }}>
                 Vinculando para: {returnToStage.reqText}
               </Text>
             </View>
-            <Text style={{ fontSize: 12, color: isDarkMode ? '#a78bfa' : '#7c3aed', marginTop: 4 }}>
+            <Text style={{ fontSize: 12, color: isDarkMode ? colors.accentText : colors.accentText, marginTop: 4 }}>
               Toca "Vincular a este Requisito" en cualquiera de tus certificados o sube uno nuevo para marcar la etapa.
             </Text>
           </View>
@@ -397,7 +397,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                 alignItems: 'center',
                 paddingVertical: 8,
                 paddingHorizontal: 12,
-                borderRadius: 9,
+                borderRadius: 12,
                 backgroundColor: viewMode === 'grid' ? colors.primary : 'transparent',
                 gap: 5
               }}
@@ -415,7 +415,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                 alignItems: 'center',
                 paddingVertical: 8,
                 paddingHorizontal: 12,
-                borderRadius: 9,
+                borderRadius: 12,
                 backgroundColor: viewMode === 'list' ? colors.primary : 'transparent',
                 gap: 5
               }}
@@ -497,12 +497,12 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                   <View style={{ padding: 10, flex: 1, justifyContent: 'space-between' }}>
                     <View>
                       <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginBottom: 4 }}>
-                        <Text style={[styles.catBadgeText, { fontSize: 11 }]}>
+                        <Text style={[styles.catBadgeText, { fontSize: 12 }]}>
                           {catObj?.name || 'ACREDITACIÓN'}
                         </Text>
                         {levelObj && (
                           <View style={[styles.levelBadge, { backgroundColor: levelColor, paddingHorizontal: 5, paddingVertical: 1 }]}>
-                            <Text style={[styles.levelBadgeText, { fontSize: 11 }]}>{levelObj.name.split(' ')[0]}</Text>
+                            <Text style={[styles.levelBadgeText, { fontSize: 12 }]}>{levelObj.name.split(' ')[0]}</Text>
                           </View>
                         )}
                       </View>
@@ -561,7 +561,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                         style={{
                           backgroundColor: '#10b981',
                           paddingVertical: 5,
-                          borderRadius: 6,
+                          borderRadius: 8,
                           alignItems: 'center',
                           marginTop: 6
                         }}
@@ -659,7 +659,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                       backgroundColor: '#10b981',
                       paddingVertical: 9,
                       paddingHorizontal: 12,
-                      borderRadius: 10,
+                      borderRadius: 12,
                       marginTop: 10,
                       gap: 6
                     }}
@@ -670,7 +670,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                   >
                     <CheckCircle size={16} color="white" />
                     <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>
-                      ✅ Vincular a este Requisito
+                      Vincular a este Requisito
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -734,7 +734,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
 
                 {(isScouter || viewModalCert?.scout_id === user?.id) && (
                   <TouchableOpacity
-                    style={[viewerStyles.deleteActionBtn, { backgroundColor: isDarkMode ? '#27272a' : '#e0e7ff' }]}
+                    style={[viewerStyles.deleteActionBtn, { backgroundColor: isDarkMode ? '#27272a' : colors.accentSoft }]}
                     onPress={() => handleOpenEditModal(viewModalCert)}
                   >
                     <Edit2 size={18} color={colors.primary} />
@@ -763,7 +763,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
           <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white' }]}>
             <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
               <Text style={[modalStyles.title, { color: theme.text }]}>
-                {editingCertId ? '✏️ Editar Acreditación' : 'Nueva Acreditación / Iniciativa'}
+                {editingCertId ? 'Editar Acreditación' : 'Nueva Acreditación / Iniciativa'}
               </Text>
               <TouchableOpacity onPress={() => setShowFormModal(false)}>
                 <X color={isDarkMode ? '#a1a1aa' : '#64748b'} size={22} />
@@ -831,7 +831,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                       borderWidth: 1,
                       borderColor: isDarkMode ? '#38bdf8' : '#3b82f6',
                       padding: 10,
-                      borderRadius: 10,
+                      borderRadius: 12,
                       marginTop: 6,
                       marginBottom: 8,
                       gap: 6
@@ -846,7 +846,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                   >
                     <FolderOpen size={16} color={isDarkMode ? '#38bdf8' : '#2563eb'} />
                     <Text style={{ fontSize: 12, fontWeight: 'bold', color: isDarkMode ? '#38bdf8' : '#1d4ed8', flex: 1 }}>
-                      📁 Ver Fichas y Requisitos en Dropbox
+                      Ver Fichas y Requisitos en Dropbox
                     </Text>
                     <ExternalLink size={13} color={isDarkMode ? '#38bdf8' : '#2563eb'} />
                   </TouchableOpacity>
@@ -1002,7 +1002,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
               <Text style={[modalStyles.label, { color: theme.subText }]}>FECHA DE OBTENCIÓN / APROBACIÓN *</Text>
               <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 12 }}>
                 <TouchableOpacity
-                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? '#27272a' : '#e2e8f0', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: theme.border }}
+                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? '#27272a' : '#e2e8f0', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: theme.border }}
                   onPress={() => setShowDatePickerModal(true)}
                   activeOpacity={0.8}
                 >
@@ -1041,14 +1041,14 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                           <TouchableOpacity 
                             onPress={() => setCalYear(prev => prev - 1)}
-                            style={{ padding: 4, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderRadius: 6 }}
+                            style={{ padding: 4, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderRadius: 8 }}
                           >
                             <ChevronLeft size={14} color={theme.text} />
                           </TouchableOpacity>
                           <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.accentText }}>{calYear}</Text>
                           <TouchableOpacity 
                             onPress={() => setCalYear(prev => prev + 1)}
-                            style={{ padding: 4, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderRadius: 6 }}
+                            style={{ padding: 4, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderRadius: 8 }}
                           >
                             <ChevronRight size={14} color={theme.text} />
                           </TouchableOpacity>
@@ -1138,11 +1138,11 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
 
               {/* TOGGLE DE SINCRONIZACIÓN CON EL CURRÍCULUM */}
               <TouchableOpacity
-                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: syncWithCurriculum ? (isDarkMode ? '#1e1b4b' : '#f5f3ff') : (isDarkMode ? '#27272a' : '#f8fafc'), padding: 12, borderRadius: 12, borderWidth: 1, borderColor: syncWithCurriculum ? '#8b5cf6' : theme.border, marginBottom: 14 }}
+                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: syncWithCurriculum ? (isDarkMode ? colors.accentSoft : colors.accentSoft) : (isDarkMode ? '#27272a' : '#f8fafc'), padding: 12, borderRadius: 12, borderWidth: 1, borderColor: syncWithCurriculum ? colors.primary : theme.border, marginBottom: 14 }}
                 onPress={() => setSyncWithCurriculum(prev => !prev)}
                 activeOpacity={0.8}
               >
-                <View style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: syncWithCurriculum ? '#8b5cf6' : 'transparent', borderWidth: 1.5, borderColor: syncWithCurriculum ? '#8b5cf6' : theme.subText, justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
+                <View style={{ width: 22, height: 22, borderRadius: 8, backgroundColor: syncWithCurriculum ? colors.primary : 'transparent', borderWidth: 1.5, borderColor: syncWithCurriculum ? colors.primary : theme.subText, justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
                   {syncWithCurriculum && <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>✓</Text>}
                 </View>
                 <View style={{ flex: 1 }}>
@@ -1164,7 +1164,7 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
               >
                 <ImageIcon size={20} color={colors.primary} style={{ marginRight: 8 }} />
                 <Text style={[modalStyles.deviceFileBtnText, { color: theme.accentText }]}>
-                  📂 Seleccionar Foto/Diploma desde tu Dispositivo
+                  Seleccionar Foto/Diploma desde tu Dispositivo
                 </Text>
               </TouchableOpacity>
 
@@ -1237,14 +1237,14 @@ export default function CertificateUploadScreen({ route, navigation }: any) {
 
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
               <TouchableOpacity
-                style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', alignItems: 'center' }}
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', alignItems: 'center' }}
                 onPress={() => setDeleteModalCert(null)}
               >
                 <Text style={{ color: theme.subText, fontWeight: 'bold' }}>Cancelar</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: '#ef4444', alignItems: 'center' }}
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: '#ef4444', alignItems: 'center' }}
                 onPress={handleDeleteCertificate}
               >
                 <Text style={{ color: 'white', fontWeight: 'bold' }}>
@@ -1286,8 +1286,8 @@ const styles = liveStyles(() => StyleSheet.create({
   certCard: { borderRadius: 16, padding: 18, marginBottom: 14, borderWidth: 1, elevation: 2 },
   certCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   catBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-  catBadgeText: { fontSize: 12, fontWeight: 'bold', color: '#ffffff', backgroundColor: colors.primaryLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  levelBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  catBadgeText: { fontSize: 12, fontWeight: 'bold', color: '#ffffff', backgroundColor: colors.primary, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
+  levelBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
   levelBadgeText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   certTitle: { fontSize: 16, fontWeight: 'bold', marginTop: 2 },
   certArea: { fontSize: 12, marginTop: 4 },
@@ -1303,7 +1303,7 @@ const styles = liveStyles(() => StyleSheet.create({
 
   gridCard: {
     width: '48.5%',
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     overflow: 'hidden',
     marginBottom: 10,
@@ -1336,9 +1336,9 @@ const viewerStyles = liveStyles(() => StyleSheet.create({
   fullImage: { width: '100%', height: '100%' },
   noImageCard: { height: 150, justifyContent: 'center', alignItems: 'center' },
   btnActionRow: { flexDirection: 'row', gap: 10, marginTop: 12, marginBottom: 20 },
-  downloadBtn: { flex: 1, backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14 },
+  downloadBtn: { flex: 1, backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 16 },
   downloadBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 },
-  deleteActionBtn: { backgroundColor: '#fee2e2', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 14, justifyContent: 'center', alignItems: 'center' }
+  deleteActionBtn: { backgroundColor: '#fee2e2', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }
 }));
 
 const modalStyles = liveStyles(() => StyleSheet.create({
@@ -1349,10 +1349,10 @@ const modalStyles = liveStyles(() => StyleSheet.create({
   label: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5, marginBottom: 6, marginTop: 14 },
   input: { borderRadius: 12, borderWidth: 1, padding: 14, fontSize: 14 },
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-  chipBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, borderWidth: 1 },
+  chipBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, borderWidth: 1 },
   chipBtnText: { fontSize: 12 },
   quickSuggestBox: { marginTop: 8, padding: 10, borderRadius: 12, backgroundColor: 'rgba(107, 33, 168, 0.05)' },
-  suggestLabel: { fontSize: 12, fontWeight: 'bold', color: colors.primary },
+  suggestLabel: { fontSize: 12, fontWeight: 'bold', color: colors.accentText },
   itemPill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, borderWidth: 1 },
   itemPillText: { fontSize: 12 },
   deviceFileBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 12, borderWidth: 1.5, borderStyle: 'dashed', marginTop: 4 },
@@ -1360,6 +1360,6 @@ const modalStyles = liveStyles(() => StyleSheet.create({
   previewBox: { marginTop: 10, borderRadius: 12, overflow: 'hidden' },
   previewText: { fontSize: 12, fontWeight: 'bold', marginBottom: 4 },
   previewImg: { width: '100%', height: 120, borderRadius: 8 },
-  saveSubmitBtn: { backgroundColor: colors.primary, paddingVertical: 16, borderRadius: 14, alignItems: 'center', marginTop: 24, marginBottom: 30 },
+  saveSubmitBtn: { backgroundColor: colors.primary, paddingVertical: 16, borderRadius: 16, alignItems: 'center', marginTop: 24, marginBottom: 30 },
   saveSubmitText: { color: 'white', fontWeight: 'bold', fontSize: 15 }
 }));

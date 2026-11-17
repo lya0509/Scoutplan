@@ -27,10 +27,10 @@ export const styles = StyleSheet.create({
   manualName: { fontSize: 14, fontWeight: 'bold', flex: 1 },
   manualSummary: { fontSize: 12, marginTop: 2, lineHeight: 16 },
   catTagBadge: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 },
-  diffBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, marginLeft: 6 },
-  diffBadgeText: { fontSize: 11, fontWeight: 'bold' },
+  diffBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8, marginLeft: 6 },
+  diffBadgeText: { fontSize: 12, fontWeight: 'bold' },
   miniFeaturePill: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 },
-  miniFeatureText: { fontSize: 11, fontWeight: 'bold' }
+  miniFeatureText: { fontSize: 12, fontWeight: 'bold' }
 });
 
 export const modalStyles = StyleSheet.create({
@@ -45,11 +45,11 @@ export const modalStyles = StyleSheet.create({
   useText: { fontSize: 13, lineHeight: 19 },
   stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
   stepText: { fontSize: 13, flex: 1, lineHeight: 19 },
-  tipBox: { padding: 12, borderRadius: 10, borderWidth: 1, marginTop: 12 },
+  tipBox: { padding: 12, borderRadius: 12, borderWidth: 1, marginTop: 12 },
   visualStepPill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#cbd5e1', backgroundColor: '#ffffff' },
   visualStepPillText: { fontSize: 12, fontWeight: 'bold' },
   stepDetailCard: { padding: 12, borderRadius: 12, borderWidth: 1, marginTop: 10 },
-  videoCard: { padding: 12, borderRadius: 14, borderWidth: 1, marginTop: 6 },
+  videoCard: { padding: 12, borderRadius: 16, borderWidth: 1, marginTop: 6 },
   videoThumbBox: { height: 160, borderRadius: 12, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center', marginBottom: 10, position: 'relative' },
   videoPlayBtn: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#ef4444', justifyContent: 'center', alignItems: 'center', elevation: 4 },
   durationBadge: { position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },

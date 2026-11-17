@@ -2,7 +2,7 @@
   "metadata": {
     "project": "Plan Progresivo Scout ASV",
     "version": "3.0.0-full-system",
-    "generatedAt": "2026-11-15T03:02:30.809Z",
+    "generatedAt": "2026-11-17T01:43:24.614Z",
     "generator": "scripts/graphify.js (Full-System AST/Regex Analyzer)",
     "summary": {
       "totalCommunities": 8,
@@ -97,8 +97,8 @@
       "file": "App.tsx",
       "role": "Initializes Graphify Bridge, registers /sw.js Service Worker on Web, listens to window online events to flush dataService.syncPendingRequirements(), and wraps ThemeProvider -> AuthProvider -> NotificationProvider -> AppNavigator.",
       "exists": true,
-      "lines": 73,
-      "bytes": 2961,
+      "lines": 87,
+      "bytes": 3664,
       "exports": [
         "App"
       ],
@@ -107,6 +107,7 @@
         "react-native",
         "./src/context/AuthContext",
         "./src/context/ThemeContext",
+        "./src/theme/tokens",
         "./src/context/NotificationContext",
         "./src/components/LiveNotificationToast",
         "./src/components/BadgeCelebrationWatcher",
@@ -134,17 +135,19 @@
       "file": "src/navigation/AppNavigator.tsx",
       "role": "Routes unauthenticated users to Login/Register and authenticated users by role (scout -> DrawerNavigator, scouter -> ScouterDashboard, jefe_grupo -> JefeDashboard, comisionados/nacional/admin -> ComisionadoDashboard) plus shared screens.",
       "exists": true,
-      "lines": 304,
-      "bytes": 13952,
+      "lines": 311,
+      "bytes": 14445,
       "exports": [
         "hasPendingVerify",
         "AppNavigator"
       ],
       "imports": [
         "react",
+        "../theme/colors",
         "@react-navigation/native",
         "@react-navigation/native-stack",
         "react-native",
+        "../components/ui",
         "../context/AuthContext",
         "../context/ThemeContext",
         "../lib/graphifyBridge",
@@ -192,8 +195,8 @@
       "file": "src/navigation/DrawerNavigator.tsx",
       "role": "15-screen Drawer menu for Scouts with custom header avatar, dark mode toggle, ThemeCustomizerModal trigger, and PWAInstallModal trigger.",
       "exists": true,
-      "lines": 250,
-      "bytes": 10647,
+      "lines": 294,
+      "bytes": 14787,
       "exports": [
         "DrawerNavigator"
       ],
@@ -203,10 +206,10 @@
         "react-native",
         "../context/AuthContext",
         "../context/ThemeContext",
-        "../theme/colors",
-        "../components/UserScoutAvatar",
         "../components/DualProfileAvatar",
         "lucide-react-native",
+        "../components/ui",
+        "../theme/tokens",
         "../components/ThemeCustomizerModal",
         "../hooks/useBackHandler",
         "../components/PWAInstallModal",
@@ -275,8 +278,8 @@
       "file": "src/context/ThemeContext.tsx",
       "role": "Persists app_dark_mode and app_primary_color in AsyncStorage and provides dynamic theme tokens across all screens.",
       "exists": true,
-      "lines": 136,
-      "bytes": 4708,
+      "lines": 215,
+      "bytes": 8456,
       "exports": [
         "THEME_COLOR_PRESETS",
         "ThemeProvider",
@@ -284,8 +287,10 @@
       ],
       "imports": [
         "react",
+        "react-native",
         "@react-native-async-storage/async-storage",
-        "../theme/colors"
+        "../theme/colors",
+        "../theme/tokens"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -376,8 +381,8 @@
       "file": "src/theme/colors.ts",
       "role": "Central color palette for units, stages, and dark/light surfaces.",
       "exists": true,
-      "lines": 28,
-      "bytes": 997,
+      "lines": 31,
+      "bytes": 1243,
       "exports": [
         "colors",
         "UNIT_COLORS"
@@ -442,8 +447,8 @@
       "file": "src/lib/dataService.ts",
       "role": "Async data layer on top of the offline outbox (@scout_outbox_v1) with cached reads: stage/requirement progress, stage/requirement progress, stage review/approval, certificates + curriculum auto-sync, quarterly plans, CIP events, nights log, vida de grupo log, and membership dates.",
       "exists": true,
-      "lines": 2220,
-      "bytes": 100626,
+      "lines": 2226,
+      "bytes": 100917,
       "exports": [
         "MembershipReceipt",
         "MembershipHistoryEntry",
@@ -779,7 +784,7 @@
       "role": "Mounts window.__SCOUT_GRAPHIFY__ for Claude Code programmatic navigation, state inspection, and diagnostics.",
       "exists": true,
       "lines": 230,
-      "bytes": 13097,
+      "bytes": 13120,
       "exports": [
         "GraphifyRuntimeState",
         "registerGraphifyControllers",
@@ -811,8 +816,7 @@
         "@scout_outbox_v1",
         "@scout_programas_list",
         "@scout_temporal_drive_albums",
-        "app_dark_mode",
-        "app_primary_color"
+        "app_dark_mode"
       ]
     },
     {
@@ -958,13 +962,15 @@
       "route": "Login",
       "role": "Email/password authentication, password recovery modal, and link to RegisterScreen.",
       "exists": true,
-      "lines": 547,
-      "bytes": 16827,
+      "lines": 543,
+      "bytes": 16606,
       "exports": [
         "LoginScreen"
       ],
       "imports": [
         "react",
+        "../components/ui",
+        "../theme/liveStyles",
         "react-native",
         "lucide-react-native",
         "../lib/supabaseClient",
@@ -991,13 +997,14 @@
       "route": "Register",
       "role": "Multi-role user registration (Scout, Scouter, Jefe de Grupo, Comisionado) with Region, District, Group, and Unit selectors.",
       "exists": true,
-      "lines": 758,
-      "bytes": 29920,
+      "lines": 759,
+      "bytes": 30049,
       "exports": [
         "RegisterScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
         "lucide-react-native",
         "../lib/supabaseClient",
@@ -1023,13 +1030,14 @@
       "route": "Resumen",
       "role": "Main Scout home dashboard: ScoutUserIcon greeting badge, progression summary, active stage progress bar, unit Rovers directory (directorio_grupo RPC), quick access cards, CarnetScoutModal, OnboardingGuideModal, and HelpFloatingFAB.",
       "exists": true,
-      "lines": 895,
-      "bytes": 40971,
+      "lines": 771,
+      "bytes": 37075,
       "exports": [
         "ScoutDashboardScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
         "@react-native-async-storage/async-storage",
         "../context/AuthContext",
@@ -1039,7 +1047,6 @@
         "../lib/offline/readCache",
         "../lib/dataService",
         "../services/presenceService",
-        "../theme/colors",
         "@react-navigation/native",
         "../components/NotificationHeaderBell",
         "../components/DualProfileAvatar",
@@ -1047,6 +1054,8 @@
         "../components/ProgramaPdfPreviewModal",
         "../types/programa",
         "lucide-react-native",
+        "../components/ui",
+        "../theme/tokens",
         "../utils/dateLocal",
         "../components/PullToRefreshScrollView",
         "../context/NotificationContext",
@@ -1072,8 +1081,8 @@
       "route": "PlanProgresivo",
       "role": "Displays the 4 Rover/Clan progression stages (Precursor, Expedicionario, Descubridor, Fundador) with completion percentages and lock status.",
       "exists": true,
-      "lines": 258,
-      "bytes": 12422,
+      "lines": 188,
+      "bytes": 8785,
       "exports": [
         "PlanProgresivoScreen"
       ],
@@ -1088,13 +1097,14 @@
         "../lib/supabaseClient",
         "../theme/colors",
         "lucide-react-native",
+        "../components/ui",
+        "../theme/tokens",
         "../components/StageBadgeIcon",
         "../components/NotificationHeaderBell",
         "../data/unitTemplates",
         "../components/Skeleton",
         "../theme/layout",
         "../theme/stageColors",
-        "../theme/buttons",
         "../utils/badgeCelebration",
         "../lib/celebration",
         "../lib/celebrationVideo"
@@ -1113,13 +1123,14 @@
       "route": "StageDetail",
       "role": "Interactive checklist of stage requirements, linking to CatalogSelectorScreen, NochesAireLibreModal, VidaGrupoModal, CertificateUploadScreen, and stage review submission.",
       "exists": true,
-      "lines": 1266,
-      "bytes": 57633,
+      "lines": 1267,
+      "bytes": 60330,
       "exports": [
         "StageDetailScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
         "@react-navigation/native",
         "lucide-react-native",
@@ -1141,7 +1152,10 @@
         "../utils/dateLocal",
         "../components/SecureImage",
         "../components/CipStageModal",
-        "../components/Skeleton"
+        "../components/Skeleton",
+        "../components/ui",
+        "../theme/tokens",
+        "../context/NotificationContext"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -1157,13 +1171,14 @@
       "route": "CatalogSelector",
       "role": "Searchable selector for official ASV catalog activities (básicas, opcionales, especialidades, cursos, ciclos) filtered by stage and requirement type.",
       "exists": true,
-      "lines": 505,
-      "bytes": 22693,
+      "lines": 506,
+      "bytes": 22786,
       "exports": [
         "CatalogSelectorScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
         "lucide-react-native",
         "@react-native-async-storage/async-storage",
@@ -1191,13 +1206,15 @@
       "route": "Especialidades",
       "role": "Interactive catalog of Scout Specialties across 6 categories and 3 levels (Bronce, Plata, Oro).",
       "exists": true,
-      "lines": 681,
-      "bytes": 21052,
+      "lines": 683,
+      "bytes": 21170,
       "exports": [
         "EspecialidadesScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
+        "../theme/colors",
         "react-native",
         "lucide-react-native",
         "../context/ThemeContext",
@@ -1221,13 +1238,14 @@
       "route": "Perfil",
       "role": "Scout & Scouter personal profile editor: dual avatars (Uniformado/Casual), cédula, dates (birth, promise, join), membership expiration proposal, and digital Carnet Scout.",
       "exists": true,
-      "lines": 782,
-      "bytes": 35015,
+      "lines": 783,
+      "bytes": 35172,
       "exports": [
         "ProfileScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
         "@react-navigation/native",
         "../context/AuthContext",
@@ -1264,13 +1282,14 @@
       "route": "ScoutFullProfile",
       "role": "360-degree view of a Scout profile for Scouters/Jefes: progression stages, certificates, medical record summary, curriculum, and membership status.",
       "exists": true,
-      "lines": 581,
-      "bytes": 25797,
+      "lines": 582,
+      "bytes": 25864,
       "exports": [
         "ScoutFullProfileScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "../utils/safeUrl",
         "react-native",
         "../context/ThemeContext",
@@ -1307,13 +1326,14 @@
       "route": "ScouterDashboard",
       "role": "Unit leader dashboard: lists unit scouts with online presence, pending stage reviews, quarterly plan feedback, unit programs, and profile photo moderation.",
       "exists": true,
-      "lines": 1215,
-      "bytes": 59590,
+      "lines": 1209,
+      "bytes": 59647,
       "exports": [
         "ScouterDashboardScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
         "@react-navigation/native",
         "../context/AuthContext",
@@ -1362,15 +1382,17 @@
       "route": "ScouterReview",
       "role": "Detailed requirement-by-requirement verification screen for a Scout with Approve/Reject stage actions and notification dispatch.",
       "exists": true,
-      "lines": 661,
-      "bytes": 35818,
+      "lines": 665,
+      "bytes": 36589,
       "exports": [
         "ScouterReviewScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
         "lucide-react-native",
+        "../components/ui",
         "../lib/dataService",
         "../context/ThemeContext",
         "../data/progressionTemplate",
@@ -1395,8 +1417,8 @@
       "route": "JefeDashboard",
       "role": "Group Chief dashboard: supervises all units (Manada, Tropa, Caminantes, Clan), approves/rejects membership expiration dates, moderates photos, and manages group calendar.",
       "exists": true,
-      "lines": 1729,
-      "bytes": 87441,
+      "lines": 1730,
+      "bytes": 87411,
       "exports": [
         "JefeGrupoScreen"
       ],
@@ -1453,7 +1475,7 @@
       "role": "Territorial hierarchy dashboard (Distrital, Regional, Nacional, Admin) with drill-down metrics by Region -> District -> Group -> Unit.",
       "exists": true,
       "lines": 712,
-      "bytes": 36952,
+      "bytes": 36962,
       "exports": [
         "ComisionadoDashboardScreen"
       ],
@@ -1494,13 +1516,14 @@
       "route": "ProgramaScout",
       "role": "Lists unit & sinodal Scout Activity Programs with filters by unit, duplicate/delete actions, PDF preview modal, and Word .docx export.",
       "exists": true,
-      "lines": 1178,
-      "bytes": 48115,
+      "lines": 1179,
+      "bytes": 48172,
       "exports": [
         "ProgramaScoutScreen"
       ],
       "imports": [
         "react",
+        "../theme/colors",
         "react-native",
         "@react-navigation/native",
         "lucide-react-native",
@@ -1531,13 +1554,14 @@
       "route": "ProgramaScoutEditor",
       "role": "Full editor for ProgramaScout: metadata, unit/sinodal selector, objectives, SDGs (17 ODS), 6 Growth Area achievement indicators, time-table schedule, and autoSaveService integration.",
       "exists": true,
-      "lines": 1937,
+      "lines": 1938,
       "bytes": 91538,
       "exports": [
         "ProgramaScoutEditorScreen"
       ],
       "imports": [
         "react",
+        "../theme/colors",
         "react-native",
         "lucide-react-native",
         "../context/AuthContext",
@@ -1577,7 +1601,7 @@
       "role": "Quarterly planner (Trimestres I-IV) supporting individual Rover plans and shared unit plans linked to ProgramaScoutEditor.",
       "exists": true,
       "lines": 2123,
-      "bytes": 104096,
+      "bytes": 103968,
       "exports": [
         "QuarterlyPlanScreen"
       ],
@@ -1622,13 +1646,14 @@
       "route": "CalendarStandalone",
       "role": "Interactive calendar (react-native-calendars) for unit, group, district, and CIP events with event creation and reminders.",
       "exists": true,
-      "lines": 606,
-      "bytes": 29106,
+      "lines": 607,
+      "bytes": 29123,
       "exports": [
         "CalendarScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
         "react-native-calendars",
         "lucide-react-native",
@@ -1658,13 +1683,14 @@
       "route": "CentroActividades",
       "role": "Hub for CIP events, unit activities, and direct launch of activity programs.",
       "exists": true,
-      "lines": 284,
-      "bytes": 11242,
+      "lines": 285,
+      "bytes": 11310,
       "exports": [
         "ActivityCenterScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
         "../theme/colors",
         "lucide-react-native",
@@ -1687,13 +1713,14 @@
       "route": "TemporalDrive",
       "role": "Photo evidence albums organized by activity/date, backed by Supabase Storage scout-files and @scout_temporal_drive_albums cache.",
       "exists": true,
-      "lines": 709,
-      "bytes": 34144,
+      "lines": 710,
+      "bytes": 34219,
       "exports": [
         "TemporalDriveScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
         "lucide-react-native",
         "../context/AuthContext",
@@ -1728,14 +1755,16 @@
       "route": "FichaMedica",
       "role": "Two-tab medical record: \"Ficha Médica Scout\" (ASV form, Word .docx export) and \"Ficha Médica Orión 84\" (FichaMedicaOrion84Form, PDF export). Both live in profiles.medical_data (Orión 84 under medical_data.orion84; saves merge, never overwrite each other).",
       "exists": true,
-      "lines": 848,
-      "bytes": 42245,
+      "lines": 861,
+      "bytes": 42661,
       "exports": [
         "FichaMedicaScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
+        "../components/ui",
         "lucide-react-native",
         "../context/AuthContext",
         "../context/ThemeContext",
@@ -1768,14 +1797,16 @@
       "route": "CurriculumScout",
       "role": "Official Scout Curriculum Vitae form auto-synced with uploaded certificates, awards, and progression stages, with Word .docx export.",
       "exists": true,
-      "lines": 1242,
-      "bytes": 63820,
+      "lines": 1268,
+      "bytes": 64897,
       "exports": [
         "CurriculumScoutScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
+        "../components/ui",
         "lucide-react-native",
         "../context/AuthContext",
         "../context/ThemeContext",
@@ -1805,13 +1836,14 @@
       "route": "CertificateUpload",
       "role": "Uploads and categorizes Scout certificates/courses to Supabase Storage and syncs them automatically into CurriculumScout.",
       "exists": true,
-      "lines": 1365,
-      "bytes": 64328,
+      "lines": 1366,
+      "bytes": 64510,
       "exports": [
         "CertificateUploadScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "../utils/safeUrl",
         "react-native",
         "lucide-react-native",
@@ -1845,7 +1877,7 @@
       "role": "100% offline interactive manual of Scout knots, lashings (amarres), camping techniques, and visual SVG diagrams (ManualVisualDiagram).",
       "exists": true,
       "lines": 873,
-      "bytes": 42138,
+      "bytes": 42169,
       "exports": [
         "NudosManualScreen"
       ],
@@ -1877,7 +1909,7 @@
       "role": "Offline Scout songbook categorized by unit (Manada, Tropa, Caminantes, Clan, Fogata) with search and chords/lyrics.",
       "exists": true,
       "lines": 192,
-      "bytes": 8472,
+      "bytes": 8468,
       "exports": [
         "CancioneroScreen"
       ],
@@ -1904,13 +1936,15 @@
       "route": "Documentos",
       "role": "Digital library of official ASV & WOSM PDF manuals and Mundialito guides stored in public/documentos/.",
       "exists": true,
-      "lines": 1046,
-      "bytes": 37741,
+      "lines": 1048,
+      "bytes": 37865,
       "exports": [
         "DocumentosScreen"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
+        "../theme/colors",
         "react-native",
         "lucide-react-native",
         "../context/ThemeContext",
@@ -1938,13 +1972,14 @@
       "file": "src/components/CarnetScoutModal.tsx",
       "role": "Renders official digital Scout ID card with QR verification, membership status badge, and PDF/image export.",
       "exists": true,
-      "lines": 267,
-      "bytes": 13758,
+      "lines": 268,
+      "bytes": 13829,
       "exports": [
         "CarnetScoutModal"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
         "lucide-react-native",
         "../types/progression",
@@ -1970,7 +2005,7 @@
       "role": "Modal logbook for recording camping nights (date, location, nights count, notes) toward stage requirements.",
       "exists": true,
       "lines": 627,
-      "bytes": 20819,
+      "bytes": 20793,
       "exports": [
         "NochesAireLibreModal"
       ],
@@ -1998,7 +2033,7 @@
       "role": "Modal logbook for recording Vida de Grupo participations and council activities.",
       "exists": true,
       "lines": 659,
-      "bytes": 23554,
+      "bytes": 23550,
       "exports": [
         "VidaGrupoEntry",
         "VidaGrupoModal"
@@ -2060,7 +2095,7 @@
       "role": "Step-by-step interactive onboarding guide for new Scouts and Scouters.",
       "exists": true,
       "lines": 284,
-      "bytes": 8613,
+      "bytes": 8610,
       "exports": [
         "OnboardingGuideModal"
       ],
@@ -2084,13 +2119,14 @@
       "file": "src/components/NotificationCenterModal.tsx",
       "role": "Displays personal notifications and official system announcements with mark-as-read and clear actions.",
       "exists": true,
-      "lines": 756,
-      "bytes": 28947,
+      "lines": 757,
+      "bytes": 29026,
       "exports": [
         "NotificationCenterModal"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
         "lucide-react-native",
         "../context/NotificationContext",
@@ -2114,7 +2150,7 @@
       "role": "Header bell button with animated unread counter opening NotificationCenterModal.",
       "exists": true,
       "lines": 76,
-      "bytes": 1995,
+      "bytes": 1996,
       "exports": [
         "NotificationHeaderBell"
       ],
@@ -2140,13 +2176,14 @@
       "file": "src/components/LiveNotificationToast.tsx",
       "role": "Global top toast banner displaying incoming real-time notifications.",
       "exists": true,
-      "lines": 140,
-      "bytes": 3917,
+      "lines": 141,
+      "bytes": 3995,
       "exports": [
         "LiveNotificationToast"
       ],
       "imports": [
         "react",
+        "../theme/colors",
         "react-native",
         "../context/NotificationContext",
         "../context/ThemeContext",
@@ -2165,13 +2202,14 @@
       "file": "src/components/ThemeCustomizerModal.tsx",
       "role": "Modal allowing users to customize primary accent color and dark/light theme.",
       "exists": true,
-      "lines": 299,
-      "bytes": 9028,
+      "lines": 314,
+      "bytes": 9824,
       "exports": [
         "ThemeCustomizerModal"
       ],
       "imports": [
         "react",
+        "../theme/colors",
         "../lib/appVersion",
         "react-native",
         "lucide-react-native",
@@ -2193,7 +2231,7 @@
       "role": "Triggers native beforeinstallprompt or displays step-by-step iOS Safari Add to Home Screen instructions.",
       "exists": true,
       "lines": 317,
-      "bytes": 11364,
+      "bytes": 11344,
       "exports": [
         "PWAInstallModal"
       ],
@@ -2217,13 +2255,14 @@
       "file": "src/components/HelpFloatingFAB.tsx",
       "role": "Floating action button submitting diagnostic bug reports to bug_reports table.",
       "exists": true,
-      "lines": 595,
-      "bytes": 26371,
+      "lines": 596,
+      "bytes": 26322,
       "exports": [
         "HelpFloatingFAB"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
         "lucide-react-native",
         "../context/AuthContext",
@@ -2255,7 +2294,7 @@
       "role": "Scout (uniform) and personal photo tabs; always opens on «Foto Scout» and each tab shows ONLY its own photo. In lists (Resumen, Rovers, dashboards) only the scout photo or the scout icon is shown — the personal photo never replaces it (fix 2026-11-09). Uploads via onUpload, images through SecureImage (signed URLs).",
       "exists": true,
       "lines": 751,
-      "bytes": 24236,
+      "bytes": 24203,
       "exports": [
         "DualProfileAvatar"
       ],
@@ -2284,8 +2323,8 @@
       "file": "src/components/UserScoutAvatar.tsx",
       "role": "Renders user avatar with unit logo fallback and role badge.",
       "exists": true,
-      "lines": 106,
-      "bytes": 2934,
+      "lines": 48,
+      "bytes": 1849,
       "exports": [
         "UserScoutAvatar"
       ],
@@ -2307,8 +2346,8 @@
       "file": "src/components/StageBadgeIcon.tsx",
       "role": "Renders vector insignias for Precursor, Expedicionario, Descubridor, and Fundador.",
       "exists": true,
-      "lines": 53,
-      "bytes": 1582,
+      "lines": 52,
+      "bytes": 1514,
       "exports": [
         "BADGE_IMAGES",
         "StageBadgeIcon"
@@ -2316,7 +2355,8 @@
       "imports": [
         "react",
         "react-native",
-        "react-native-svg"
+        "lucide-react-native",
+        "../context/ThemeContext"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -2331,13 +2371,14 @@
       "file": "src/components/FichaMedicaOrion84Form.tsx",
       "role": "Orión 84 medical form: prefilled from profile + Ficha Médica Scout, autosaved draft, saves to profiles.medical_data.orion84 and downloads the filled PDF.",
       "exists": true,
-      "lines": 351,
-      "bytes": 15227,
+      "lines": 352,
+      "bytes": 15295,
       "exports": [
         "FichaMedicaOrion84Form"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
         "react-native",
         "lucide-react-native",
         "../lib/dataService",
@@ -2383,8 +2424,8 @@
       "file": "src/components/OfflineStatusBanner.tsx",
       "role": "Shows \"Sin conexión · N\", \"Enviando…\", \"Todo enviado\" or failed changes with retry; collapses to a small chip under the header so it never covers bottom action buttons.",
       "exists": true,
-      "lines": 178,
-      "bytes": 6652,
+      "lines": 182,
+      "bytes": 6840,
       "exports": [
         "OfflineStatusBanner"
       ],
@@ -2394,7 +2435,8 @@
         "lucide-react-native",
         "../context/ThemeContext",
         "../lib/offline/outbox",
-        "./PendingChangesModal"
+        "./PendingChangesModal",
+        "./ui"
       ],
       "supabaseTables": [],
       "supabaseBuckets": [],
@@ -2600,7 +2642,7 @@
       "role": "Renders step-by-step vector diagrams for knots, lashings, and camping setups.",
       "exists": true,
       "lines": 327,
-      "bytes": 17719,
+      "bytes": 17710,
       "exports": [
         "ManualVisualDiagram"
       ],
@@ -2949,7 +2991,7 @@
       "role": "Route Administracion (/administracion). Jefe de Grupo: people of own group (Scout/Scouter/Jefe, unit, approve). Comisionados: also create groups (scout_groups) and move people inside their territory. Admin/Nacional: whole country, all roles. Rules mirrored by proteger_perfil.",
       "exists": true,
       "lines": 701,
-      "bytes": 37008,
+      "bytes": 37009,
       "exports": [
         "AdministracionScreen"
       ],
@@ -3191,7 +3233,7 @@
       "role": "Scouter/Jefatura: catalog of official CIPs (cip_oficiales: create, list), mark attendance per youth (cip_sel_* in certificates, counts to the current stage requirement of that level), review old-CIP requests (cip_sol_*) made under the Scout Law.",
       "exists": true,
       "lines": 373,
-      "bytes": 21362,
+      "bytes": 21363,
       "exports": [
         "CipManagerModal"
       ],
@@ -3418,7 +3460,7 @@
       "role": "Month calendar with quick dates (today, next Saturday/Sunday) for ProgramaScoutEditorScreen.",
       "exists": true,
       "lines": 146,
-      "bytes": 6656,
+      "bytes": 6636,
       "exports": [
         "quickDate",
         "DatePickerModal"
@@ -3517,8 +3559,8 @@
       "file": "tests/e2e/run.mjs",
       "role": "npm run test:e2e — builds and opens the app in Chromium with Supabase MOCKED (tests/e2e/mockSupabase.mjs): 25 screens × 4 roles × light/dark (no JS errors, no endless spinner, content visible, contrast ≥ 3:1), program editor modals, and cold start offline with an expired session.",
       "exists": true,
-      "lines": 391,
-      "bytes": 21167,
+      "lines": 393,
+      "bytes": 21379,
       "exports": [],
       "imports": [
         "playwright-core",
@@ -3679,13 +3721,15 @@
       "file": "src/components/AppErrorBoundary.tsx",
       "role": "Wraps AppNavigator: if a screen throws while rendering, shows «Algo salió mal» with «Volver a intentar» / «Ir al inicio» instead of a blank page, and reports it as fatal.",
       "exists": true,
-      "lines": 59,
-      "bytes": 2767,
+      "lines": 61,
+      "bytes": 2882,
       "exports": [
         "AppErrorBoundary"
       ],
       "imports": [
         "react",
+        "../theme/liveStyles",
+        "../theme/colors",
         "react-native",
         "../lib/errorReporter"
       ],
@@ -3703,7 +3747,7 @@
       "role": "Jefatura panel listing automatic errors and manual bug reports of the group (RLS reportes_jefatura_ver in supabase_errores_app.sql), expandable detail.",
       "exists": true,
       "lines": 135,
-      "bytes": 6707,
+      "bytes": 6697,
       "exports": [
         "AppErrorsModal"
       ],
@@ -3751,8 +3795,8 @@
       "file": "src/components/PanelHeader.tsx",
       "role": "Shared header of Scouter, Jefatura and Comisionado dashboards: role pill + bell/colors/dark/sign-out buttons on top, full-width name below (replaces three different headers; Comisionado no longer amber).",
       "exists": true,
-      "lines": 83,
-      "bytes": 3920,
+      "lines": 84,
+      "bytes": 3929,
       "exports": [
         "PanelHeaderButton",
         "PanelHeader"

@@ -755,7 +755,7 @@ const styles = liveStyles(() => StyleSheet.create({
   actionLinkText: { fontWeight: '600', fontSize: 14 },
   rowCard: { flexDirection: 'row', alignItems: 'center', gap: SPACE.md, paddingVertical: SPACE.md, minHeight: 64 },
   memberCard: { alignItems: 'center', gap: 4, padding: SPACE.md, minWidth: 116 },
-  presenceDot: { position: 'absolute', bottom: 0, right: 0, width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
+  presenceDot: { position: 'absolute', bottom: 0, right: 0, width: 12, height: 12, borderRadius: 8, borderWidth: 2 },
   eventCircle: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   eventInfo: { flex: 1, minWidth: 0 },
 

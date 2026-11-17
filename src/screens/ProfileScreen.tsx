@@ -66,7 +66,7 @@ function WheelColumn({ items, selected, onSelect, labelFn }: {
               onPress={() => onSelect(item)}
             >
               <Text style={{ fontSize: sel ? 18 : 15, fontWeight: sel ? 'bold' : 'normal',
-                color: sel ? colors.primary : '#bbb' }}>
+                color: sel ? colors.accentText : '#bbb' }}>
                 {label(item)}
               </Text>
             </TouchableOpacity>
@@ -143,13 +143,13 @@ function EditRow({ label, value, onEdit, placeholder = 'Toca para agregar', high
   );
 }
 
-const rowStyles = StyleSheet.create({
+const rowStyles = liveStyles(() => StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1 },
-  rowHighlight: { backgroundColor: '#faf5ff', borderRadius: 8, paddingHorizontal: 10, marginHorizontal: -10 },
-  rowHighlightDark: { backgroundColor: '#3b0764', borderRadius: 8, paddingHorizontal: 10, marginHorizontal: -10 },
+  rowHighlight: { backgroundColor: colors.accentSoft, borderRadius: 8, paddingHorizontal: 10, marginHorizontal: -10 },
+  rowHighlightDark: { backgroundColor: colors.accentSoft, borderRadius: 8, paddingHorizontal: 10, marginHorizontal: -10 },
   label: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
   value: { fontSize: 15, fontWeight: '500' },
-});
+}));
 
 function ProfileProgress({ pct, isDarkMode = false }: { pct: number; isDarkMode?: boolean }) {
   const barColor = pct === 100 ? '#22c55e' : pct >= 60 ? colors.primary : '#f59e0b';
@@ -162,7 +162,7 @@ function ProfileProgress({ pct, isDarkMode = false }: { pct: number; isDarkMode?
       <View style={[progStyles.barBg, { backgroundColor: isDarkMode ? '#27272a' : '#eee' }]}>
         <View style={[progStyles.barFill, { width: `${pct}%`, backgroundColor: barColor }]} />
       </View>
-      {pct < 100 && <Text style={[progStyles.hint, { color: isDarkMode ? '#a1a1aa' : colors.textLight }]}>Completa tus datos para llegar al 100% ✨</Text>}
+      {pct < 100 && <Text style={[progStyles.hint, { color: isDarkMode ? '#a1a1aa' : colors.textLight }]}>Completa tus datos para llegar al 100%</Text>}
     </View>
   );
 }
@@ -390,8 +390,8 @@ export default function ProfileScreen({ navigation }: any) {
 
   const handleAvatarPress = () => {
     showAlert(
-      '📷 Foto de Perfil Institucional',
-      '⚠️ ADVERTENCIA INSTITUCIONAL: La foto de perfil debe ser un retrato oficial de frente, con fondo claro y vestimenta/pañoleta scout adecuada para documentos oficiales y Carnet Scout.'
+      'Foto de Perfil Institucional',
+      'ADVERTENCIA INSTITUCIONAL: La foto de perfil debe ser un retrato oficial de frente, con fondo claro y vestimenta/pañoleta scout adecuada para documentos oficiales y Carnet Scout.'
     );
   };
 
@@ -415,7 +415,7 @@ export default function ProfileScreen({ navigation }: any) {
                 alignItems: 'center',
                 paddingVertical: 6,
                 paddingHorizontal: 12,
-                borderRadius: 10,
+                borderRadius: 12,
                 backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
                 gap: 6
               }}
@@ -479,7 +479,7 @@ export default function ProfileScreen({ navigation }: any) {
           >
             <ShieldCheck size={18} color="white" style={{ marginRight: 6 }} />
             <Text style={[styles.carnetTriggerText, { color: 'white' }]}>
-              🪪 VER Y DESCARGAR CARNET SCOUT OFICIAL ✓
+              VER Y DESCARGAR CARNET SCOUT OFICIAL ✓
             </Text>
           </TouchableOpacity>
         )}
@@ -490,7 +490,7 @@ export default function ProfileScreen({ navigation }: any) {
 
       {/* SECCIÓN 1: DATOS SCOUT */}
       <View style={[styles.section, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-        <Text style={[styles.sectionHeader, { color: isDarkMode ? '#c084fc' : colors.primary }]}>INFORMACIÓN SCOUT</Text>
+        <Text style={[styles.sectionHeader, { color: isDarkMode ? colors.accentText : colors.accentText }]}>INFORMACIÓN SCOUT</Text>
 
         <EditRow
           label="Cédula de Identidad"
@@ -545,12 +545,12 @@ export default function ProfileScreen({ navigation }: any) {
 
       {/* SECCIÓN 2: CARNET Y ESTADO DE MEMBRESÍA */}
       <View style={[styles.section, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-        <Text style={[styles.sectionHeader, { color: isDarkMode ? '#c084fc' : colors.primary }]}>ESTADO DE MEMBRESÍA Y CARNET</Text>
+        <Text style={[styles.sectionHeader, { color: isDarkMode ? colors.accentText : colors.accentText }]}>ESTADO DE MEMBRESÍA Y CARNET</Text>
 
         {membershipStatus === 'approved' && membershipExpiresAt && (daysUntil(membershipExpiresAt) ?? 0) < 0 ? (
           <View style={[styles.cardMissingBox, { backgroundColor: isDarkMode ? '#450a0a' : '#fee2e2', borderColor: '#ef4444' }]}>
             <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fca5a5' : '#991b1b', fontSize: 13, marginBottom: 4 }}>
-              ⚠️ ANUALIDAD VENCIDA
+              ANUALIDAD VENCIDA
             </Text>
             <Text style={{ color: isDarkMode ? '#f4f4f5' : '#7f1d1d', fontSize: 12, lineHeight: 18 }}>
               Venció el <Text style={{ fontWeight: 'bold' }}>{formatDateEs(membershipExpiresAt)}</Text>. Renueva tu inscripción anual con la ASV, sube el comprobante aquí abajo y pide a tu Scouter que registre la nueva fecha.
@@ -568,7 +568,7 @@ export default function ProfileScreen({ navigation }: any) {
         ) : membershipStatus === 'pending_approval' ? (
           <View style={[styles.cardMissingBox, { backgroundColor: isDarkMode ? '#451a03' : '#fef3c7', borderColor: '#d97706' }]}>
             <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fcd34d' : '#b45309', fontSize: 13, marginBottom: 4 }}>
-              ⏳ MEMBRESÍA EN ESPERA DE APROBACIÓN
+              MEMBRESÍA EN ESPERA DE APROBACIÓN
             </Text>
             <Text style={{ color: isDarkMode ? '#f4f4f5' : '#451a03', fontSize: 12, lineHeight: 18 }}>
               Tu Scouter asignó la fecha <Text style={{ fontWeight: 'bold' }}>{membershipExpiresAt}</Text>. La Jefatura de Grupo la aprobará en breve.
@@ -577,16 +577,16 @@ export default function ProfileScreen({ navigation }: any) {
         ) : membershipStatus === 'rejected' ? (
           <View style={[styles.cardMissingBox, { backgroundColor: isDarkMode ? '#450a0a' : '#fee2e2', borderColor: '#ef4444' }]}>
             <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#fca5a5' : '#991b1b', fontSize: 13, marginBottom: 4 }}>
-              ❌ MEMBRESÍA RECHAZADA
+              MEMBRESÍA RECHAZADA
             </Text>
             <Text style={{ color: isDarkMode ? '#f4f4f5' : '#7f1d1d', fontSize: 12, lineHeight: 18 }}>
               Motivo: {membershipRejectedReason || 'No especificado por Jefatura'}. Por favor consulta con tu Scouter de Unidad.
             </Text>
           </View>
         ) : (
-          <View style={[styles.cardMissingBox, { backgroundColor: isDarkMode ? '#1e1b4b' : '#eff6ff', borderColor: '#3b82f6' }]}>
+          <View style={[styles.cardMissingBox, { backgroundColor: isDarkMode ? colors.accentSoft : '#eff6ff', borderColor: '#3b82f6' }]}>
             <Text style={{ fontWeight: 'bold', color: isDarkMode ? '#93c5fd' : '#1d4ed8', fontSize: 13, marginBottom: 4 }}>
-              📋 SIN REGISTRO DE MEMBRESÍA
+              SIN REGISTRO DE MEMBRESÍA
             </Text>
             <Text style={{ color: isDarkMode ? '#f4f4f5' : '#1e3a8a', fontSize: 12, lineHeight: 18 }}>
               Tu Scouter de Unidad debe registrar y asignar tu fecha de vencimiento de membresía scout.
@@ -595,13 +595,13 @@ export default function ProfileScreen({ navigation }: any) {
         )}
 
         <TouchableOpacity
-          style={[styles.membershipRecordsBtn, { borderColor: isDarkMode ? '#c084fc' : colors.primary }]}
+          style={[styles.membershipRecordsBtn, { borderColor: isDarkMode ? colors.accentText : colors.primary }]}
           onPress={() => setShowMembershipRecords(true)}
           accessibilityRole="button"
           accessibilityLabel="Comprobante de pago e historial de membresía"
         >
-          <Receipt size={16} color={isDarkMode ? '#c084fc' : colors.primary} />
-          <Text style={{ color: isDarkMode ? '#c084fc' : colors.primary, fontWeight: '700', fontSize: 13 }}>
+          <Receipt size={16} color={isDarkMode ? colors.accentText : colors.primary} />
+          <Text style={{ color: isDarkMode ? colors.accentText : colors.accentText, fontWeight: '700', fontSize: 13 }}>
             Comprobante de pago e historial
           </Text>
         </TouchableOpacity>
@@ -615,7 +615,7 @@ export default function ProfileScreen({ navigation }: any) {
 
       {/* SECCIÓN 3: DATOS PERSONALES */}
       <View style={[styles.section, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-        <Text style={[styles.sectionHeader, { color: isDarkMode ? '#c084fc' : colors.primary }]}>DATOS PERSONALES</Text>
+        <Text style={[styles.sectionHeader, { color: isDarkMode ? colors.accentText : colors.accentText }]}>DATOS PERSONALES</Text>
 
         <EditRow
           label="Fecha de Nacimiento"
@@ -674,7 +674,7 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={[mStyles.sheet, { padding: 24, borderRadius: 20 }]}>
             <Text style={{ fontSize: 17, fontWeight: 'bold', marginBottom: 12 }}>Teléfono de Contacto</Text>
             <TextInput
-              style={{ backgroundColor: '#f5f5f5', borderRadius: 10, padding: 12, fontSize: 15, marginBottom: 20 }}
+              style={{ backgroundColor: '#f5f5f5', borderRadius: 12, padding: 12, fontSize: 15, marginBottom: 20 }}
               placeholder="Ej: +58 412 1234567"
               value={phoneInput}
               onChangeText={setPhoneInput}
@@ -697,7 +697,7 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={[mStyles.sheet, { padding: 24, borderRadius: 20 }]}>
             <Text style={{ fontSize: 17, fontWeight: 'bold', marginBottom: 12 }}>Cédula de Identidad</Text>
             <TextInput
-              style={{ backgroundColor: '#f5f5f5', borderRadius: 10, padding: 12, fontSize: 15, marginBottom: 20 }}
+              style={{ backgroundColor: '#f5f5f5', borderRadius: 12, padding: 12, fontSize: 15, marginBottom: 20 }}
               placeholder="Ej: V-12.345.678 / 12345678"
               value={cedulaInput}
               onChangeText={setCedulaInput}
@@ -739,8 +739,8 @@ const styles = liveStyles(() => StyleSheet.create({
   name: { fontSize: 22, fontWeight: 'bold' },
   email: { fontSize: 13, color: colors.textLight, marginTop: 2 },
   badgeRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  unitBadge: { backgroundColor: colors.primaryLight, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
-  unitBadgeText: { color: colors.primary, fontWeight: 'bold', fontSize: 12 },
+  unitBadge: { backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
+  unitBadgeText: { color: colors.accentText, fontWeight: 'bold', fontSize: 12 },
   roleBadge: { backgroundColor: '#f3f4f6', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
   roleBadgeText: { color: '#4b5563', fontWeight: 'bold', fontSize: 12 },
 
@@ -755,7 +755,7 @@ const styles = liveStyles(() => StyleSheet.create({
     borderWidth: 1, elevation: 2,
   },
   sectionHeader: {
-    fontSize: 12, fontWeight: '800', color: colors.primary,
+    fontSize: 12, fontWeight: '800', color: colors.accentText,
     letterSpacing: 1, marginBottom: 8,
   },
   cardAvailableBox: { padding: 14, borderRadius: 12, borderWidth: 1, marginTop: 4 },
@@ -773,10 +773,10 @@ const mStyles = liveStyles(() => StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   title: { fontSize: 16, fontWeight: 'bold', color: colors.text },
   cancel: { fontSize: 15, color: colors.textLight },
-  confirm: { fontSize: 15, color: colors.primary, fontWeight: 'bold' },
+  confirm: { fontSize: 15, color: colors.accentText, fontWeight: 'bold' },
   labels: { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 12 },
   colLabel: { flex: 1, textAlign: 'center', fontSize: 12, fontWeight: '700', color: '#bbb' },
   wheels: { flexDirection: 'row', paddingHorizontal: 20, backgroundColor: '#fafafa', marginHorizontal: 16, borderRadius: 16 },
   sep: { width: 1, backgroundColor: '#eee', marginVertical: 8 },
-  preview: { textAlign: 'center', paddingTop: 14, color: colors.primary, fontWeight: 'bold', fontSize: 15 },
+  preview: { textAlign: 'center', paddingTop: 14, color: colors.accentText, fontWeight: 'bold', fontSize: 15 },
 }));

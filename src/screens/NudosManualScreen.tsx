@@ -222,10 +222,10 @@ export default function NudosManualScreen({ navigation }: any) {
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              backgroundColor: isDarkMode ? '#1e1b4b' : '#ede9fe',
-              borderColor: '#8b5cf6',
+              backgroundColor: isDarkMode ? colors.accentSoft : colors.accentSoft,
+              borderColor: colors.primary,
               borderWidth: 1.5,
-              borderRadius: 14,
+              borderRadius: 16,
               padding: 12,
               gap: 12,
               elevation: 1
@@ -233,18 +233,18 @@ export default function NudosManualScreen({ navigation }: any) {
             onPress={() => navigation.navigate('Especialidades')}
             activeOpacity={0.8}
           >
-            <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: '#8b5cf6', justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
               <Award size={20} color="#ffffff" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 12, fontWeight: '800', color: isDarkMode ? '#c4b5fd' : '#6d28d9' }}>
-                🏅 Especialidad Oficial: Maniobra con Cuerdas
+              <Text style={{ fontSize: 12, fontWeight: '800', color: isDarkMode ? colors.accentText : colors.accentText }}>
+                Especialidad Oficial: Maniobra con Cuerdas
               </Text>
               <Text style={{ fontSize: 12, color: theme.subText, marginTop: 1 }}>
                 Revisa los requisitos ASV para obtener la insignia de especialidad.
               </Text>
             </View>
-            <ChevronRight size={18} color="#8b5cf6" />
+            <ChevronRight size={18} color={colors.primary} />
           </TouchableOpacity>
         </View>
       )}
@@ -272,7 +272,7 @@ export default function NudosManualScreen({ navigation }: any) {
               onPress={() => handleOpenItem(item)}
               activeOpacity={0.8}
             >
-              <View style={[styles.manualIconBox, { backgroundColor: isDarkMode ? '#27272a' : 'rgba(99, 102, 241, 0.1)' }]}>
+              <View style={[styles.manualIconBox, { backgroundColor: isDarkMode ? '#27272a' : colors.accentSoft }]}>
                 <Text style={{ fontSize: 26 }}>{item.icon}</Text>
               </View>
 
@@ -508,7 +508,7 @@ export default function NudosManualScreen({ navigation }: any) {
                     {selectedItem.tips && selectedItem.tips.length > 0 && (
                       <View style={[modalStyles.tipBox, { backgroundColor: isDarkMode ? '#1e293b' : '#eff6ff', borderColor: '#3b82f6' }]}>
                         <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#2563eb', marginBottom: 4 }}>
-                          💡 CONSEJOS DE PATRULLA / SCOUTER:
+                          CONSEJOS DE PATRULLA / SCOUTER:
                         </Text>
                         {selectedItem.tips.map((t, idx) => (
                           <Text key={idx} style={{ fontSize: 12, color: isDarkMode ? '#bfdbfe' : '#1e40af', marginBottom: 2 }}>

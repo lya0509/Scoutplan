@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
+import { colors } from '../theme/colors';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, ActivityIndicator, Platform, BackHandler } from 'react-native';
+import { ScreenTransition } from '../components/ui';
 
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -207,7 +209,7 @@ export default function AppNavigator() {
   if (showingLoader) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#18181b' }}>
-        <ActivityIndicator size="large" color="#9333ea" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -227,7 +229,12 @@ export default function AppNavigator() {
         }
       }}
     >
-      <Stack.Navigator 
+      <Stack.Navigator
+        // Web: la pila no anima sola, así que la pantalla que entra aparece con ScreenTransition.
+        // En teléfono nativo ya desliza desde la derecha. «Drawer» anima sus propias pantallas.
+        screenLayout={({ children, route }: any) => (
+          Platform.OS === 'web' && route.name !== 'Drawer' ? <ScreenTransition>{children}</ScreenTransition> : <>{children}</>
+        )}
         screenOptions={{ 
           headerShown: false, 
           gestureEnabled: true, 

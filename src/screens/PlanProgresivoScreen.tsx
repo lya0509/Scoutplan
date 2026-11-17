@@ -35,7 +35,7 @@ export default function PlanProgresivoScreen({ navigation }: any) {
     const idx = order.indexOf(stage.id);
     return {
       title: stage.name,
-      color: STAGE_COLORS[stage.id] || colors.primary,
+      color: STAGE_COLORS[stage.id] || colors.accentText,
       badge: BADGE_IMAGES[stage.id],
       isMax: isMaxBadge(stage.id, order),
       unitLabel: tpl.unit?.label || 'Clan',

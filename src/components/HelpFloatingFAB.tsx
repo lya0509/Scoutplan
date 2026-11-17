@@ -54,43 +54,43 @@ interface FAQItem {
 const FAQ_DATA: FAQItem[] = [
   {
     id: 'faq_1',
-    question: '📲 ¿Cómo instalar la aplicación en mi celular o PC?',
+    question: '¿Cómo instalar la aplicación en mi celular o PC?',
     answer: 'Abre la página en Google Chrome o Safari en tu teléfono. Toca el menú de tres puntos (o el botón de compartir en iPhone) y selecciona "Agregar a la pantalla de inicio". ¡Así tendrás un icono directo de app nativa sin necesidad de descargar desde la App Store!',
     icon: Smartphone
   },
   {
     id: 'faq_2',
-    question: '🔒 ¿Cómo funciona la visibilidad Pública y Privada del Drive de Fotos?',
-    answer: 'Al crear un Álbum Temporal puedes elegir: "🌐 Público" (lo pueden ver y descargar todos los jóvenes y adultos de tu Grupo Scout) o "🔒 Privado" (disponible únicamente para los jóvenes y Scouters pertenecientes a tu misma unidad, como Manada, Tropa, Caminantes o Clan).',
+    question: '¿Cómo funciona la visibilidad Pública y Privada del Drive de Fotos?',
+    answer: 'Al crear un Álbum Temporal puedes elegir: "Público" (lo pueden ver y descargar todos los jóvenes y adultos de tu Grupo Scout) o "Privado" (disponible únicamente para los jóvenes y Scouters pertenecientes a tu misma unidad, como Manada, Tropa, Caminantes o Clan).',
     icon: Lock
   },
   {
     id: 'faq_3',
-    question: '🎯 ¿Cómo convalidar o registrar un Evento CIP anterior?',
+    question: '¿Cómo convalidar o registrar un Evento CIP anterior?',
     answer: 'Entra a tu etapa en "Mi Plan Progresivo" y abre el requisito del CIP. Encontrarás un formulario rápido donde colocas el nombre del evento (ej: I Campamento Distrital) y el año para marcarlo de inmediato.',
     icon: Award
   },
   {
     id: 'faq_4',
-    question: '📶 ¿La aplicación funciona sin conexión a Internet?',
+    question: '¿La aplicación funciona sin conexión a Internet?',
     answer: '¡Sí! Toda la sección de Manual de Nudos, Cancionero Scout y tus Fichas guardadas funcionan 100% offline sin necesidad de datos móviles.',
     icon: WifiOff
   },
   {
     id: 'faq_5',
-    question: '📜 ¿Cómo descargar mi Ficha Médica o Currículum en Word?',
+    question: '¿Cómo descargar mi Ficha Médica o Currículum en Word?',
     answer: 'Entra a la opción "Ficha Médica" o "Currículum Scout" desde el menú. Completa tus datos, presiona "Guardar Datos" y luego haz clic en el botón inferior "Descargar Documento Oficial (.docx)". El documento se descargará autocompletado con formato oficial.',
     icon: FileText
   },
   {
     id: 'faq_6',
-    question: '📷 ¿Cómo subir fotos o videos al Drive de Actividades?',
+    question: '¿Cómo subir fotos o videos al Drive de Actividades?',
     answer: 'Dirígete a "Drive de Fotos" en el menú. Selecciona o crea un álbum de evento y presiona "+ Subir Fotos o Videos". Puedes subir clips de hasta 50MB a máxima calidad original sin compresión.',
     icon: Camera
   },
   {
     id: 'faq_7',
-    question: '🔐 ¿Quién puede ver mi información y avances?',
+    question: '¿Quién puede ver mi información y avances?',
     answer: 'Tus datos están protegidos. Únicamente tu Scouter de Unidad y el Jefe de Grupo tienen autorización para revisar y verificar tus fichas y adelanto progresivo.',
     icon: ShieldCheck
   }
@@ -166,19 +166,19 @@ export default function HelpFloatingFAB() {
       const userPhone = user?.phone || (user as any)?.phone_number || 'No registrado';
 
       const messageText = 
-        `💡 *NUEVA SUGERENCIA DE FUNCIÓN / COMENTARIO*\n\n` +
-        `👤 *Usuario:* ${realName}\n` +
-        `👑 *Rol:* ${userRole}\n` +
-        `⚜️ *Grupo Scout:* ${userGroup}\n` +
-        `⛺ *Unidad:* ${userUnit}\n` +
-        `📧 *Correo:* ${realEmail}\n` +
-        `📱 *Teléfono:* ${userPhone}\n\n` +
-        `💡 *Sugerencia / Comentarios:*\n${suggestionText.trim()}`;
+        `*NUEVA SUGERENCIA DE FUNCIÓN / COMENTARIO*\n\n` +
+        `*Usuario:* ${realName}\n` +
+        `*Rol:* ${userRole}\n` +
+        `*Grupo Scout:* ${userGroup}\n` +
+        `*Unidad:* ${userUnit}\n` +
+        `*Correo:* ${realEmail}\n` +
+        `*Teléfono:* ${userPhone}\n\n` +
+        `*Sugerencia / Comentarios:*\n${suggestionText.trim()}`;
 
       await postApi('/api/telegram-notify', { text: messageText });
 
       showAlert(
-        '¡Sugerencia Recibida! 💡',
+        '¡Sugerencia Recibida!',
         'Muchas gracias por tus comentarios e ideas. Tu opinión nos ayuda a seguir construyendo la mejor app para la Asociación de Scouts de Venezuela.'
       );
       setSuggestionText('');
@@ -245,10 +245,10 @@ export default function HelpFloatingFAB() {
 
       // Avisar al equipo por Telegram (el token del bot está en el servidor)
       try {
-        const captionText = `⚠️ *NUEVO REPORTE DE ERROR EN APP SCOUT*\n\n` +
-          `👤 *Usuario:* ${realName} (${(user?.role || 'scout').toUpperCase()})\n` +
-          `📧 *Correo:* ${realEmail}\n\n` +
-          `📝 *Descripción del fallo:*\n${bugDescription.trim()}`;
+        const captionText = `*NUEVO REPORTE DE ERROR EN APP SCOUT*\n\n` +
+          `*Usuario:* ${realName} (${(user?.role || 'scout').toUpperCase()})\n` +
+          `*Correo:* ${realEmail}\n\n` +
+          `*Descripción del fallo:*\n${bugDescription.trim()}`;
 
         await postApi('/api/telegram-notify', {
           text: captionText,
@@ -284,7 +284,7 @@ export default function HelpFloatingFAB() {
               <View style={styles.labelBubble}>
                 <Text style={styles.labelText}>Guía de Inicio (Paso a Paso)</Text>
               </View>
-              <View style={[styles.miniFab, { backgroundColor: '#7c3aed' }]}>
+              <View style={[styles.miniFab, { backgroundColor: colors.primary }]}>
                 <Compass size={18} color="white" />
               </View>
             </TouchableOpacity>
@@ -495,7 +495,7 @@ export default function HelpFloatingFAB() {
                 ¿Qué nueva herramienta, función o mejora te gustaría que agreguemos a la App Scout? Tu opinión es enviada directamente a nuestro equipo técnico.
               </Text>
 
-              <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: theme.border, marginBottom: 14 }}>
+              <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: theme.border, marginBottom: 14 }}>
                 <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.accentText, marginBottom: 2 }}>IDENTIFICACIÓN DEL REMITENTE</Text>
                 <Text style={{ fontSize: 13, color: theme.text, fontWeight: '600' }}>{user?.name || 'Usuario Scout'} • {(user?.role || 'scout').toUpperCase()}</Text>
                 <Text style={{ fontSize: 12, color: theme.subText }}>Grupo: {user?.group_name || (user as any)?.group || 'Sin especificar'} | Unidad: {(user?.unit || 'Sin especificar').toUpperCase()}</Text>
@@ -576,7 +576,7 @@ const styles = liveStyles(() => StyleSheet.create({
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1 },
   modalTitle: { fontSize: 17, fontWeight: 'bold' },
 
-  faqCard: { borderRadius: 14, borderWidth: 1, marginBottom: 10, overflow: 'hidden' },
+  faqCard: { borderRadius: 16, borderWidth: 1, marginBottom: 10, overflow: 'hidden' },
   faqCardHeader: { flexDirection: 'row', alignItems: 'center', padding: 14 },
   faqQuestionText: { flex: 1, fontSize: 13, fontWeight: 'bold' },
   faqCardBody: { padding: 14, borderTopWidth: 1, backgroundColor: 'rgba(150,150,150,0.05)' },
@@ -587,7 +587,7 @@ const styles = liveStyles(() => StyleSheet.create({
   fieldLabel: { fontSize: 12, fontWeight: 'bold', marginBottom: 6 },
   textAreaInput: { borderRadius: 12, borderWidth: 1, padding: 12, fontSize: 13, height: 100, textAlignVertical: 'top' },
   attachBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed' },
-  mediaPreviewBox: { marginTop: 10, padding: 10, alignItems: 'center', backgroundColor: 'rgba(99, 102, 241, 0.08)', borderRadius: 12 },
+  mediaPreviewBox: { marginTop: 10, padding: 10, alignItems: 'center', backgroundColor: colors.accentSoft, borderRadius: 12 },
   mediaPreviewImg: { width: 140, height: 90, borderRadius: 8 },
 
   sendReportBtn: { backgroundColor: '#ef4444', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 14, borderRadius: 12 },

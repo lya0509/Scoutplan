@@ -34,6 +34,7 @@ const SHOTS = {
     `perfil-completo?scoutId=${SID}`,
     `scouter-revision?scoutId=${SID}&stageId=expedicionario&scoutName=Joven%20Prueba`,
     `scouter-revision?scoutId=${SID}&stageId=descubridor&scoutName=Joven%20Prueba`],
+  lobato: ['inicio', 'plan', 'etapa/expedicionario'], // versión de Manada: ámbar y letra grande
   jefe_grupo: ['jefe-grupo', 'administracion'],
   comisionado_distrital: ['', 'administracion'],
 };

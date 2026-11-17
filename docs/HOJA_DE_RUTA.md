@@ -248,3 +248,36 @@ Cuando empiece cada fase se escribe su diseño detallado en `docs/` y se aprueba
 2. **Listas de cargos** de Tropa y Clan, y si Caminantes tiene cargos o equipos: sacarlas del material oficial.
 3. **Qué guarda una patrulla:** elegir de la propuesta de §3.7.
 4. **Material oficial** de Manada, Tropa y Caminantes: el dueño lo consigue en los archivos de la ASV (necesario para A3).
+
+---
+
+## 8. Sistema de diseño (rama `rediseno-sistema`, en curso desde el 2026-11-16)
+
+Trabajo aparte de las fases A1–A6, pedido por el dueño: unificar el aspecto de toda la app.
+
+**Decidido por el dueño (✅):**
+- ✅ Un solo color de acento por pantalla, que sale de la **rama**: jóvenes y scouters ven el color de su unidad;
+  Jefatura y comisionados, el morado. El botón **«Personalizar»** se conserva y reemplaza ese color.
+- ✅ Sin emojis en los textos: íconos de línea. Un botón principal por pantalla (acento), los demás con borde gris,
+  rojo solo para borrar o devolver.
+- ✅ Menú fijo a la izquierda en computadora y **barra inferior** en teléfono para el joven.
+- ✅ Se publica en `main` solo cuando **todo** el apartado gráfico esté actualizado.
+
+**Hecho en la rama:** cimientos (`src/theme/tokens.ts`, `src/theme/liveStyles.ts`, `src/components/ui/`), navegación
+del joven, Resumen (con «Qué te falta»), Plan Progresivo, Detalle de etapa (hoja de envío, confirmación, etapa
+devuelta), revisión y panel del Scouter, cabecera de paneles, y un pase automático de colores, emojis, radios de
+borde (8 / 12 / 16) y letra mínima de 12 en todas las pantallas. Además:
+- **Formularios por pasos** en teléfono: Ficha Médica (4 pasos) y Currículum (7 pasos). En computadora, y para quien
+  solo consulta, siguen completos. «Guardar» sirve desde cualquier paso.
+- **Versión de Manada**: los lobatos ven la letra un 12 % más grande. Cualquiera puede encenderla o apagarla con
+  «Letra grande» en «Personalizar» (se guarda en el teléfono, clave `app_large_text`).
+- **Animaciones**: la pantalla que entra aparece y sube (`ScreenTransition`), el aviso de conexión baja desde arriba.
+  Todas se apagan si el teléfono pide menos movimiento.
+
+**Falta para publicar:** revisar a mano, pantalla por pantalla, las que solo recibieron el pase automático, y probar
+en un teléfono real.
+
+**Pendiente de confirmar (❓):** Manada quedó en **ámbar oscuro** (`#a85d00`) en vez del amarillo oficial, porque la
+letra blanca no se lee sobre amarillo en las pantallas que aún no usan las piezas nuevas.
+
+Kit de referencia: https://claude.ai/artifact/9YgmWqThtvRMuPdNQRGDgK

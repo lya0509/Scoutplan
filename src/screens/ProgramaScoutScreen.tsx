@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { colors } from '../theme/colors';
 import {
   View,
   Text,
@@ -417,10 +418,10 @@ export default function ProgramaScoutScreen({ navigation }: any) {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
               {[
                 { id: 'todas', label: 'Todas las Ramas' },
-                { id: 'manada', label: '🟡 Manada' },
-                { id: 'tropa', label: '🟢 Tropa' },
-                { id: 'caminantes', label: '🔵 Caminantes' },
-                { id: 'clan', label: '🔴 Clan' }
+                { id: 'manada', label: 'Manada' },
+                { id: 'tropa', label: 'Tropa' },
+                { id: 'caminantes', label: 'Caminantes' },
+                { id: 'clan', label: 'Clan' }
               ].map(tab => (
                 <TouchableOpacity
                   key={tab.id}
@@ -463,7 +464,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                   statusFilter === 'proximos' ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }
                 ]}
               >
-                ⚡ Próximos ({countProximos})
+                Próximos ({countProximos})
               </Text>
             </TouchableOpacity>
 
@@ -483,7 +484,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                   statusFilter === 'realizados' ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }
                 ]}
               >
-                ✅ Realizados ({countRealizados})
+                Realizados ({countRealizados})
               </Text>
             </TouchableOpacity>
 
@@ -503,7 +504,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                   statusFilter === 'todos' ? { color: '#ffffff', fontWeight: 'bold' } : { color: theme.text }
                 ]}
               >
-                📂 Todos ({unitFilteredProgramas.length})
+                Todos ({unitFilteredProgramas.length})
               </Text>
             </TouchableOpacity>
           </View>
@@ -570,8 +571,8 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                         </Text>
                       </View>
                       {item.isSinodal && (
-                        <View style={[styles.unitPill, { backgroundColor: '#7c3aed20', borderColor: '#7c3aed' }]}>
-                          <Text style={[styles.unitPillText, { color: '#7c3aed' }]}>SINODAL</Text>
+                        <View style={[styles.unitPill, { backgroundColor: '#7c3aed20', borderColor: colors.primary }]}>
+                          <Text style={[styles.unitPillText, { color: colors.accentText }]}>SINODAL</Text>
                         </View>
                       )}
                       {item.status === 'draft' && (
@@ -600,7 +601,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                             { color: isPastAct ? (isDarkMode ? '#cbd5e1' : '#475569') : (isDarkMode ? '#86efac' : '#15803d'), fontSize: 12 }
                           ]}
                         >
-                          {isPastAct ? '✓ Realizada' : '⚡ Próxima'}
+                          {isPastAct ? '✓ Realizada' : 'Próxima'}
                         </Text>
                       </View>
                     </View>
@@ -774,18 +775,18 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                   style={[
                     styles.choiceCard,
                     {
-                      backgroundColor: isDarkMode ? '#27272a' : '#faf5ff',
-                      borderColor: '#9333ea'
+                      backgroundColor: isDarkMode ? '#27272a' : colors.accentSoft,
+                      borderColor: colors.primary
                     }
                   ]}
                   onPress={handleChooseExtraordinary}
                   activeOpacity={0.8}
                 >
-                  <View style={[styles.choiceIconBadge, { backgroundColor: '#9333ea' }]}>
+                  <View style={[styles.choiceIconBadge, { backgroundColor: colors.primary }]}>
                     <Sparkles size={22} color="#ffffff" />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.choiceCardTitle, { color: isDarkMode ? '#d8b4fe' : '#7e22ce' }]}>
+                    <Text style={[styles.choiceCardTitle, { color: isDarkMode ? colors.accentText : colors.accentText }]}>
                       No, actividad Extraordinaria / Otros
                     </Text>
                     <Text style={[styles.choiceCardDesc, { color: isDarkMode ? '#cbd5e1' : '#475569' }]}>
@@ -871,7 +872,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                         )}
 
                         <TouchableOpacity
-                          style={[styles.createBtn, { backgroundColor: '#9333ea', marginTop: 18 }]}
+                          style={[styles.createBtn, { backgroundColor: colors.primary, marginTop: 18 }]}
                           onPress={handleChooseExtraordinary}
                         >
                           <Sparkles size={16} color="#ffffff" style={{ marginRight: 6 }} />
@@ -909,7 +910,7 @@ export default function ProgramaScoutScreen({ navigation }: any) {
                                 </View>
                                 {act.isModified && (
                                   <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
-                                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#b45309' }}>Modificada</Text>
+                                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#b45309' }}>Modificada</Text>
                                   </View>
                                 )}
                               </View>
@@ -991,7 +992,7 @@ const styles = StyleSheet.create({
   searchWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 12,
     height: 40,
   },
@@ -999,7 +1000,7 @@ const styles = StyleSheet.create({
   unitTabChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     marginRight: 8,
   },
@@ -1018,10 +1019,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 18,
     paddingVertical: 11,
-    borderRadius: 10,
+    borderRadius: 12,
   },
   programCard: {
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     padding: 16,
     marginBottom: 14,
@@ -1048,7 +1049,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   cardTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 6 },
   metaRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap' },
@@ -1115,7 +1116,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1.5,
     gap: 14,
   },
@@ -1147,7 +1148,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     marginBottom: 8,
     gap: 10,
@@ -1155,7 +1156,7 @@ const styles = StyleSheet.create({
   dayBadgeMini: {
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   quarterlyActTitle: {
     fontSize: 13,
@@ -1164,7 +1165,7 @@ const styles = StyleSheet.create({
   selectActBtn: {
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   backToChoiceBtn: {
     flexDirection: 'row',

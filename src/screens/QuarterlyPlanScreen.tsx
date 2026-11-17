@@ -561,34 +561,34 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
 
     let text = `*ASOCIACIÓN DE SCOUTS DE VENEZUELA*\n`;
     text += `*REGIÓN MIRANDA / DISTRITO GUARENAS-GUATIRE • GRUPO SCOUT ORIÓN #84*\n`;
-    text += `⚜️ *TRIMESTRE DE ${unitName} — ${qName.toUpperCase()} (${selectedYear})*\n\n`;
-    text += `👤 *Elaborado por:* ${elaboratedBy || scoutPlan?.elaborated_by || '—'}\n`;
-    text += `📅 *Meses:* ${activeQuarterObj?.months}\n\n`;
+    text += `*TRIMESTRE DE ${unitName} — ${qName.toUpperCase()} (${selectedYear})*\n\n`;
+    text += `*Elaborado por:* ${elaboratedBy || scoutPlan?.elaborated_by || '—'}\n`;
+    text += `*Meses:* ${activeQuarterObj?.months}\n\n`;
 
-    text += `🎯 *OBJETIVO GENERAL DEL TRIMESTRE:*\n`;
+    text += `*OBJETIVO GENERAL DEL TRIMESTRE:*\n`;
     text += `${generalObjective || 'Sin especificar'}\n\n`;
 
     const especs = specificObjectivesList.filter(s => s.trim());
     if (especs.length > 0) {
-      text += `💡 *OBJETIVOS ESPECÍFICOS:*\n`;
+      text += `*OBJETIVOS ESPECÍFICOS:*\n`;
       especs.forEach((s, i) => { text += `${i + 1}. ${s}\n`; });
       text += `\n`;
     }
 
     const metas = trimestreGoalsList.filter(s => s.trim());
     if (metas.length > 0) {
-      text += `📌 *METAS DEL TRIMESTRE:*\n`;
+      text += `*METAS DEL TRIMESTRE:*\n`;
       metas.forEach((g, i) => { text += `${i + 1}. ${g}\n`; });
       text += `\n`;
     }
 
-    text += `🏃 *OBJETIVOS EDUCATIVOS (6 ÁREAS):*\n`;
+    text += `*OBJETIVOS EDUCATIVOS (6 ÁREAS):*\n`;
     const areasStr = Object.entries(educationalAreas)
       .map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1)}: ${v ? 'SÍ ✓' : 'NO ✗'}`)
       .join(' | ');
     text += `${areasStr}\n\n`;
 
-    text += `📆 *CRONOGRAMA DE ACTIVIDADES:*\n`;
+    text += `*CRONOGRAMA DE ACTIVIDADES:*\n`;
     currentMonths.forEach(m => {
       text += `\n*${m.toUpperCase()}:*\n`;
       const mActs = activities.filter(a => a.month === m);
@@ -873,7 +873,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
         senderId: user.id,
         groupName: user.group_name || undefined,
         unit: targetUnit,
-        title: `📑 Plan Trimestral (${selectedQuarter}) Actualizado`,
+        title: `Plan Trimestral (${selectedQuarter}) Actualizado`,
         message: `${finalAuthor} ha actualizado las metas y actividades del Plan Trimestral de ${targetUnit.toUpperCase()}.`,
         type: 'plan'
       }).catch(() => {});
@@ -927,7 +927,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
       const confirm1 = window.confirm(`¿Quieres limpiar el ${qName}? Se vaciarán las actividades y objetivos de este trimestre.`);
       if (confirm1) {
         setTimeout(() => {
-          const confirm2 = window.confirm(`⚠️ ¿ESTÁS SÚPER MEGA SEGURO de borrar todo el ${qName}? Esta acción NO se puede deshacer.`);
+          const confirm2 = window.confirm(`¿ESTÁS SÚPER MEGA SEGURO de borrar todo el ${qName}? Esta acción NO se puede deshacer.`);
           if (confirm2) {
             executeClearQuarter();
           }
@@ -944,7 +944,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
             style: 'destructive',
             onPress: () => {
               Alert.alert(
-                `⚠️ Confirmación Final`,
+                `Confirmación Final`,
                 `¿Estás SÚPER MEGA SEGURO de borrar todo el ${qName}? Esta acción NO se puede deshacer.`,
                 [
                   { text: 'No, cancelar', style: 'cancel' },
@@ -1108,7 +1108,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={[styles.historyBtnHeader, { backgroundColor: 'rgba(99, 102, 241, 0.12)', borderColor: colors.primary }]} onPress={openHistoryModal}>
+            <TouchableOpacity style={[styles.historyBtnHeader, { backgroundColor: colors.accentSoft, borderColor: colors.primary }]} onPress={openHistoryModal}>
               <History size={14} color={colors.primary} style={{ marginRight: 4 }} />
               <Text style={{ color: theme.accentText, fontWeight: 'bold', fontSize: 12 }}>Histórico</Text>
             </TouchableOpacity>
@@ -1186,10 +1186,10 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
           <View style={{ marginTop: 4, marginBottom: 10 }}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
               {[
-                { id: 'manada', label: '🐺 MANADA', color: UNIT_COLORS.manada || '#ffb300' },
-                { id: 'tropa', label: '⚜️ TROPA', color: UNIT_COLORS.tropa || '#43a047' },
-                { id: 'comunidad', label: '🧭 COMUNIDAD', color: UNIT_COLORS.comunidad || '#1e88e5' },
-                { id: 'clan', label: '🔴 CLAN', color: UNIT_COLORS.clan || '#e53935' }
+                { id: 'manada', label: 'MANADA', color: UNIT_COLORS.manada || '#ffb300' },
+                { id: 'tropa', label: 'TROPA', color: UNIT_COLORS.tropa || '#43a047' },
+                { id: 'comunidad', label: 'COMUNIDAD', color: UNIT_COLORS.comunidad || '#1e88e5' },
+                { id: 'clan', label: 'CLAN', color: UNIT_COLORS.clan || '#e53935' }
               ].map(u => {
                 const isActive = getActiveUnit() === u.id;
                 return (
@@ -1233,17 +1233,17 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
             <View style={[styles.documentSheet, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
               
               {/* BANNER PLAN COMPARTIDO DE UNIDAD */}
-              <View style={{ backgroundColor: isDarkMode ? '#1e1b4b' : 'rgba(99, 102, 241, 0.12)', borderLeftWidth: 4, borderLeftColor: colors.primary, padding: 14, borderRadius: 10, marginBottom: 16 }}>
+              <View style={{ backgroundColor: isDarkMode ? colors.accentSoft : colors.accentSoft, borderLeftWidth: 4, borderLeftColor: colors.primary, padding: 14, borderRadius: 12, marginBottom: 16 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text style={{ fontWeight: 'bold', fontSize: 13, color: theme.accentText }}>
-                    📌 Plan Trimestral Único de la Unidad ({unitDisplay(getActiveUnit()).toUpperCase()}) — {selectedQuarter}
+                    Plan Trimestral Único de la Unidad ({unitDisplay(getActiveUnit()).toUpperCase()}) — {selectedQuarter}
                   </Text>
-                  <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#10b981' }}>
-                    <Text style={{ fontSize: 12, color: '#10b981', fontWeight: 'bold' }}>💾 Auto-guardado activo</Text>
+                  <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, borderWidth: 1, borderColor: '#10b981' }}>
+                    <Text style={{ fontSize: 12, color: '#10b981', fontWeight: 'bold' }}>Auto-guardado activo</Text>
                   </View>
                 </View>
                 <Text style={{ fontSize: 12, color: theme.subText, marginTop: 4 }}>
-                  ✍️ Creado / Modificado por: <Text style={{ fontWeight: 'bold', color: theme.text }}>{elaboratedBy || scoutPlan?.elaborated_by || (remoteLoading ? 'cargando…' : 'todavía no hay plan guardado')}</Text>
+                  Creado / Modificado por: <Text style={{ fontWeight: 'bold', color: theme.text }}>{elaboratedBy || scoutPlan?.elaborated_by || (remoteLoading ? 'cargando…' : 'todavía no hay plan guardado')}</Text>
                 </Text>
               </View>
 
@@ -1265,13 +1265,13 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                 >
                   <Edit3 size={16} color="white" style={{ marginRight: 8 }} />
                   <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>
-                    ✏️ ¿Deseas modificar las actividades de este Plan Trimestral?
+                    ¿Deseas modificar las actividades de este Plan Trimestral?
                   </Text>
                 </TouchableOpacity>
               ) : (
-                <View style={{ backgroundColor: 'rgba(22, 163, 74, 0.15)', borderWidth: 1, borderColor: '#16a34a', padding: 10, borderRadius: 10, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ backgroundColor: 'rgba(22, 163, 74, 0.15)', borderWidth: 1, borderColor: '#16a34a', padding: 10, borderRadius: 12, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Text style={{ color: '#16a34a', fontWeight: 'bold', fontSize: 12 }}>
-                    🔓 Edición Desbloqueada (Modo Colaborativo de Unidad)
+                    Edición Desbloqueada (Modo Colaborativo de Unidad)
                   </Text>
                   <TouchableOpacity onPress={() => setScouterEditUnlocked(false)}>
                     <Text style={{ color: '#ef4444', fontWeight: 'bold', fontSize: 12 }}>Bloquear</Text>
@@ -1280,7 +1280,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
               )}
 
               {remoteLoading && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: 10, marginBottom: 10, backgroundColor: theme.inputBg }} accessibilityLiveRegion="polite">
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: 12, marginBottom: 10, backgroundColor: theme.inputBg }} accessibilityLiveRegion="polite">
                   <ActivityIndicator size="small" color={theme.accentText} />
                   <Text style={{ color: theme.subText, fontSize: 13, flex: 1 }}>Cargando el plan de la unidad… no lo edites hasta que termine.</Text>
                 </View>
@@ -1463,7 +1463,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                             <View style={{ backgroundColor: isDarkMode ? '#451a03' : '#fef3c7', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#fde68a', marginBottom: 8 }}>
                               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <Text style={{ fontSize: 12, fontWeight: 'bold', color: isDarkMode ? '#fbbf24' : '#b45309' }}>
-                                  ⚠️ Actividad Modificada (Original: {act.originalActivity})
+                                  Actividad Modificada (Original: {act.originalActivity})
                                 </Text>
                                 <TouchableOpacity onPress={() => handleRevertModification(act.id)} style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
                                   <Text style={{ fontSize: 12, color: isDarkMode ? '#fbbf24' : '#b45309', fontWeight: 'bold' }}>↩️ Revertir</Text>
@@ -1525,18 +1525,18 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                           <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
                             {!act.isModified && (
                               <TouchableOpacity
-                                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? '#27272a' : '#fef3c7', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: '#fde68a' }}
+                                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? '#27272a' : '#fef3c7', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: '#fde68a' }}
                                 onPress={() => handleOpenModifyModal(act)}
                               >
-                                <Text style={{ fontSize: 12, color: isDarkMode ? '#fbbf24' : '#b45309', fontWeight: 'bold' }}>🔄 Modificar Actividad</Text>
+                                <Text style={{ fontSize: 12, color: isDarkMode ? '#fbbf24' : '#b45309', fontWeight: 'bold' }}>Modificar Actividad</Text>
                               </TouchableOpacity>
                             )}
 
                             <TouchableOpacity
-                              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#9333ea', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6 }}
+                              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.primary, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 }}
                               onPress={() => handleNavigateToPrograma(act)}
                             >
-                              <Text style={{ fontSize: 12, color: 'white', fontWeight: 'bold' }}>📝 Ficha de Programa</Text>
+                              <Text style={{ fontSize: 12, color: 'white', fontWeight: 'bold' }}>Ficha de Programa</Text>
                             </TouchableOpacity>
                           </View>
                         </View>
@@ -1553,30 +1553,30 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
 
               {/* TARJETAS DE MÉTRICAS DE CUMPLIMIENTO */}
               <View style={{ flexDirection: 'row', gap: 8, marginVertical: 12 }}>
-                <View style={[styles.trafficCard, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border, flex: 1, padding: 8, borderRadius: 10, alignItems: 'center' }]}>
+                <View style={[styles.trafficCard, { backgroundColor: isDarkMode ? '#27272a' : '#f8fafc', borderColor: theme.border, flex: 1, padding: 8, borderRadius: 12, alignItems: 'center' }]}>
                   <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{activities.length}</Text>
                   <Text style={{ fontSize: 12, color: theme.subText, textAlign: 'center' }}>Total Programadas</Text>
                 </View>
 
-                <View style={[styles.trafficCard, { backgroundColor: '#dcfce7', borderColor: '#16a34a', flex: 1, padding: 8, borderRadius: 10, alignItems: 'center' }]}>
+                <View style={[styles.trafficCard, { backgroundColor: '#dcfce7', borderColor: '#16a34a', flex: 1, padding: 8, borderRadius: 12, alignItems: 'center' }]}>
                   <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#15803d' }}>
                     {activities.filter(a => !a.isModified).length}
                   </Text>
                   <Text style={{ fontSize: 12, color: '#166534', textAlign: 'center' }}>Sin Cambios</Text>
                 </View>
 
-                <View style={[styles.trafficCard, { backgroundColor: '#fef3c7', borderColor: '#d97706', flex: 1, padding: 8, borderRadius: 10, alignItems: 'center' }]}>
+                <View style={[styles.trafficCard, { backgroundColor: '#fef3c7', borderColor: '#d97706', flex: 1, padding: 8, borderRadius: 12, alignItems: 'center' }]}>
                   <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#b45309' }}>
                     {activities.filter(a => a.isModified).length}
                   </Text>
                   <Text style={{ fontSize: 12, color: '#92400e', textAlign: 'center' }}>Modificadas</Text>
                 </View>
 
-                <View style={[styles.trafficCard, { backgroundColor: '#e0e7ff', borderColor: '#4f46e5', flex: 1.2, padding: 8, borderRadius: 10, alignItems: 'center' }]}>
-                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#4338ca' }}>
+                <View style={[styles.trafficCard, { backgroundColor: colors.accentSoft, borderColor: colors.primary, flex: 1.2, padding: 8, borderRadius: 12, alignItems: 'center' }]}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.accentText }}>
                     {activities.length > 0 ? Math.round(((activities.filter(a => !a.isModified).length) / activities.length) * 100) : 100}%
                   </Text>
-                  <Text style={{ fontSize: 12, color: '#3730a3', textAlign: 'center' }}>Cumplimiento</Text>
+                  <Text style={{ fontSize: 12, color: colors.accentText, textAlign: 'center' }}>Cumplimiento</Text>
                 </View>
               </View>
 
@@ -1701,7 +1701,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                           { backgroundColor: isChecked ? colors.primary + '15' : theme.inputBg, borderColor: isChecked ? colors.primary : theme.border }
                         ]}
                       >
-                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: isChecked ? colors.primary : theme.subText }}>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: isChecked ? colors.accentText : theme.subText }}>
                           {isChecked ? '✓ ' : '✗ '}{area.label}
                         </Text>
                       </View>
@@ -1748,7 +1748,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                               style={{
                                 flexDirection: 'row',
                                 alignItems: 'center',
-                                backgroundColor: '#9333ea',
+                                backgroundColor: colors.primary,
                                 paddingHorizontal: 10,
                                 paddingVertical: 6,
                                 borderRadius: 8,
@@ -1756,7 +1756,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                               }}
                               onPress={() => handleNavigateToPrograma(act)}
                             >
-                              <Text style={{ fontSize: 12, color: 'white', fontWeight: 'bold' }}>📝 Ficha de Programa</Text>
+                              <Text style={{ fontSize: 12, color: 'white', fontWeight: 'bold' }}>Ficha de Programa</Text>
                             </TouchableOpacity>
                           </TouchableOpacity>
                         ))
@@ -1957,7 +1957,7 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
               {/* BOTÓN PARA HABILITAR EDICIÓN DE SCOUTER CON CONFIRMACIÓN */}
               {!scouterEditUnlocked ? (
                 <TouchableOpacity
-                  style={{ backgroundColor: 'rgba(99, 102, 241, 0.12)', borderWidth: 1, borderColor: colors.primary, padding: 12, borderRadius: 12, alignItems: 'center', marginTop: 16 }}
+                  style={{ backgroundColor: colors.accentSoft, borderWidth: 1, borderColor: colors.primary, padding: 12, borderRadius: 12, alignItems: 'center', marginTop: 16 }}
                   onPress={() => {
                     if (Platform.OS === 'web' && typeof window !== 'undefined') {
                       if (window.confirm('¿Deseas habilitar la edición del plan trimestral de este joven como Scouter?')) {
@@ -1971,12 +1971,12 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
                     }
                   }}
                 >
-                  <Text style={{ color: theme.accentText, fontWeight: 'bold', fontSize: 13 }}>✏️ ¿Deseas modificar las actividades de este Plan Trimestral?</Text>
+                  <Text style={{ color: theme.accentText, fontWeight: 'bold', fontSize: 13 }}>¿Deseas modificar las actividades de este Plan Trimestral?</Text>
                 </TouchableOpacity>
               ) : (
-                <View style={{ backgroundColor: '#fef3c7', padding: 10, borderRadius: 10, marginTop: 16 }}>
+                <View style={{ backgroundColor: '#fef3c7', padding: 10, borderRadius: 12, marginTop: 16 }}>
                   <Text style={{ color: '#92400e', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>
-                    🔓 MODO EDICIÓN DE DIRIGENTE ACTIVO (Puedes modificar actividades u objetivos)
+                    MODO EDICIÓN DE DIRIGENTE ACTIVO (Puedes modificar actividades u objetivos)
                   </Text>
                 </View>
               )}
@@ -2029,9 +2029,9 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
               </TouchableOpacity>
             </View>
 
-            <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#fef3c7', padding: 10, borderRadius: 10, marginBottom: 12, borderWidth: 1, borderColor: '#fde68a' }}>
+            <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#fef3c7', padding: 10, borderRadius: 12, marginBottom: 12, borderWidth: 1, borderColor: '#fde68a' }}>
               <Text style={{ fontSize: 12, color: '#92400e', fontWeight: 'bold' }}>
-                📌 Actividad Planificada Originalmente:
+                Actividad Planificada Originalmente:
               </Text>
               <Text style={{ fontSize: 13, color: isDarkMode ? '#fbbf24' : '#b45309', fontWeight: 'bold', marginTop: 2 }}>
                 {actToModify?.originalActivity || actToModify?.activity}
@@ -2062,14 +2062,14 @@ export default function QuarterlyPlanScreen({ navigation, route }: any) {
 
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <TouchableOpacity
-                style={{ flex: 1, padding: 12, borderRadius: 10, backgroundColor: isDarkMode ? '#27272a' : '#e2e8f0', alignItems: 'center' }}
+                style={{ flex: 1, padding: 12, borderRadius: 12, backgroundColor: isDarkMode ? '#27272a' : '#e2e8f0', alignItems: 'center' }}
                 onPress={() => setModifyModalVisible(false)}
               >
                 <Text style={{ color: theme.text, fontWeight: 'bold' }}>Cancelar</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={{ flex: 1.5, padding: 12, borderRadius: 10, backgroundColor: '#d97706', alignItems: 'center' }}
+                style={{ flex: 1.5, padding: 12, borderRadius: 12, backgroundColor: '#d97706', alignItems: 'center' }}
                 onPress={handleApplyModification}
               >
                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Guardar Cambio</Text>

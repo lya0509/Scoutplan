@@ -121,7 +121,9 @@ const bad = (m) => { console.log('  ✘', m); results.push(['fail', m]); fails++
 
 async function newContext(browser, profile, { dark = false, expired = false, userDataDir } = {}) {
   const STORAGE_KEY = supabaseStorageKey();
-  const opts = { viewport: { width: 400, height: 860 }, serviceWorkers: 'allow' };
+  // reducedMotion: las animaciones de entrada dejan el texto medio transparente un instante y la
+  // medición de contraste lo contaba como ilegible; con «menos movimiento» la app no anima.
+  const opts = { viewport: { width: 400, height: 860 }, serviceWorkers: 'allow', reducedMotion: 'reduce' };
   const context = userDataDir
     ? await chromium.launchPersistentContext(userDataDir, { executablePath: findChromium(), headless: true, ...opts })
     : await browser.newContext(opts);
@@ -260,7 +262,7 @@ async function checkProgramaEditor(browser, base) {
     // Fecha: abrir el calendario y elegir «Próx. Sábado»
     await page.getByText(/^(\d{4}-\d{2}-\d{2}|Seleccionar fecha\.\.\.)$/).first().click();
     await page.getByText('Seleccionar Fecha', { exact: true }).waitFor({ timeout: 5000 });
-    await page.getByText('⚜️ Próx. Sábado').click();
+    await page.getByText('Próx. Sábado').click();
     const d = new Date(); d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7));
     const sat = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     await page.getByText(sat, { exact: true }).first().waitFor({ timeout: 5000 })

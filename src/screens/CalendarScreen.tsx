@@ -26,7 +26,7 @@ function formatDateWithDayOfWeek(dateStr: string): string {
     const monthName = dateObj.toLocaleDateString('es-ES', { month: 'long' });
     const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
     const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-    return `📅 ${capitalizedDay}, ${+d} de ${capitalizedMonth} de ${y}`;
+    return `${capitalizedDay}, ${+d} de ${capitalizedMonth} de ${y}`;
   } catch (e) {
     return dateStr;
   }
@@ -113,7 +113,7 @@ export default function CalendarScreen() {
           senderId: user?.id,
           groupName: user?.group_name || undefined,
           unit: newEventUnit === 'grupo' ? undefined : newEventUnit,
-          title: '📅 Nueva Actividad de Calendario',
+          title: 'Nueva Actividad de Calendario',
           message: `${newEventTitle.trim()} programada para el ${newEventDate.trim()} (${newEventUnit.toUpperCase()}).`,
           type: 'calendar'
         },
@@ -333,7 +333,7 @@ export default function CalendarScreen() {
         {/* Lista de eventos del día seleccionado (SÓLIDA, SIN PARPADEO NI DEGRADADO) */}
         <View style={styles.eventsSection}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
-            {([['dia', '📅 Día'], ['trimestre', '🗓️ Trimestre'], ['proximas', '⏭️ Próximas'], ['cip', '🚩 CIP']] as const).map(([k, label]) => (
+            {([['dia', 'Día'], ['trimestre', 'Trimestre'], ['proximas', 'Próximas'], ['cip', 'CIP']] as const).map(([k, label]) => (
               <TouchableOpacity
                 key={k}
                 onPress={() => setViewMode(k)}
@@ -513,12 +513,12 @@ export default function CalendarScreen() {
               <Text style={[styles.label, { color: theme.subText }]}>DESTINO / RAMA DEL EVENTO *</Text>
               <View style={styles.unitSelectorRow}>
                 {[
-                  { id: 'grupo', label: '⚜️ Todo el Grupo' },
-                  { id: 'scouters', label: '👥 Solo Scouters (Asamblea)' },
-                  { id: 'manada', label: '🟡 Manada' },
-                  { id: 'tropa', label: '🟢 Tropa' },
-                  { id: 'comunidad', label: '🔵 Caminantes' },
-                  { id: 'clan', label: '🔴 Clan' }
+                  { id: 'grupo', label: 'Todo el Grupo' },
+                  { id: 'scouters', label: 'Solo Scouters (Asamblea)' },
+                  { id: 'manada', label: 'Manada' },
+                  { id: 'tropa', label: 'Tropa' },
+                  { id: 'comunidad', label: 'Caminantes' },
+                  { id: 'clan', label: 'Clan' }
                 ].map(item => (
                   <TouchableOpacity
                     key={item.id}
@@ -541,9 +541,9 @@ export default function CalendarScreen() {
               </View>
 
               {newEventUnit === 'scouters' && (
-                <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#eef2ff', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: '#6366f1', marginTop: 8, marginBottom: 12 }}>
-                  <Text style={{ fontSize: 12, color: '#4f46e5', fontWeight: 'bold' }}>
-                    🔒 Visibilidad Privada: Este evento SOLO lo verán Jefatura y Scouters. Los jóvenes scouts NO lo verán.
+                <View style={{ backgroundColor: isDarkMode ? '#27272a' : colors.accentSoft, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.primary, marginTop: 8, marginBottom: 12 }}>
+                  <Text style={{ fontSize: 12, color: colors.accentText, fontWeight: 'bold' }}>
+                    Visibilidad Privada: Este evento SOLO lo verán Jefatura y Scouters. Los jóvenes scouts NO lo verán.
                   </Text>
                 </View>
               )}
@@ -574,7 +574,7 @@ const styles = liveStyles(() => StyleSheet.create({
   calendarContainer: { margin: 16, borderRadius: 16, overflow: 'hidden', elevation: 2 },
   legendContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, padding: 14, marginHorizontal: 16, borderRadius: 12, borderWidth: 1, marginBottom: 16 },
   legendItem: { flexDirection: 'row', alignItems: 'center' },
-  legendDot: { width: 10, height: 10, borderRadius: 5, marginRight: 6 },
+  legendDot: { width: 10, height: 10, borderRadius: 8, marginRight: 6 },
   legendText: { fontSize: 12 },
 
   eventsSection: { paddingHorizontal: 16 },

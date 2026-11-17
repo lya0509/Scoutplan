@@ -179,7 +179,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
         icon: <Globe size={18} color="#ffffff" />,
         title: 'DIRECCIÓN NACIONAL SCOUT',
         subtitle: 'Asociación de Scouts de Venezuela • Supervisión Nacional',
-        themeColor: '#4f46e5'
+        themeColor: colors.primary
       };
     }
     if (isRegional) {
@@ -231,7 +231,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
         {/* SELECTORES DE ALCANCE TERRITORIAL */}
         <View style={[styles.filterCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
           <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.subText, marginBottom: 8, textTransform: 'uppercase' }}>
-            🌐 FILTRO DE JURISDICCIÓN TERRITORIAL
+            FILTRO DE JURISDICCIÓN TERRITORIAL
           </Text>
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -243,7 +243,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                   onPress={() => setSelectedRegion('all')}
                 >
                   <Text style={[styles.scopeChipText, { color: selectedRegion === 'all' ? 'white' : theme.text }]}>
-                    🇻🇪 Todo el País
+                    Todo el País
                   </Text>
                 </TouchableOpacity>
                 {REGIONS_DATA.map(r => (
@@ -268,7 +268,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
                   onPress={() => setSelectedGroup('all')}
                 >
                   <Text style={[styles.scopeChipText, { color: selectedGroup === 'all' ? 'white' : theme.text }]}>
-                    🏢 Todos los Grupos ({uniqueGroups.length})
+                    Todos los Grupos ({uniqueGroups.length})
                   </Text>
                 </TouchableOpacity>
                 {uniqueGroups.map(grp => (
@@ -295,7 +295,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
               onPress={() => setShowCensoModal(true)}
               activeOpacity={0.8}
             >
-              <Users size={16} color={isDarkMode ? '#c084fc' : '#7e22ce'} />
+              <Users size={16} color={isDarkMode ? colors.accentText : colors.primary} />
               <Text style={[styles.toolBtnText, btn.secondaryText]}>Censo Territorial</Text>
             </TouchableOpacity>
 
@@ -366,8 +366,8 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
               </View>
 
               <View style={[styles.kpiCard, kpiDesktop, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-                <Shield color="#4f46e5" size={24} />
-                <Text style={[styles.kpiNumber, { color: isDarkMode ? '#a5b4fc' : '#4f46e5' }]}>{territorialStats.totalLeaders}</Text>
+                <Shield color={colors.primary} size={24} />
+                <Text style={[styles.kpiNumber, { color: isDarkMode ? colors.accentText : colors.accentText }]}>{territorialStats.totalLeaders}</Text>
                 <Text style={[styles.kpiLabel, { color: theme.subText }]}>Dirigentes</Text>
               </View>
 
@@ -381,7 +381,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
             {/* DIRECTORIO DE GRUPOS EN EL TERRITORIO */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, marginBottom: 12 }}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                🏢 Grupos Scouts en Jurisdicción ({uniqueGroups.length})
+                Grupos Scouts en Jurisdicción ({uniqueGroups.length})
               </Text>
               <Text style={{ fontSize: 12, color: theme.subText }}>{filteredProfiles.length} miembros totales</Text>
             </View>
@@ -465,7 +465,7 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
           <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', maxWidth: 880, maxHeight: '92%' }]}>
             <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Users color="#9333ea" size={22} style={{ marginRight: 8 }} />
+                <Users color={colors.primary} size={22} style={{ marginRight: 8 }} />
                 <View>
                   <Text style={[modalStyles.title, { color: theme.text }]}>Censo y Nómina Territorial</Text>
                   <Text style={{ fontSize: 12, color: theme.subText }}>{territorialTitle} • {filteredProfiles.length} Miembros Registrados</Text>
@@ -620,19 +620,19 @@ export default function ComisionadoDashboardScreen({ navigation }: any) {
               {filteredProfiles.map((m, idx) => {
                 const hasDate = !!m.membership_expires_at;
                 const isPending = m.membership_status === 'pending_approval' || m.membership_status === 'pending';
-                let statusLabel = '🔴 Sin Carnet';
+                let statusLabel = 'Sin Carnet';
                 let statusColor = '#dc2626';
 
                 if (isPending) {
-                  statusLabel = '⏳ Por Aprobar';
-                  statusColor = '#9333ea';
+                  statusLabel = 'Por Aprobar';
+                  statusColor = colors.primary;
                 } else if (hasDate) {
                   const diff = Math.ceil((new Date(m.membership_expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                   if (diff > 30) {
-                    statusLabel = `🟢 Vigente (${diff}d)`;
+                    statusLabel = `Vigente (${diff}d)`;
                     statusColor = '#16a34a';
                   } else if (diff >= 0) {
-                    statusLabel = `🟡 Vence (${diff}d)`;
+                    statusLabel = `Vence (${diff}d)`;
                     statusColor = '#d97706';
                   }
                 }
@@ -669,7 +669,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
   iconBtn: { padding: 8, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 12 },
 
-  filterCard: { margin: 16, marginBottom: 8, padding: 12, borderRadius: 14, borderWidth: 1 },
+  filterCard: { margin: 16, marginBottom: 8, padding: 12, borderRadius: 16, borderWidth: 1 },
   scopeChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#d1d5db', marginRight: 6 },
   scopeChipText: { fontSize: 12, fontWeight: '600' },
 
@@ -677,29 +677,29 @@ const styles = StyleSheet.create({
   toolBtnText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
 
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  kpiCard: { width: '48%', padding: 14, borderRadius: 14, borderWidth: 1, alignItems: 'center' },
+  kpiCard: { width: '48%', padding: 14, borderRadius: 16, borderWidth: 1, alignItems: 'center' },
   kpiNumber: { fontSize: 22, fontWeight: 'bold', marginTop: 4 },
   kpiLabel: { fontSize: 12, marginTop: 2, textAlign: 'center' },
 
   sectionTitle: { fontSize: 15, fontWeight: 'bold' },
-  emptyBox: { padding: 24, borderRadius: 14, borderWidth: 1, alignItems: 'center' },
+  emptyBox: { padding: 24, borderRadius: 16, borderWidth: 1, alignItems: 'center' },
 
-  groupCard: { borderRadius: 14, borderWidth: 1, marginBottom: 10, overflow: 'hidden' },
+  groupCard: { borderRadius: 16, borderWidth: 1, marginBottom: 10, overflow: 'hidden' },
   groupHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14 },
   groupTitle: { fontSize: 14, fontWeight: 'bold' },
   groupBody: { padding: 10, borderTopWidth: 1 },
 
   memberMiniRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: 'rgba(150,150,150,0.1)' },
   memberName: { fontSize: 12, fontWeight: 'bold' },
-  viewProfileBtn: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  viewProfileBtn: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
 
   logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 24, padding: 12, gap: 8 },
   logoutBtnText: { color: colors.error, fontWeight: 'bold', fontSize: 13 },
 
-  modalActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 10, borderRadius: 10, gap: 6 },
+  modalActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 10, borderRadius: 12, gap: 6 },
   modalActionBtnText: { color: 'white', fontWeight: 'bold', fontSize: 12 },
 
-  tableRow: { flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 10, borderWidth: 1, marginBottom: 6 },
+  tableRow: { flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 12, borderWidth: 1, marginBottom: 6 },
   tableIndex: { fontSize: 12, fontWeight: 'bold', width: 24 }
 });
 

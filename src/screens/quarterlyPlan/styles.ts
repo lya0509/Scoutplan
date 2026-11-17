@@ -1,28 +1,29 @@
 // Estilos de QuarterlyPlanScreen (separados para que la pantalla sea más fácil de leer).
 import { StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
+import { liveStyles } from '../../theme/liveStyles';
 
-export const styles = StyleSheet.create({
+export const styles = liveStyles(() => StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 18, borderBottomWidth: 1 },
   asociacionBanner: { marginBottom: 6 },
-  asociacionText: { fontSize: 13, fontWeight: '900', color: colors.primary, letterSpacing: 0.5 },
+  asociacionText: { fontSize: 13, fontWeight: '900', color: colors.accentText, letterSpacing: 0.5 },
   asociacionSub: { fontSize: 12, fontWeight: 'bold', color: '#64748b' },
   title: { fontSize: 17, fontWeight: 'bold' },
   headerMainRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, marginBottom: 12, flexWrap: 'wrap', gap: 10 },
   yearAndHistoryGroup: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  yearSelectorRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderWidth: 1 },
+  yearSelectorRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 1 },
   yearArrowBtn: { padding: 3 },
   yearText: { fontSize: 13, fontWeight: 'bold', marginHorizontal: 4 },
 
-  historyBtnHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, borderWidth: 1 },
-  historyBtnHeaderText: { fontSize: 12, fontWeight: 'bold', color: colors.primary },
+  historyBtnHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, borderWidth: 1 },
+  historyBtnHeaderText: { fontSize: 12, fontWeight: 'bold', color: colors.accentText },
 
   actionButtonsRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 },
-  actionPillBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
+  actionPillBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
   actionPillBtnText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
 
-  modeToggleGroup: { flexDirection: 'row', borderRadius: 10, padding: 3, borderWidth: 1 },
+  modeToggleGroup: { flexDirection: 'row', borderRadius: 12, padding: 3, borderWidth: 1 },
   modeToggleBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
   modeToggleText: { fontSize: 12 },
 
@@ -32,9 +33,9 @@ export const styles = StyleSheet.create({
   filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: '#e2e8f0', marginRight: 8 },
   filterChipActive: { backgroundColor: colors.primary },
   filterChipText: { fontSize: 12, fontWeight: '600', color: '#475569' },
-  filterChipTextActive: { color: 'white', fontWeight: 'bold' },
+  filterChipTextActive: { color: colors.onPrimary, fontWeight: 'bold' },
 
-  quarterInfoCard: { padding: 12, borderRadius: 14, borderWidth: 1 },
+  quarterInfoCard: { padding: 12, borderRadius: 16, borderWidth: 1 },
   quarterName: { fontSize: 14, fontWeight: 'bold' },
   quarterMonths: { fontSize: 12, fontWeight: 'bold' },
 
@@ -48,8 +49,8 @@ export const styles = StyleSheet.create({
   sectionTitle: { fontSize: 15, fontWeight: 'bold', marginBottom: 6 },
   label: { fontSize: 12, fontWeight: '800', marginBottom: 4, marginTop: 10 },
   inputLabel: { fontSize: 12, fontWeight: '800', marginBottom: 4, marginTop: 10 },
-  trafficCard: { borderRadius: 10, borderWidth: 1 },
-  input: { borderRadius: 10, borderWidth: 1, padding: 10, fontSize: 13 },
+  trafficCard: { borderRadius: 12, borderWidth: 1 },
+  input: { borderRadius: 12, borderWidth: 1, padding: 10, fontSize: 13 },
   textArea: { height: 75, textAlignVertical: 'top' },
 
   dynamicRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
@@ -62,20 +63,20 @@ export const styles = StyleSheet.create({
   areaChipBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1 },
   areaChipText: { fontSize: 12 },
 
-  monthBlock: { padding: 12, borderRadius: 14, borderWidth: 1, marginTop: 10 },
+  monthBlock: { padding: 12, borderRadius: 16, borderWidth: 1, marginTop: 10 },
   monthHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   monthTitleText: { fontSize: 13, fontWeight: 'bold', letterSpacing: 0.5 },
-  addActBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  addActBtnText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
+  addActBtn: { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  addActBtnText: { color: colors.onPrimary, fontSize: 12, fontWeight: 'bold' },
   noActText: { fontSize: 12, fontStyle: 'italic', marginVertical: 4 },
-  activityRowCard: { padding: 10, borderRadius: 10, borderWidth: 1, marginBottom: 8 },
-  dayPickerBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10, borderWidth: 1 },
+  activityRowCard: { padding: 10, borderRadius: 12, borderWidth: 1, marginBottom: 8 },
+  dayPickerBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 8, borderRadius: 12, borderWidth: 1 },
   dayPickerBtnText: { fontSize: 12, fontWeight: 'bold' },
   deleteActBtn: { padding: 8, justifyContent: 'center', alignItems: 'center' },
 
   feedbackBox: { marginTop: 14, padding: 12, borderRadius: 12 },
-  saveSubmitBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 14, alignItems: 'center', marginTop: 20 },
-  saveSubmitText: { color: 'white', fontWeight: 'bold', fontSize: 15 },
+  saveSubmitBtn: { backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 16, alignItems: 'center', marginTop: 20 },
+  saveSubmitText: { color: colors.onPrimary, fontWeight: 'bold', fontSize: 15 },
 
   // PREVISUALIZACIÓN OFICIAL STYLES
   previewSheet: { borderRadius: 18, padding: 20, borderWidth: 1, marginBottom: 16 },
@@ -91,21 +92,21 @@ export const styles = StyleSheet.create({
   previewTableActTitle: { fontSize: 13, fontWeight: 'bold' },
   previewTableActSub: { fontSize: 12, marginTop: 2 },
 
-  historyRowCard: { padding: 14, borderRadius: 14, borderWidth: 1, marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  historyRowCard: { padding: 14, borderRadius: 16, borderWidth: 1, marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 
   sectionHeading: { fontSize: 16, fontWeight: 'bold', marginBottom: 12 },
-  emptyCard: { padding: 24, borderRadius: 14, borderWidth: 1, alignItems: 'center' },
+  emptyCard: { padding: 24, borderRadius: 16, borderWidth: 1, alignItems: 'center' },
   scoutPlanRow: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 16, borderWidth: 1, marginBottom: 10 },
   avatarMini: { width: 38, height: 38, borderRadius: 19, justifyContent: 'center', alignItems: 'center' },
   avatarMiniText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   scoutRowName: { fontSize: 15, fontWeight: 'bold' },
   scoutRowSub: { fontSize: 12, marginTop: 2 },
   noPlanWarningText: { fontSize: 12, fontStyle: 'italic', marginTop: 2 },
-  unitBadgeMini: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6 },
-  unitBadgeMiniText: { color: 'white', fontSize: 11, fontWeight: 'bold' },
-  statusChip: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderWidth: 1 },
+  unitBadgeMini: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8 },
+  unitBadgeMiniText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
+  statusChip: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 1 },
   statusChipText: { fontSize: 12, fontWeight: 'bold' }
-});
+}));
 
 export const modalStyles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
@@ -114,9 +115,9 @@ export const modalStyles = StyleSheet.create({
   title: { fontSize: 17, fontWeight: 'bold' },
   subTitle: { fontSize: 12, marginTop: 2 },
   label: { fontSize: 12, fontWeight: '800', marginBottom: 4, marginTop: 10 },
-  input: { borderRadius: 10, borderWidth: 1, padding: 10, fontSize: 13 },
+  input: { borderRadius: 12, borderWidth: 1, padding: 10, fontSize: 13 },
   textArea: { height: 75, textAlignVertical: 'top' },
-  btnAction: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
+  btnAction: { flex: 1, paddingVertical: 14, borderRadius: 16, alignItems: 'center' },
   btnActionText: { color: 'white', fontWeight: 'bold', fontSize: 13 },
 
   overlayPicker: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 },

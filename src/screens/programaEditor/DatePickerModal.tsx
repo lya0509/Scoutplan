@@ -68,19 +68,19 @@ export function DatePickerModal({ visible, value, onSelect, onClose }: Props) {
               style={[styles.quickDateChip, { backgroundColor: primaryColor + '18', borderColor: primaryColor }]}
               onPress={() => onSelect(quickDate('today'))}
             >
-              <Text style={[styles.quickDateChipText, { color: theme.accentText }]}>📅 Hoy</Text>
+              <Text style={[styles.quickDateChipText, { color: theme.accentText }]}>Hoy</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.quickDateChip, { backgroundColor: '#16a34a18', borderColor: '#16a34a' }]}
               onPress={() => onSelect(quickDate('next_saturday'))}
             >
-              <Text style={[styles.quickDateChipText, { color: '#16a34a' }]}>⚜️ Próx. Sábado</Text>
+              <Text style={[styles.quickDateChipText, { color: '#16a34a' }]}>Próx. Sábado</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.quickDateChip, { backgroundColor: '#2563eb18', borderColor: '#2563eb' }]}
               onPress={() => onSelect(quickDate('next_sunday'))}
             >
-              <Text style={[styles.quickDateChipText, { color: '#2563eb' }]}>🏕️ Próx. Domingo</Text>
+              <Text style={[styles.quickDateChipText, { color: '#2563eb' }]}>Próx. Domingo</Text>
             </TouchableOpacity>
           </View>
 

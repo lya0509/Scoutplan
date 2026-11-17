@@ -86,11 +86,11 @@ export function InsigniasExportBar({ members, groupName, scopeLabel }: Props) {
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderRadius: 14, padding: 14, gap: 12 },
+  card: { borderWidth: 1, borderRadius: 16, padding: 14, gap: 12 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   title: { fontSize: 15, fontWeight: '800' },
   sub: { fontSize: 12, marginTop: 1 },
   row: { flexDirection: 'row', gap: 10 },
-  btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 10, minHeight: 42, paddingHorizontal: 10 },
+  btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, minHeight: 42, paddingHorizontal: 10 },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 13.5 },
 });

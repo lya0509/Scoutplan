@@ -244,7 +244,7 @@ export function VidaGrupoModal({
               ) : isCampamento ? (
                 <Tent size={22} color="#16a34a" />
               ) : (
-                <HeartHandshake size={22} color="#8b5cf6" />
+                <HeartHandshake size={22} color={colors.primary} />
               )}
               <View style={{ flex: 1 }}>
                 <Text style={[styles.headerTitle, { color: theme.text }]} numberOfLines={1}>
@@ -268,14 +268,14 @@ export function VidaGrupoModal({
                 {
                   backgroundColor: isCompleted
                     ? 'rgba(34, 197, 94, 0.12)'
-                    : 'rgba(99, 102, 241, 0.08)',
+                    : colors.accentSoft,
                   borderColor: isCompleted ? '#22c55e' : colors.primary,
                 },
               ]}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ fontSize: 13, fontWeight: 'bold', color: isCompleted ? '#16a34a' : colors.primary }}>
-                  {isCompleted ? '🎉 ¡Meta alcanzada!' : `Progreso: ${entries.length} de ${requiredCount}`}
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: isCompleted ? '#16a34a' : colors.accentText }}>
+                  {isCompleted ? '¡Meta alcanzada!' : `Progreso: ${entries.length} de ${requiredCount}`}
                 </Text>
                 <View
                   style={{
@@ -582,7 +582,7 @@ const styles = StyleSheet.create({
   },
   formBox: {
     borderWidth: 1.5,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 14,
   },
   formHeaderTitle: {
@@ -607,14 +607,14 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 13,
   },
   saveBtn: {
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 14,
   },

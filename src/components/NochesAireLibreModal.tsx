@@ -117,7 +117,7 @@ export function NochesAireLibreModal({
       setShowAddForm(false);
 
       showAlert(
-        '🏕️ Noche Registrada',
+        'Noche Registrada',
         newCompleted
           ? `¡Felicitaciones! Has completado el requisito con un total de ${newTotal} de ${requiredCount} noches.`
           : `Se guardó tu registro de ${nightsInput} noche(s). Llevas ${newTotal} de ${requiredCount} noches.`
@@ -234,7 +234,7 @@ export function NochesAireLibreModal({
                 {showAddForm && (
                   <View style={[styles.formContainer, { backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', borderColor: theme?.border || '#e2e8f0' }]}>
                     <Text style={[styles.formHeader, { color: theme.accentText }]}>
-                      🏕️ Nuevo Registro de Pernocta
+                      Nuevo Registro de Pernocta
                     </Text>
 
                     <Text style={[styles.inputLabel, { color: theme?.text || '#0f172a' }]}>
@@ -301,7 +301,7 @@ export function NochesAireLibreModal({
                       {saving ? (
                         <ActivityIndicator size="small" color="white" />
                       ) : (
-                        <Text style={styles.saveBtnText}>💾 GUARDAR REGISTRO</Text>
+                        <Text style={styles.saveBtnText}>GUARDAR REGISTRO</Text>
                       )}
                     </TouchableOpacity>
                   </View>
@@ -311,7 +311,7 @@ export function NochesAireLibreModal({
 
             {/* LISTA DE NOCHES REGISTRADAS */}
             <Text style={[styles.sectionTitle, { color: theme?.text || '#0f172a' }]}>
-              📜 Historial de Noches Registradas ({entries.length})
+              Historial de Noches Registradas ({entries.length})
             </Text>
 
             {loading ? (
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
   formContainer: {
     marginTop: 10,
     padding: 14,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
   },
   formHeader: {
@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 13,
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
   saveBtn: {
     marginTop: 14,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
   },
   saveBtnText: {
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
   emptyCard: {
     alignItems: 'center',
     padding: 24,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     marginTop: 6,
   },

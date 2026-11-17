@@ -93,7 +93,7 @@ export default function CancioneroScreen({ navigation }: any) {
           <ArrowLeft size={16} color={theme.text} />
           <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.text }}>Volver</Text>
         </TouchableOpacity>
-        <Text style={styles.offlineBadge}>⚡ 100% OFFLINE (CANCIONES Y ORACIONES EN TU BOLSILLO)</Text>
+        <Text style={styles.offlineBadge}>100% OFFLINE (CANCIONES Y ORACIONES EN TU BOLSILLO)</Text>
         <Text style={[styles.title, { color: theme.text }]}>Cancionero & Oraciones Scout</Text>
 
         <View style={[styles.searchBox, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>

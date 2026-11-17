@@ -36,7 +36,7 @@ export const StageBadgeIcon: React.FC<StageBadgeIconProps> = ({ stageId, size = 
         style={{
           width: size,
           height: size,
-          borderRadius: 10,
+          borderRadius: 12,
           resizeMode: 'cover',
         }}
       />
@@ -44,7 +44,7 @@ export const StageBadgeIcon: React.FC<StageBadgeIconProps> = ({ stageId, size = 
   }
 
   return (
-    <View style={{ width: size, height: size, borderRadius: 6, backgroundColor: '#A61C1C' }} />
+    <View style={{ width: size, height: size, borderRadius: 8, backgroundColor: '#A61C1C' }} />
   );
 };
 

@@ -36,7 +36,7 @@ export const styles = StyleSheet.create({
   importBannerTitle: { fontSize: 13, fontWeight: 'bold', marginBottom: 2 },
   card: {
     padding: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     marginBottom: 16,
   },
@@ -53,7 +53,7 @@ export const styles = StyleSheet.create({
   },
   textInputSmall: {
     height: 36,
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1,
     paddingHorizontal: 10,
     fontSize: 12,
@@ -69,7 +69,7 @@ export const styles = StyleSheet.create({
   },
   textAreaSmall: {
     height: 55,
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -98,7 +98,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     marginTop: 4,
   },
@@ -106,11 +106,11 @@ export const styles = StyleSheet.create({
   fixedUnitBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   sinodalBox: {
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     marginTop: 4,
   },
@@ -127,7 +127,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     marginTop: 4,
   },
@@ -135,7 +135,7 @@ export const styles = StyleSheet.create({
   activeBadgeStatus: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   addSmallBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   addSmallBtnText: { fontSize: 12, fontWeight: 'bold' },
@@ -143,7 +143,7 @@ export const styles = StyleSheet.create({
   dynamicInput: {
     flex: 1,
     height: 38,
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1,
     paddingHorizontal: 10,
     fontSize: 12,
@@ -161,7 +161,7 @@ export const styles = StyleSheet.create({
   },
   sdgChipText: { fontSize: 12, fontWeight: '500' },
   areaAccordion: {
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     marginBottom: 8,
     overflow: 'hidden',
@@ -173,14 +173,14 @@ export const styles = StyleSheet.create({
     padding: 12,
   },
   areaTitle: { fontSize: 13, fontWeight: 'bold' },
-  areaBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10, marginLeft: 8 },
+  areaBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, marginLeft: 8 },
   areaBody: { padding: 12, borderTopWidth: 1, borderTopColor: '#e5e7eb' },
   selectedIndicatorItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 8,
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1,
     marginBottom: 6,
   },
@@ -204,7 +204,7 @@ export const styles = StyleSheet.create({
   addScheduleBtnText: { color: '#ffffff', fontSize: 12, fontWeight: 'bold' },
   scheduleCardItem: {
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     marginBottom: 10,
   },
@@ -345,7 +345,7 @@ export const styles = StyleSheet.create({
   },
   calNavBtn: {
     padding: 6,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   calMonthTitle: {
     fontSize: 14,
@@ -396,18 +396,18 @@ export const styles = StyleSheet.create({
   },
   reorderArrowBtn: {
     padding: 4,
-    borderRadius: 6,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   reorderingBanner: {
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   reorderActiveBar: {
     borderWidth: 1.5,
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 10,
     marginBottom: 10,
   },
@@ -479,7 +479,7 @@ export const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: 8,
     marginBottom: 8,
   },
   saveOptionBadgeText: {
@@ -498,7 +498,7 @@ export const styles = StyleSheet.create({
     marginBottom: 12,
   },
   previewRoleBox: {
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     padding: 10,
     marginBottom: 12,
@@ -515,7 +515,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 10,
     paddingHorizontal: 16,
-    borderRadius: 10,
+    borderRadius: 12,
   },
   btnOptionExecuteText: {
     color: '#ffffff',
@@ -542,7 +542,7 @@ export const styles = StyleSheet.create({
   timePickerTabBtn: {
     flex: 1,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -561,7 +561,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 12,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     marginBottom: 14,
   },
@@ -573,7 +573,7 @@ export const styles = StyleSheet.create({
   },
   amPmSelector: {
     flexDirection: 'row',
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     overflow: 'hidden',
   },
@@ -613,7 +613,7 @@ export const styles = StyleSheet.create({
   minuteAdjustBtn: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1,
   },
   minutesGrid: {
@@ -653,7 +653,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 10,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     marginTop: 4,
     marginBottom: 8,
@@ -666,7 +666,7 @@ export const styles = StyleSheet.create({
   timePickerCancelBtn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -674,7 +674,7 @@ export const styles = StyleSheet.create({
     flex: 2,
     flexDirection: 'row',
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },

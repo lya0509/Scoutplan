@@ -206,7 +206,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
             alignItems: 'center',
             paddingVertical: 6,
             paddingHorizontal: 12,
-            borderRadius: 10,
+            borderRadius: 12,
             backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9',
             gap: 6
           }}
@@ -272,7 +272,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
         {isScouterOrAdmin && (
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
             <TouchableOpacity
-              style={[styles.docBtn, { backgroundColor: 'rgba(99, 102, 241, 0.12)', borderColor: colors.primary }]}
+              style={[styles.docBtn, { backgroundColor: colors.accentSoft, borderColor: colors.primary }]}
               onPress={() => navigation.navigate('FichaMedica', { targetUserId: scoutId })}
             >
               <Text style={{ fontSize: 18, marginRight: 6 }}>📋</Text>
@@ -283,7 +283,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.docBtn, { backgroundColor: 'rgba(99, 102, 241, 0.12)', borderColor: colors.primary }]}
+              style={[styles.docBtn, { backgroundColor: colors.accentSoft, borderColor: colors.primary }]}
               onPress={() => navigation.navigate('CurriculumScout', { targetUserId: scoutId })}
             >
               <Text style={{ fontSize: 18, marginRight: 6 }}>📜</Text>
@@ -337,7 +337,7 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
               </View>
               {isScouterOrAdmin && (
                 <Text style={{ fontSize: 12, color: theme.accentText, fontWeight: 'bold', marginTop: 4 }}>
-                  Toca para ver desglose de requisitos y actividades ➔
+                  Toca para ver desglose de requisitos y actividades
                 </Text>
               )}
             </View>
@@ -495,14 +495,14 @@ export default function ScoutFullProfileScreen({ route, navigation }: any) {
 
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
               <TouchableOpacity
-                style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', alignItems: 'center' }}
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: isDarkMode ? '#27272a' : '#f1f5f9', alignItems: 'center' }}
                 onPress={() => setDeleteModalCert(null)}
               >
                 <Text style={{ color: theme.subText, fontWeight: 'bold' }}>Cancelar</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: '#ef4444', alignItems: 'center' }}
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: '#ef4444', alignItems: 'center' }}
                 onPress={handleDeleteByScouter}
               >
                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Confirmar</Text>
@@ -536,7 +536,7 @@ const styles = liveStyles(() => StyleSheet.create({
 
   stageRowCard: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 16, borderWidth: 1, marginBottom: 10 },
   stageTitle: { fontSize: 15, fontWeight: 'bold' },
-  stageStatusTag: { fontSize: 12, fontWeight: 'bold', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  stageStatusTag: { fontSize: 12, fontWeight: 'bold', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
   tagApproved: { backgroundColor: '#dcfce7', color: '#16a34a' },
   tagReview: { backgroundColor: '#fef3c7', color: '#d97706' },
   tagProgress: { backgroundColor: '#e0f2fe', color: '#0284c7' },
@@ -547,14 +547,14 @@ const styles = liveStyles(() => StyleSheet.create({
 
   certCard: { borderRadius: 16, padding: 16, borderWidth: 1, marginBottom: 12 },
   certCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  catBadge: { fontSize: 12, fontWeight: 'bold', color: colors.primary, backgroundColor: 'rgba(107, 33, 168, 0.1)', alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, marginBottom: 4 },
+  catBadge: { fontSize: 12, fontWeight: 'bold', color: colors.accentText, backgroundColor: 'rgba(107, 33, 168, 0.1)', alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, marginBottom: 4 },
   certTitleText: { fontSize: 15, fontWeight: 'bold' },
   actionIconBtn: { padding: 8, backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 20 },
   certImgWrapper: { marginTop: 12, borderRadius: 12, overflow: 'hidden', height: 160, position: 'relative' },
   certImg: { width: '100%', height: '100%' },
   zoomHintOverlay: { position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.7)', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   zoomHintText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
-  emptyCertCard: { padding: 20, borderRadius: 14, borderWidth: 1, alignItems: 'center' }
+  emptyCertCard: { padding: 20, borderRadius: 16, borderWidth: 1, alignItems: 'center' }
 }));
 
 const viewerStyles = liveStyles(() => StyleSheet.create({
@@ -567,9 +567,9 @@ const viewerStyles = liveStyles(() => StyleSheet.create({
   fullImage: { width: '100%', height: '100%' },
   noImageCard: { height: 150, justifyContent: 'center', alignItems: 'center' },
   btnActionRow: { flexDirection: 'row', gap: 10, marginTop: 12, marginBottom: 20 },
-  downloadBtn: { flex: 1, backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14 },
+  downloadBtn: { flex: 1, backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 16 },
   downloadBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 },
-  deleteActionBtn: { backgroundColor: '#fee2e2', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 14, justifyContent: 'center', alignItems: 'center' }
+  deleteActionBtn: { backgroundColor: '#fee2e2', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }
 }));
 
 const modalStyles = StyleSheet.create({

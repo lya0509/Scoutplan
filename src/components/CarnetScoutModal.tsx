@@ -213,7 +213,7 @@ const styles = liveStyles(() => StyleSheet.create({
   modalTitle: { fontSize: 17, fontWeight: 'bold' },
 
   statusBanner: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, borderWidth: 1, width: '100%', marginBottom: 16 },
-  sideLabel: { fontSize: 11, fontWeight: '900', color: colors.primary, letterSpacing: 1, marginBottom: 8, alignSelf: 'flex-start' },
+  sideLabel: { fontSize: 11, fontWeight: '900', color: colors.accentText, letterSpacing: 1, marginBottom: 8, alignSelf: 'flex-start' },
 
   expiredStampWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   expiredStamp: { borderWidth: 3, borderColor: '#dc2626', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 4, backgroundColor: 'rgba(255,255,255,0.75)', transform: [{ rotate: '-14deg' }] },

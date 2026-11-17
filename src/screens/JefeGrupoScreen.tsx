@@ -49,7 +49,7 @@ function formatDateWithDayOfWeek(dateStr: string): string {
     const monthName = dateObj.toLocaleDateString('es-ES', { month: 'long' });
     const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
     const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-    return `📅 ${capitalizedDay}, ${+d} de ${capitalizedMonth} de ${y}`;
+    return `${capitalizedDay}, ${+d} de ${capitalizedMonth} de ${y}`;
   } catch (e) {
     return dateStr;
   }
@@ -59,9 +59,10 @@ export default function JefeGrupoScreen({ navigation }: any) {
   const { user, signOut } = useAuth();
   const { isDarkMode, theme, primaryColor, toggleDarkMode } = useTheme();
   // Morados e índigos fuertes sobre fondo negro casi no se leen: versión clara en modo oscuro
-  const subCatDark = isDarkMode ? { color: '#c084fc' } : null;
+  // Subtítulos de cada rama: gris de apoyo (antes violeta), para que el acento quede en las acciones
+  const subCatDark = { color: theme.subText };
   const [showAppErrors, setShowAppErrors] = useState(false);
-  const indigoText = isDarkMode ? '#a5b4fc' : '#4f46e5';
+  const indigoText = isDarkMode ? colors.accentText : colors.primary;
 
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -223,7 +224,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
             groupName: user?.group_name || undefined,
             unit: eventUnit === 'grupo' ? undefined : eventUnit,
             receiverRole: eventUnit === 'scouters' ? 'scouter' : undefined,
-            title: `📅 ${eventTitle}`,
+            title: `${eventTitle}`,
             message: `Nueva actividad programada para el ${formatDateWithDayOfWeek(eventDate)} (${destLabelForNotify}).`,
             type: 'calendar'
           },
@@ -267,7 +268,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
     notificationService.sendNotification({
       senderId: user?.id,
       receiverId: memberId,
-      title: '🪪 ¡Membresía y Carnet Aprobados!',
+      title: '¡Membresía y Carnet Aprobados!',
       message: 'Jefatura de Grupo ha validado tu membresía institucional. Ya puedes descargar tu Carnet Scout Oficial.',
       type: 'membership'
     }).catch(() => {});
@@ -289,7 +290,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
         notificationService.sendNotification({
           senderId: user?.id,
           receiverId: p.id,
-          title: '🪪 ¡Membresía Aprobada!',
+          title: '¡Membresía Aprobada!',
           message: 'Tu carnet scout oficial ha sido activado por Jefatura de Grupo.',
           type: 'membership'
         }).catch(() => {});
@@ -312,7 +313,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
     notificationService.sendNotification({
       senderId: user?.id,
       receiverId: selectedMemberForMembership.id,
-      title: '🪪 Membresía Asignada y Aprobada',
+      title: 'Membresía Asignada y Aprobada',
       message: `Tu membresía scout está vigente hasta ${formatDateWithDayOfWeek(finalDate)}.`,
       type: 'membership'
     }).catch(() => {});
@@ -477,8 +478,8 @@ export default function JefeGrupoScreen({ navigation }: any) {
             <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
               <Text style={[styles.memberName, { color: theme.text }]}>{member.name}</Text>
               {isScouterRole && (
-                <View style={{ backgroundColor: 'rgba(79, 70, 229, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#4f46e5' }}>
-                  <Text style={{ fontSize: 12, color: isDarkMode ? '#a5b4fc' : '#6366f1', fontWeight: 'bold' }}>👔 DIRIGENTE</Text>
+                <View style={{ backgroundColor: 'rgba(79, 70, 229, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, borderWidth: 1, borderColor: colors.primary }}>
+                  <Text style={{ fontSize: 12, color: isDarkMode ? colors.accentText : colors.accentText, fontWeight: 'bold' }}>DIRIGENTE</Text>
                 </View>
               )}
             </View>
@@ -488,7 +489,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
           </View>
 
           <TouchableOpacity
-            style={[styles.profileBtn, { backgroundColor: isScouterRole ? '#4f46e5' : primaryColor }]}
+            style={[styles.profileBtn, { backgroundColor: isScouterRole ? colors.primary : primaryColor }]}
             onPress={() => navigation.navigate('ScoutFullProfile', { scoutId: member.id })}
           >
             <Text style={styles.profileBtnText}>Ver Perfil</Text>
@@ -499,7 +500,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
         {/* ACCESOS DIRECTOS */}
         <View style={styles.docActionsRow}>
           <TouchableOpacity
-            style={[styles.miniDocBtn, { backgroundColor: 'rgba(99, 102, 241, 0.12)', borderColor: primaryColor }]}
+            style={[styles.miniDocBtn, { backgroundColor: colors.accentSoft, borderColor: primaryColor }]}
             onPress={() => navigation.navigate('FichaMedica', { targetUserId: member.id })}
           >
             <Text style={{ fontSize: 13, marginRight: 4 }}>📋</Text>
@@ -507,7 +508,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.miniDocBtn, { backgroundColor: 'rgba(99, 102, 241, 0.12)', borderColor: primaryColor }]}
+            style={[styles.miniDocBtn, { backgroundColor: colors.accentSoft, borderColor: primaryColor }]}
             onPress={() => navigation.navigate('CurriculumScout', { targetUserId: member.id })}
           >
             <Text style={{ fontSize: 13, marginRight: 4 }}>📜</Text>
@@ -554,7 +555,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
         onPress={() => setShowCensoModal(true)}
         activeOpacity={0.8}
       >
-        <Users size={18} color="#9333ea" />
+        <Users size={18} color={colors.primary} />
         <Text style={[styles.quickToolBtnText, { color: theme.text }]}>Censo y Nómina</Text>
       </TouchableOpacity>
 
@@ -587,7 +588,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
         activeOpacity={0.8}
         accessibilityRole="button"
       >
-        <Flag size={18} color="#7c3aed" />
+        <Flag size={18} color={colors.primary} />
         <Text style={[styles.quickToolBtnText, { color: theme.text }]}>CIP</Text>
       </TouchableOpacity>
 
@@ -680,7 +681,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 activeOpacity={0.8}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.accordionTitle, { color: theme.text }]}>🟡 MANADA DE LOBATOS Y LOBEZNAS</Text>
+                  <Text style={[styles.accordionTitle, { color: theme.text }]}>MANADA DE LOBATOS Y LOBEZNAS</Text>
                   <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                     {manadaData.scouters.length} Scouters • {manadaData.totalYouth} Niños/as
                   </Text>
@@ -690,21 +691,21 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {expanded.manada && (
                 <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters / Dirigentes de Manada ({manadaData.scouters.length})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark]}>Scouters / Dirigentes de Manada ({manadaData.scouters.length})</Text>
                   {manadaData.scouters.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay scouters registrados en Manada.</Text>
                   ) : (
                     manadaData.scouters.map(s => renderMemberCard(s, 'Dirigente de Manada / Akela', true))
                   )}
 
-                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🐺 Lobatos ({manadaData.lobatos?.length || 0})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>Lobatos ({manadaData.lobatos?.length || 0})</Text>
                   {manadaData.lobatos?.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay lobatos registrados.</Text>
                   ) : (
                     manadaData.lobatos?.map(s => renderMemberCard(s, 'Lobato • Manada'))
                   )}
 
-                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🐺 Lobeznas ({manadaData.lobeznas?.length || 0})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>Lobeznas ({manadaData.lobeznas?.length || 0})</Text>
                   {manadaData.lobeznas?.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay lobeznas registradas.</Text>
                   ) : (
@@ -725,7 +726,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 activeOpacity={0.8}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.accordionTitle, { color: theme.text }]}>🟢 TROPA SCOUT</Text>
+                  <Text style={[styles.accordionTitle, { color: theme.text }]}>TROPA SCOUT</Text>
                   <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                     {tropaData.scouters.length} Scouters • {tropaData.totalYouth} Scouts
                   </Text>
@@ -735,14 +736,14 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {expanded.tropa && (
                 <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters de Tropa ({tropaData.scouters.length})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark]}>Scouters de Tropa ({tropaData.scouters.length})</Text>
                   {tropaData.scouters.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay scouters registrados en Tropa.</Text>
                   ) : (
                     tropaData.scouters.map(s => renderMemberCard(s, 'Dirigente de Tropa', true))
                   )}
 
-                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>⚜️ Scouts ({tropaData.youth?.length || 0})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>Scouts ({tropaData.youth?.length || 0})</Text>
                   {tropaData.youth?.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay scouts registrados en Tropa.</Text>
                   ) : (
@@ -763,7 +764,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 activeOpacity={0.8}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.accordionTitle, { color: theme.text }]}>🔵 CAMINANTES / COMUNIDAD</Text>
+                  <Text style={[styles.accordionTitle, { color: theme.text }]}>CAMINANTES / COMUNIDAD</Text>
                   <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                     {caminantesData.scouters.length} Scouters • {caminantesData.totalYouth} Caminantes
                   </Text>
@@ -773,14 +774,14 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {expanded.caminantes && (
                 <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters de Caminantes ({caminantesData.scouters.length})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark]}>Scouters de Caminantes ({caminantesData.scouters.length})</Text>
                   {caminantesData.scouters.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay scouters registrados en Caminantes.</Text>
                   ) : (
                     caminantesData.scouters.map(s => renderMemberCard(s, 'Dirigente de Caminantes', true))
                   )}
 
-                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🧭 Caminantes ({caminantesData.youth?.length || 0})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>Caminantes ({caminantesData.youth?.length || 0})</Text>
                   {caminantesData.youth?.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay jóvenes registrados en Caminantes.</Text>
                   ) : (
@@ -801,7 +802,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 activeOpacity={0.8}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.accordionTitle, { color: theme.text }]}>🔴 CLAN ROVER</Text>
+                  <Text style={[styles.accordionTitle, { color: theme.text }]}>CLAN ROVER</Text>
                   <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                     {clanData.scouters.length} Scouters • {clanData.totalYouth} Rovers
                   </Text>
@@ -811,14 +812,14 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {expanded.clan && (
                 <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={[styles.subCategoryTitle, subCatDark]}>👔 Scouters de Clan ({clanData.scouters.length})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark]}>Scouters de Clan ({clanData.scouters.length})</Text>
                   {clanData.scouters.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay scouters registrados en Clan.</Text>
                   ) : (
                     clanData.scouters.map(s => renderMemberCard(s, 'Scouter de Clan / Rover', true))
                   )}
 
-                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>🚩 Rovers ({clanData.youth?.length || 0})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark, { marginTop: 12 }]}>Rovers ({clanData.youth?.length || 0})</Text>
                   {clanData.youth?.length === 0 ? (
                     <Text style={styles.emptySubText}>No hay rovers registrados en el Clan.</Text>
                   ) : (
@@ -839,7 +840,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 activeOpacity={0.8}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.accordionTitle, { color: theme.text }]}>⚜️ JEFATURA Y CONSEJO DE GRUPO</Text>
+                  <Text style={[styles.accordionTitle, { color: theme.text }]}>JEFATURA Y CONSEJO DE GRUPO</Text>
                   <Text style={{ fontSize: 12, color: theme.subText, marginTop: 2 }}>
                     {jefaturaMembers.length} Miembros de Jefatura
                   </Text>
@@ -849,7 +850,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
 
               {expanded.jefatura && (
                 <View style={[styles.accordionBody, { borderTopColor: theme.border }]}>
-                  <Text style={[styles.subCategoryTitle, subCatDark]}>👑 Jefes y Subjefes de Grupo ({jefaturaMembers.length})</Text>
+                  <Text style={[styles.subCategoryTitle, subCatDark]}>Jefes y Subjefes de Grupo ({jefaturaMembers.length})</Text>
                   {jefaturaMembers.map(j => renderMemberCard(j, 'Jefatura de Grupo', true))}
                 </View>
               )}
@@ -899,14 +900,14 @@ export default function JefeGrupoScreen({ navigation }: any) {
               </View>
 
               <View style={[styles.statCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-                <Shield color="#4f46e5" size={28} />
-                <Text style={[styles.statNumber, { color: indigoText }]}>{stats.scouters}</Text>
+                <Shield color={colors.primary} size={28} />
+                <Text style={[styles.statNumber, { color: theme.text }]}>{stats.scouters}</Text>
                 <Text style={[styles.statLabel, { color: theme.subText }]}>Dirigentes & Jefatura</Text>
               </View>
 
               <View style={[styles.statCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-                <Award color="#f59e0b" size={28} />
-                <Text style={[styles.statNumber, { color: '#f59e0b' }]}>{stats.insigniasAprobadas}</Text>
+                <Award color={colors.primary} size={28} />
+                <Text style={[styles.statNumber, { color: theme.text }]}>{stats.insigniasAprobadas}</Text>
                 <Text style={[styles.statLabel, { color: theme.subText }]}>Insignias Aprobadas</Text>
               </View>
             </View>
@@ -930,7 +931,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
             </View>
 
             <Text style={[styles.sectionTitle, { color: theme.text, marginTop: 14, marginBottom: 12 }]}>
-              🌳 Estructura y Miembros del Grupo ({allMembers.length})
+              Estructura y Miembros del Grupo ({allMembers.length})
             </Text>
 
             {isWide ? (
@@ -977,7 +978,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
           <View style={[modalStyles.sheet, { backgroundColor: isDarkMode ? '#18181b' : 'white', maxWidth: 840, maxHeight: '92%' }]}>
             <View style={[modalStyles.header, { borderBottomColor: theme.border }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Users color="#9333ea" size={22} style={{ marginRight: 8 }} />
+                <Users color={colors.primary} size={22} style={{ marginRight: 8 }} />
                 <View>
                   <Text style={[modalStyles.title, { color: theme.text }]}>Censo y Nómina Oficial del Grupo</Text>
                   <Text style={{ fontSize: 12, color: theme.subText }}>{user?.group_name || 'Grupo Scout'} • {filteredCensoMembers.length} Miembros filtrados</Text>
@@ -1029,12 +1030,12 @@ export default function JefeGrupoScreen({ navigation }: any) {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
                 {[
                   { id: 'all', label: 'Todas las Ramas' },
-                  { id: 'manada', label: '🟡 Manada' },
-                  { id: 'tropa', label: '🟢 Tropa' },
-                  { id: 'caminantes', label: '🔵 Caminantes' },
-                  { id: 'clan', label: '🔴 Clan' },
-                  { id: 'jefatura', label: '⚜️ Jefatura' },
-                  { id: 'edad', label: '⚠️ Edad fuera de rama' }
+                  { id: 'manada', label: 'Manada' },
+                  { id: 'tropa', label: 'Tropa' },
+                  { id: 'caminantes', label: 'Caminantes' },
+                  { id: 'clan', label: 'Clan' },
+                  { id: 'jefatura', label: 'Jefatura' },
+                  { id: 'edad', label: 'Edad fuera de rama' }
                 ].map(item => (
                   <TouchableOpacity
                     key={item.id}
@@ -1070,7 +1071,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                         <Text style={{ fontSize: 12, color: theme.subText }}>C.I: {m.cedula || 'Sin C.I.'}</Text>
                       </View>
                       <View style={{ flex: 1.5 }}>
-                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: isJefe ? (isDarkMode ? '#c084fc' : '#9333ea') : theme.accentText }}>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: isJefe ? (isDarkMode ? colors.accentText : colors.accentText) : theme.accentText }}>
                           {isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase()}
                         </Text>
                         <Text style={{ fontSize: 12, color: theme.subText }}>{m.role === 'scouter' ? 'Dirigente' : m.role === 'jefe_grupo' ? 'Jefe Grupo' : 'Scout'}</Text>
@@ -1164,11 +1165,11 @@ export default function JefeGrupoScreen({ navigation }: any) {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
                 {[
                   { id: 'all', label: 'Todas las Ramas' },
-                  { id: 'manada', label: '🟡 Manada' },
-                  { id: 'tropa', label: '🟢 Tropa' },
-                  { id: 'caminantes', label: '🔵 Caminantes' },
-                  { id: 'clan', label: '🔴 Clan' },
-                  { id: 'jefatura', label: '⚜️ Jefatura' }
+                  { id: 'manada', label: 'Manada' },
+                  { id: 'tropa', label: 'Tropa' },
+                  { id: 'caminantes', label: 'Caminantes' },
+                  { id: 'clan', label: 'Clan' },
+                  { id: 'jefatura', label: 'Jefatura' }
                 ].map(item => (
                   <TouchableOpacity
                     key={item.id}
@@ -1207,7 +1208,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                       <Text style={[styles.tableIndex, { color: theme.subText }]}>{idx + 1}</Text>
                       <View style={{ flex: 2 }}>
                         <Text style={[styles.tableMainText, { color: theme.text }]}>{m.name}</Text>
-                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: isJefe ? (isDarkMode ? '#c084fc' : '#9333ea') : theme.subText }}>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: isJefe ? (isDarkMode ? colors.accentText : colors.accentText) : theme.subText }}>
                           {isJefe ? 'JEFATURA' : (m.unit || 'General').toUpperCase()}
                         </Text>
                         {isAdult && (
@@ -1227,7 +1228,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                       {/* ALERGIAS */}
                       <View style={{ flex: 2, paddingHorizontal: 6 }}>
                         <Text style={{ fontSize: 12, color: hasAllergies ? '#dc2626' : theme.subText, fontWeight: hasAllergies ? 'bold' : 'normal' }}>
-                          {hasAllergies ? `⚠️ ${med.allergies.medicamento || med.allergies.alimento || 'Alergia'}` : 'Sin Alergias'}
+                          {hasAllergies ? `${med.allergies.medicamento || med.allergies.alimento || 'Alergia'}` : 'Sin Alergias'}
                         </Text>
                       </View>
 
@@ -1279,7 +1280,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   onPress={() => setSemaforoStatusFilter('all')}
                 >
                   <Text style={[styles.trafficNumber, { color: theme.text }]}>{allMembers.length}</Text>
-                  <Text style={[styles.trafficLabel, { color: theme.text }]}>📋 Todos</Text>
+                  <Text style={[styles.trafficLabel, { color: theme.text }]}>Todos</Text>
                 </TouchableOpacity>
 
                 {/* 1. VIGENTES (> 3 MESES / > 90 DÍAS) */}
@@ -1288,7 +1289,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   onPress={() => setSemaforoStatusFilter(semaforoStatusFilter === 'active' ? 'all' : 'active')}
                 >
                   <Text style={[styles.trafficNumber, { color: '#15803d' }]}>{semaforoCounts.active}</Text>
-                  <Text style={[styles.trafficLabel, { color: '#166534' }]}>🟢 Vigentes (&gt;3m)</Text>
+                  <Text style={[styles.trafficLabel, { color: '#166534' }]}>Vigentes (&gt;3m)</Text>
                 </TouchableOpacity>
 
                 {/* 2. POR VENCER (3 MESES / 31-90 DÍAS) */}
@@ -1297,7 +1298,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   onPress={() => setSemaforoStatusFilter(semaforoStatusFilter === 'expiring_3m' ? 'all' : 'expiring_3m')}
                 >
                   <Text style={[styles.trafficNumber, { color: '#854d0e' }]}>{semaforoCounts.expiring_3m}</Text>
-                  <Text style={[styles.trafficLabel, { color: '#713f12' }]}>🟡 Por Vencer (3m)</Text>
+                  <Text style={[styles.trafficLabel, { color: '#713f12' }]}>Por Vencer (3m)</Text>
                 </TouchableOpacity>
 
                 {/* 3. A PUNTO DE VENCER (1 MES / 0-30 DÍAS) */}
@@ -1306,7 +1307,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   onPress={() => setSemaforoStatusFilter(semaforoStatusFilter === 'expiring_1m' ? 'all' : 'expiring_1m')}
                 >
                   <Text style={[styles.trafficNumber, { color: '#c2410c' }]}>{semaforoCounts.expiring_1m}</Text>
-                  <Text style={[styles.trafficLabel, { color: '#9a3412' }]}>🟠 Por Vencer (30d)</Text>
+                  <Text style={[styles.trafficLabel, { color: '#9a3412' }]}>Por Vencer (30d)</Text>
                 </TouchableOpacity>
 
                 {/* 4. VENCIDAS O SIN FECHA */}
@@ -1315,23 +1316,23 @@ export default function JefeGrupoScreen({ navigation }: any) {
                   onPress={() => setSemaforoStatusFilter(semaforoStatusFilter === 'expired' ? 'all' : 'expired')}
                 >
                   <Text style={[styles.trafficNumber, { color: '#b91c1c' }]}>{semaforoCounts.expired}</Text>
-                  <Text style={[styles.trafficLabel, { color: '#991b1b' }]}>🔴 Vencidas / S.F</Text>
+                  <Text style={[styles.trafficLabel, { color: '#991b1b' }]}>Vencidas / S.F</Text>
                 </TouchableOpacity>
 
                 {/* 5. POR APROBAR */}
                 <TouchableOpacity
-                  style={[styles.trafficCard, { backgroundColor: '#f3e8ff', borderColor: '#9333ea', minWidth: 105 }, semaforoStatusFilter === 'pending' && styles.trafficCardActive]}
+                  style={[styles.trafficCard, { backgroundColor: colors.accentSoft, borderColor: colors.primary, minWidth: 105 }, semaforoStatusFilter === 'pending' && styles.trafficCardActive]}
                   onPress={() => setSemaforoStatusFilter(semaforoStatusFilter === 'pending' ? 'all' : 'pending')}
                 >
-                  <Text style={[styles.trafficNumber, { color: '#7e22ce' }]}>{semaforoCounts.pending}</Text>
-                  <Text style={[styles.trafficLabel, { color: '#6b21a8' }]}>⏳ Por Aprobar</Text>
+                  <Text style={[styles.trafficNumber, { color: colors.accentText }]}>{semaforoCounts.pending}</Text>
+                  <Text style={[styles.trafficLabel, { color: colors.accentText }]}>Por Aprobar</Text>
                 </TouchableOpacity>
               </ScrollView>
 
               {/* BOTÓN APROBACIÓN MASIVA EN LOTE SI HAY PENDIENTES */}
               {semaforoCounts.pending > 0 && (
                 <TouchableOpacity
-                  style={[styles.batchApproveBtn, { backgroundColor: '#9333ea' }]}
+                  style={[styles.batchApproveBtn, { backgroundColor: colors.primary }]}
                   onPress={handleBatchApprove}
                   disabled={approvingBatch}
                 >
@@ -1389,7 +1390,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 </Text>
                 {semaforoStatusFilter !== 'all' && (
                   <TouchableOpacity 
-                    style={{ backgroundColor: primaryColor, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }} 
+                    style={{ backgroundColor: primaryColor, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }} 
                     onPress={() => setSemaforoStatusFilter('all')}
                   >
                     <Text style={{ fontSize: 12, color: 'white', fontWeight: 'bold' }}>✕ Ver Todos ({allMembers.length})</Text>
@@ -1408,21 +1409,21 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 filteredSemaforoMembers.map((m, idx) => {
                   const isPending = m.membership_status === 'pending_approval' || m.membership_status === 'pending';
                   const hasDate = !!m.membership_expires_at;
-                  let statusBadge = { bg: '#fee2e2', border: '#fca5a5', text: '#b91c1c', label: '🔴 Vencida / S.F' };
+                  let statusBadge = { bg: '#fee2e2', border: '#fca5a5', text: '#b91c1c', label: 'Vencida / S.F' };
 
                   if (isPending) {
-                    statusBadge = { bg: '#f3e8ff', border: '#d8b4fe', text: '#7e22ce', label: '⏳ Por Aprobar' };
+                    statusBadge = { bg: colors.accentSoft, border: colors.accentText, text: colors.primary, label: 'Por Aprobar' };
                   } else if (hasDate) {
                     const expDate = new Date(m.membership_expires_at);
                     const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                     if (diffDays < 0) {
-                      statusBadge = { bg: '#fee2e2', border: '#fca5a5', text: '#b91c1c', label: `🔴 Vencida (${Math.abs(diffDays)}d)` };
+                      statusBadge = { bg: '#fee2e2', border: '#fca5a5', text: '#b91c1c', label: `Vencida (${Math.abs(diffDays)}d)` };
                     } else if (diffDays <= 30) {
-                      statusBadge = { bg: '#ffedd5', border: '#fdba74', text: '#c2410c', label: `🟠 Vence en ${diffDays}d` };
+                      statusBadge = { bg: '#ffedd5', border: '#fdba74', text: '#c2410c', label: `Vence en ${diffDays}d` };
                     } else if (diffDays <= 90) {
-                      statusBadge = { bg: '#fef9c3', border: '#fde047', text: '#a16207', label: `🟡 Vence en ${diffDays}d (3m)` };
+                      statusBadge = { bg: '#fef9c3', border: '#fde047', text: '#a16207', label: `Vence en ${diffDays}d (3m)` };
                     } else {
-                      statusBadge = { bg: '#dcfce7', border: '#86efac', text: '#15803d', label: `🟢 Vigente (${diffDays}d)` };
+                      statusBadge = { bg: '#dcfce7', border: '#86efac', text: '#15803d', label: `Vigente (${diffDays}d)` };
                     }
                   }
 
@@ -1470,7 +1471,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                             setShowMembershipDatePicker(true);
                           }}
                         >
-                          <Text style={{ color: theme.text, fontSize: 12, fontWeight: 'bold' }}>📅 Asignar</Text>
+                          <Text style={{ color: theme.text, fontSize: 12, fontWeight: 'bold' }}>Asignar</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -1535,7 +1536,7 @@ export default function JefeGrupoScreen({ navigation }: any) {
                 <Text style={{ color: theme.subText }}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={{ backgroundColor: primaryColor, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10 }}
+                style={{ backgroundColor: primaryColor, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12 }}
                 onPress={() => {
                   setShowMembershipDatePicker(false);
                   handleSaveMembershipDate();
@@ -1577,12 +1578,12 @@ export default function JefeGrupoScreen({ navigation }: any) {
               <Text style={[modalStyles.label, { color: theme.subText }]}>DESTINO / VISIBILIDAD DEL EVENTO *</Text>
               <View style={modalStyles.scopeRow}>
                 {[
-                  { id: 'grupo', label: '⚜️ Todo el Grupo' },
-                  { id: 'scouters', label: '👥 Solo Scouters (Asamblea)' },
-                  { id: 'manada', label: '🟡 Manada' },
-                  { id: 'tropa', label: '🟢 Tropa' },
-                  { id: 'comunidad', label: '🔵 Caminantes' },
-                  { id: 'clan', label: '🔴 Clan' }
+                  { id: 'grupo', label: 'Todo el Grupo' },
+                  { id: 'scouters', label: 'Solo Scouters (Asamblea)' },
+                  { id: 'manada', label: 'Manada' },
+                  { id: 'tropa', label: 'Tropa' },
+                  { id: 'comunidad', label: 'Caminantes' },
+                  { id: 'clan', label: 'Clan' }
                 ].map(item => (
                   <TouchableOpacity
                     key={item.id}
@@ -1605,9 +1606,9 @@ export default function JefeGrupoScreen({ navigation }: any) {
               </View>
 
               {eventUnit === 'scouters' && (
-                <View style={{ backgroundColor: isDarkMode ? '#27272a' : '#eef2ff', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: '#6366f1', marginBottom: 12 }}>
-                  <Text style={{ fontSize: 12, color: '#4f46e5', fontWeight: 'bold' }}>
-                    🔒 Visibilidad Privada: Este evento SOLO lo verán Jefatura y Scouters. Los jóvenes scouts NO lo verán.
+                <View style={{ backgroundColor: isDarkMode ? '#27272a' : colors.accentSoft, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.primary, marginBottom: 12 }}>
+                  <Text style={{ fontSize: 12, color: colors.accentText, fontWeight: 'bold' }}>
+                    Visibilidad Privada: Este evento SOLO lo verán Jefatura y Scouters. Los jóvenes scouts NO lo verán.
                   </Text>
                 </View>
               )}

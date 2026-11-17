@@ -145,7 +145,7 @@ export function DualProfileAvatar({
               { color: activeTab === 'scout' ? '#ffffff' : (isDarkMode ? '#a1a1aa' : '#64748b') },
               activeTab === 'scout' && styles.tabPillTextActive
             ]}>
-              ⚜️ Foto Scout {scoutAvatarUrl ? '✓' : ''}
+              Foto Scout {scoutAvatarUrl ? '✓' : ''}
             </Text>
           </TouchableOpacity>
 
@@ -162,7 +162,7 @@ export function DualProfileAvatar({
               { color: activeTab === 'custom' ? '#ffffff' : (isDarkMode ? '#a1a1aa' : '#64748b') },
               activeTab === 'custom' && styles.tabPillTextActive
             ]}>
-              ✨ Foto Personal {customAvatarUrl ? '✓' : ''}
+              Foto Personal {customAvatarUrl ? '✓' : ''}
             </Text>
           </TouchableOpacity>
         </View>
@@ -306,7 +306,7 @@ export function DualProfileAvatar({
                 activeOpacity={0.8}
               >
                 <Text style={[styles.zoomTabText, activeTab === 'scout' && styles.zoomTabTextActive]}>
-                  ⚜️ Foto Scout {scoutAvatarUrl ? '●' : '(Vacía)'}
+                  Foto Scout {scoutAvatarUrl ? '●' : '(Vacía)'}
                 </Text>
               </TouchableOpacity>
 
@@ -319,7 +319,7 @@ export function DualProfileAvatar({
                 activeOpacity={0.8}
               >
                 <Text style={[styles.zoomTabText, activeTab === 'custom' && styles.zoomTabTextActive]}>
-                  ✨ Foto Personal {customAvatarUrl ? '●' : '(Vacía)'}
+                  Foto Personal {customAvatarUrl ? '●' : '(Vacía)'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -337,8 +337,8 @@ export function DualProfileAvatar({
           <View style={{ alignItems: 'center', marginVertical: 6 }}>
             <Text style={styles.zoomSubtitle}>
               {activeTab === 'scout'
-                ? '⚜️ Retrato Oficial con Uniforme Scout'
-                : '✨ Fotografía Personal o Avatar Libre'}
+                ? 'Retrato Oficial con Uniforme Scout'
+                : 'Fotografía Personal o Avatar Libre'}
             </Text>
           </View>
 
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
     right: -2,
     width: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: 12,
     borderWidth: 1.5,
     justifyContent: 'center',
     alignItems: 'center',
@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(16, 185, 129, 0.08)',
   },
   customPlaceholderText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
     marginTop: 2,
   },
@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
   deleteMiniBtn: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -740,7 +740,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 10,
     paddingHorizontal: 16,
-    borderRadius: 14,
+    borderRadius: 16,
   },
   zoomActionBtnText: {
     color: 'white',

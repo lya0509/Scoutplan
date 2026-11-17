@@ -152,6 +152,6 @@ export function SkeletonScreen({ variant = 'list', fill = true }: { variant?: Va
 
 const styles = StyleSheet.create({
   wrap: { padding: 16 },
-  card: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 12 },
+  card: { borderWidth: 1, borderRadius: 16, padding: 14, marginTop: 12 },
   row: { flexDirection: 'row', gap: 10 },
 });

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { colors } from '../theme/colors';
 import { appVersionLabel } from '../lib/appVersion';
 import {
   View,
@@ -7,7 +8,8 @@ import {
   Modal,
   TouchableOpacity,
   TextInput,
-  ScrollView
+  ScrollView,
+  Switch
 } from 'react-native';
 import { Palette, X, Check, RotateCcw } from 'lucide-react-native';
 import { useTheme, THEME_COLOR_PRESETS } from '../context/ThemeContext';
@@ -20,7 +22,7 @@ interface Props {
 }
 
 export function ThemeCustomizerModal({ visible, onClose }: Props) {
-  const { isDarkMode, theme, primaryColor, basePrimaryColor, setPrimaryColor, resetToDefaultColor } = useTheme();
+  const { isDarkMode, theme, primaryColor, basePrimaryColor, setPrimaryColor, resetToDefaultColor, largeText, setLargeText } = useTheme();
   const [customHex, setCustomHex] = useState(basePrimaryColor);
 
   // Soporte universal para gestos de retroceso en Android, iOS y PWA
@@ -64,7 +66,7 @@ export function ThemeCustomizerModal({ visible, onClose }: Props) {
               <View style={[styles.iconBox, { backgroundColor: primaryColor + '20' }]}>
                 <Palette size={20} color={primaryColor} />
               </View>
-              <Text style={[styles.title, { color: theme.text }]}>Personalización de Color</Text>
+              <Text style={[styles.title, { color: theme.text }]}>Personalizar</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
               <X size={20} color={theme.subText} />
@@ -139,6 +141,20 @@ export function ThemeCustomizerModal({ visible, onClose }: Props) {
               <RotateCcw size={14} color={theme.subText} style={{ marginRight: 6 }} />
               <Text style={[styles.resetText, { color: theme.subText }]}>Volver al color de mi rama</Text>
             </TouchableOpacity>
+
+            {/* Letra grande (encendida de entrada para la Manada) */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 18, paddingTop: 14, borderTopWidth: 1, borderTopColor: theme.border }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: theme.text, fontSize: 15, fontWeight: '600' }}>Letra grande</Text>
+                <Text style={{ color: theme.subText, fontSize: 13, marginTop: 2 }}>Agranda los textos de toda la app.</Text>
+              </View>
+              <Switch
+                value={largeText}
+                onValueChange={setLargeText}
+                accessibilityLabel="Letra grande"
+                trackColor={{ false: theme.border, true: theme.primary }}
+              />
+            </View>
 
             {/* Versión que tiene este teléfono: para saber si ya llegó un arreglo */}
             <Text style={{ color: theme.subText, fontSize: 12, textAlign: 'center', marginTop: 14 }}>
@@ -249,7 +265,7 @@ const styles = StyleSheet.create({
   presetDot: {
     width: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: 12,
     marginRight: 8,
     justifyContent: 'center',
     alignItems: 'center'

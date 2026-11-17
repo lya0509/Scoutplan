@@ -1,105 +1,47 @@
 import React from 'react';
-import Svg, { Circle, Path, Rect, G } from 'react-native-svg';
-import { colors, UNIT_COLORS } from '../theme/colors';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import { colors } from '../theme/colors';
 
 interface UserScoutAvatarProps {
+  /** Se aceptan por compatibilidad; el avatar ya no cambia de color por unidad ni por rol. */
   unit?: string;
   role?: string;
   size?: number;
 }
 
-export const UserScoutAvatar: React.FC<UserScoutAvatarProps> = ({ 
-  unit = 'manada', 
-  role = 'scout', 
-  size = 48 
-}) => {
-  const cleanUnit = unit.toLowerCase();
-  const isScouter = role === 'scouter' || role === 'jefe_grupo';
+// Un solo color para todos: morado Scout de fondo y figura en blanco, sin colores
+// de pañoleta de un grupo concreto.
+const FONDO = colors.purple;
+const FIGURA = '#ffffff';
 
-  // Color de Fondo basado en la Unidad Scout
-  const bgColor = UNIT_COLORS[cleanUnit] || colors.primary;
-  const strokeColor = '#ffffff';
-
-  // Color de la Pañoleta Scout por defecto o personalizada
-  let scarfColor = '#ffffff';
-  let scarfSecondary = '#f59e0b';
-  let woggleColor = '#78350f'; // Color de cuero para el nudo de pañoleta
-
-  if (cleanUnit === 'manada') {
-    scarfColor = '#fef08a';
-    scarfSecondary = '#d97706';
-  } else if (cleanUnit === 'tropa') {
-    scarfColor = '#bbf7d0';
-    scarfSecondary = '#15803d';
-  } else if (cleanUnit === 'caminantes' || cleanUnit === 'comunidad') {
-    scarfColor = '#bfdbfe';
-    scarfSecondary = '#1d4ed8';
-  } else if (cleanUnit === 'clan') {
-    scarfColor = '#fecaca';
-    scarfSecondary = '#b91c1c';
-  }
-
-  if (isScouter) {
-    woggleColor = '#f59e0b'; // Nudo de madera Gilwell
-  }
-
+export const UserScoutAvatar: React.FC<UserScoutAvatarProps> = ({ size = 48 }) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 50 50">
-      {/* CÍRCULO BASE DE FONDO */}
-      <Circle cx="25" cy="25" r="23" fill={bgColor} />
-      <Circle cx="25" cy="25" r="21.5" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+      {/* Círculo base */}
+      <Circle cx="25" cy="25" r="23" fill={FONDO} />
+      <Circle cx="25" cy="25" r="21.5" fill="none" stroke={FIGURA} strokeOpacity={0.25} strokeWidth="1.5" />
 
-      {/* CABEZA SILUETA MINIMALISTA */}
-      <Circle cx="25" cy="15" r="6.5" fill="none" stroke={strokeColor} strokeWidth="2.5" />
-
-      {/* HOMBROS SILUETA MINIMALISTA */}
+      {/* Persona: silueta tenue para que la pañoleta sea lo que destaca */}
+      <Circle cx="25" cy="12" r="5.6" fill={FIGURA} fillOpacity={0.45} />
       <Path
-        d="M 12 37 C 12 28, 18 26, 25 26 C 32 26, 38 28, 38 37"
-        fill="none"
-        stroke={strokeColor}
-        strokeWidth="2.5"
-        strokeLinecap="round"
+        d="M 11.5 39 C 11.5 26, 17.5 20, 25 20 C 32.5 20, 38.5 26, 38.5 39 Z"
+        fill={FIGURA}
+        fillOpacity={0.45}
       />
 
-      {/* PAÑOLETAL SCOUT VECTORIAL (VECTOR MINIMALISTA) */}
-      <G>
-        {/* Cuello de la Pañoleta en V */}
-        <Path
-          d="M 18 26 C 21 30, 29 30, 32 26"
-          fill="none"
-          stroke={scarfColor}
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
+      {/* Pañoleta: cuello en V que baja hasta el nudo */}
+      <Path
+        d="M 18.4 21.6 C 20.4 20.6, 22.6 20.1, 25 20.1 C 27.4 20.1, 29.6 20.6, 31.6 21.6 L 25.9 30.6 L 24.1 30.6 Z M 21.9 22.3 L 25 27.6 L 28.1 22.3 C 26.2 21.8, 23.8 21.8, 21.9 22.3 Z"
+        fillRule="evenodd"
+        fill={FIGURA}
+      />
 
-        {/* Punta Izquierda de la Pañoleta */}
-        <Path
-          d="M 23 31 L 18 43 L 23 41 Z"
-          fill={scarfColor}
-          stroke={scarfSecondary}
-          strokeWidth="1"
-        />
+      {/* Dos puntas largas que cuelgan del nudo */}
+      <Path d="M 23.5 32.6 L 24.8 32.6 L 24.7 38.2 L 22.9 43 L 22.5 38.2 Z" fill={FIGURA} />
+      <Path d="M 26.5 32.6 L 25.2 32.6 L 25.3 38.2 L 27.1 43 L 27.5 38.2 Z" fill={FIGURA} />
 
-        {/* Punta Derecha de la Pañoleta */}
-        <Path
-          d="M 27 31 L 32 43 L 27 41 Z"
-          fill={scarfColor}
-          stroke={scarfSecondary}
-          strokeWidth="1"
-        />
-
-        {/* NUDO / ANILLO DE LA PAÑOLETA (WOGGLE) */}
-        <Rect
-          x="22.5"
-          y="28.5"
-          width="5"
-          height="4.5"
-          rx="1.5"
-          fill={woggleColor}
-          stroke="#ffffff"
-          strokeWidth="0.8"
-        />
-      </G>
+      {/* Nudo / anillo */}
+      <Rect x="22.7" y="29.6" width="4.6" height="3.6" rx="1.1" fill={FONDO} stroke={FIGURA} strokeWidth="1" />
     </Svg>
   );
 };

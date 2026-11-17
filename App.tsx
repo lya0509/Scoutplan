@@ -21,9 +21,12 @@ import ServerStatusBanner from './src/components/ServerStatusBanner';
 /** Fija el color de partida según la rama y el rol de quien inició sesión. */
 function RamaAccentSync() {
   const { user } = useAuth();
-  const { setRamaAccent } = useTheme();
+  const { setRamaAccent, setLargeTextDefault } = useTheme();
   const accent = accentForUser(user);
   useEffect(() => { setRamaAccent(accent); }, [accent, setRamaAccent]);
+  // Versión de Manada: los lobatos ven la letra más grande (se puede apagar en «Personalizar»)
+  const lobato = user?.role === 'scout' && (user?.unit || '').toLowerCase() === 'manada';
+  useEffect(() => { setLargeTextDefault(lobato); }, [lobato, setLargeTextDefault]);
   return null;
 }
 

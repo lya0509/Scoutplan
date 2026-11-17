@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   sub: { fontSize: 14, textAlign: 'center', marginTop: 6, marginBottom: 14, lineHeight: 20 },
   label: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 10, marginBottom: 6 },
   inputWrap: { position: 'relative', justifyContent: 'center' },
-  input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, minHeight: 46, fontSize: 16 },
+  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, minHeight: 46, fontSize: 16 },
   eye: { position: 'absolute', right: 2, top: 0, bottom: 0, width: 44, alignItems: 'center', justifyContent: 'center' },
   error: { color: '#dc2626', fontSize: 13.5, marginTop: 12, lineHeight: 19 },
   primary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 12, minHeight: 48, marginTop: 18 },
